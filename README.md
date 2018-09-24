@@ -10,6 +10,23 @@ make
 
 ## Usage
 
+### Configuration
+
+Is done via Environment variables.
+
+```bash
+bin/discover -h
+
+This application is configured via the environment. The following environment
+variables can be used:
+
+KEY                   TYPE             DEFAULT                                  REQUIRED    DESCRIPTION
+DISCOVER_DEBUG        True or False    false                                    False       turn on debug log
+DISCOVER_REPORTURL    String           http://localhost:8080/device/register    False       Register endpoint url
+```
+
+### Execution
+
 ```bash
 sudo .bin/discover
 INFO[09-24|14:09:59] configuration                            debug=false reportURL=http://localhost:8080/device/register
