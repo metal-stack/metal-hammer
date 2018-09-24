@@ -28,7 +28,7 @@ DISCOVER_REPORTURL    String           http://localhost:8080/device/register    
 ### Execution
 
 ```bash
-sudo .bin/discover
+sudo bin/discover
 INFO[09-24|14:09:59] configuration                            debug=false reportURL=http://localhost:8080/device/register
 INFO[09-24|14:10:00] device already registered                uuid=4C3CEF61-F536-B211-A85C-B765E03E138F caller=lshw.go:63
 ```
