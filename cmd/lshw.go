@@ -11,6 +11,11 @@ import (
 	log "github.com/inconshreveable/log15"
 )
 
+var (
+	lshwCommand = "/usr/sbin/lshw"
+)
+
+//RegisterDevice register a device at the maas api
 func RegisterDevice(spec *Specification) error {
 	lshw, err := executeCommand()
 	if err != nil {
@@ -21,7 +26,7 @@ func RegisterDevice(spec *Specification) error {
 }
 
 func executeCommand() (string, error) {
-	lshwOutput, err := exec.Command("lshw", "-quiet", "-json").Output()
+	lshwOutput, err := exec.Command(lshwCommand, "-quiet", "-json").Output()
 	if err != nil {
 		return "", err
 	}
