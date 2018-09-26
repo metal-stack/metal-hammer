@@ -4,13 +4,36 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
 )
 
 var (
-	imgCommand = "/bin/img"
+	imgCommand  = "/bin/img"
+	defaultDisk = Disk{
+		Device: "/dev/sda",
+		Partitions: []*Partition{
+
+			&Partition{
+				Label:      "boot",
+				Name:       "/dev/sda1",
+				Number:     1,
+				MountPoint: "/boot",
+				Filesystem: EXT3,
+				Size:       1 * GB,
+			},
+			&Partition{
+				Label:      "root",
+				Name:       "/dev/sda2",
+				Number:     2,
+				MountPoint: "/",
+				Filesystem: EXT4,
+				Size:       -1,
+			},
+		},
+	}
 )
 
 const (
@@ -33,6 +56,7 @@ type FSType string
 // Partition defines a disk partition
 type Partition struct {
 	Label      string
+	Name       string
 	Number     int
 	MountPoint string
 
@@ -54,37 +78,26 @@ func Install(image string) error {
 	if err != nil {
 		return err
 	}
-
-	boot := &Partition{
-		Label:      "boot",
-		Number:     1,
-		MountPoint: "/boot",
-		Filesystem: EXT3,
-		Size:       1 * GB,
-	}
-	root := &Partition{
-		Label:      "root",
-		Number:     2,
-		MountPoint: "/",
-		Filesystem: EXT4,
-		Size:       -1,
-	}
-	partitions := make([]*Partition, 0)
-	partitions = append(partitions, root)
-	partitions = append(partitions, boot)
-	disk := Disk{
-		Device:     "/dev/sda",
-		Partitions: partitions,
-	}
-	err = formatDisk(disk)
+	err = format(defaultDisk)
 	if err != nil {
 		return err
 	}
+
+	err = mountPartitions(defaultDisk)
+	if err != nil {
+		return err
+	}
+
 	err = pull(image)
 	if err != nil {
 		return err
 	}
 	err = burn(image)
+	if err != nil {
+		return err
+	}
+
+	err = install(image)
 	if err != nil {
 		return err
 	}
@@ -103,13 +116,41 @@ func wipeDisks() error {
 	return nil
 }
 
-func formatDisk(disk Disk) error {
+func format(disk Disk) error {
 	log.Info("format disk", "disk", disk)
+	return nil
+}
+
+func mountPartitions(disk Disk) error {
+	log.Info("mount disk", "disk", disk)
+	// "/" must be mounted first
+	partitions := make([]*Partition, 0)
+	for _, p := range disk.Partitions {
+		if p.MountPoint == "/" {
+			partitions = append(partitions, p)
+		}
+	}
+	for _, p := range disk.Partitions {
+		if p.MountPoint != "/" {
+			partitions = append(partitions, p)
+		}
+	}
+
+	for _, p := range partitions {
+		mountPoint := fmt.Sprintf("/mnt%s", p.MountPoint)
+		log.Info("mount partition", "partition", p.Name, "mountPoint", mountPoint)
+		err := syscall.Mount(p.Name, mountPoint, string(p.Filesystem), 0, "rw")
+		if err != nil {
+			log.Error("unable to mount", "partition", p.Name, "mountPoint", mountPoint, "error", err)
+		}
+	}
+
 	return nil
 }
 
 // pull a image by calling genuinetools/img pull
 func pull(image string) error {
+	log.Info("pull image", "image", image)
 	cmd := exec.Command(imgCommand, "pull", image)
 	cmd.Env = os.Environ()
 	output, err := cmd.CombinedOutput()
@@ -123,6 +164,7 @@ func pull(image string) error {
 
 // burn a image by calling genuinetools/img unpack to a specific directory
 func burn(image string) error {
+	log.Info("burn image", "image", image)
 	cmd := exec.Command(imgCommand, "unpack", image)
 	cmd.Env = os.Environ()
 	output, err := cmd.CombinedOutput()
@@ -131,5 +173,10 @@ func burn(image string) error {
 		return fmt.Errorf("unable to burn image %s error message: %v error: %v", image, string(output), err)
 	}
 	log.Debug("burn image", "output", output, "image", image)
+	return nil
+}
+
+func install(image string) error {
+	log.Info("install image", "image", image)
 	return nil
 }
