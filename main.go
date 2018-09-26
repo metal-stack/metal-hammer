@@ -1,8 +1,6 @@
 package main
 
 import (
-	"io"
-	"net/http"
 	"os"
 
 	"git.f-i-ts.de/maas/discover/cmd"
@@ -42,25 +40,9 @@ func main() {
 	h = log.LvlFilterHandler(level, h)
 	log.Root().SetHandler(h)
 
-	err = cmd.RegisterDevice(&spec)
+	err = cmd.Run(&spec)
 	if err != nil {
-		log.Error("register device", "error", err)
-	}
-
-	err = cmd.Install("ubuntu")
-	if err != nil {
-		log.Error("install", "error", err)
-	}
-
-	rootHandler := func(w http.ResponseWriter, req *http.Request) {
-		io.WriteString(w, "discover\n")
-	}
-
-	http.HandleFunc("/", rootHandler)
-	log.Info("waiting for a image to burn")
-	err = http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Error("http server not stared", "error", err)
+		log.Error("discover run", "error", err)
 	}
 }
 
