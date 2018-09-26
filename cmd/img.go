@@ -6,15 +6,81 @@ import (
 	"os/exec"
 
 	log "github.com/inconshreveable/log15"
+	"github.com/jaypipes/ghw"
 )
 
 var (
 	imgCommand = "/bin/img"
 )
 
+const (
+	// EXT3 is usually only used for /boot
+	EXT3 = FSType("ext3")
+	// EXT4 is the default fs
+	EXT4 = FSType("ext4")
+	// SWAP is for the swap partition
+	SWAP = FSType("swap")
+)
+
+const (
+	// GB GigaByte
+	GB = 1024 * 1024 * 1024
+)
+
+// FSType defines the Filesystem of a Partition
+type FSType string
+
+// Partition defines a disk partition
+type Partition struct {
+	Label      string
+	Number     int
+	MountPoint string
+
+	// Size in Bytes. If negative all available space is used.
+	Size       int64
+	Filesystem FSType
+}
+
+// Disk is a physical Disk
+type Disk struct {
+	Device string
+	// Partitions to create on this disk, order is important when mounting
+	Partitions []*Partition
+}
+
 // Install a given image to the disk by using genuinetools/img
 func Install(image string) error {
-	err := pull(image)
+	err := wipeDisks()
+	if err != nil {
+		return err
+	}
+
+	boot := &Partition{
+		Label:      "boot",
+		Number:     1,
+		MountPoint: "/boot",
+		Filesystem: EXT3,
+		Size:       1 * GB,
+	}
+	root := &Partition{
+		Label:      "root",
+		Number:     2,
+		MountPoint: "/",
+		Filesystem: EXT4,
+		Size:       -1,
+	}
+	partitions := make([]*Partition, 0)
+	partitions = append(partitions, root)
+	partitions = append(partitions, boot)
+	disk := Disk{
+		Device:     "/dev/sda",
+		Partitions: partitions,
+	}
+	err = formatDisk(disk)
+	if err != nil {
+		return err
+	}
+	err = pull(image)
 	if err != nil {
 		return err
 	}
@@ -22,6 +88,23 @@ func Install(image string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func wipeDisks() error {
+	log.Info("wipe all disks")
+	block, err := ghw.Block()
+	if err != nil {
+		return fmt.Errorf("unable to gather disks: %v", err)
+	}
+	for _, disk := range block.Disks {
+		log.Info("wipe disk", "disk", disk)
+	}
+	return nil
+}
+
+func formatDisk(disk Disk) error {
+	log.Info("format disk", "disk", disk)
 	return nil
 }
 
