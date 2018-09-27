@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 	"syscall"
 
 	log "github.com/inconshreveable/log15"
@@ -11,8 +14,9 @@ import (
 )
 
 var (
-	imgCommand  = "/bin/img"
-	defaultDisk = Disk{
+	imgCommand    = "/bin/img"
+	sgdiskCommand = "/usr/bin/sgdisk"
+	defaultDisk   = Disk{
 		Device: "/dev/sda",
 		Partitions: []*Partition{
 
@@ -57,7 +61,7 @@ type FSType string
 type Partition struct {
 	Label      string
 	Name       string
-	Number     int
+	Number     uint
 	MountPoint string
 
 	// Size in Bytes. If negative all available space is used.
@@ -67,8 +71,9 @@ type Partition struct {
 
 // Disk is a physical Disk
 type Disk struct {
-	Device string
-	// Partitions to create on this disk, order is important when mounting
+	Device     string
+	SectorSize int64
+	// Partitions to create on this disk, order is preserved
 	Partitions []*Partition
 }
 
@@ -83,7 +88,7 @@ func Install(image string) error {
 		return err
 	}
 
-	err = mountPartitions(defaultDisk)
+	err = mountPartitions("rootfs", defaultDisk)
 	if err != nil {
 		return err
 	}
@@ -111,41 +116,106 @@ func wipeDisks() error {
 		return fmt.Errorf("unable to gather disks: %v", err)
 	}
 	for _, disk := range block.Disks {
-		log.Info("wipe disk", "disk", disk)
+		log.Info("TODO wipe disk", "disk", disk)
 	}
 	return nil
 }
 
 func format(disk Disk) error {
 	log.Info("format disk", "disk", disk)
+
+	log.Info("sgdisk zap all existing partitions", "disk", disk)
+	cmd := exec.Command(sgdiskCommand, "--zap-all")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error("sgdisk zap all existing partitions failed", "error", err, "output", output)
+	}
+
+	diskName := strings.Split(disk.Device, "/")[2]
+	hwSectorSize, err := ioutil.ReadFile(fmt.Sprintf("/sys/block/%s/queue/hw_sector_size", diskName))
+	if err != nil {
+		return fmt.Errorf("unable to determine sectorsize of %s error:%v", diskName, err)
+	}
+
+	sectorSize, err := strconv.Atoi(strings.TrimSpace(string(hwSectorSize)))
+	if err != nil {
+		return fmt.Errorf("unable to convert hw_sector_size to an int error:%v", err)
+	}
+
+	cmd = exec.Command(sgdiskCommand, "--end-of-largest", disk.Device)
+	output, err = cmd.CombinedOutput()
+	finalSector, err := strconv.Atoi(strings.TrimSpace(string(output)))
+	if err != nil {
+		return fmt.Errorf("unable to convert end-of-largest sector to an int error:%v", err)
+	}
+
+	cmd = exec.Command(sgdiskCommand, "--first-in-largest", disk.Device)
+	output, err = cmd.CombinedOutput()
+	firstUsableSector, err := strconv.Atoi(strings.TrimSpace(string(output)))
+	if err != nil {
+		return fmt.Errorf("unable to convert end-of-largest sector to an int error:%v", err)
+	}
+
+	log.Info("disk sectors", "sectorSize", sectorSize, "firstUsableSector", firstUsableSector, "finalSector", finalSector)
+
+	newPartitionsCommands := make([]string, 0)
+	for _, p := range disk.Partitions {
+		sectorsOfPartition := p.Size / int64(sectorSize)
+		startSector := int64(firstUsableSector) + int64(p.Number-1)*sectorsOfPartition + int64(1)
+		var endSector int64
+		if p.Size == -1 {
+			endSector = int64(finalSector)
+		} else {
+			endSector = startSector + sectorsOfPartition
+		}
+		newPartitionCommand := fmt.Sprintf("--new:%d:%d:%d", p.Number, startSector, endSector)
+		newPartitionsCommands = append(newPartitionsCommands, newPartitionCommand)
+	}
+
+	newPartitionsCommands = append(newPartitionsCommands, disk.Device)
+	log.Info("sgdisk create partitions", "command", newPartitionsCommands)
+	cmd = exec.Command(sgdiskCommand, newPartitionsCommands...)
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Error("sgdisk creating partitions failed", "error", err, "output", output)
+	}
+
 	return nil
 }
 
-func mountPartitions(disk Disk) error {
+func mountPartitions(prefix string, disk Disk) error {
 	log.Info("mount disk", "disk", disk)
 	// "/" must be mounted first
-	partitions := make([]*Partition, 0)
-	for _, p := range disk.Partitions {
-		if p.MountPoint == "/" {
-			partitions = append(partitions, p)
-		}
-	}
-	for _, p := range disk.Partitions {
-		if p.MountPoint != "/" {
-			partitions = append(partitions, p)
-		}
-	}
+	partitions := orderPartitions(disk.Partitions)
 
 	for _, p := range partitions {
-		mountPoint := fmt.Sprintf("/mnt%s", p.MountPoint)
+		mountPoint := fmt.Sprintf("%s%s", prefix, p.MountPoint)
 		log.Info("mount partition", "partition", p.Name, "mountPoint", mountPoint)
+		// see man 2 mount
 		err := syscall.Mount(p.Name, mountPoint, string(p.Filesystem), 0, "rw")
 		if err != nil {
+			// FIXME error handling
 			log.Error("unable to mount", "partition", p.Name, "mountPoint", mountPoint, "error", err)
 		}
 	}
 
 	return nil
+}
+
+// orderPartitions ensures that "/" is the first, which is required for mounting
+func orderPartitions(partitions []*Partition) []*Partition {
+	ordered := make([]*Partition, 0)
+	for _, p := range partitions {
+		if p.MountPoint == "/" {
+			ordered = append(ordered, p)
+		}
+	}
+	for _, p := range partitions {
+		if p.MountPoint != "/" {
+			ordered = append(ordered, p)
+		}
+	}
+	return ordered
 }
 
 // pull a image by calling genuinetools/img pull
@@ -176,7 +246,9 @@ func burn(image string) error {
 	return nil
 }
 
+// install will execute /install.sh in the pulled docker image which was extracted onto disk
+// to finish installation e.g. install mbr, grub, write network and filesystem config
 func install(image string) error {
-	log.Info("install image", "image", image)
+	log.Info("TODO: install image", "image", image)
 	return nil
 }
