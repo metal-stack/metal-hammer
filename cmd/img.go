@@ -221,7 +221,7 @@ func createFilesystem(p *Partition) error {
 	cmd := exec.Command(mkfs, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("mkfs failed: %s error:%v", output, err)
+		return fmt.Errorf("mkfs failed: %s error:%v", string(output), err)
 	}
 
 	return nil
@@ -253,7 +253,7 @@ func pull(image string) error {
 	if err != nil {
 		return fmt.Errorf("unable to pull image %s error message: %v error: %v", image, string(output), err)
 	}
-	log.Debug("pull image", "output", output, "image", image)
+	log.Debug("pull image", "output", string(output), "image", image)
 	return nil
 }
 
@@ -264,6 +264,8 @@ func burn(image string) error {
 	cmd.Env = os.Environ()
 	output, err := cmd.CombinedOutput()
 
+	// lvl=eror msg=install error="unable to burn image registry.fi-ts.io/metal/os/ubuntu error message: destination directory already exists: /rootfs\n error: exit status 1" caller=root.go:2
+	// FIXME put into subdirectory
 	if err != nil {
 		return fmt.Errorf("unable to burn image %s error message: %v error: %v", image, string(output), err)
 	}
