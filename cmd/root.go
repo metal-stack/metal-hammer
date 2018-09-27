@@ -18,7 +18,7 @@ func Run(spec *Specification) error {
 		log.Error("register device", "error", err)
 	}
 
-	err = Install("ubuntu")
+	err = Install("registry.fi-ts.io/metal/os/ubuntu")
 	if err != nil {
 		log.Error("install", "error", err)
 	}
@@ -27,6 +27,11 @@ func Run(spec *Specification) error {
 	err = waitForInstall()
 	if err != nil {
 		log.Error("wait for install", "error", err)
+	}
+
+	err = reportInstallation()
+	if err != nil {
+		log.Error("report install", "error", err)
 	}
 
 	reboot()
@@ -44,6 +49,11 @@ func waitForInstall() error {
 	if err != nil {
 		return fmt.Errorf("http server not stared %v", err)
 	}
+	return nil
+}
+
+func reportInstallation() error {
+	log.Info("report image installation status back")
 	return nil
 }
 
