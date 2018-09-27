@@ -2,11 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"strconv"
-	"strings"
 	"syscall"
 
 	log "github.com/inconshreveable/log15"
@@ -26,7 +23,8 @@ var (
 				Number:     1,
 				MountPoint: "/boot",
 				Filesystem: EXT3,
-				Size:       1 * GB,
+				GPTType:    GPT_BOOT,
+				Size:       100,
 			},
 			&Partition{
 				Label:      "root",
@@ -34,6 +32,7 @@ var (
 				Number:     2,
 				MountPoint: "/",
 				Filesystem: EXT4,
+				GPTType:    GPT_LINUX,
 				Size:       -1,
 			},
 		},
@@ -47,12 +46,14 @@ const (
 	EXT4 = FSType("ext4")
 	// SWAP is for the swap partition
 	SWAP = FSType("swap")
+
+	// GPT_BOOT EFI Boot Partition
+	GPT_BOOT = GPTType("ef02")
+	// GPT_LINUX Linux Partition
+	GPT_LINUX = GPTType("8300")
 )
 
-const (
-	// GB GigaByte
-	GB = 1024 * 1024 * 1024
-)
+type GPTType string
 
 // FSType defines the Filesystem of a Partition
 type FSType string
@@ -64,9 +65,10 @@ type Partition struct {
 	Number     uint
 	MountPoint string
 
-	// Size in Bytes. If negative all available space is used.
+	// Size in mebiBytes. If negative all available space is used.
 	Size       int64
 	Filesystem FSType
+	GPTType    GPTType
 }
 
 // Disk is a physical Disk
@@ -131,44 +133,13 @@ func format(disk Disk) error {
 		log.Error("sgdisk zap all existing partitions failed", "error", err, "output", output)
 	}
 
-	diskName := strings.Split(disk.Device, "/")[2]
-	hwSectorSize, err := ioutil.ReadFile(fmt.Sprintf("/sys/block/%s/queue/hw_sector_size", diskName))
-	if err != nil {
-		return fmt.Errorf("unable to determine sectorsize of %s error:%v", diskName, err)
-	}
-
-	sectorSize, err := strconv.Atoi(strings.TrimSpace(string(hwSectorSize)))
-	if err != nil {
-		return fmt.Errorf("unable to convert hw_sector_size to an int error:%v", err)
-	}
-
-	cmd = exec.Command(sgdiskCommand, "--end-of-largest", disk.Device)
-	output, err = cmd.CombinedOutput()
-	finalSector, err := strconv.Atoi(strings.TrimSpace(string(output)))
-	if err != nil {
-		return fmt.Errorf("unable to convert end-of-largest sector to an int error:%v", err)
-	}
-
-	cmd = exec.Command(sgdiskCommand, "--first-in-largest", disk.Device)
-	output, err = cmd.CombinedOutput()
-	firstUsableSector, err := strconv.Atoi(strings.TrimSpace(string(output)))
-	if err != nil {
-		return fmt.Errorf("unable to convert end-of-largest sector to an int error:%v", err)
-	}
-
-	log.Info("disk sectors", "sectorSize", sectorSize, "firstUsableSector", firstUsableSector, "finalSector", finalSector)
-
 	newPartitionsCommands := make([]string, 0)
 	for _, p := range disk.Partitions {
-		sectorsOfPartition := p.Size / int64(sectorSize)
-		startSector := int64(firstUsableSector) + int64(p.Number-1)*sectorsOfPartition + int64(1)
-		var endSector int64
+		size := fmt.Sprintf("%dM", p.Size)
 		if p.Size == -1 {
-			endSector = int64(finalSector)
-		} else {
-			endSector = startSector + sectorsOfPartition
+			size = "0"
 		}
-		newPartitionCommand := fmt.Sprintf("--new:%d:%d:%d", p.Number, startSector, endSector)
+		newPartitionCommand := fmt.Sprintf("--new %d:0:%s --change-name %d:\"%s\" --type %d:%s", p.Number, size, p.Number, p.Label, p.Number, p.GPTType)
 		newPartitionsCommands = append(newPartitionsCommands, newPartitionCommand)
 	}
 
