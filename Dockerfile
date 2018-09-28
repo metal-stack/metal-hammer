@@ -1,6 +1,7 @@
 FROM golang:1.11-stretch as builder
 
-RUN apt update && apt -y install make git
+RUN apt update \
+ && apt -y install make git
 
 WORKDIR /app
 COPY go.mod .
@@ -12,6 +13,7 @@ COPY Makefile ./Makefile
 RUN make
 
 FROM alpine:3.8
+LABEL maintainer FI-TS Devops <devops@f-i-ts.de>
 COPY --from=builder /app/bin/discover /bin/discover
 RUN apk update \
  && apk add \
