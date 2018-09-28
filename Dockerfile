@@ -18,10 +18,6 @@ RUN apk update \
         ca-certificates \
         lshw \
         sgdisk \
-        e2fsprogs \
- && wget https://github.com/genuinetools/img/releases/download/v0.5.0/img-linux-amd64 -O /bin/img \
- && chmod +x /bin/img \
- && wget https://github.com/opencontainers/runc/releases/download/v1.0.0-rc5/runc.amd64 -O /bin/runc \
- && chmod +x /bin/runc
+        e2fsprogs
 
 CMD ["/bin/discover"]

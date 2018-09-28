@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +11,7 @@ import (
 
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
+	"github.com/mholt/archiver"
 )
 
 var (
@@ -134,30 +137,32 @@ func format(disk Disk) error {
 	log.Info("format disk", "disk", disk)
 
 	log.Info("sgdisk zap all existing partitions", "disk", disk)
-	cmd := exec.Command(sgdiskCommand, "--zap-all")
+	cmd := exec.Command(sgdiskCommand, "-Z")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Error("sgdisk zap all existing partitions failed", "error", err, "output", output)
 	}
 
-	newPartitionsCommands := make([]string, 0)
+	args := make([]string, 0)
 	for _, p := range disk.Partitions {
 		size := fmt.Sprintf("%dM", p.Size)
 		if p.Size == -1 {
 			size = "0"
 		}
-		newPartitionCommand := fmt.Sprintf("--new %d:0:%s --change-name %d:\"%s\" --type %d:%s", p.Number, size, p.Number, p.Label, p.Number, p.GPTType)
-		newPartitionsCommands = append(newPartitionsCommands, newPartitionCommand)
+		args = append(args, fmt.Sprintf("-n=%d:0:%s", p.Number, size))
+		args = append(args, fmt.Sprintf(`-c=%d:"%s"`, p.Number, p.Label))
+		args = append(args, fmt.Sprintf("-t=%d:%s", p.Number, p.GPTType))
 
 		p.Device = fmt.Sprintf("%s%d", disk.Device, p.Number)
 	}
 
-	newPartitionsCommands = append(newPartitionsCommands, disk.Device)
-	log.Info("sgdisk create partitions", "command", newPartitionsCommands)
-	cmd = exec.Command(sgdiskCommand, newPartitionsCommands...)
-	output, err = cmd.CombinedOutput()
+	args = append(args, disk.Device)
+	log.Info("sgdisk create partitions", "command", args)
+	cmd = exec.Command(sgdiskCommand, args...)
+	output, err = cmd.Output()
+	// FIXME sgdisk return 0 in case of failure, and > 0 if succeed
 	if err != nil {
-		log.Error("sgdisk creating partitions failed", "error", err, "output", output)
+		log.Error("sgdisk creating partitions failed", "error", err, "output", string(output))
 	}
 
 	return nil
@@ -246,30 +251,53 @@ func orderPartitions(partitions []*Partition) []*Partition {
 // pull a image by calling genuinetools/img pull
 func pull(image string) error {
 	log.Info("pull image", "image", image)
-	cmd := exec.Command(imgCommand, "pull", image)
-	cmd.Env = os.Environ()
-	output, err := cmd.CombinedOutput()
-
+	err := downloadFile("/tmp/os.tgz", image)
 	if err != nil {
-		return fmt.Errorf("unable to pull image %s error message: %v error: %v", image, string(output), err)
+		return fmt.Errorf("unable to pull image %s error: %v", image, err)
 	}
-	log.Debug("pull image", "output", string(output), "image", image)
+	log.Debug("pull image", "image", image)
+	return nil
+}
+
+// downloadFile will download a url to a local file. It's efficient because it will
+// write as it downloads and not load the whole file into memory.
+func downloadFile(filepath string, url string) error {
+	// Create the file
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // burn a image by calling genuinetools/img unpack to a specific directory
 func burn(image string) error {
 	log.Info("burn image", "image", image)
-	cmd := exec.Command(imgCommand, "unpack", image)
-	cmd.Env = os.Environ()
-	output, err := cmd.CombinedOutput()
 
-	// lvl=eror msg=install error="unable to burn image registry.fi-ts.io/metal/os/ubuntu error message: destination directory already exists: /rootfs\n error: exit status 1" caller=root.go:2
-	// FIXME put into subdirectory
+	err := archiver.TarGz.Open("/tmp/os.tgz", "rootfs")
 	if err != nil {
-		return fmt.Errorf("unable to burn image %s error message: %v error: %v", image, string(output), err)
+		return fmt.Errorf("unable to burn image %s error: %v", image, err)
 	}
-	log.Debug("burn image", "output", output, "image", image)
+	log.Debug("burn image", "image", image)
+	err = os.Remove("/tmp/os.tgz")
+	if err != nil {
+		log.Warn("burn image unable to remove image source", "error", err)
+	}
 	return nil
 }
 

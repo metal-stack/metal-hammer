@@ -18,7 +18,7 @@ func Run(spec *Specification) error {
 		log.Error("register device", "error", err)
 	}
 
-	err = Install("registry.fi-ts.io/metal/os/ubuntu")
+	err = Install("https://blobstore.fi-ts.io/metal/images/os/ubuntu/18.04/img.tar.gz")
 	if err != nil {
 		log.Error("install", "error", err)
 	}
@@ -58,5 +58,5 @@ func reportInstallation() error {
 }
 
 func reboot() {
-	exec.Command("reboot")
+	exec.Command("/sbin/reboot")
 }
