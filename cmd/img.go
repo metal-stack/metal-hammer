@@ -15,20 +15,21 @@ import (
 )
 
 var (
-	imgCommand      = "/bin/img"
-	sgdiskCommand   = "/usr/bin/sgdisk"
-	ext4MkFsCommand = "/sbin/mkfs.ext4"
-	ext3MkFsCommand = "/sbin/mkfs.ext3"
-	mkswapCommand   = "/sbin/mkswap"
-	defaultDisk     = Disk{
+	imgCommand       = "/bin/img"
+	sgdiskCommand    = "/usr/bin/sgdisk"
+	ext4MkFsCommand  = "/sbin/mkfs.ext4"
+	ext3MkFsCommand  = "/sbin/mkfs.ext3"
+	fat32MkFsCommand = "/sbin/mkfs.vfat"
+	mkswapCommand    = "/sbin/mkswap"
+	defaultDisk      = Disk{
 		Device: "/dev/sda",
 		Partitions: []*Partition{
 
 			&Partition{
 				Label:      "boot",
 				Number:     1,
-				MountPoint: "/boot",
-				Filesystem: EXT3,
+				MountPoint: "",
+				Filesystem: FAT32,
 				GPTType:    GPTBoot,
 				Size:       100,
 			},
@@ -45,6 +46,8 @@ var (
 )
 
 const (
+	// FAT32 is ised for the UEFI boot partition
+	FAT32 = FSType("fat32")
 	// EXT3 is usually only used for /boot
 	EXT3 = FSType("ext3")
 	// EXT4 is the default fs
@@ -180,6 +183,10 @@ func mountPartitions(prefix string, disk Disk) error {
 			log.Error("mount partition create filesystem failed", "error", err)
 		}
 
+		if p.MountPoint == "" {
+			continue
+		}
+
 		mountPoint := filepath.Join(prefix, p.MountPoint)
 		err = os.MkdirAll(mountPoint, os.ModePerm)
 		if err != nil {
@@ -201,19 +208,24 @@ func createFilesystem(p *Partition) error {
 	mkfs := ""
 	var args []string
 	switch p.Filesystem {
-	case "ext4":
+	case EXT4:
 		mkfs = ext4MkFsCommand
 		args = append(args, "-F")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
-	case "ext3":
+	case EXT3:
 		mkfs = ext3MkFsCommand
 		args = append(args, "-F")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
-	case "swap":
+	case FAT32:
+		mkfs = fat32MkFsCommand
+		if p.Label != "" {
+			args = append(args, "-L", p.Label)
+		}
+	case SWAP:
 		mkfs = ext3MkFsCommand
 		args = append(args, "-f")
 		if p.Label != "" {
