@@ -26,11 +26,12 @@ var (
 		Partitions: []*Partition{
 
 			&Partition{
-				Label:      "boot",
+				Label:      "efi",
 				Number:     1,
-				MountPoint: "",
+				MountPoint: "/efi",
 				Filesystem: FAT32,
 				GPTType:    GPTBoot,
+				GPTGuid:    EFISystemPartition,
 				Size:       100,
 			},
 			&Partition{
@@ -59,10 +60,15 @@ const (
 	GPTBoot = GPTType("ef02")
 	// GPTLinux Linux Partition
 	GPTLinux = GPTType("8300")
+	// EFISystemPartition see https://en.wikipedia.org/wiki/EFI_system_partition
+	EFISystemPartition = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 )
 
 // GPTType is the GUID Partition table type
 type GPTType string
+
+// GPTGuid is the UID of the GPT partition to create
+type GPTGuid string
 
 // FSType defines the Filesystem of a Partition
 type FSType string
@@ -79,6 +85,7 @@ type Partition struct {
 	Size       int64
 	Filesystem FSType
 	GPTType    GPTType
+	GPTGuid    GPTGuid
 }
 
 // MountOption a option given to a mountpoint
@@ -155,6 +162,9 @@ func format(disk Disk) error {
 		args = append(args, fmt.Sprintf("-n=%d:0:%s", p.Number, size))
 		args = append(args, fmt.Sprintf(`-c=%d:"%s"`, p.Number, p.Label))
 		args = append(args, fmt.Sprintf("-t=%d:%s", p.Number, p.GPTType))
+		if p.GPTGuid != "" {
+			args = append(args, fmt.Sprintf("-u=%d:%s", p.Number, p.GPTGuid))
+		}
 
 		p.Device = fmt.Sprintf("%s%d", disk.Device, p.Number)
 	}
