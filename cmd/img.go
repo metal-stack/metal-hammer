@@ -28,7 +28,7 @@ var (
 			&Partition{
 				Label:      "efi",
 				Number:     1,
-				MountPoint: "/efi",
+				MountPoint: "/boot/efi",
 				Filesystem: FAT32,
 				GPTType:    GPTBoot,
 				GPTGuid:    EFISystemPartition,
@@ -232,8 +232,9 @@ func createFilesystem(p *Partition) error {
 		}
 	case FAT32:
 		mkfs = fat32MkFsCommand
+		args = append(args, "-F32")
 		if p.Label != "" {
-			args = append(args, "-L", p.Label)
+			log.Warn("create filesystem, labels not supported on fat32 filesystems")
 		}
 	case SWAP:
 		mkfs = ext3MkFsCommand
