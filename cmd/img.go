@@ -93,8 +93,7 @@ type MountOption string
 
 // Disk is a physical Disk
 type Disk struct {
-	Device     string
-	SectorSize int64
+	Device string
 	// Partitions to create on this disk, order is preserved
 	Partitions []*Partition
 }
@@ -166,6 +165,7 @@ func format(disk Disk) error {
 			args = append(args, fmt.Sprintf("-u=%d:%s", p.Number, p.GPTGuid))
 		}
 
+		// TODO format must not have the side effect to change incoming data
 		p.Device = fmt.Sprintf("%s%d", disk.Device, p.Number)
 	}
 
