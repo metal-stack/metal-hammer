@@ -10,3 +10,5 @@ all: $(BINARY);
 
 %:
 	CGO_ENABLE=0 GO111MODULE=on go build -tags netgo -ldflags "-linkmode external -extldflags -static -X 'main.version=$(VERSION)' -X 'main.revision=$(GITVERSION)' -X 'main.gitsha1=$(SHA)' -X 'main.builddate=$(BUILDDATE)'" -o bin/$@
+
+image: docker build -t registry.fi-ts.io/maas/discover .

@@ -24,15 +24,13 @@ var (
 	defaultDisk      = Disk{
 		Device: "/dev/sda",
 		Partitions: []*Partition{
-
 			&Partition{
-				Label:      "efi",
 				Number:     1,
 				MountPoint: "/boot/efi",
-				Filesystem: FAT32,
+				Filesystem: VFAT,
 				GPTType:    GPTBoot,
 				GPTGuid:    EFISystemPartition,
-				Size:       100,
+				Size:       300,
 			},
 			&Partition{
 				Label:      "root",
@@ -47,8 +45,10 @@ var (
 )
 
 const (
-	// FAT32 is ised for the UEFI boot partition
+	// FAT32 is used for the UEFI boot partition
 	FAT32 = FSType("fat32")
+	// VFAT is used for the UEFI boot partition
+	VFAT = FSType("vfat")
 	// EXT3 is usually only used for /boot
 	EXT3 = FSType("ext3")
 	// EXT4 is the default fs
@@ -57,11 +57,15 @@ const (
 	SWAP = FSType("swap")
 
 	// GPTBoot EFI Boot Partition
-	GPTBoot = GPTType("ef02")
+	GPTBoot = GPTType("ef00")
 	// GPTLinux Linux Partition
 	GPTLinux = GPTType("8300")
 	// EFISystemPartition see https://en.wikipedia.org/wiki/EFI_system_partition
 	EFISystemPartition = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+)
+
+const (
+	PREFIX = "rootfs"
 )
 
 // GPTType is the GUID Partition table type
@@ -109,7 +113,7 @@ func Install(image string) error {
 		return err
 	}
 
-	err = mountPartitions("rootfs", defaultDisk)
+	err = mountPartitions(PREFIX, defaultDisk)
 	if err != nil {
 		return err
 	}
@@ -118,12 +122,12 @@ func Install(image string) error {
 	if err != nil {
 		return err
 	}
-	err = burn(image)
+	err = burn(PREFIX, image)
 	if err != nil {
 		return err
 	}
 
-	err = install(image)
+	err = install(PREFIX, image)
 	if err != nil {
 		return err
 	}
@@ -230,11 +234,11 @@ func createFilesystem(p *Partition) error {
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
-	case FAT32:
+	case FAT32, VFAT:
 		mkfs = fat32MkFsCommand
-		args = append(args, "-F32")
+		args = append(args, "-F", "32")
 		if p.Label != "" {
-			log.Warn("create filesystem, labels not supported on fat32 filesystems")
+			args = append(args, "-n", p.Label)
 		}
 	case SWAP:
 		mkfs = ext3MkFsCommand
@@ -309,10 +313,10 @@ func downloadFile(filepath string, url string) error {
 }
 
 // burn a image by calling genuinetools/img unpack to a specific directory
-func burn(image string) error {
+func burn(prefix, image string) error {
 	log.Info("burn image", "image", image)
 
-	err := archiver.TarGz.Open("/tmp/os.tgz", "rootfs")
+	err := archiver.TarGz.Open("/tmp/os.tgz", prefix)
 	if err != nil {
 		return fmt.Errorf("unable to burn image %s error: %v", image, err)
 	}
@@ -326,7 +330,44 @@ func burn(image string) error {
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func install(image string) error {
+func install(prefix, image string) error {
 	log.Info("TODO: install image", "image", image)
+	err := syscall.Mount("proc", prefix+"/proc", "proc", 0, "")
+	if err != nil {
+		log.Error("mounting /proc failed", "error", err)
+	}
+	err = syscall.Mount("sys", prefix+"/sys", "sysfs", 0, "")
+	if err != nil {
+		log.Error("mounting /sys failed", "error", err)
+	}
+	err = syscall.Mount("tmpfs", prefix+"/tmp", "tmpfs", 0, "")
+	if err != nil {
+		log.Error("mounting /tmpfs failed", "error", err)
+	}
+
+	// syscall.Mount cannot bind-mount.
+	err = exec.Command("/bin/mount", "-o", "bind", "/dev", prefix+"/dev").Run()
+	if err != nil {
+		log.Error("mounting /dev failed", "error", err)
+	}
+
+	// There is no PATH in current context.
+	log.Info("running /install.sh on", "prefix", prefix)
+
+	err = exec.Command("/usr/sbin/chroot", prefix, "/install.sh").Run()
+	if err != nil {
+		log.Error("running install.sh in chroot failed", "error", err)
+		return fmt.Errorf("running install.sh in chroot failed: %v", err)
+	}
+
+	mounts := [6]string{"/boot/efi", "/proc", "/sys", "/dev", "/tmp", "/"}
+	for _, m := range mounts {
+		p := prefix + m
+		err = exec.Command("/bin/umount", p).Run()
+		if err != nil {
+			log.Error("unable to umount", "path", p, "error", err)
+		}
+	}
+
 	return nil
 }

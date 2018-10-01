@@ -16,4 +16,5 @@ require (
 	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
 	github.com/ulikunitz/xz v0.5.4 // indirect
 	golang.org/x/sys v0.0.0-20180921163948-d47a0f339242 // indirect
+	golang.org/x/vgo v0.0.0-20180912184537-9d567625acf4 // indirect
 )
