@@ -18,6 +18,7 @@ func Run(spec *Specification) error {
 		log.Error("register device", "error", err)
 	}
 
+	// get from metalcore the image
 	err = Install("https://blobstore.fi-ts.io/metal/images/os/ubuntu/18.04/img.tar.gz")
 	if err != nil {
 		log.Error("install", "error", err)

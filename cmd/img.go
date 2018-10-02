@@ -25,6 +25,7 @@ var (
 		Device: "/dev/sda",
 		Partitions: []*Partition{
 			&Partition{
+				Label:		"efi",
 				Number:     1,
 				MountPoint: "/boot/efi",
 				Filesystem: VFAT,
@@ -354,7 +355,11 @@ func install(prefix, image string) error {
 	// There is no PATH in current context.
 	log.Info("running /install.sh on", "prefix", prefix)
 
-	err = exec.Command("/usr/sbin/chroot", prefix, "/install.sh").Run()
+	// Log output to stdout to get an idea what is (not) going on.
+	cmd := exec.Command("/usr/sbin/chroot", prefix, "/install.sh")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
+	err = cmd.Run()
 	if err != nil {
 		log.Error("running install.sh in chroot failed", "error", err)
 		return fmt.Errorf("running install.sh in chroot failed: %v", err)
