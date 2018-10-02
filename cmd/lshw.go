@@ -16,10 +16,10 @@ var (
 )
 
 //RegisterDevice register a device at the maas api
-func RegisterDevice(spec *Specification) error {
+func RegisterDevice(spec *Specification) (string, error) {
 	lshw, err := executeCommand()
 	if err != nil {
-		return fmt.Errorf("error reading lshw output %v", err.Error())
+		return "", fmt.Errorf("error reading lshw output %v", err.Error())
 	}
 	log.Debug("lshw output", "raw", lshw)
 	return register(spec.ReportURL, lshw)
@@ -33,26 +33,29 @@ func executeCommand() (string, error) {
 	return string(lshwOutput), nil
 }
 
-func register(url, lshw string) error {
+func register(url, lshw string) (string, error) {
 	var jsonStr = []byte(lshw)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	fakeUUID := "1234-1234-1234"
+	e := fmt.Sprintf("%v/%v", url,fakeUUID)
+	req, err := http.NewRequest(http.MethodPost, e, bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
 
+	log.Info("registering device", "uuid", fakeUUID)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("cannot POST lshw json struct to register endpoint: %v", err)
+		return "", fmt.Errorf("cannot POST lshw json struct to register endpoint: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("unable to read response from register call %v", err)
+		return "", fmt.Errorf("unable to read response from register call %v", err)
 	}
 
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("POST of lshw to register endpoint did not succeed %v", resp.Status)
+		return "", fmt.Errorf("POST of lshw to register endpoint did not succeed %v", resp.Status)
 	}
 
 	result := make(map[string]interface{})
@@ -69,5 +72,5 @@ func register(url, lshw string) error {
 	} else if resp.StatusCode == 201 {
 		log.Info("device registered", "uuid", uuid)
 	}
-	return nil
+	return fakeUUID, nil
 }

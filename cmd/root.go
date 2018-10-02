@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
 
@@ -13,21 +13,19 @@ import (
 func Run(spec *Specification) error {
 	log.Info("discover run")
 
-	err := RegisterDevice(spec)
+	uuid, err := RegisterDevice(spec)
 	if err != nil {
 		log.Error("register device", "error", err)
 	}
 
-	// get from metalcore the image
-	err = Install("https://blobstore.fi-ts.io/metal/images/os/ubuntu/18.04/img.tar.gz")
-	if err != nil {
-		log.Error("install", "error", err)
-	}
-
-	// FIXME must be before Install
-	err = waitForInstall()
+	url, err := waitForInstall(spec.InstallURL, uuid)
 	if err != nil {
 		log.Error("wait for install", "error", err)
+	}
+
+	err = Install(url)
+	if err != nil {
+		log.Error("install", "error", err)
 	}
 
 	err = reportInstallation()
@@ -39,18 +37,20 @@ func Run(spec *Specification) error {
 	return nil
 }
 
-func waitForInstall() error {
-	rootHandler := func(w http.ResponseWriter, req *http.Request) {
-		io.WriteString(w, "discover\n")
-	}
+func waitForInstall(url, uuid string) (string, error) {
+	log.Info("waiting for install", "uuid", uuid)
 
-	http.HandleFunc("/", rootHandler)
-	log.Info("waiting for a image to burn")
-	err := http.ListenAndServe(":8080", nil)
+	e := fmt.Sprintf("%v/%v",url,uuid)
+	resp, err := http.Get(e)
 	if err != nil {
-		return fmt.Errorf("http server not stared %v", err)
+		return "", fmt.Errorf("waiting for install failed with: %v", err)
 	}
-	return nil
+	defer resp.Body.Close()
+	imgURL, err := ioutil.ReadAll(resp.Body)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("reading response failed with: %v", err)
+	}
+	return string(imgURL), nil
 }
 
 func reportInstallation() error {
