@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	imgCommand       = "/bin/img"
 	sgdiskCommand    = "/usr/bin/sgdisk"
 	ext4MkFsCommand  = "/sbin/mkfs.ext4"
 	ext3MkFsCommand  = "/sbin/mkfs.ext3"
