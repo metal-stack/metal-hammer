@@ -12,7 +12,7 @@ import (
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(spec *Specification) error {
-	log.Info("discover run")
+	log.Info("metal-hammer run")
 
 	uuid, err := RegisterDevice(spec)
 	if err != nil {

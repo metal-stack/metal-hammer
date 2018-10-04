@@ -1,4 +1,4 @@
-module git.f-i-ts.de/maas/discover
+module git.f-i-ts.de/maas/metal-hammer
 
 require (
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect

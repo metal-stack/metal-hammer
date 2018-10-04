@@ -14,7 +14,7 @@ RUN make
 
 FROM alpine:3.8
 LABEL maintainer FI-TS Devops <devops@f-i-ts.de>
-COPY --from=builder /app/bin/discover /bin/discover
+COPY --from=builder /app/bin/metal-hammer /bin/metal-hammer
 RUN apk update \
  && apk add \
         ca-certificates \
@@ -22,4 +22,4 @@ RUN apk update \
         sgdisk \
         e2fsprogs
 
-CMD ["/bin/discover"]
+CMD ["/bin/metal-hammer"]

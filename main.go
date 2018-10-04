@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"git.f-i-ts.de/maas/discover/cmd"
+	"git.f-i-ts.de/maas/metal-hammer/cmd"
 	log "github.com/inconshreveable/log15"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -19,17 +19,17 @@ var (
 
 func main() {
 	var spec cmd.Specification
-	err := envconfig.Process("discover", &spec)
+	err := envconfig.Process("metal-hammer", &spec)
 	if err != nil {
 		log.Error("configuration error", "error", err)
 		os.Exit(1)
 	}
 	if len(os.Args) > 1 {
-		envconfig.Usage("discover", &spec)
+		envconfig.Usage("metal-hammer", &spec)
 		os.Exit(0)
 	}
 
-	// Grab discover configuration from kernel commandline
+	// Grab metal-hammer configuration from kernel commandline
 	cmdline, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		log.Error("unable to read /proc/cmdline", "error", err)
@@ -52,7 +52,7 @@ func main() {
 		spec.ReportURL = i + "/device/report"
 	}
 
-	log.Info("discover", "version", getVersionString())
+	log.Info("metal-hammer", "version", getVersionString())
 	var level log.Lvl
 	if spec.Debug {
 		level = log.LvlDebug
@@ -67,7 +67,7 @@ func main() {
 
 	err = cmd.Run(&spec)
 	if err != nil {
-		log.Error("discover run", "error", err)
+		log.Error("metal-hammer run", "error", err)
 	}
 }
 

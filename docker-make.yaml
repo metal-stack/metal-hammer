@@ -1,6 +1,6 @@
 ---
 version: '1'
-name: discover
+name: metal-hammer
 username: metal
 registry-host: registry.fi-ts.io
 default-build-args:
@@ -12,6 +12,6 @@ default-build-args:
   - no_proxy=${NO_PROXY}
 builds:
   -
-    name: "discover"
+    name: "metal-hammer"
     tags:
       - latest
