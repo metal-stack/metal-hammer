@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os/exec"
 
 	log "github.com/inconshreveable/log15"
+
+	"golang.org/x/sys/unix"
 )
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
@@ -40,7 +41,7 @@ func Run(spec *Specification) error {
 func waitForInstall(url, uuid string) (string, error) {
 	log.Info("waiting for install", "uuid", uuid)
 
-	e := fmt.Sprintf("%v/%v",url,uuid)
+	e := fmt.Sprintf("%v/%v", url, uuid)
 	resp, err := http.Get(e)
 	if err != nil {
 		return "", fmt.Errorf("waiting for install failed with: %v", err)
@@ -59,5 +60,7 @@ func reportInstallation() error {
 }
 
 func reboot() {
-	exec.Command("/sbin/reboot")
+	if err := unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART)); err != nil {
+		log.Error("unable to reboot", "error", err.Error())
+	}
 }
