@@ -30,7 +30,7 @@ func main() {
 	}
 
 	// Grab discover configuration from kernel commandline
-	cmdline, err := ioutil.ReadAll("/proc/cmdline")
+	cmdline, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		log.Error("unable to read /proc/cmdline", "error", err)
 	}
@@ -42,6 +42,7 @@ func main() {
 		envmap[key] = value
 	}
 
+	// METAL_CORE_URL must be in the form http://metal-core:4242
 	if i, ok := envmap["METAL_CORE_URL"]; ok {
 		spec.InstallURL = i + "/device/install"
 		spec.ReportURL = i + "/device/report"
