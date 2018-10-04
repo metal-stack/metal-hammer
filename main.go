@@ -40,8 +40,8 @@ func main() {
 	for _, v := range cmdLineValues {
 		keyValue := strings.Split(v, "=")
 		if len(keyValue) == 2 {
-			key := keyValue[0]
-			value := keyValue[1]
+			key := strings.TrimSpace(keyValue[0])
+			value := strings.TrimSpace(keyValue[1])
 			envmap[key] = value
 		}
 	}
