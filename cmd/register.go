@@ -14,7 +14,7 @@ type registerRequest struct {
 	UUID string `json:"uuid" description:"the uuid of the device to register"`
 }
 
-//RegisterDevice register a device at the maas api
+// RegisterDevice register a device at the metal-api via metal-core
 func RegisterDevice(spec *Specification) (string, error) {
 	result := registerRequest{}
 	uuid, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")

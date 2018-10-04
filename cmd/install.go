@@ -178,6 +178,7 @@ func format(disk Disk) error {
 	cmd = exec.Command(sgdiskCommand, args...)
 	output, err = cmd.Output()
 	// FIXME sgdisk return 0 in case of failure, and > 0 if succeed
+	// TODO still the case ?
 	if err != nil {
 		log.Error("sgdisk creating partitions failed", "error", err, "output", string(output))
 	}
