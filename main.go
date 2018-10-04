@@ -1,7 +1,9 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
+	"strings"
 
 	"git.f-i-ts.de/maas/discover/cmd"
 	log "github.com/inconshreveable/log15"
@@ -25,6 +27,24 @@ func main() {
 	if len(os.Args) > 1 {
 		envconfig.Usage("discover", &spec)
 		os.Exit(0)
+	}
+
+	// Grab discover configuration from kernel commandline
+	cmdline, err := ioutil.ReadAll("/proc/cmdline")
+	if err != nil {
+		log.Error("unable to read /proc/cmdline", "error", err)
+	}
+
+	cmdLineValues := strings.Split(string(cmdline), " ")
+	envmap := make(map[string]string)
+	for _, v := range cmdLineValues {
+		key, value := strings.Split(v, "=")
+		envmap[key] = value
+	}
+
+	if i, ok := envmap["METAL_CORE_URL"]; ok {
+		spec.InstallURL = i + "/device/install"
+		spec.ReportURL = i + "/device/report"
 	}
 
 	log.Info("discover", "version", getVersionString())
