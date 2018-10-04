@@ -38,8 +38,12 @@ func main() {
 	cmdLineValues := strings.Split(string(cmdline), " ")
 	envmap := make(map[string]string)
 	for _, v := range cmdLineValues {
-		key, value := strings.Split(v, "=")
-		envmap[key] = value
+		keyValue := strings.Split(v, "=")
+		if len(keyValue) == 2 {
+			key := keyValue[0]
+			value := keyValue[1]
+			envmap[key] = value
+		}
 	}
 
 	// METAL_CORE_URL must be in the form http://metal-core:4242
