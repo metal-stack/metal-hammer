@@ -25,7 +25,7 @@ var (
 		Device: "/dev/sda",
 		Partitions: []*Partition{
 			&Partition{
-				Label:		"efi",
+				Label:      "efi",
 				Number:     1,
 				MountPoint: "/boot/efi",
 				Filesystem: VFAT,
@@ -329,46 +329,50 @@ func burn(prefix, image string) error {
 	return nil
 }
 
+type mount struct {
+	source string
+	target string
+	fstype string
+	flags  uintptr
+	data   string
+}
+
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
 func install(prefix, image string) error {
-	log.Info("TODO: install image", "image", image)
-	err := syscall.Mount("proc", prefix+"/proc", "proc", 0, "")
-	if err != nil {
-		log.Error("mounting /proc failed", "error", err)
-	}
-	err = syscall.Mount("sys", prefix+"/sys", "sysfs", 0, "")
-	if err != nil {
-		log.Error("mounting /sys failed", "error", err)
-	}
-	err = syscall.Mount("tmpfs", prefix+"/tmp", "tmpfs", 0, "")
-	if err != nil {
-		log.Error("mounting /tmpfs failed", "error", err)
+	log.Info("install image", "image", image)
+	mounts := []mount{
+		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
+		mount{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
+		mount{source: "tmpfs", target: "/tmp", fstype: "tmpfs", flags: 0, data: ""},
+		// /dev is a bind mount, a bind mount must have MS_BIND flags set see man 2 mount
+		mount{source: "/dev", target: "/dev", fstype: "", flags: syscall.MS_BIND, data: ""},
 	}
 
-	// syscall.Mount cannot bind-mount.
-	err = exec.Command("/bin/mount", "-o", "bind", "/dev", prefix+"/dev").Run()
-	if err != nil {
-		log.Error("mounting /dev failed", "error", err)
+	for _, m := range mounts {
+		err := syscall.Mount(m.source, prefix+m.target, m.fstype, m.flags, m.data)
+		if err != nil {
+			log.Error("mounting failed", "source", m.source, "target", m.target, "error", err)
+		}
 	}
 
-	// There is no PATH in current context.
 	log.Info("running /install.sh on", "prefix", prefix)
 
 	// Log output to stdout to get an idea what is (not) going on.
 	cmd := exec.Command("/usr/sbin/chroot", prefix, "/install.sh")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
-	err = cmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		log.Error("running install.sh in chroot failed", "error", err)
 		return fmt.Errorf("running install.sh in chroot failed: %v", err)
 	}
+	log.Info("finish running /install.sh")
 
-	mounts := [6]string{"/boot/efi", "/proc", "/sys", "/dev", "/tmp", "/"}
-	for _, m := range mounts {
+	umounts := [6]string{"/boot/efi", "/proc", "/sys", "/dev", "/tmp", "/"}
+	for _, m := range umounts {
 		p := prefix + m
-		err = exec.Command("/bin/umount", p).Run()
+		err = syscall.Unmount(p, 0)
 		if err != nil {
 			log.Error("unable to umount", "path", p, "error", err)
 		}
