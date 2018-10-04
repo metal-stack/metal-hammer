@@ -65,7 +65,7 @@ const (
 )
 
 const (
-	PREFIX = "rootfs"
+	prefix = "rootfs"
 )
 
 // GPTType is the GUID Partition table type
@@ -113,7 +113,7 @@ func Install(image string) error {
 		return err
 	}
 
-	err = mountPartitions(PREFIX, defaultDisk)
+	err = mountPartitions(prefix, defaultDisk)
 	if err != nil {
 		return err
 	}
@@ -122,12 +122,12 @@ func Install(image string) error {
 	if err != nil {
 		return err
 	}
-	err = burn(PREFIX, image)
+	err = burn(prefix, image)
 	if err != nil {
 		return err
 	}
 
-	err = install(PREFIX, image)
+	err = install(prefix, image)
 	if err != nil {
 		return err
 	}
