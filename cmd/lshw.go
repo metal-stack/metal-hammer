@@ -6,46 +6,41 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os/exec"
 
 	log "github.com/inconshreveable/log15"
 )
 
-var (
-	lshwCommand = "/usr/sbin/lshw"
-)
+type registerRequest struct {
+	UUID string `json:"uuid" description:"the uuid of the device to register"`
+}
 
 //RegisterDevice register a device at the maas api
 func RegisterDevice(spec *Specification) (string, error) {
-	lshw, err := executeCommand()
+	result := registerRequest{}
+	uuid, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
 	if err != nil {
-		return "", fmt.Errorf("error reading lshw output %v", err.Error())
+		return "", fmt.Errorf("error getting product_uuid info: %v", err)
 	}
-	log.Debug("lshw output", "raw", lshw)
-	return register(spec.ReportURL, lshw)
+
+	result.UUID = string(uuid)
+	return register(spec.ReportURL, result)
 }
 
-func executeCommand() (string, error) {
-	lshwOutput, err := exec.Command(lshwCommand, "-quiet", "-json").Output()
+func register(url string, hw registerRequest) (string, error) {
+	e := fmt.Sprintf("%v/%v", url, hw.UUID)
+	hwJSON, err := json.Marshal(hw)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("unable to serialize hw to json %v", err)
 	}
-	return string(lshwOutput), nil
-}
 
-func register(url, lshw string) (string, error) {
-	var jsonStr = []byte(lshw)
-
-	fakeUUID := "1234-1234-1234"
-	e := fmt.Sprintf("%v/%v", url,fakeUUID)
-	req, err := http.NewRequest(http.MethodPost, e, bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest(http.MethodPost, e, bytes.NewBuffer(hwJSON))
 	req.Header.Set("Content-Type", "application/json")
 
-	log.Info("registering device", "uuid", fakeUUID)
+	log.Info("registering device", "uuid", hw.UUID)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("cannot POST lshw json struct to register endpoint: %v", err)
+		return "", fmt.Errorf("cannot POST hw json struct to register endpoint: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -54,8 +49,8 @@ func register(url, lshw string) (string, error) {
 		return "", fmt.Errorf("unable to read response from register call %v", err)
 	}
 
-	if resp.StatusCode >= 400 {
-		return "", fmt.Errorf("POST of lshw to register endpoint did not succeed %v", resp.Status)
+	if resp.StatusCode >= http.StatusBadRequest {
+		return "", fmt.Errorf("POST of hw to register endpoint did not succeed %v", resp.Status)
 	}
 
 	result := make(map[string]interface{})
@@ -67,10 +62,10 @@ func register(url, lshw string) (string, error) {
 		uuid = result["id"]
 	}
 
-	if resp.StatusCode == 200 {
+	if resp.StatusCode == http.StatusOK {
 		log.Info("device already registered", "uuid", uuid)
-	} else if resp.StatusCode == 201 {
+	} else if resp.StatusCode == http.StatusCreated {
 		log.Info("device registered", "uuid", uuid)
 	}
-	return fakeUUID, nil
+	return hw.UUID, nil
 }
