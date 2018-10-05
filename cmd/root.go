@@ -83,7 +83,7 @@ func reportInstallation() error {
 }
 
 func reboot() {
-	if err := unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART)); err != nil {
+	if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
 		log.Error("unable to reboot", "error", err.Error())
 	}
 }
