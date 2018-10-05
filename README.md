@@ -64,12 +64,23 @@ linuxkit run qemu -disk size=4G pxeboot
 
 ## Create a initial ramdisk with u-root
 
+```
 u-root -format=cpio -build=bb -files="bin/metal-hammer:bbin/metal-hammer" -o metal-initrd.cpio
+```
+
+executing metal-hammer directly:
+```
+u-root -format=cpio -build=bb -files="bin/metal-hammer:bbin/metal-hammer" -defaultsh="/bbin/metal-hammer" -o metal-initrd.cpio
+```
 
 ### check content
 
+```
 cpio -itv < metal-initrd.cpio 
+```
 
 ### start it
 
+```
 qemu-system-x86_64 -m 2G -kernel pxeboot-kernel -initrd metal-initrd.cpio -nographic -append console=ttyS0
+```
