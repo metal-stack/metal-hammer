@@ -1,0 +1,48 @@
+kernel:
+  image: linuxkit/kernel:4.18.11
+  cmdline: "console=tty0 console=ttyS0"
+  ucode: intel-ucode.cpio
+init:
+  - linuxkit/init:e24105ebb339e1a2e578fde7ec8bccf844a633d5
+  - linuxkit/runc:1dc6559fd0a9a332c740312637af0c3fbe6bafa3
+  - linuxkit/containerd:ed0589d53e29890b0e504f594a0e4af7326b6484
+  - linuxkit/ca-certificates:v0.6
+  - linuxkit/firmware:v0.6
+onboot:
+  - name: rngd1
+    image: linuxkit/rngd:v0.6
+    command: ["/sbin/rngd", "-1"]
+  - name: sysctl
+    image: linuxkit/sysctl:v0.6
+  - name: dhcpcd
+    image: linuxkit/dhcpcd:v0.6
+    command: ["/sbin/dhcpcd", "--nobackground", "-f", "/dhcpcd.conf", "-1"]
+  - name: metadata
+    image: linuxkit/metadata:v0.6
+    command: ["/usr/bin/metadata", "packet"]
+services:
+  - name: rngd
+    image: linuxkit/rngd:v0.6
+  - name: getty
+    image: linuxkit/getty:v0.6
+    env:
+     - INSECURE=true
+  - name: sshd
+    image: linuxkit/sshd:v0.6
+  - name: metal-hammer
+    image: registry.fi-ts.io/metal/metal-hammer
+    env:
+      - METAL_HAMMER_DEBUG=true
+    capabilities:
+      - all
+    binds:
+     - /etc/resolv.conf:/etc/resolv.conf
+     - /dev:/dev
+files:
+  - path: root/.ssh/authorized_keys
+    source: metal.key.pub
+    mode: "0600"
+    optional: true
+trust:
+  org:
+    - linuxkit

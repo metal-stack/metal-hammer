@@ -31,3 +31,33 @@ sudo bin/metal-hammer
 INFO[09-24|14:09:59] configuration                            debug=false reportURL=http://localhost:8080/device/register
 INFO[09-24|14:10:00] device already registered                uuid=4C3CEF61-F536-B211-A85C-B765E03E138F caller=lshw.go:63
 ```
+
+
+## Create a PXE boot image with linuxkit
+
+In order to be able to create a kernel and initrd image which is suitable to boot a bare metal server with the required tools to discover and install the target os, we use linuxkit.
+
+### Quickstart
+
+- download linuxkit:
+
+```bash
+sudo curl -fSL https://github.com/linuxkit/linuxkit/releases/download/v0.6/linuxkit-linux-amd64 -o /usr/local/bin/linuxkit && sudo chmod +x /usr/local/bin/linuxkit
+
+OR
+
+go get -u github.com/linuxkit/linuxkit/src/cmd/linuxkit
+
+```
+
+- build the kernel and image:
+
+```bash
+linuxkit build pxeboot.yaml
+```
+
+- check by running it:
+
+```bash
+linuxkit run qemu -disk size=4G pxeboot
+```
