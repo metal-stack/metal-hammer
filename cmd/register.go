@@ -84,7 +84,7 @@ func RegisterDevice(spec *Specification) (string, error) {
 	}
 
 	hw.UUID = string(productUUID)
-	return register(spec.ReportURL, hw)
+	return register(spec.RegisterURL, hw)
 }
 
 func register(url string, hw registerRequest) (string, error) {

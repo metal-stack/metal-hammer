@@ -49,6 +49,7 @@ func main() {
 	// METAL_CORE_URL must be in the form http://metal-core:4242
 	if i, ok := envmap["METAL_CORE_URL"]; ok {
 		spec.InstallURL = i + "/device/install"
+		spec.RegisterURL = i + "/device/register"
 		spec.ReportURL = i + "/device/report"
 	}
 
