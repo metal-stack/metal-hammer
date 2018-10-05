@@ -85,7 +85,8 @@ func RegisterDevice(spec *Specification) (string, error) {
 
 	productUUID, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
 	if err != nil {
-		return "", fmt.Errorf("error getting product_uuid info: %v", err)
+		log.Error("error getting product_uuid, use default uuid", "error", err)
+		productUUID = []byte("00000000-0000-0000-0000-000000000000")
 	}
 
 	hw.UUID = strings.TrimSpace(string(productUUID))
