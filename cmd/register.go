@@ -78,12 +78,12 @@ func RegisterDevice(spec *Specification) (string, error) {
 	}
 	hw.Disks = disks
 
-	boardSerial, err := ioutil.ReadFile("/sys/class/dmi/id/board_serial")
+	productUUID, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
 	if err != nil {
-		return "", fmt.Errorf("error getting board_serial info: %v", err)
+		return "", fmt.Errorf("error getting product_uuid info: %v", err)
 	}
 
-	hw.UUID = string(boardSerial)
+	hw.UUID = string(productUUID)
 	return register(spec.ReportURL, hw)
 }
 
