@@ -4,7 +4,7 @@ stages:
     - build
 
 before_script:
-  - curl -o /usr/local/bin/mc https://dl.minio.io/client/mc/release/linux-amd64/mc && chmod +x /usr/local/bin/mc
+  - curl -fsSL https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc && chmod +x /usr/local/bin/mc
   - curl -fsSL https://github.com/linuxkit/linuxkit/releases/download/v0.6/linuxkit-linux-amd64 -o /usr/local/bin/linuxkit && chmod +x /usr/local/bin/linuxkit
   - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
 
