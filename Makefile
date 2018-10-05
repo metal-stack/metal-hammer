@@ -28,4 +28,4 @@ clean:
 	rm -f ${BINARY}
 
 image:
-	docker build -t registry.fi-ts.io/maas/metal-hammer .
+	docker build -t registry.fi-ts.io/metal/metal-hammer .
