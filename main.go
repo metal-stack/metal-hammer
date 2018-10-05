@@ -52,6 +52,10 @@ func main() {
 		spec.ReportURL = i + "/device/report"
 	}
 
+	if i, ok := envmap["IMAGE_URL"]; ok {
+		spec.ImageURL = i
+	}
+
 	log.Info("metal-hammer", "version", getVersionString())
 	var level log.Lvl
 	if spec.Debug {

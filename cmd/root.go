@@ -19,9 +19,14 @@ func Run(spec *Specification) error {
 		log.Error("register device", "error", err)
 	}
 
-	url, err := waitForInstall(spec.InstallURL, uuid)
-	if err != nil {
-		log.Error("wait for install", "error", err)
+	var url string
+	if spec.ImageURL != "" {
+		url = spec.ImageURL
+	} else {
+		url, err = waitForInstall(spec.InstallURL, uuid)
+		if err != nil {
+			log.Error("wait for install", "error", err)
+		}
 	}
 
 	err = Install(url)
