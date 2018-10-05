@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	log "github.com/inconshreveable/log15"
 
@@ -13,6 +14,8 @@ import (
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(spec *Specification) error {
 	log.Info("metal-hammer run")
+	firmware := bootedWith()
+	log.Info("metal-hammer bootet with", "firmware", firmware)
 
 	uuid, err := RegisterDevice(spec)
 	if err != nil {
@@ -41,6 +44,14 @@ func Run(spec *Specification) error {
 
 	reboot()
 	return nil
+}
+
+func bootedWith() string {
+	_, err := os.Stat("/sys/firmware/efi")
+	if os.IsNotExist(err) {
+		return "bios"
+	}
+	return "efi"
 }
 
 func waitForInstall(url, uuid string) (string, error) {
