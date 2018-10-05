@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	log "github.com/inconshreveable/log15"
 
@@ -83,7 +84,7 @@ func RegisterDevice(spec *Specification) (string, error) {
 		return "", fmt.Errorf("error getting product_uuid info: %v", err)
 	}
 
-	hw.UUID = string(productUUID)
+	hw.UUID = strings.TrimSpace(string(productUUID))
 	return register(spec.RegisterURL, hw)
 }
 
