@@ -55,11 +55,15 @@ func RegisterDevice(spec *Specification) (string, error) {
 	}
 	nics := []Nic{}
 	for _, n := range net.NICs {
+		features := []string{}
+		if n.EnabledFeatures != nil {
+			features = n.EnabledFeatures
+		}
 		nic := Nic{
 			MacAddress: n.MacAddress,
 			Name:       n.Name,
 			Vendor:     n.Vendor,
-			Features:   n.EnabledFeatures,
+			Features:   features,
 		}
 		nics = append(nics, nic)
 	}
@@ -102,7 +106,7 @@ func register(url string, hw registerRequest) (string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("cannot POST hw json struct %s to register endpoint:%s %v", string(hwJSON), url, err)
+		return "", fmt.Errorf("cannot POST hw %s to register endpoint:%s %v", string(hwJSON), url, err)
 	}
 	defer resp.Body.Close()
 
@@ -112,7 +116,7 @@ func register(url string, hw registerRequest) (string, error) {
 	}
 
 	if resp.StatusCode >= http.StatusBadRequest {
-		return "", fmt.Errorf("POST of hw to register endpoint did not succeed %v", resp.Status)
+		return "", fmt.Errorf("POST of hw %s to register endpoint:%s did not succeed %v response body:%s", string(hwJSON), url, resp.Status, body)
 	}
 
 	result := make(map[string]interface{})
