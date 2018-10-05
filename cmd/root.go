@@ -61,12 +61,8 @@ func waitForInstall(url, uuid string) (string, error) {
 	var resp *http.Response
 	for {
 		resp, err := http.Get(e)
-		if err != nil {
-			log.Error("waiting for install failed", "error", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			body, _ := ioutil.ReadAll(resp.Body)
-			log.Debug("waiting for install did not succeed", "status_code", resp.Status, "response_body", string(body))
+		if err != nil || resp.StatusCode != http.StatusOK {
+			log.Debug("waiting for install failed", "error", err, "status_code", resp.StatusCode)
 		} else {
 			break
 		}
