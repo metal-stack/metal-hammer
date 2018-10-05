@@ -62,15 +62,15 @@ func waitForInstall(url, uuid string) (string, error) {
 	for {
 		resp, err := http.Get(e)
 		if err != nil {
-			log.Error("waiting for install failed with: %v", err)
+			log.Error("waiting for install failed", "error", err)
 		}
 		if resp.StatusCode != http.StatusOK {
 			body, _ := ioutil.ReadAll(resp.Body)
-			log.Debug("waiting for install did not succeed %v: %s", resp.Status, string(body))
-			log.Debug("Retrying...")
+			log.Debug("waiting for install did not succeed", "status_code", resp.Status, "response_body", string(body))
 		} else {
 			break
 		}
+		log.Debug("Retrying...")
 	}
 
 	defer resp.Body.Close()
