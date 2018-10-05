@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	log "github.com/inconshreveable/log15"
 
@@ -62,11 +63,12 @@ func waitForInstall(url, uuid string) (string, error) {
 	for {
 		resp, err := http.Get(e)
 		if err != nil || resp.StatusCode != http.StatusOK {
-			log.Debug("waiting for install failed", "error", err, "status_code", resp.StatusCode)
+			log.Debug("waiting for install failed", "error", err)
 		} else {
 			break
 		}
 		log.Debug("Retrying...")
+		time.Sleep(2 * time.Second)
 	}
 
 	defer resp.Body.Close()
