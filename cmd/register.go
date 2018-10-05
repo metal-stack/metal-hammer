@@ -102,7 +102,7 @@ func register(url string, hw registerRequest) (string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("cannot POST hw json struct to register endpoint: %v", err)
+		return "", fmt.Errorf("cannot POST hw json struct %s to register endpoint:%s %v", string(hwJSON), url, err)
 	}
 	defer resp.Body.Close()
 
