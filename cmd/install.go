@@ -102,6 +102,10 @@ type Disk struct {
 	Partitions []*Partition
 }
 
+func (p *Partition) String() string {
+	return fmt.Sprintf("%s", p.Device)
+}
+
 // Install a given image to the disk by using genuinetools/img
 func Install(image string) error {
 	err := wipeDisks()
