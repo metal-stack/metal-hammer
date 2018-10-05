@@ -55,16 +55,27 @@ func bootedWith() string {
 }
 
 func waitForInstall(url, uuid string) (string, error) {
-	log.Info("waiting for install", "uuid", uuid)
-
+	log.Info("waiting for install, long polling", "uuid", uuid)
 	e := fmt.Sprintf("%v/%v", url, uuid)
-	resp, err := http.Get(e)
-	if err != nil {
-		return "", fmt.Errorf("waiting for install failed with: %v", err)
+
+	var resp *http.Response
+	for {
+		resp, err := http.Get(e)
+		if err != nil {
+			log.Error("waiting for install failed with: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			body, _ := ioutil.ReadAll(resp.Body)
+			log.Debug("waiting for install did not succeed %v: %s", resp.Status, string(body))
+			log.Debug("Retrying...")
+		} else {
+			break
+		}
 	}
+
 	defer resp.Body.Close()
 	imgURL, err := ioutil.ReadAll(resp.Body)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	if err != nil {
 		return "", fmt.Errorf("reading response failed with: %v", err)
 	}
 	return string(imgURL), nil
