@@ -48,4 +48,4 @@ uroot:
     	-files="${FAT}:sbin/mkfs.fat" \
     	-files="${RNGD}:usr/sbin/rngd" \
     	-files="metal-hammer.sh:bbin/uinit" \
-    	-o metal-hammer.img
+    	-o metal-hammer-initrd.img
