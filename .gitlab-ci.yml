@@ -21,7 +21,7 @@ compile-uroot:
   stage: build
   script:
     - go get github.com/u-root/u-root
-    - yum install -y rng-tools e2fsprogs dosfstools gdisk
+    - yum install -y rng-tools e2fsprogs dosfstools gdisk which
     - make
     - mkdir images
     - linuxkit build metal-hammer.yaml

@@ -38,7 +38,8 @@ MKFS := $(shell which mke2fs)
 RNGD := $(shell which rngd)
 
 uroot:
-	u-root -format=cpio -build=bb \
+	${GOPATH}/bin/u-root \
+		-format=cpio -build=bb \
     	-files="bin/metal-hammer:bbin/metal-hammer" \
     	-files="${SGDISK}:usr/bin/sgdisk" \
     	-files="${VFAT}:sbin/mkfs.vfat" \
