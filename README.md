@@ -70,7 +70,7 @@ u-root -format=cpio -build=bb -files="bin/metal-hammer:bbin/metal-hammer" -o met
 
 executing metal-hammer directly:
 ```
-u-root -format=cpio -build=bb -files="bin/metal-hammer:bbin/metal-hammer" -defaultsh="/bbin/metal-hammer" -o metal-initrd.cpio
+u-root -format=cpio -build=bb -files="bin/metal-hammer:bbin/uinit" -o metal-initrd.cpio
 ```
 
 ### check content
