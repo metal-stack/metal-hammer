@@ -16,3 +16,17 @@ compile:
     - mc cp --recursive images fits/metal
   only:
     - master
+
+compile-uroot:
+  stage: build
+  script:
+    - go get github.com/u-root/u-root
+    - yum install -y rng-tools e2fsprogs dosfstools gdisk
+    - make
+    - mkdir images
+    - linuxkit build metal-hammer.yaml
+    - make uroot
+    - mv metal-hammer-kernel metal-hammer.img images
+    - mc cp --recursive images fits/metal
+  only:
+    - master
