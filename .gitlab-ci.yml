@@ -33,7 +33,7 @@ stages:
   only:
     - master
 
-compile-uroot-alpine:
+compile-uroot-debian:
   image: golang:1.11-stretch
   stage: build
   script:
@@ -43,13 +43,11 @@ compile-uroot-alpine:
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
     - curl -fsSL https://github.com/linuxkit/linuxkit/releases/download/v0.6/linuxkit-linux-amd64 -o /usr/local/bin/linuxkit
     - chmod +x /usr/local/bin/linuxkit
-    - mkdir -p ${GOPATH}/pkg ${GOPATH}/bin ${GOPATH}/src/github.com/u-root
-    - cd ${GOPATH}/src/github.com/u-root && git clone https://github.com/u-root/u-root && cd u-root && go build -o $GOPATH/bin/u-root
-    - cd ${CI_PROJECT_DIR}
-    - mkdir images
+    - go get github.com/u-root/u-root
     - linuxkit build metal-hammer.yaml && rm metal-hammer-initrd.img
     - make uroot
     - gzip metal-hammer-initrd.img
+    - mkdir images
     - mv metal-hammer-kernel metal-hammer-initrd.img.gz metal-hammer-cmdline images
     - mc cp --recursive images fits/metal
   only:
