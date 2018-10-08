@@ -37,7 +37,7 @@ compile-uroot-alpine:
   image: golang:1.11-alpine
   stage: build
   script:
-    - apk udd -y rng-tools e2fsprogs dosfstools sgdisk which make git curl
+    - apk add rng-tools e2fsprogs dosfstools sgdisk which make git curl
     - curl -fsSL https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
     - chmod +x /usr/local/bin/mc
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
