@@ -1,11 +1,11 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	log "github.com/inconshreveable/log15"
@@ -24,16 +24,19 @@ func Run(spec *Specification) error {
 		log.Error("register device", "error", err)
 	}
 
+	var device *Device
 	var url string
 	if spec.ImageURL != "" {
 		url = spec.ImageURL
 	} else {
-		url, err = waitForInstall(spec.InstallURL, uuid)
+		device, err = waitForInstall(spec.InstallURL, uuid)
 		if err != nil {
 			log.Error("wait for install", "error", err)
 		}
+		url = device.Image.Url
 	}
 
+	// TODO: use device as argument for Install
 	err = Install(url)
 	if err != nil {
 		log.Error("install", "error", err)
@@ -56,7 +59,7 @@ func bootedWith() string {
 	return "efi"
 }
 
-func waitForInstall(url, uuid string) (string, error) {
+func waitForInstall(url, uuid string) (*Device, error) {
 	log.Info("waiting for install, long polling", "uuid", uuid)
 	e := fmt.Sprintf("%v/%v", url, uuid)
 
@@ -73,12 +76,18 @@ func waitForInstall(url, uuid string) (string, error) {
 		time.Sleep(2 * time.Second)
 	}
 
-	imgURL, err := ioutil.ReadAll(resp.Body)
+	deviceJSON, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("reading response failed with: %v", err)
+		return nil, fmt.Errorf("reading response failed with: %v", err)
 	}
 
-	return strings.TrimSpace(string(imgURL)), nil
+	var device Device
+	err = json.Unmarshal(deviceJSON, &device)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal response with error: %v", err)
+	}
+
+	return &device, nil
 }
 
 func reportInstallation() error {
