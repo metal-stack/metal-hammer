@@ -50,7 +50,8 @@ compile-uroot-alpine:
     - mkdir images
     - linuxkit build metal-hammer.yaml && rm metal-hammer-initrd.img
     - make uroot
-    - mv metal-hammer-kernel metal-hammer-initrd.img metal-hammer-cmdline images
+    - gzip metal-hammer-initrd.img
+    - mv metal-hammer-kernel metal-hammer-initrd.img.gz metal-hammer-cmdline images
     - mc cp --recursive images fits/metal
   only:
     - master
