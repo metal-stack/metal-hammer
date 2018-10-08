@@ -112,7 +112,7 @@ func Install(image string) error {
 	if err != nil {
 		return err
 	}
-	err = format(defaultDisk)
+	err = partition(defaultDisk)
 	if err != nil {
 		return err
 	}
@@ -150,14 +150,13 @@ func wipeDisks() error {
 	return nil
 }
 
-func format(disk Disk) error {
-	log.Info("format disk", "disk", disk)
+func partition(disk Disk) error {
+	log.Info("partition disk", "disk", disk)
 
 	log.Info("sgdisk zap all existing partitions", "disk", disk)
-	cmd := exec.Command(sgdiskCommand, "-Z")
-	output, err := cmd.CombinedOutput()
+	err := executeCommand(sgdiskCommand, "-Z", disk.Device)
 	if err != nil {
-		log.Error("sgdisk zap all existing partitions failed", "error", err, "output", output)
+		log.Error("sgdisk zap all existing partitions failed", "error", err)
 	}
 
 	args := make([]string, 0)
@@ -179,12 +178,11 @@ func format(disk Disk) error {
 
 	args = append(args, disk.Device)
 	log.Info("sgdisk create partitions", "command", args)
-	cmd = exec.Command(sgdiskCommand, args...)
-	output, err = cmd.Output()
+	err = executeCommand(sgdiskCommand, args...)
 	// FIXME sgdisk return 0 in case of failure, and > 0 if succeed
 	// TODO still the case ?
 	if err != nil {
-		log.Error("sgdisk creating partitions failed", "error", err, "output", string(output))
+		log.Error("sgdisk creating partitions failed", "error", err)
 	}
 
 	return nil
@@ -229,24 +227,24 @@ func createFilesystem(p *Partition) error {
 	switch p.Filesystem {
 	case EXT4:
 		mkfs = ext4MkFsCommand
-		args = append(args, "-F")
+		args = append(args, "-v", "-F")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
 	case EXT3:
 		mkfs = ext3MkFsCommand
-		args = append(args, "-F")
+		args = append(args, "-v", "-F")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
 	case FAT32, VFAT:
 		mkfs = fat32MkFsCommand
-		args = append(args, "-F", "32")
+		args = append(args, "-v", "-F", "32")
 		if p.Label != "" {
 			args = append(args, "-n", p.Label)
 		}
 	case SWAP:
-		mkfs = ext3MkFsCommand
+		mkfs = mkswapCommand
 		args = append(args, "-f")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
@@ -255,10 +253,9 @@ func createFilesystem(p *Partition) error {
 		return fmt.Errorf("unsupported filesystem format: %q", p.Filesystem)
 	}
 	args = append(args, p.Device)
-	cmd := exec.Command(mkfs, args...)
-	output, err := cmd.CombinedOutput()
+	err := executeCommand(mkfs, args...)
 	if err != nil {
-		return fmt.Errorf("mkfs failed: %s error:%v", string(output), err)
+		return fmt.Errorf("mkfs failed with error:%v", err)
 	}
 
 	return nil
@@ -363,10 +360,7 @@ func install(prefix, image string) error {
 	log.Info("running /install.sh on", "prefix", prefix)
 
 	// Log output to stdout to get an idea what is (not) going on.
-	cmd := exec.Command("/usr/sbin/chroot", prefix, "/install.sh")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stdout
-	err := cmd.Run()
+	err := executeCommand("/usr/sbin/chroot", prefix, "/install.sh")
 	if err != nil {
 		log.Error("running install.sh in chroot failed", "error", err)
 		return fmt.Errorf("running install.sh in chroot failed: %v", err)
@@ -383,4 +377,12 @@ func install(prefix, image string) error {
 	}
 
 	return nil
+}
+
+// small helper to execute a command, redirect stdout/stderr.
+func executeCommand(name string, arg ...string) error {
+	cmd := exec.Command(name, arg...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
+	return cmd.Run()
 }
