@@ -1,5 +1,5 @@
 #!/bbin/elvish
-/usr/sbin/rngd -p /rngd.pid
+/usr/sbin/rngd -r /dev/urandom -p /rngd.pid
 
 /bbin/sshd -port 22 &
 
