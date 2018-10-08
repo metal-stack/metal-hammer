@@ -60,8 +60,9 @@ func waitForInstall(url, uuid string) (string, error) {
 	e := fmt.Sprintf("%v/%v", url, uuid)
 
 	var resp *http.Response
+	var err error
 	for {
-		resp, err := http.Get(e)
+		resp, err = http.Get(e)
 		if err != nil || resp.StatusCode != http.StatusOK {
 			log.Debug("waiting for install failed", "error", err)
 		} else {
@@ -71,7 +72,6 @@ func waitForInstall(url, uuid string) (string, error) {
 		time.Sleep(2 * time.Second)
 	}
 
-	defer resp.Body.Close()
 	imgURL, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("reading response failed with: %v", err)
