@@ -6,7 +6,8 @@ stages:
 before_script:
   - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
 
-compile:
+# Disabled by leading dot.
+.compile:
   stage: build
   script:
     - docker-make -s --exclude-linting-rules rule3
