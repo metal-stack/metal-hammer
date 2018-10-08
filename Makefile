@@ -29,3 +29,22 @@ clean:
 
 image:
 	docker build -t registry.fi-ts.io/metal/metal-hammer .
+
+SGDISK := $(shell which sgdisk)
+VFAT := $(shell which mkfs.vfat)
+FAT := $(shell which mkfs.fat)
+EXT4 := $(shell which mkfs.ext4)
+MKFS := $(shell which mke2fs)
+RNGD := $(shell which rngd)
+
+uroot:
+	u-root -format=cpio -build=bb \
+    	-files="bin/metal-hammer:bbin/metal-hammer" \
+    	-files="${SGDISK}:usr/bin/sgdisk" \
+    	-files="${VFAT}:sbin/mkfs.vfat" \
+    	-files="${EXT4}:sbin/mkfs.ext4" \
+    	-files="${MKFS}:sbin/mke2fs" \
+    	-files="${FAT}:sbin/mkfs.fat" \
+    	-files="${RNGD}:usr/sbin/rngd" \
+    	-files="metal-hammer.sh:bbin/uinit" \
+    	-o metal-hammer.img
