@@ -34,7 +34,7 @@ stages:
     - master
 
 compile-uroot-alpine:
-  image: golang:1.11-stretch
+  image: golang:1.11-alpine
   stage: build
   script:
     - apk udd -y rng-tools e2fsprogs dosfstools sgdisk which make git curl
