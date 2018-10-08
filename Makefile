@@ -39,15 +39,15 @@ RNGD := $(shell which rngd)
 
 uroot: ${BINARY}
 	${GOPATH}/bin/u-root \
-	-format=cpio -build=bb \
-    	-files="bin/metal-hammer:bbin/metal-hammer" \
-    	-files="${SGDISK}:usr/bin/sgdisk" \
-    	-files="${VFAT}:sbin/mkfs.vfat" \
-    	-files="${EXT4}:sbin/mkfs.ext4" \
-    	-files="${MKFS}:sbin/mke2fs" \
-    	-files="${FAT}:sbin/mkfs.fat" \
-    	-files="${RNGD}:usr/sbin/rngd" \
+		-format=cpio -build=bb \
+		-files="bin/metal-hammer:bbin/metal-hammer" \
+		-files="${SGDISK}:usr/bin/sgdisk" \
+		-files="${VFAT}:sbin/mkfs.vfat" \
+		-files="${EXT4}:sbin/mkfs.ext4" \
+		-files="${MKFS}:sbin/mke2fs" \
+		-files="${FAT}:sbin/mkfs.fat" \
+		-files="${RNGD}:usr/sbin/rngd" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
-    	-files="metal-hammer.sh:bbin/uinit" \
-    	-o metal-hammer-initrd.img
+		-files="metal-hammer.sh:bbin/uinit" \
+		-o metal-hammer-initrd.img
