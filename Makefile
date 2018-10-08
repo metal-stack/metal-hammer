@@ -15,10 +15,7 @@ ${BINARY}:
 	GO111MODULE=on \
 	go build \
 		-tags netgo \
-		-ldflags "-linkmode external \
-				  -extldflags \
-				  -static \
-				  -X 'main.version=$(VERSION)' \
+		-ldflags "-X 'main.version=$(VERSION)' \
 				  -X 'main.revision=$(GITVERSION)' \
 				  -X 'main.gitsha1=$(SHA)' \
 				  -X 'main.builddate=$(BUILDDATE)'" \
