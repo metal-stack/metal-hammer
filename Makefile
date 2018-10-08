@@ -37,7 +37,7 @@ EXT4 := $(shell which mkfs.ext4)
 MKFS := $(shell which mke2fs)
 RNGD := $(shell which rngd)
 
-uroot:
+uroot: ${BINARY}
 	${GOPATH}/bin/u-root \
 		-format=cpio -build=bb \
     	-files="bin/metal-hammer:bbin/metal-hammer" \
