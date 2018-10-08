@@ -30,7 +30,7 @@ compile-uroot:
     - mkdir images
     - linuxkit build metal-hammer.yaml
     - make uroot
-    - mv metal-hammer-kernel metal-hammer.img images
+    - mv metal-hammer-kernel metal-hammer.img metal-hammer-cmdline images
     - mc cp --recursive images fits/metal
   only:
     - master
