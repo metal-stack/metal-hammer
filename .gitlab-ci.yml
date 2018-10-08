@@ -34,10 +34,10 @@ stages:
     - master
 
 compile-uroot-alpine:
-  image: golang:1.11-alpine
+  image: golang:1.11-stretch
   stage: build
   script:
-    - apk add rng-tools e2fsprogs dosfstools sgdisk which make git curl gcc
+    - apt update && apt install -y rng-tools e2fsprogs dosfstools gdisk make git curl gcc
     - curl -fsSL https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
     - chmod +x /usr/local/bin/mc
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
