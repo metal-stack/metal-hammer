@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	log "github.com/inconshreveable/log15"
@@ -76,7 +77,8 @@ func waitForInstall(url, uuid string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("reading response failed with: %v", err)
 	}
-	return string(imgURL), nil
+
+	return strings.TrimSpace(string(imgURL)), nil
 }
 
 func reportInstallation() error {
