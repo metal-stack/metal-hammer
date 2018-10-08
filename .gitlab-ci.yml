@@ -46,7 +46,6 @@ compile-uroot-alpine:
     - mkdir -p ${GOPATH}/pkg ${GOPATH}/bin ${GOPATH}/src/github.com/u-root
     - cd ${GOPATH}/src/github.com/u-root && git clone https://github.com/u-root/u-root && cd u-root && go build -o $GOPATH/bin/u-root
     - cd ${CI_PROJECT_DIR}
-    - make
     - mkdir images
     - linuxkit build metal-hammer.yaml && rm metal-hammer-initrd.img
     - make uroot
