@@ -48,3 +48,6 @@ uroot: ${BINARY}
 		-files="metal.key.pub:authorized_keys" \
 		-files="metal-hammer.sh:bbin/uinit" \
 	-o metal-hammer-initrd.img
+
+initrd: uroot
+	gzip -f metal-hammer-initrd.img

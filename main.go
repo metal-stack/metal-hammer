@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"git.f-i-ts.de/maas/metal-hammer/cmd"
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/cmd"
 	log "github.com/inconshreveable/log15"
 	"github.com/kelseyhightower/envconfig"
 )
