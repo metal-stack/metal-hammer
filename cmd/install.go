@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	log "github.com/inconshreveable/log15"
@@ -239,7 +240,7 @@ func createFilesystem(p *Partition) error {
 		mkfs = fat32MkFsCommand
 		args = append(args, "-v", "-F", "32")
 		if p.Label != "" {
-			args = append(args, "-n", p.Label)
+			args = append(args, "-n", strings.ToUpper(p.Label))
 		}
 	case SWAP:
 		mkfs = mkswapCommand
