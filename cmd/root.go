@@ -91,6 +91,7 @@ func waitForInstall(url, uuid string) (*Device, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal response with error: %v", err)
 	}
+	log.Debug("stopped waiting and got", "device", device)
 
 	return &device, nil
 }
