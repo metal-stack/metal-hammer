@@ -65,7 +65,7 @@ const (
 )
 
 const (
-	prefix = "rootfs"
+	prefix = "/rootfs"
 )
 
 // GPTType is the GUID Partition table type
@@ -144,8 +144,9 @@ func WipeDisks() error {
 	for _, disk := range block.Disks {
 		log.Info("TODO wipe disk", "disk", disk)
 
-		log.Info("sgdisk zap all existing partitions", "disk", disk.Name)
-		err := executeCommand(sgdiskCommand, "-Z", disk.Name)
+		diskDevice := fmt.Sprintf("/dev/%s", disk.Name)
+		log.Info("sgdisk zap all existing partitions", "disk", diskDevice)
+		err := executeCommand(sgdiskCommand, "-Z", diskDevice)
 		if err != nil {
 			log.Error("sgdisk zap all existing partitions failed", "error", err)
 		}
@@ -356,22 +357,34 @@ func install(prefix, image string) error {
 
 	log.Info("running /install.sh on", "prefix", prefix)
 
-	// Log output to stdout to get an idea what is (not) going on.
+	err := os.Chdir(prefix)
+	if err != nil {
+		log.Error("unable to chdir", "chroot", prefix, "error", err)
+	}
 	cmd := exec.Command("/install.sh")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Credential: &syscall.Credential{
+			Uid:    uint32(0),
+			Gid:    uint32(0),
+			Groups: []uint32{0},
+		},
 		Chroot: prefix,
 	}
 	if err := cmd.Run(); err != nil {
 		log.Error("running install.sh in chroot failed", "error", err)
 		return fmt.Errorf("running install.sh in chroot failed: %v", err)
 	}
+	err = os.Chdir("/")
+	if err != nil {
+		log.Error("unable to chdir to /", "error", err)
+	}
 	log.Info("finish running /install.sh")
 
 	umounts := [6]string{"/boot/efi", "/proc", "/sys", "/dev", "/tmp", "/"}
 	for _, m := range umounts {
 		p := prefix + m
-		err := syscall.Unmount(p, 0)
+		err := syscall.Unmount(p, syscall.MNT_FORCE)
 		if err != nil {
 			log.Error("unable to umount", "path", p, "error", err)
 		}

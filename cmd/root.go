@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -48,11 +47,14 @@ func Run(spec *Specification) error {
 		log.Error("install", "error", err)
 	}
 
-	err = reportInstallation(spec.ReportURL, device, err)
+	err = ReportInstallation(spec.ReportURL, uuid, err)
 	if err != nil {
-		log.Error("report install", "error", err)
+		log.Error("report install, reboot in 10sec", "error", err)
+		time.Sleep(10 * time.Second)
+		reboot()
 	}
 
+	kexec()
 	return nil
 }
 
@@ -96,47 +98,12 @@ func waitForInstall(url, uuid string) (*Device, error) {
 	return &device, nil
 }
 
-// Report is send back to metal-core after installation finished
-type Report struct {
-	Success bool   `json:"success" description:"true if installation succeeded"`
-	Message string `json:"message" description:"if installation failed, the error message"`
-}
-
-func reportInstallation(url string, dev *Device, installError error) error {
-	e := fmt.Sprintf("%v/%v", url, dev.ID)
-	report := &Report{}
-	report.Success = true
-	if installError != nil {
-		report.Success = false
-		report.Message = installError.Error()
-	}
-
-	reportJSON, err := json.Marshal(report)
-	if err != nil {
-		return fmt.Errorf("unable to serialize report to json %v", err)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, e, bytes.NewBuffer(reportJSON))
-	req.Header.Set("Content-Type", "application/json")
-
-	log.Info("report device", "uuid", dev.ID)
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("cannot POST hw %s to report endpoint:%s %v", string(reportJSON), url, err)
-	}
-	defer resp.Body.Close()
-	if !report.Success {
-		log.Error("report image installation was not successful, rebooting")
-		reboot()
-	}
-
-	log.Info("report image installation was successful")
-	return nil
-}
-
 func reboot() {
 	if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
 		log.Error("unable to reboot", "error", err.Error())
 	}
+}
+
+func kexec() {
+	log.Info("TODO: kexec new kernel")
 }
