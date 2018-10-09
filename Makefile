@@ -4,13 +4,13 @@ GITVERSION := $(shell git describe --long --all)
 BUILDDATE := $(shell date -Iseconds)
 VERSION := $(or ${VERSION},devel)
 
-BINARY := metal-hammer
+BINARY := bin/metal-hammer
 
 .PHONY: clean image
 
 all: $(BINARY)
 
-${BINARY}:
+${BINARY}: clean
 	CGO_ENABLE=0 \
 	GO111MODULE=on \
 	go build \
@@ -19,7 +19,7 @@ ${BINARY}:
 				  -X 'main.revision=$(GITVERSION)' \
 				  -X 'main.gitsha1=$(SHA)' \
 				  -X 'main.builddate=$(BUILDDATE)'" \
-	-o bin/$@
+	-o $@
 
 clean:
 	rm -f ${BINARY}
@@ -35,7 +35,7 @@ MKFS := $(shell which mke2fs)
 RNGD := $(shell which rngd)
 
 uroot: ${BINARY}
-	${GOPATH}/bin/u-root \
+	u-root \
 		-format=cpio -build=bb \
 		-files="bin/metal-hammer:bbin/metal-hammer" \
 		-files="${SGDISK}:usr/bin/sgdisk" \
@@ -47,4 +47,4 @@ uroot: ${BINARY}
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 		-files="metal-hammer.sh:bbin/uinit" \
-		-o metal-hammer-initrd.img
+	-o metal-hammer-initrd.img
