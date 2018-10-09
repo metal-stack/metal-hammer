@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -47,12 +48,11 @@ func Run(spec *Specification) error {
 		log.Error("install", "error", err)
 	}
 
-	err = reportInstallation()
+	err = reportInstallation(spec.ReportURL, device, err)
 	if err != nil {
 		log.Error("report install", "error", err)
 	}
 
-	reboot()
 	return nil
 }
 
@@ -95,8 +95,42 @@ func waitForInstall(url, uuid string) (*Device, error) {
 	return &device, nil
 }
 
-func reportInstallation() error {
-	log.Info("report image installation status back")
+// Report is send back to metal-core after installation finished
+type Report struct {
+	Success bool   `json:"success" description:"true if installation succeeded"`
+	Message string `json:"message" description:"if installation failed, the error message"`
+}
+
+func reportInstallation(url string, dev *Device, installError error) error {
+	e := fmt.Sprintf("%v/%v", url, dev.ID)
+	report := &Report{}
+	report.Success = true
+	if installError != nil {
+		report.Success = false
+		report.Message = installError.Error()
+	}
+
+	reportJSON, err := json.Marshal(report)
+	if err != nil {
+		return fmt.Errorf("unable to serialize report to json %v", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, e, bytes.NewBuffer(reportJSON))
+	req.Header.Set("Content-Type", "application/json")
+
+	log.Info("report device", "uuid", dev.ID)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("cannot POST hw %s to report endpoint:%s %v", string(reportJSON), url, err)
+	}
+	defer resp.Body.Close()
+	if !report.Success {
+		log.Error("report image installation was not successful, rebooting")
+		reboot()
+	}
+
+	log.Info("report image installation was successful")
 	return nil
 }
 
