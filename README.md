@@ -1,41 +1,23 @@
 # Discover a device with metal-hammer
 
-in order to be able to register a new device, or check whether a device is already registered, we execute from the pxeboot image a binary which does the hardware discovery. This is done with the *lshw* command which is available on various linux distributions, call it with the `-json` option as root and send the output to the maas api.
+in order to be able to register a new device, or check whether a device is already registered, we execute from the pxeboot image a binary which does the hardware discovery and send the output to the maas api.
 
 ## Build
 
 ```bash
-make
+make initrd
 ```
 
-## Usage
+## Local Testing
 
-### Configuration
-
-Is done via Environment variables.
-
-```bash
-bin/metal-hammer -h
-
-This application is configured via the environment. The following environment
-variables can be used:
-
-KEY                   TYPE             DEFAULT                                  REQUIRED    DESCRIPTION
-METAL_HAMMER_DEBUG    True or False    false                                    False       turn on debug log
 ```
-
-### Execution
-
-```bash
-sudo bin/metal-hammer
-INFO[09-24|14:09:59] configuration                            debug=false reportURL=http://localhost:8080/device/register
-INFO[09-24|14:10:00] device already registered                uuid=4C3CEF61-F536-B211-A85C-B765E03E138F caller=lshw.go:63
+vagrant destroy -f && make initrd && vagrant up && virsh console metal-hammer_pxeclient
 ```
 
 
-## Create a PXE boot image with linuxkit
+## Create a PXE boot image with linuxkit and u-root
 
-In order to be able to create a kernel and initrd image which is suitable to boot a bare metal server with the required tools to discover and install the target os, we use linuxkit.
+In order to be able to create a kernel and initrd image which is suitable to boot a bare metal server with the required tools to discover and install the target os, we use linuxkit and u-root.
 
 ### Quickstart
 
@@ -43,50 +25,30 @@ In order to be able to create a kernel and initrd image which is suitable to boo
 
 ```bash
 sudo curl -fSL https://github.com/linuxkit/linuxkit/releases/download/v0.6/linuxkit-linux-amd64 -o /usr/local/bin/linuxkit && sudo chmod +x /usr/local/bin/linuxkit
-
-OR
-
-go get -u github.com/linuxkit/linuxkit/src/cmd/linuxkit
-
 ```
 
-- build the kernel and image:
+- download u-root:
+
+```
+go get -u github.com/u-root/u-root
+```
+
+- build the kernel:
 
 ```bash
-linuxkit build pxeboot.yaml
+linuxkit build metal-hammer.yaml
 ```
 
-- check by running it:
+- build the initrd
 
 ```bash
-linuxkit run qemu -disk size=4G pxeboot
+make initrd
 ```
-
-## Create a initial ramdisk with u-root
-
-
-executing metal-hammer via metal-hammer.sh which is copied to /bbin/uinit (user init):
-
-```
-u-root -format=cpio -build=bb \
-    -files="bin/metal-hammer:bbin/metal-hammer" \
-    -files="/sbin/sgdisk:usr/bin/sgdisk" \
-    -files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
-    -files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
-    -files="/sbin/mke2fs:sbin/mke2fs" \
-    -files="/sbin/mkfs.fat:sbin/mkfs.fat" \
-    -files="/usr/sbin/rngd:usr/sbin/rngd" \
-    -files="metal-hammer.sh:bbin/uinit" \
-    -o metal-initrd.cpio
-```
-
-
-
 
 ### check content
 
 ```
-cpio -itv < metal-initrd.cpio 
+cpio -itv < metal-hammer-initrd.img
 ```
 
 ### start it
