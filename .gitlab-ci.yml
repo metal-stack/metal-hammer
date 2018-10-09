@@ -48,8 +48,7 @@ compile-uroot-debian:
     - cd ${CI_PROJECT_DIR}
     - go get github.com/u-root/u-root
     - linuxkit build metal-hammer.yaml && rm metal-hammer-initrd.img
-    - make uroot
-    - gzip metal-hammer-initrd.img
+    - make initrd
     - mkdir images
     - mv metal-hammer-kernel metal-hammer-initrd.img.gz metal-hammer-cmdline images
     - mc cp --recursive images fits/metal
