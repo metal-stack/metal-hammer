@@ -43,6 +43,9 @@ compile-uroot-debian:
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
     - curl -fsSL https://github.com/linuxkit/linuxkit/releases/download/v0.6/linuxkit-linux-amd64 -o /usr/local/bin/linuxkit
     - chmod +x /usr/local/bin/linuxkit
+    - mkdir -p ${GOPATH}/src/github.com/u-root
+    - cd ${GOPATH}/src/github.com/u-root && git clone https://github.com/u-root/u-root
+    - cd ${CI_PROJECT_DIR}
     - go get github.com/u-root/u-root
     - linuxkit build metal-hammer.yaml && rm metal-hammer-initrd.img
     - make uroot
