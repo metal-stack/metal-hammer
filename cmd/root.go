@@ -19,6 +19,11 @@ func Run(spec *Specification) error {
 	firmware := bootedWith()
 	log.Info("metal-hammer bootet with", "firmware", firmware)
 
+	err := WipeDisks()
+	if err != nil {
+		log.Error("register device", "error", err)
+	}
+
 	uuid, err := RegisterDevice(spec)
 	if err != nil {
 		log.Error("register device", "error", err)

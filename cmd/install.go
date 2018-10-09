@@ -108,11 +108,7 @@ func (p *Partition) String() string {
 
 // Install a given image to the disk by using genuinetools/img
 func Install(image string) error {
-	err := wipeDisks()
-	if err != nil {
-		return err
-	}
-	err = partition(defaultDisk)
+	err := partition(defaultDisk)
 	if err != nil {
 		return err
 	}
@@ -138,7 +134,8 @@ func Install(image string) error {
 	return nil
 }
 
-func wipeDisks() error {
+// WipeDisks will erase all content and partitions of all existing Disks
+func WipeDisks() error {
 	log.Info("wipe all disks")
 	block, err := ghw.Block()
 	if err != nil {
@@ -146,18 +143,18 @@ func wipeDisks() error {
 	}
 	for _, disk := range block.Disks {
 		log.Info("TODO wipe disk", "disk", disk)
+
+		log.Info("sgdisk zap all existing partitions", "disk", disk.Name)
+		err := executeCommand(sgdiskCommand, "-Z", disk.Name)
+		if err != nil {
+			log.Error("sgdisk zap all existing partitions failed", "error", err)
+		}
 	}
 	return nil
 }
 
 func partition(disk Disk) error {
 	log.Info("partition disk", "disk", disk)
-
-	log.Info("sgdisk zap all existing partitions", "disk", disk)
-	err := executeCommand(sgdiskCommand, "-Z", disk.Device)
-	if err != nil {
-		log.Error("sgdisk zap all existing partitions failed", "error", err)
-	}
 
 	args := make([]string, 0)
 	for _, p := range disk.Partitions {
@@ -178,7 +175,7 @@ func partition(disk Disk) error {
 
 	args = append(args, disk.Device)
 	log.Info("sgdisk create partitions", "command", args)
-	err = executeCommand(sgdiskCommand, args...)
+	err := executeCommand(sgdiskCommand, args...)
 	// FIXME sgdisk return 0 in case of failure, and > 0 if succeed
 	// TODO still the case ?
 	if err != nil {
@@ -360,8 +357,12 @@ func install(prefix, image string) error {
 	log.Info("running /install.sh on", "prefix", prefix)
 
 	// Log output to stdout to get an idea what is (not) going on.
-	err := executeCommand("/usr/sbin/chroot", prefix, "/install.sh")
-	if err != nil {
+	cmd := exec.Command("/install.sh")
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Chroot: prefix,
+	}
+	if err := cmd.Run(); err != nil {
 		log.Error("running install.sh in chroot failed", "error", err)
 		return fmt.Errorf("running install.sh in chroot failed: %v", err)
 	}
@@ -370,7 +371,7 @@ func install(prefix, image string) error {
 	umounts := [6]string{"/boot/efi", "/proc", "/sys", "/dev", "/tmp", "/"}
 	for _, m := range umounts {
 		p := prefix + m
-		err = syscall.Unmount(p, 0)
+		err := syscall.Unmount(p, 0)
 		if err != nil {
 			log.Error("unable to umount", "path", p, "error", err)
 		}
