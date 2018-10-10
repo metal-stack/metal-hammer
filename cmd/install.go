@@ -339,6 +339,7 @@ func downloadFile(filepath string, url string) error {
 
 	bar := pb.New64(fileSize).SetUnits(pb.U_BYTES)
 	bar.SetWidth(80)
+	bar.ShowSpeed = true
 	bar.Start()
 	reader := bar.NewProxyReader(resp.Body)
 
