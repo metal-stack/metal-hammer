@@ -348,6 +348,8 @@ func downloadFile(filepath string, url string) error {
 		return err
 	}
 
+	bar.Finish()
+
 	return nil
 }
 
