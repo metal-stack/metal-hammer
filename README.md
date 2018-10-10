@@ -14,29 +14,16 @@ make initrd
 vagrant destroy -f && make initrd && vagrant up && virsh console metal-hammer_pxeclient
 ```
 
+## Create a PXE boot initrd with u-root
 
-## Create a PXE boot image with linuxkit and u-root
-
-In order to be able to create a kernel and initrd image which is suitable to boot a bare metal server with the required tools to discover and install the target os, we use linuxkit and u-root.
+In order to be able to create an initrd image which is suitable to boot a bare metal server with the required tools to discover and install the target os, we use u-root.
 
 ### Quickstart
-
-- download linuxkit:
-
-```bash
-sudo curl -fSL https://github.com/linuxkit/linuxkit/releases/download/v0.6/linuxkit-linux-amd64 -o /usr/local/bin/linuxkit && sudo chmod +x /usr/local/bin/linuxkit
-```
 
 - download u-root:
 
 ```
 go get -u github.com/u-root/u-root
-```
-
-- build the kernel:
-
-```bash
-linuxkit build metal-hammer.yaml
 ```
 
 - build the initrd

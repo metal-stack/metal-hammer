@@ -10,16 +10,14 @@ compile-uroot-debian:
     - curl -fsSL https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
     - chmod +x /usr/local/bin/mc
     - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
-    - curl -fsSL https://github.com/linuxkit/linuxkit/releases/download/v0.6/linuxkit-linux-amd64 -o /usr/local/bin/linuxkit
-    - chmod +x /usr/local/bin/linuxkit
     - mkdir -p ${GOPATH}/src/github.com/u-root
     - cd ${GOPATH}/src/github.com/u-root && git clone https://github.com/u-root/u-root
     - cd ${CI_PROJECT_DIR}
     - go get github.com/u-root/u-root
-    - linuxkit build metal-hammer.yaml && rm metal-hammer-initrd.img
     - make initrd
     - mkdir images
-    - mv metal-hammer-kernel metal-hammer-initrd.img.gz metal-hammer-cmdline images
+    - mv metal-hammer-initrd.img.gz images
+    - cp cmdline images/metal-hammer-cmdline
     - mc cp --recursive images fits/metal
   only:
     - master
