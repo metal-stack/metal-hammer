@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"crypto/md5"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -287,18 +288,33 @@ func orderPartitions(partitions []*Partition) []*Partition {
 
 // pull a image by calling genuinetools/img pull
 func pull(image string) error {
+	md5file := image + ".md5"
 	log.Info("pull image", "image", image)
 	err := downloadFile("/tmp/os.tgz", image)
 	if err != nil {
 		return fmt.Errorf("unable to pull image %s error: %v", image, err)
 	}
-	log.Debug("pull image", "image", image)
+	err = downloadFile("/tmp/os.tgz.md5", md5file)
+	if err != nil {
+		return fmt.Errorf("unable to pull md5 %s error: %v", md5file, err)
+	}
+	log.Info("check md5")
+	matches, err := checkMD5("/tmp/os.tgz", "/tmp/os.tgz.md5")
+	if err != nil {
+		return fmt.Errorf("unable to check md5sum error: %v", err)
+	}
+	if !matches {
+		log.Error("md5sum mismatch")
+	}
+
+	log.Debug("pull image done", "image", image)
 	return nil
 }
 
 // downloadFile will download a url to a local file. It's efficient because it will
 // write as it downloads and not load the whole file into memory.
 func downloadFile(filepath string, url string) error {
+	log.Info("download", "from", url, "to", filepath)
 	// Create the file
 	out, err := os.Create(filepath)
 	if err != nil {
@@ -320,6 +336,31 @@ func downloadFile(filepath string, url string) error {
 	}
 
 	return nil
+}
+
+func checkMD5(file, md5file string) (bool, error) {
+	md5fileContent, err := ioutil.ReadFile(md5file)
+	if err != nil {
+		return false, fmt.Errorf("unable to read md5sum file: %v", err)
+	}
+	expectedMD5 := strings.Split(string(md5fileContent), " ")[0]
+
+	f, err := os.Open(file)
+	if err != nil {
+		return false, fmt.Errorf("unable to read file: %v", err)
+	}
+	defer f.Close()
+
+	h := md5.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return false, fmt.Errorf("unable to calculate md5sum of file: %v", err)
+	}
+	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
+	log.Info("checkMD5", "source md5", sourceMD5, "expected md5", expectedMD5)
+	if sourceMD5 != expectedMD5 {
+		return false, nil
+	}
+	return true, nil
 }
 
 // burn a image by calling genuinetools/img unpack to a specific directory
