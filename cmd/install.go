@@ -97,6 +97,10 @@ type Partition struct {
 	GPTGuid    GPTGuid
 }
 
+func (p *Partition) String() string {
+	return fmt.Sprintf("%s", p.Device)
+}
+
 // MountOption a option given to a mountpoint
 type MountOption string
 
@@ -107,13 +111,11 @@ type Disk struct {
 	Partitions []*Partition
 }
 
+// InstallerConfig contains configuration items which are
+// consumed by the install.sh of the individual target OS.
 type InstallerConfig struct {
 	Hostname     string `yaml:"hostname"`
 	SSHPublicKey string `yaml:"sshpublickey"`
-}
-
-func (p *Partition) String() string {
-	return fmt.Sprintf("%s", p.Device)
 }
 
 // Install a given image to the disk by using genuinetools/img
@@ -288,18 +290,21 @@ func orderPartitions(partitions []*Partition) []*Partition {
 
 // pull a image by calling genuinetools/img pull
 func pull(image string) error {
-	md5file := image + ".md5"
 	log.Info("pull image", "image", image)
-	err := downloadFile("/tmp/os.tgz", image)
+	destination := "/tmp/os.tgz"
+	md5destination := destination + ".md5"
+	md5file := image + ".md5"
+	err := downloadFile(destination, image)
 	if err != nil {
 		return fmt.Errorf("unable to pull image %s error: %v", image, err)
 	}
-	err = downloadFile("/tmp/os.tgz.md5", md5file)
+	err = downloadFile(md5destination, md5file)
+	defer os.Remove(md5destination)
 	if err != nil {
 		return fmt.Errorf("unable to pull md5 %s error: %v", md5file, err)
 	}
 	log.Info("check md5")
-	matches, err := checkMD5("/tmp/os.tgz", "/tmp/os.tgz.md5")
+	matches, err := checkMD5(destination, md5destination)
 	if err != nil {
 		return fmt.Errorf("unable to check md5sum error: %v", err)
 	}
