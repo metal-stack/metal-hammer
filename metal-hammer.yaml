@@ -1,7 +1,0 @@
-kernel:
-  image: linuxkit/kernel:4.18.11
-  cmdline: "console=tty0 console=ttyS0 ip=dhcp"
-  ucode: intel-ucode.cpio
-trust:
-  org:
-    - linuxkit
