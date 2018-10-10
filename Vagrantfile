@@ -12,6 +12,11 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define :pxeclient do |pxeclient|
+    pxeclient.trigger.before :up do |trigger|
+      trigger.info = "Download kernel..."
+      trigger.run = {path: "download-kernel.sh"}
+    end
+
     pxeclient.vm.provider :libvirt do |domain|
       domain.cpus = 1
       domain.memory = 1024
