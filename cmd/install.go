@@ -15,6 +15,7 @@ import (
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
 	"github.com/mholt/archiver"
+	pb "gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
 )
 
@@ -313,8 +314,15 @@ func downloadFile(filepath string, url string) error {
 	}
 	defer resp.Body.Close()
 
+	fileSize := resp.ContentLength
+
+	bar := pb.New64(fileSize).SetUnits(pb.U_BYTES)
+	bar.SetWidth(80)
+	bar.Start()
+	reader := bar.NewProxyReader(resp.Body)
+
 	// Write the body to file
-	_, err = io.Copy(out, resp.Body)
+	_, err = io.Copy(out, reader)
 	if err != nil {
 		return err
 	}
