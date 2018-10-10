@@ -44,6 +44,7 @@ uroot: ${BINARY}
 		-files="${MKFS}:sbin/mke2fs" \
 		-files="${FAT}:sbin/mkfs.fat" \
 		-files="${RNGD}:usr/sbin/rngd" \
+		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 		-files="metal-hammer.sh:bbin/uinit" \
