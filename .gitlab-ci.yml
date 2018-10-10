@@ -16,7 +16,8 @@ compile-uroot-debian:
     - go get github.com/u-root/u-root
     - make initrd
     - mkdir images
-    - mv metal-hammer-initrd.img.gz metal-hammer-cmdline images
+    - mv metal-hammer-initrd.img.gz images
+    - cp cmdline images/metal-hammer-cmdline
     - mc cp --recursive images fits/metal
   only:
     - master

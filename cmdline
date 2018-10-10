@@ -1,0 +1,1 @@
+console=tty0 console=ttyS0 ip=dhcp
