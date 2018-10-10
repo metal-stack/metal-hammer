@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -57,6 +58,7 @@ func main() {
 		spec.ImageURL = i
 	}
 
+	fmt.Print(cmd.Hammer)
 	log.Info("metal-hammer", "version", getVersionString())
 	var level log.Lvl
 	if spec.Debug {
