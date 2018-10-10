@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"compress/gzip"
 	"crypto/md5"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -383,15 +385,53 @@ func checkMD5(file, md5file string) (bool, error) {
 func burn(prefix, image string) error {
 	log.Info("burn image", "image", image)
 
-	err := archiver.TarGz.Open("/tmp/os.tgz", prefix)
+	source := "/tmp/os.tgz"
+
+	file, err := os.Open(source)
 	if err != nil {
-		return fmt.Errorf("unable to burn image %s error: %v", image, err)
+		return fmt.Errorf("%s: failed to open archive: %v", source, err)
+
 	}
-	log.Debug("burn image", "image", image)
-	err = os.Remove("/tmp/os.tgz")
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("unable to stat %s error: %v", source, err)
+	}
+
+	// last four bytes of the gzip contain the uncompressed file size
+	buf := make([]byte, 4)
+	start := stat.Size() - 4
+	_, err = file.ReadAt(buf, start)
+	if err != nil {
+		return fmt.Errorf("cannot read uncompressed file size of gzip: %v", err)
+	}
+
+	bar := pb.New64(int64(binary.LittleEndian.Uint32(buf))).SetUnits(pb.U_BYTES)
+	bar.Start()
+	bar.SetWidth(80)
+	bar.ShowSpeed = true
+
+	gzr, err := gzip.NewReader(file)
+	if err != nil {
+		return fmt.Errorf("error decompressing: %v", err)
+	}
+	defer gzr.Close()
+
+	reader := bar.NewProxyReader(gzr)
+
+	err = archiver.Tar.Read(reader, prefix)
+	if err != nil {
+		return fmt.Errorf("unable to burn image %s error: %v", source, err)
+	}
+
+	bar.Finish()
+
+	err = os.Remove(source)
 	if err != nil {
 		log.Warn("burn image unable to remove image source", "error", err)
 	}
+
 	return nil
 }
 
