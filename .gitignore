@@ -3,3 +3,5 @@ vendor
 .idea
 .vscode
 .vagrant
+metal-hammer-initrd.img.gz
+metal-hammer-kernel
