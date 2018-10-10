@@ -3,9 +3,11 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -13,6 +15,7 @@ import (
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
 	"github.com/mholt/archiver"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -103,12 +106,18 @@ type Disk struct {
 	Partitions []*Partition
 }
 
+type InstallerConfig struct {
+	Hostname     string `yaml:"hostname"`
+	SSHPublicKey string `yaml:"sshpublickey"`
+}
+
 func (p *Partition) String() string {
 	return fmt.Sprintf("%s", p.Device)
 }
 
 // Install a given image to the disk by using genuinetools/img
-func Install(image string) error {
+func Install(device *Device) error {
+	image := device.Image.Url
 	err := partition(defaultDisk)
 	if err != nil {
 		return err
@@ -128,7 +137,7 @@ func Install(image string) error {
 		return err
 	}
 
-	err = install(prefix, image)
+	err = install(prefix, device)
 	if err != nil {
 		return err
 	}
@@ -339,8 +348,8 @@ type mount struct {
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func install(prefix, image string) error {
-	log.Info("install image", "image", image)
+func install(prefix string, device *Device) error {
+	log.Info("install image", "image", device.Image.Url)
 	mounts := []mount{
 		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
 		mount{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
@@ -356,9 +365,21 @@ func install(prefix, image string) error {
 		}
 	}
 
+	log.Info("write installation configuration")
+	configdir := path.Join(prefix, "etc", "metal")
+	err := os.MkdirAll(configdir, 0755)
+	if err != nil {
+		log.Error("mkdir of configuration in target os failed", "error", err)
+	}
+	configpath := path.Join(configdir, "install.yaml")
+	err = writeInstallerConfig(device, configpath)
+	if err != nil {
+		log.Error("writing configuration in target os failed", "configpath", configpath, "error", err)
+	}
+
 	log.Info("running /install.sh on", "prefix", prefix)
 
-	err := os.Chdir(prefix)
+	err = os.Chdir(prefix)
 	if err != nil {
 		log.Error("unable to chdir", "chroot", prefix, "error", err)
 	}
@@ -392,6 +413,19 @@ func install(prefix, image string) error {
 	}
 
 	return nil
+}
+
+func writeInstallerConfig(device *Device, destination string) error {
+	y := &InstallerConfig{
+		Hostname:     device.Hostname,
+		SSHPublicKey: device.SSHPubKey,
+	}
+	yamlContent, err := yaml.Marshal(y)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(destination, yamlContent, 0600)
 }
 
 // small helper to execute a command, redirect stdout/stderr.

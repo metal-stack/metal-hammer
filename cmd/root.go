@@ -29,20 +29,24 @@ func Run(spec *Specification) error {
 		log.Error("register device", "error", err)
 	}
 
+	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	var device *Device
-	var url string
 	if spec.ImageURL != "" {
-		url = spec.ImageURL
+		device = &Device{
+			Image: &Image{
+				Url: spec.ImageURL,
+			},
+			Hostname:  "dummy",
+			SSHPubKey: "a not working key",
+		}
 	} else {
 		device, err = waitForInstall(spec.InstallURL, uuid)
 		if err != nil {
 			log.Error("wait for install", "error", err)
 		}
-		url = device.Image.Url
 	}
 
-	// TODO: use device as argument for Install
-	err = Install(url)
+	err = Install(device)
 	if err != nil {
 		log.Error("install", "error", err)
 	}
