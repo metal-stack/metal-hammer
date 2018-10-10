@@ -363,7 +363,7 @@ func checkMD5(file, md5file string) (bool, error) {
 	return true, nil
 }
 
-// burn a image by calling genuinetools/img unpack to a specific directory
+// burn a image pulling a tarball and unpack to a specific directory
 func burn(prefix, image string) error {
 	log.Info("burn image", "image", image)
 
