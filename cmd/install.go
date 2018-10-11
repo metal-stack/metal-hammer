@@ -16,7 +16,6 @@ import (
 	"syscall"
 
 	log "github.com/inconshreveable/log15"
-	"github.com/jaypipes/ghw"
 	"github.com/mholt/archiver"
 	pb "gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
@@ -148,26 +147,6 @@ func Install(device *Device) (*bootinfo, error) {
 		return nil, err
 	}
 	return info, nil
-}
-
-// WipeDisks will erase all content and partitions of all existing Disks
-func WipeDisks() error {
-	log.Info("wipe all disks")
-	block, err := ghw.Block()
-	if err != nil {
-		return fmt.Errorf("unable to gather disks: %v", err)
-	}
-	for _, disk := range block.Disks {
-		log.Info("TODO wipe disk", "disk", disk)
-
-		diskDevice := fmt.Sprintf("/dev/%s", disk.Name)
-		log.Info("sgdisk zap all existing partitions", "disk", diskDevice)
-		err := executeCommand(sgdiskCommand, "-Z", diskDevice)
-		if err != nil {
-			log.Error("sgdisk zap all existing partitions failed", "error", err)
-		}
-	}
-	return nil
 }
 
 func partition(disk Disk) error {
@@ -558,12 +537,4 @@ func writeInstallerConfig(device *Device, destination string) error {
 	}
 
 	return ioutil.WriteFile(destination, yamlContent, 0600)
-}
-
-// small helper to execute a command, redirect stdout/stderr.
-func executeCommand(name string, arg ...string) error {
-	cmd := exec.Command(name, arg...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stdout
-	return cmd.Run()
 }
