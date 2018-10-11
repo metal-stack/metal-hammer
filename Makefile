@@ -5,8 +5,9 @@ BUILDDATE := $(shell date -Iseconds)
 VERSION := $(or ${VERSION},devel)
 
 BINARY := bin/metal-hammer
+INITRD := metal-hammer-initrd.img.gz
 
-.PHONY: clean image
+.PHONY: clean initrd
 
 all: $(BINARY)
 
@@ -22,33 +23,10 @@ ${BINARY}: clean
 	-o $@
 
 clean:
-	rm -f ${BINARY}
+	rm -f ${BINARY} ${INITRD}
 
-image:
-	docker build -t registry.fi-ts.io/metal/metal-hammer .
+${INITRD}:
+	rm -f ${INITRD}
+	docker-make --no-push
 
-SGDISK := $(shell which sgdisk)
-VFAT := $(shell which mkfs.vfat)
-FAT := $(shell which mkfs.fat)
-EXT4 := $(shell which mkfs.ext4)
-MKFS := $(shell which mke2fs)
-RNGD := $(shell which rngd)
-
-uroot: ${BINARY}
-	u-root \
-		-format=cpio -build=bb \
-		-files="bin/metal-hammer:bbin/metal-hammer" \
-		-files="${SGDISK}:usr/bin/sgdisk" \
-		-files="${VFAT}:sbin/mkfs.vfat" \
-		-files="${EXT4}:sbin/mkfs.ext4" \
-		-files="${MKFS}:sbin/mke2fs" \
-		-files="${FAT}:sbin/mkfs.fat" \
-		-files="${RNGD}:usr/sbin/rngd" \
-		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
-		-files="metal.key:id_rsa" \
-		-files="metal.key.pub:authorized_keys" \
-		-files="metal-hammer.sh:bbin/uinit" \
-	-o metal-hammer-initrd.img
-
-initrd: uroot
-	gzip -f metal-hammer-initrd.img
+initrd: ${INITRD}

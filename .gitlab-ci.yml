@@ -1,20 +1,15 @@
-image: golang:1.11-stretch
+image: registry.cloud.fits/fits/builder:7
 
 stages:
     - build
 
-compile-uroot-debian:
+before_script:
+  - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
+
+metal-hammer:
   stage: build
   script:
-    - apt update && apt install -y rng-tools e2fsprogs dosfstools gdisk make git curl gcc
-    - curl -fsSL https://dl.minio.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
-    - chmod +x /usr/local/bin/mc
-    - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
-    - mkdir -p ${GOPATH}/src/github.com/u-root
-    - cd ${GOPATH}/src/github.com/u-root && git clone https://github.com/u-root/u-root
-    - cd ${CI_PROJECT_DIR}
-    - go get github.com/u-root/u-root
-    - make initrd
+    - docker-make --no-push
     - mkdir images
     - mv metal-hammer-initrd.img.gz images
     - cp cmdline images/metal-hammer-cmdline
