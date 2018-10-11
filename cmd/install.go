@@ -122,32 +122,32 @@ type InstallerConfig struct {
 }
 
 // Install a given image to the disk by using genuinetools/img
-func Install(device *Device) error {
+func Install(device *Device) (*bootinfo, error) {
 	image := device.Image.Url
 	err := partition(defaultDisk)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = mountPartitions(prefix, defaultDisk)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = pull(image)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = burn(prefix, image)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = install(prefix, device)
+	info, err := install(prefix, device)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return info, nil
 }
 
 // WipeDisks will erase all content and partitions of all existing Disks
@@ -443,9 +443,15 @@ type mount struct {
 	data   string
 }
 
+type bootinfo struct {
+	Initrd  string `yaml:"initrd"`
+	Cmdline string `yaml:"cmdline"`
+	Kernel  string `yaml:"kernel"`
+}
+
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func install(prefix string, device *Device) error {
+func install(prefix string, device *Device) (*bootinfo, error) {
 	log.Info("install image", "image", device.Image.Url)
 	mounts := []mount{
 		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
@@ -492,7 +498,7 @@ func install(prefix string, device *Device) error {
 	}
 	if err := cmd.Run(); err != nil {
 		log.Error("running install.sh in chroot failed", "error", err)
-		return fmt.Errorf("running install.sh in chroot failed: %v", err)
+		return nil, fmt.Errorf("running install.sh in chroot failed: %v", err)
 	}
 	err = os.Chdir("/")
 	if err != nil {
@@ -500,16 +506,45 @@ func install(prefix string, device *Device) error {
 	}
 	log.Info("finish running /install.sh")
 
+	log.Info("read /boot-info.yaml")
+	bi, err := ioutil.ReadFile(path.Join(prefix, "boot-info.yaml"))
+	if err != nil {
+		log.Error("could not read boot-info.yaml", "error", err)
+		return nil, err
+	}
+
+	var info bootinfo
+	err = yaml.Unmarshal(bi, &info)
+	if err != nil {
+		log.Error("could not unmarshal boot-info.yaml", "error", err)
+		return nil, err
+	}
+
+	files := []string{info.Kernel, info.Initrd}
+	tmp := "/tmp"
+	for _, f := range files {
+		src := path.Join(prefix, f)
+		dest := path.Join(tmp, filepath.Base(f))
+		_, err := copy(src, dest)
+		if err != nil {
+			log.Error("could not copy", "src", src, "dest", dest, "error", err)
+			return nil, err
+		}
+	}
+	info.Kernel = path.Join(tmp, filepath.Base(info.Kernel))
+	info.Initrd = path.Join(tmp, filepath.Base(info.Initrd))
+
 	umounts := [6]string{"/boot/efi", "/proc", "/sys", "/dev", "/tmp", "/"}
 	for _, m := range umounts {
 		p := prefix + m
+		log.Info("unmounting", "mountpoint", p)
 		err := syscall.Unmount(p, syscall.MNT_FORCE)
 		if err != nil {
 			log.Error("unable to umount", "path", p, "error", err)
 		}
 	}
 
-	return nil
+	return &info, nil
 }
 
 func writeInstallerConfig(device *Device, destination string) error {

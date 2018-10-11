@@ -10,6 +10,7 @@ import (
 
 	log "github.com/inconshreveable/log15"
 
+	"github.com/u-root/u-root/pkg/kexec"
 	"golang.org/x/sys/unix"
 )
 
@@ -31,6 +32,7 @@ func Run(spec *Specification) error {
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	var device *Device
+	devMode := false
 	if spec.ImageURL != "" {
 		device = &Device{
 			Image: &Image{
@@ -39,6 +41,7 @@ func Run(spec *Specification) error {
 			Hostname:  "dummy",
 			SSHPubKey: "a not working key",
 		}
+		devMode = true
 	} else {
 		device, err = waitForInstall(spec.InstallURL, uuid)
 		if err != nil {
@@ -46,7 +49,7 @@ func Run(spec *Specification) error {
 		}
 	}
 
-	err = Install(device)
+	info, err := Install(device)
 	if err != nil {
 		log.Error("install", "error", err)
 	}
@@ -55,10 +58,12 @@ func Run(spec *Specification) error {
 	if err != nil {
 		log.Error("report install, reboot in 10sec", "error", err)
 		time.Sleep(10 * time.Second)
-		reboot()
+		if !devMode {
+			reboot()
+		}
 	}
 
-	kexec()
+	runKexec(info)
 	return nil
 }
 
@@ -108,6 +113,27 @@ func reboot() {
 	}
 }
 
-func kexec() {
-	log.Info("TODO: kexec new kernel")
+func runKexec(info *bootinfo) {
+	kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
+	if err != nil {
+		log.Error("could not open", "kernel", info.Kernel, "error", err)
+		return
+	}
+	defer kernel.Close()
+
+	ramfs, err := os.OpenFile(info.Initrd, os.O_RDONLY, 0)
+	if err != nil {
+		log.Error("could not open", "initrd", info.Initrd, "error", err)
+		return
+	}
+	defer ramfs.Close()
+
+	if err := kexec.FileLoad(kernel, ramfs, info.Cmdline); err != nil {
+		log.Error("could not execute kexec load", "info", info, "error", err)
+	}
+
+	err = kexec.Reboot()
+	if err != nil {
+		log.Error("could not fire kexec reboot", "info", info, "error", err)
+	}
 }
