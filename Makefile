@@ -27,6 +27,6 @@ clean:
 
 ${INITRD}:
 	rm -f ${INITRD}
-	docker-make --no-push
+	docker-make --no-push --Lint
 
 initrd: ${INITRD}
