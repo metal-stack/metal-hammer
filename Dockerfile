@@ -14,7 +14,8 @@ FROM golang:1.11-stretch as initrd-builder
 RUN apt-get update
 RUN apt-get install -y rng-tools e2fsprogs dosfstools gdisk curl gcc
 RUN mkdir -p ${GOPATH}/src/github.com/u-root
-RUN cd ${GOPATH}/src/github.com/u-root && git clone https://github.com/u-root/u-root
+RUN cd ${GOPATH}/src/github.com/u-root \
+ && git clone https://github.com/u-root/u-root
 RUN go get github.com/u-root/u-root
 WORKDIR /work
 COPY metal.key /work/
