@@ -1,4 +1,4 @@
-image: registry.cloud.fits/fits/builder:7-dev
+image: registry.cloud.fits/fits/builder:7-dev-81ee9dfc812aa7f7320ca43f63c6d9d5b5a9be87
 
 stages:
     - build
