@@ -16,4 +16,5 @@ builds:
     tags:
       - latest
     after:
-      - /bin/bash -exc "docker export $(docker create registry.fi-ts.io/metal/hammer /dev/null) > metal-hammer.tar; tar -xf metal-hammer.tar metal-hammer-initrd.img.gz"
+      - docker export $(docker create registry.fi-ts.io/metal/hammer /dev/null) > metal-hammer.tar
+      - tar -xf metal-hammer.tar metal-hammer-initrd.img.gz
