@@ -30,3 +30,21 @@ ${INITRD}:
 	docker-make --no-push --Lint
 
 initrd: ${INITRD}
+
+fast: clean ${BINARY}
+	u-root \
+		-format=cpio -build=bb \
+		-files="bin/metal-hammer:bbin/metal-hammer" \
+		-files="/sbin/sgdisk:usr/bin/sgdisk" \
+		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
+		-files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
+		-files="/sbin/mke2fs:sbin/mke2fs" \
+		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
+		-files="/usr/sbin/rngd:usr/sbin/rngd" \
+		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
+		-files="metal.key:id_rsa" \
+		-files="metal.key.pub:authorized_keys" \
+		-files="metal-hammer.sh:bbin/uinit" \
+	-o metal-hammer-initrd.img \
+	&& gzip -f metal-hammer-initrd.img \
+	&& rm -f metal-hammer-initrd.img
