@@ -1,6 +1,6 @@
 FROM golang:1.11-stretch as metal-hammer-builder
-RUN apt-get update
-RUN apt-get install -y make git
+RUN apt-get update \
+ && apt-get install -y make git
 WORKDIR /work
 COPY .git /work/
 COPY go.mod /work/
@@ -11,12 +11,18 @@ COPY Makefile /work/
 RUN make bin/metal-hammer
 
 FROM golang:1.11-stretch as initrd-builder
-RUN apt-get update
-RUN apt-get install -y rng-tools e2fsprogs dosfstools gdisk curl gcc
-RUN mkdir -p ${GOPATH}/src/github.com/u-root
-RUN cd ${GOPATH}/src/github.com/u-root \
- && git clone https://github.com/u-root/u-root
-RUN go get github.com/u-root/u-root
+RUN apt-get update \
+ && apt-get install -y \
+	curl \
+	dosfstools \
+	e2fsprogs \
+	gcc \
+	gdisk \
+	rng-tools
+RUN mkdir -p ${GOPATH}/src/github.com/u-root \
+ && cd ${GOPATH}/src/github.com/u-root \
+ && git clone https://github.com/u-root/u-root \
+ && go get github.com/u-root/u-root
 WORKDIR /work
 COPY metal.key /work/
 COPY metal.key.pub /work/
@@ -35,8 +41,8 @@ RUN u-root \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 		-files="metal-hammer.sh:bbin/uinit" \
-	-o metal-hammer-initrd.img
-RUN gzip -f metal-hammer-initrd.img
+	-o metal-hammer-initrd.img \
+ && gzip -f metal-hammer-initrd.img
 
 FROM scratch
 COPY --from=metal-hammer-builder /work/bin/metal-hammer /
