@@ -11,6 +11,7 @@ type Specification struct {
 	RegisterURL string `default:"http://localhost:4242/device/register" desc:"Register endpoint url" required:"False"`
 	InstallURL  string `default:"http://localhost:4242/device/install" desc:"Get Image url of OS to install" required:"False"`
 	ImageURL    string `default:"" desc:"Use a fixed Image url of OS to install" required:"False"`
+	DevMode     bool   `default:"false" desc:"turn on devmode which prevents failing in some situations" required:"False"`
 }
 
 // Log print configuration options

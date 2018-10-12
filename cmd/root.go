@@ -32,8 +32,7 @@ func Run(spec *Specification) error {
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	var device *Device
-	devMode := false
-	if spec.ImageURL != "" {
+	if spec.DevMode {
 		device = &Device{
 			Image: &Image{
 				Url: spec.ImageURL,
@@ -41,7 +40,6 @@ func Run(spec *Specification) error {
 			Hostname:  "dummy",
 			SSHPubKey: "a not working key",
 		}
-		devMode = true
 	} else {
 		device, err = waitForInstall(spec.InstallURL, uuid)
 		if err != nil {
@@ -58,7 +56,7 @@ func Run(spec *Specification) error {
 	if err != nil {
 		log.Error("report install, reboot in 10sec", "error", err)
 		time.Sleep(10 * time.Second)
-		if !devMode {
+		if !spec.DevMode {
 			reboot()
 		}
 	}

@@ -56,6 +56,7 @@ func main() {
 
 	if i, ok := envmap["IMAGE_URL"]; ok {
 		spec.ImageURL = i
+		spec.DevMode = true
 	}
 
 	fmt.Print(cmd.Hammer)
