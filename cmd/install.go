@@ -152,6 +152,10 @@ func Install(device *Device) (*bootinfo, error) {
 func partition(disk Disk) error {
 	log.Info("partition disk", "disk", disk)
 
+	err := executeCommand(sgdiskCommand, "-Z", disk.Device)
+	if err != nil {
+		log.Error("sgdisk zapping existing partitions failed, ignoring...", "error", err)
+	}
 	args := make([]string, 0)
 	for _, p := range disk.Partitions {
 		size := fmt.Sprintf("%dM", p.Size)
@@ -171,7 +175,7 @@ func partition(disk Disk) error {
 
 	args = append(args, disk.Device)
 	log.Info("sgdisk create partitions", "command", args)
-	err := executeCommand(sgdiskCommand, args...)
+	err = executeCommand(sgdiskCommand, args...)
 	// FIXME sgdisk return 0 in case of failure, and > 0 if succeed
 	// TODO still the case ?
 	if err != nil {
