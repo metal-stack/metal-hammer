@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"strings"
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/cmd"
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -31,32 +30,10 @@ func main() {
 	}
 
 	// Grab metal-hammer configuration from kernel commandline
-	cmdline, err := ioutil.ReadFile("/proc/cmdline")
+	envmap, err := pkg.ParseCmdline()
 	if err != nil {
-		log.Error("unable to read /proc/cmdline", "error", err)
-	}
-
-	cmdLineValues := strings.Split(string(cmdline), " ")
-	envmap := make(map[string]string)
-	for _, v := range cmdLineValues {
-		keyValue := strings.Split(v, "=")
-		if len(keyValue) == 2 {
-			key := strings.TrimSpace(keyValue[0])
-			value := strings.TrimSpace(keyValue[1])
-			envmap[key] = value
-		}
-	}
-
-	// METAL_CORE_URL must be in the form http://metal-core:4242
-	if i, ok := envmap["METAL_CORE_URL"]; ok {
-		spec.InstallURL = i + "/device/install"
-		spec.RegisterURL = i + "/device/register"
-		spec.ReportURL = i + "/device/report"
-	}
-
-	if i, ok := envmap["IMAGE_URL"]; ok {
-		spec.ImageURL = i
-		spec.DevMode = true
+		log.Error("parse cmdline", "error", err)
+		os.Exit(1)
 	}
 
 	fmt.Print(cmd.Hammer)
@@ -72,6 +49,18 @@ func main() {
 	h := log.CallerFileHandler(log.StdoutHandler)
 	h = log.LvlFilterHandler(level, h)
 	log.Root().SetHandler(h)
+
+	// METAL_CORE_URL must be in the form http://metal-core:4242
+	if i, ok := envmap["METAL_CORE_URL"]; ok {
+		spec.InstallURL = i + "/device/install"
+		spec.RegisterURL = i + "/device/register"
+		spec.ReportURL = i + "/device/report"
+	}
+
+	if i, ok := envmap["IMAGE_URL"]; ok {
+		spec.ImageURL = i
+		spec.DevMode = true
+	}
 
 	err = cmd.Run(&spec)
 	if err != nil {
