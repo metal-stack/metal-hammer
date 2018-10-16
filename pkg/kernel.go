@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/u-root/u-root/pkg/kexec"
+	"golang.org/x/sys/unix"
 )
 
 var (
@@ -62,6 +63,14 @@ func RunKexec(info *Bootinfo) error {
 	err = kexec.Reboot()
 	if err != nil {
 		return fmt.Errorf("could not fire kexec reboot info: %v error: %v", info, err)
+	}
+	return nil
+}
+
+// Reboot reboots the the server
+func Reboot() error {
+	if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
+		return fmt.Errorf("unable to reboot error %v", err.Error())
 	}
 	return nil
 }

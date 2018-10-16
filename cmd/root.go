@@ -9,7 +9,6 @@ import (
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
-	"golang.org/x/sys/unix"
 )
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
@@ -19,12 +18,12 @@ func Run(spec *Specification) error {
 
 	err := WipeDisks(spec)
 	if err != nil {
-		log.Error("register device", "error", err)
+		return fmt.Errorf("wipe error: %v", err)
 	}
 
 	uuid, err := RegisterDevice(spec)
 	if err != nil {
-		log.Error("register device", "error", err)
+		return fmt.Errorf("register error: %v", err)
 	}
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
@@ -40,13 +39,13 @@ func Run(spec *Specification) error {
 	} else {
 		device, err = waitForInstall(spec.InstallURL, uuid)
 		if err != nil {
-			log.Error("wait for install", "error", err)
+			return fmt.Errorf("wait for installation error: %v", err)
 		}
 	}
 
 	info, err := Install(device)
 	if err != nil {
-		log.Error("install", "error", err)
+		return fmt.Errorf("install error: %v", err)
 	}
 
 	err = ReportInstallation(spec.ReportURL, uuid, err)
@@ -54,7 +53,10 @@ func Run(spec *Specification) error {
 		log.Error("report install, reboot in 10sec", "error", err)
 		time.Sleep(10 * time.Second)
 		if !spec.DevMode {
-			reboot()
+			err = pkg.Reboot()
+			if err != nil {
+				log.Error("reboot", "error", err)
+			}
 		}
 	}
 
@@ -92,10 +94,4 @@ func waitForInstall(url, uuid string) (*Device, error) {
 	log.Debug("stopped waiting and got", "device", device)
 
 	return &device, nil
-}
-
-func reboot() {
-	if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
-		log.Error("unable to reboot", "error", err.Error())
-	}
 }
