@@ -315,11 +315,11 @@ func pull(image string) error {
 	destination := osImageDestination
 	md5destination := destination + ".md5"
 	md5file := image + ".md5"
-	err := downloadFile(destination, image)
+	err := download(image, destination)
 	if err != nil {
 		return fmt.Errorf("unable to pull image %s error: %v", image, err)
 	}
-	err = downloadFile(md5destination, md5file)
+	err = download(md5file, md5destination)
 	defer os.Remove(md5destination)
 	if err != nil {
 		return fmt.Errorf("unable to pull md5 %s error: %v", md5file, err)
@@ -331,46 +331,6 @@ func pull(image string) error {
 	}
 
 	log.Info("pull image done", "image", image)
-	return nil
-}
-
-// downloadFile will download a url to a local file. It's efficient because it will
-// write as it downloads and not load the whole file into memory.
-func downloadFile(filepath string, url string) error {
-	log.Info("download", "from", url, "to", filepath)
-	// Create the file
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= http.StatusBadRequest {
-		return fmt.Errorf("download of image %s did not work, statuscode was: %d", url, resp.StatusCode)
-	}
-
-	fileSize := resp.ContentLength
-
-	bar := pb.New64(fileSize).SetUnits(pb.U_BYTES)
-	bar.SetWidth(80)
-	bar.ShowSpeed = true
-	bar.Start()
-	reader := bar.NewProxyReader(resp.Body)
-
-	// Write the body to file
-	_, err = io.Copy(out, reader)
-	if err != nil {
-		return err
-	}
-
-	bar.Finish()
-
 	return nil
 }
 
