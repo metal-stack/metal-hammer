@@ -43,6 +43,7 @@ func ParseCmdline() (map[string]string, error) {
 	return envmap, nil
 }
 
+// RunKexec boot into the new kernel given in Bootinfo
 func RunKexec(info *Bootinfo) error {
 	kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
 	if err != nil {
@@ -75,7 +76,7 @@ func Reboot() error {
 	return nil
 }
 
-// Firmware returns either efi or bios, depends on the boot method.
+// Firmware returns either efi or bios, depending on the boot method.
 func Firmware() string {
 	_, err := os.Stat(sysfirmware)
 	if os.IsNotExist(err) {
