@@ -22,7 +22,7 @@ func Run(spec *Specification) error {
 	}
 
 	uuid, err := RegisterDevice(spec)
-	if err != nil {
+	if !spec.DevMode && err != nil {
 		return fmt.Errorf("register error: %v", err)
 	}
 
