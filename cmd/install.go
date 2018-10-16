@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"crypto/md5"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
@@ -120,6 +122,38 @@ type Disk struct {
 type InstallerConfig struct {
 	Hostname     string `yaml:"hostname"`
 	SSHPublicKey string `yaml:"sshpublickey"`
+}
+
+// Wait until a device create request was fired
+func Wait(url, uuid string) (*Device, error) {
+	log.Info("waiting for install, long polling", "uuid", uuid)
+	e := fmt.Sprintf("%v/%v", url, uuid)
+
+	var resp *http.Response
+	var err error
+	for {
+		resp, err = http.Get(e)
+		if err != nil || resp.StatusCode != http.StatusOK {
+			log.Warn("wait for install failed, retrying...", "error", err)
+		} else {
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	deviceJSON, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("wait for install reading response failed with: %v", err)
+	}
+
+	var device Device
+	err = json.Unmarshal(deviceJSON, &device)
+	if err != nil {
+		return nil, fmt.Errorf("wait for install could not unmarshal response with error: %v", err)
+	}
+	log.Info("stopped waiting got", "device", device)
+
+	return &device, nil
 }
 
 // Install a given image to the disk by using genuinetools/img

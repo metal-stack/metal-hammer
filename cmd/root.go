@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"time"
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
@@ -37,7 +34,7 @@ func Run(spec *Specification) error {
 			SSHPubKey: "a not working key",
 		}
 	} else {
-		device, err = waitForInstall(spec.InstallURL, uuid)
+		device, err = Wait(spec.InstallURL, uuid)
 		if err != nil {
 			return fmt.Errorf("wait for installation error: %v", err)
 		}
@@ -62,36 +59,4 @@ func Run(spec *Specification) error {
 
 	pkg.RunKexec(info)
 	return nil
-}
-
-func waitForInstall(url, uuid string) (*Device, error) {
-	log.Info("waiting for install, long polling", "uuid", uuid)
-	e := fmt.Sprintf("%v/%v", url, uuid)
-
-	var resp *http.Response
-	var err error
-	for {
-		resp, err = http.Get(e)
-		if err != nil || resp.StatusCode != http.StatusOK {
-			log.Debug("waiting for install failed", "error", err)
-		} else {
-			break
-		}
-		log.Debug("Retrying...")
-		time.Sleep(2 * time.Second)
-	}
-
-	deviceJSON, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("reading response failed with: %v", err)
-	}
-
-	var device Device
-	err = json.Unmarshal(deviceJSON, &device)
-	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal response with error: %v", err)
-	}
-	log.Debug("stopped waiting and got", "device", device)
-
-	return &device, nil
 }
