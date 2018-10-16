@@ -177,10 +177,9 @@ func partition(disk Disk) error {
 	args = append(args, disk.Device)
 	log.Info("sgdisk create partitions", "command", args)
 	err = executeCommand(sgdiskCommand, args...)
-	// FIXME sgdisk return 0 in case of failure, and > 0 if succeed
-	// TODO still the case ?
 	if err != nil {
 		log.Error("sgdisk creating partitions failed", "error", err)
+		return fmt.Errorf("unable to create partitions on %s error:%v", disk, err)
 	}
 
 	return nil
@@ -317,6 +316,9 @@ func downloadFile(filepath string, url string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode >= http.StatusBadRequest {
+		return fmt.Errorf("download of image %s did not work, statuscode was: %d", url, resp.StatusCode)
+	}
 
 	fileSize := resp.ContentLength
 
