@@ -2,11 +2,9 @@ package cmd
 
 import (
 	"compress/gzip"
-	"crypto/md5"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -332,31 +330,6 @@ func pull(image string) error {
 
 	log.Info("pull image done", "image", image)
 	return nil
-}
-
-func checkMD5(file, md5file string) (bool, error) {
-	md5fileContent, err := ioutil.ReadFile(md5file)
-	if err != nil {
-		return false, fmt.Errorf("unable to read md5sum file: %v", err)
-	}
-	expectedMD5 := strings.Split(string(md5fileContent), " ")[0]
-
-	f, err := os.Open(file)
-	if err != nil {
-		return false, fmt.Errorf("unable to read file: %v", err)
-	}
-	defer f.Close()
-
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return false, fmt.Errorf("unable to calculate md5sum of file: %v", err)
-	}
-	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
-	log.Info("checkMD5", "source md5", sourceMD5, "expected md5", expectedMD5)
-	if sourceMD5 != expectedMD5 {
-		return false, fmt.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
-	}
-	return true, nil
 }
 
 // burn a image pulling a tarball and unpack to a specific directory
