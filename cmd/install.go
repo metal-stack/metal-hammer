@@ -221,13 +221,14 @@ func partition(disk Disk) error {
 func mountPartitions(prefix string, disk Disk) error {
 	log.Info("mount disk", "disk", disk)
 	// "/" must be mounted first
-	partitions := orderPartitions(disk.Partitions)
+	partitions := disk.SortByMountPoint()
 
 	// FIXME error handling
 	for _, p := range partitions {
 		err := createFilesystem(p)
 		if err != nil {
 			log.Error("mount partition create filesystem failed", "error", err)
+			return fmt.Errorf("mount partitions create fs failed: %v", err)
 		}
 
 		if p.MountPoint == "" {
@@ -238,12 +239,15 @@ func mountPartitions(prefix string, disk Disk) error {
 		err = os.MkdirAll(mountPoint, os.ModePerm)
 		if err != nil {
 			log.Error("mount partition create directory", "error", err)
+			return fmt.Errorf("mount partitions create directory failed: %v", err)
 		}
 		log.Info("mount partition", "partition", p.Device, "mountPoint", mountPoint)
 		// see man 2 mount
 		err = syscall.Mount(p.Device, mountPoint, string(p.Filesystem), 0, "")
 		if err != nil {
 			log.Error("unable to mount", "partition", p.Device, "mountPoint", mountPoint, "error", err)
+			return fmt.Errorf("mount partitions mount: %s to:%s failed: %v", p.Device, mountPoint, err)
+
 		}
 	}
 
@@ -291,15 +295,15 @@ func createFilesystem(p *Partition) error {
 	return nil
 }
 
-// orderPartitions ensures that "/" is the first, which is required for mounting
-func orderPartitions(partitions []*Partition) []*Partition {
+// SortByMountPoint ensures that "/" is the first, which is required for mounting
+func (d *Disk) SortByMountPoint() []*Partition {
 	ordered := make([]*Partition, 0)
-	for _, p := range partitions {
+	for _, p := range d.Partitions {
 		if p.MountPoint == "/" {
 			ordered = append(ordered, p)
 		}
 	}
-	for _, p := range partitions {
+	for _, p := range d.Partitions {
 		if p.MountPoint != "/" {
 			ordered = append(ordered, p)
 		}
