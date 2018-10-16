@@ -10,8 +10,7 @@ import (
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(spec *Specification) error {
-	log.Info("metal-hammer run")
-	log.Info("metal-hammer bootet with", "firmware", pkg.Firmware())
+	log.Info("metal-hammer run", "firmware", pkg.Firmware())
 
 	err := WipeDisks(spec)
 	if err != nil {
@@ -30,8 +29,8 @@ func Run(spec *Specification) error {
 			Image: &Image{
 				Url: spec.ImageURL,
 			},
-			Hostname:  "dummy",
-			SSHPubKey: "a not working key",
+			Hostname:  "devmode",
+			SSHPubKey: "not a valid ssh public key, can be specified during device create.",
 		}
 	} else {
 		device, err = Wait(spec.InstallURL, uuid)
@@ -47,8 +46,9 @@ func Run(spec *Specification) error {
 
 	err = ReportInstallation(spec.ReportURL, uuid, err)
 	if err != nil {
-		log.Error("report install, reboot in 10sec", "error", err)
-		time.Sleep(10 * time.Second)
+		wait := 10 * time.Second
+		log.Error("report installation failed", "reboot in", wait, "error", err)
+		time.Sleep(wait)
 		if !spec.DevMode {
 			err = pkg.Reboot()
 			if err != nil {
