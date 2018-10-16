@@ -72,7 +72,8 @@ const (
 )
 
 const (
-	prefix = "/rootfs"
+	prefix             = "/rootfs"
+	osImageDestination = "/tmp/os.tgz"
 )
 
 // GPTType is the GUID Partition table type
@@ -274,10 +275,10 @@ func orderPartitions(partitions []*Partition) []*Partition {
 	return ordered
 }
 
-// pull a image by calling genuinetools/img pull
+// pull a image from s3
 func pull(image string) error {
 	log.Info("pull image", "image", image)
-	destination := "/tmp/os.tgz"
+	destination := osImageDestination
 	md5destination := destination + ".md5"
 	md5file := image + ".md5"
 	err := downloadFile(destination, image)
@@ -291,14 +292,11 @@ func pull(image string) error {
 	}
 	log.Info("check md5")
 	matches, err := checkMD5(destination, md5destination)
-	if err != nil {
-		return fmt.Errorf("unable to check md5sum error: %v", err)
-	}
-	if !matches {
-		log.Error("md5sum mismatch")
+	if err != nil || !matches {
+		return fmt.Errorf("md5sum mismatch %v", err)
 	}
 
-	log.Debug("pull image done", "image", image)
+	log.Info("pull image done", "image", image)
 	return nil
 }
 
@@ -359,7 +357,7 @@ func checkMD5(file, md5file string) (bool, error) {
 	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
 	log.Info("checkMD5", "source md5", sourceMD5, "expected md5", expectedMD5)
 	if sourceMD5 != expectedMD5 {
-		return false, nil
+		return false, fmt.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
 	}
 	return true, nil
 }
@@ -368,7 +366,7 @@ func checkMD5(file, md5file string) (bool, error) {
 func burn(prefix, image string) error {
 	log.Info("burn image", "image", image)
 
-	source := "/tmp/os.tgz"
+	source := osImageDestination
 
 	file, err := os.Open(source)
 	if err != nil {
@@ -426,6 +424,8 @@ type mount struct {
 	data   string
 }
 
+// bootinfo is written by the installer in the target os to tell us
+// which kernel, initrd and cmdline must be used for kexec
 type bootinfo struct {
 	Initrd  string `yaml:"initrd"`
 	Cmdline string `yaml:"cmdline"`
