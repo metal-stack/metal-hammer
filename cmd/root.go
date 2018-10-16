@@ -8,9 +8,8 @@ import (
 	"os"
 	"time"
 
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
-
-	"github.com/u-root/u-root/pkg/kexec"
 	"golang.org/x/sys/unix"
 )
 
@@ -61,7 +60,7 @@ func Run(spec *Specification) error {
 		}
 	}
 
-	runKexec(info)
+	pkg.RunKexec(info)
 	return nil
 }
 
@@ -108,30 +107,5 @@ func waitForInstall(url, uuid string) (*Device, error) {
 func reboot() {
 	if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
 		log.Error("unable to reboot", "error", err.Error())
-	}
-}
-
-func runKexec(info *bootinfo) {
-	kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
-	if err != nil {
-		log.Error("could not open", "kernel", info.Kernel, "error", err)
-		return
-	}
-	defer kernel.Close()
-
-	ramfs, err := os.OpenFile(info.Initrd, os.O_RDONLY, 0)
-	if err != nil {
-		log.Error("could not open", "initrd", info.Initrd, "error", err)
-		return
-	}
-	defer ramfs.Close()
-
-	if err := kexec.FileLoad(kernel, ramfs, info.Cmdline); err != nil {
-		log.Error("could not execute kexec load", "info", info, "error", err)
-	}
-
-	err = kexec.Reboot()
-	if err != nil {
-		log.Error("could not fire kexec reboot", "info", info, "error", err)
 	}
 }

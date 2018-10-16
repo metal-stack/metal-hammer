@@ -15,6 +15,7 @@ import (
 	"strings"
 	"syscall"
 
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
 	"github.com/mholt/archiver"
 	pb "gopkg.in/cheggaaa/pb.v1"
@@ -122,7 +123,7 @@ type InstallerConfig struct {
 }
 
 // Install a given image to the disk by using genuinetools/img
-func Install(device *Device) (*bootinfo, error) {
+func Install(device *Device) (*pkg.Bootinfo, error) {
 	image := device.Image.Url
 	err := partition(defaultDisk)
 	if err != nil {
@@ -426,17 +427,9 @@ type mount struct {
 	data   string
 }
 
-// bootinfo is written by the installer in the target os to tell us
-// which kernel, initrd and cmdline must be used for kexec
-type bootinfo struct {
-	Initrd  string `yaml:"initrd"`
-	Cmdline string `yaml:"cmdline"`
-	Kernel  string `yaml:"kernel"`
-}
-
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func install(prefix string, device *Device) (*bootinfo, error) {
+func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 	log.Info("install image", "image", device.Image.Url)
 	mounts := []mount{
 		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
@@ -498,7 +491,7 @@ func install(prefix string, device *Device) (*bootinfo, error) {
 		return nil, err
 	}
 
-	var info bootinfo
+	var info pkg.Bootinfo
 	err = yaml.Unmarshal(bi, &info)
 	if err != nil {
 		log.Error("could not unmarshal boot-info.yaml", "error", err)

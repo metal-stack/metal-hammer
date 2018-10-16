@@ -3,7 +3,10 @@ package pkg
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
+
+	"github.com/u-root/u-root/pkg/kexec"
 )
 
 var (
@@ -28,4 +31,36 @@ func ParseCmdline() (map[string]string, error) {
 		}
 	}
 	return envmap, nil
+}
+
+// Bootinfo is written by the installer in the target os to tell us
+// which kernel, initrd and cmdline must be used for kexec
+type Bootinfo struct {
+	Initrd  string `yaml:"initrd"`
+	Cmdline string `yaml:"cmdline"`
+	Kernel  string `yaml:"kernel"`
+}
+
+func RunKexec(info *Bootinfo) error {
+	kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
+	if err != nil {
+		return fmt.Errorf("could not open kernel: %s error: %v", info.Kernel, err)
+	}
+	defer kernel.Close()
+
+	ramfs, err := os.OpenFile(info.Initrd, os.O_RDONLY, 0)
+	if err != nil {
+		return fmt.Errorf("could not open initrd: %s error: %v", info.Initrd, err)
+	}
+	defer ramfs.Close()
+
+	if err := kexec.FileLoad(kernel, ramfs, info.Cmdline); err != nil {
+		return fmt.Errorf("could not execute kexec load: %v error: %s", info, err)
+	}
+
+	err = kexec.Reboot()
+	if err != nil {
+		return fmt.Errorf("could not fire kexec reboot info: %v error: %v", info, err)
+	}
+	return nil
 }
