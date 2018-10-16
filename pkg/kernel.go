@@ -10,8 +10,17 @@ import (
 )
 
 var (
-	cmdline = "/proc/cmdline"
+	cmdline     = "/proc/cmdline"
+	sysfirmware = "/sys/firmware/efi"
 )
+
+// Bootinfo is written by the installer in the target os to tell us
+// which kernel, initrd and cmdline must be used for kexec
+type Bootinfo struct {
+	Initrd  string `yaml:"initrd"`
+	Cmdline string `yaml:"cmdline"`
+	Kernel  string `yaml:"kernel"`
+}
 
 // ParseCmdline will put each key=value pair from /proc/cmdline into a map.
 func ParseCmdline() (map[string]string, error) {
@@ -31,14 +40,6 @@ func ParseCmdline() (map[string]string, error) {
 		}
 	}
 	return envmap, nil
-}
-
-// Bootinfo is written by the installer in the target os to tell us
-// which kernel, initrd and cmdline must be used for kexec
-type Bootinfo struct {
-	Initrd  string `yaml:"initrd"`
-	Cmdline string `yaml:"cmdline"`
-	Kernel  string `yaml:"kernel"`
 }
 
 func RunKexec(info *Bootinfo) error {
@@ -63,4 +64,13 @@ func RunKexec(info *Bootinfo) error {
 		return fmt.Errorf("could not fire kexec reboot info: %v error: %v", info, err)
 	}
 	return nil
+}
+
+// Firmware returns either efi or bios, depends on the boot method.
+func Firmware() string {
+	_, err := os.Stat(sysfirmware)
+	if os.IsNotExist(err) {
+		return "bios"
+	}
+	return "efi"
 }
