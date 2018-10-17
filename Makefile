@@ -14,6 +14,7 @@ all: $(BINARY)
 ${BINARY}: clean
 	CGO_ENABLE=0 \
 	GO111MODULE=on \
+	go test -v -race -cover $(shell go list ./...) && \
 	go build \
 		-tags netgo \
 		-ldflags "-X 'main.version=$(VERSION)' \
