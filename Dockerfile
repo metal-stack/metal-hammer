@@ -12,6 +12,7 @@ COPY Makefile /work/
 RUN make bin/metal-hammer
 
 FROM golang:1.11-stretch as initrd-builder
+ENV UROOT_GIT_SHA=5909da7ef93be40da573f61005189e5270078bb7
 RUN apt-get update \
  && apt-get install -y \
 	curl \
@@ -23,7 +24,9 @@ RUN apt-get update \
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \
- && go get github.com/u-root/u-root
+ && cd u-root \
+ && git checkout ${UROOT_GIT_SHA} \
+ && go install
 WORKDIR /work
 COPY metal.key /work/
 COPY metal.key.pub /work/
