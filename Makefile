@@ -11,10 +11,14 @@ INITRD := metal-hammer-initrd.img.gz
 
 all: $(BINARY)
 
-${BINARY}: clean
+test:
 	CGO_ENABLE=0 \
 	GO111MODULE=on \
-	go test -v -race -cover $(shell go list ./...) && \
+	go test -v -race -cover $(shell go list ./...)
+
+${BINARY}: clean test
+	CGO_ENABLE=0 \
+	GO111MODULE=on \
 	go build \
 		-tags netgo \
 		-ldflags "-X 'main.version=$(VERSION)' \
