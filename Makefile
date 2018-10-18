@@ -12,7 +12,7 @@ INITRD := metal-hammer-initrd.img.gz
 all: $(BINARY)
 
 ${BINARY}: clean
-	CGO_ENABLE=0 \
+	CGO_ENABLED=0 \
 	GO111MODULE=on \
 	go build \
 		-tags netgo \
