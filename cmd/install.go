@@ -417,23 +417,15 @@ func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 		}
 	}
 
-	log.Info("write installation configuration")
-	configdir := path.Join(prefix, "etc", "metal")
-	err := os.MkdirAll(configdir, 0755)
+	err := writeInstallerConfig(device)
 	if err != nil {
-		log.Error("mkdir of configuration in target os failed", "error", err)
-	}
-	configpath := path.Join(configdir, "install.yaml")
-	err = writeInstallerConfig(device, configpath)
-	if err != nil {
-		log.Error("writing configuration in target os failed", "configpath", configpath, "error", err)
+		return nil, fmt.Errorf("writing configuration install.yaml failed:%v", err)
 	}
 
 	log.Info("running /install.sh on", "prefix", prefix)
-
 	err = os.Chdir(prefix)
 	if err != nil {
-		log.Error("unable to chdir", "chroot", prefix, "error", err)
+		return nil, fmt.Errorf("unable to chdir to: %s error:%v", prefix, err)
 	}
 	cmd := exec.Command("/install.sh")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
@@ -446,17 +438,16 @@ func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 		Chroot: prefix,
 	}
 	if err := cmd.Run(); err != nil {
-		log.Error("running install.sh in chroot failed", "error", err)
 		return nil, fmt.Errorf("running install.sh in chroot failed: %v", err)
 	}
 	err = os.Chdir("/")
 	if err != nil {
-		log.Error("unable to chdir to /", "error", err)
+		return nil, fmt.Errorf("unable to chdir to: / error:%v", err)
 	}
 	log.Info("finish running /install.sh")
 
-	log.Info("read /boot-info.yaml")
-	bi, err := ioutil.ReadFile(path.Join(prefix, "boot-info.yaml"))
+	log.Info("read /etc/metal/boot-info.yaml")
+	bi, err := ioutil.ReadFile(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
 	if err != nil {
 		log.Error("could not read boot-info.yaml", "error", err)
 		return nil, err
@@ -496,7 +487,15 @@ func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 	return &info, nil
 }
 
-func writeInstallerConfig(device *Device, destination string) error {
+func writeInstallerConfig(device *Device) error {
+	log.Info("write installation configuration")
+	configdir := path.Join(prefix, "etc", "metal")
+	err := os.MkdirAll(configdir, 0755)
+	if err != nil {
+		return fmt.Errorf("mkdir of %s target os failed: %v", configdir, err)
+	}
+	destination := path.Join(configdir, "install.yaml")
+
 	y := &InstallerConfig{
 		Hostname:     device.Hostname,
 		SSHPublicKey: device.SSHPubKey,
