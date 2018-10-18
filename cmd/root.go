@@ -57,6 +57,5 @@ func Run(spec *Specification) error {
 		}
 	}
 
-	pkg.RunKexec(info)
-	return nil
+	return pkg.RunKexec(info)
 }
