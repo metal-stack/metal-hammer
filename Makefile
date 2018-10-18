@@ -11,7 +11,12 @@ INITRD := metal-hammer-initrd.img.gz
 
 all: $(BINARY)
 
-${BINARY}: clean
+test:
+	CGO_ENABLED=0 \
+	GO111MODULE=on \
+	go test -v -race -cover $(shell go list ./...)
+
+${BINARY}: clean test
 	CGO_ENABLED=0 \
 	GO111MODULE=on \
 	go build \

@@ -3,6 +3,7 @@ vendor
 .idea
 .vscode
 .vagrant
+metal-hammer
 metal-hammer.tar
 metal-hammer-initrd.img.gz
 metal-hammer-kernel

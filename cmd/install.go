@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"compress/gzip"
-	"crypto/md5"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -14,7 +13,9 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
 	"github.com/mholt/archiver"
 	pb "gopkg.in/cheggaaa/pb.v1"
@@ -72,7 +73,8 @@ const (
 )
 
 const (
-	prefix = "/rootfs"
+	prefix             = "/rootfs"
+	osImageDestination = "/tmp/os.tgz"
 )
 
 // GPTType is the GUID Partition table type
@@ -120,8 +122,40 @@ type InstallerConfig struct {
 	SSHPublicKey string `yaml:"sshpublickey"`
 }
 
+// Wait until a device create request was fired
+func Wait(url, uuid string) (*Device, error) {
+	log.Info("waiting for install, long polling", "uuid", uuid)
+	e := fmt.Sprintf("%v/%v", url, uuid)
+
+	var resp *http.Response
+	var err error
+	for {
+		resp, err = http.Get(e)
+		if err != nil || resp.StatusCode != http.StatusOK {
+			log.Warn("wait for install failed, retrying...", "error", err)
+		} else {
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	deviceJSON, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("wait for install reading response failed with: %v", err)
+	}
+
+	var device Device
+	err = json.Unmarshal(deviceJSON, &device)
+	if err != nil {
+		return nil, fmt.Errorf("wait for install could not unmarshal response with error: %v", err)
+	}
+	log.Info("stopped waiting got", "device", device)
+
+	return &device, nil
+}
+
 // Install a given image to the disk by using genuinetools/img
-func Install(device *Device) (*bootinfo, error) {
+func Install(device *Device) (*pkg.Bootinfo, error) {
 	image := device.Image.Url
 	err := partition(defaultDisk)
 	if err != nil {
@@ -176,10 +210,9 @@ func partition(disk Disk) error {
 	args = append(args, disk.Device)
 	log.Info("sgdisk create partitions", "command", args)
 	err = executeCommand(sgdiskCommand, args...)
-	// FIXME sgdisk return 0 in case of failure, and > 0 if succeed
-	// TODO still the case ?
 	if err != nil {
 		log.Error("sgdisk creating partitions failed", "error", err)
+		return fmt.Errorf("unable to create partitions on %s error:%v", disk, err)
 	}
 
 	return nil
@@ -188,13 +221,14 @@ func partition(disk Disk) error {
 func mountPartitions(prefix string, disk Disk) error {
 	log.Info("mount disk", "disk", disk)
 	// "/" must be mounted first
-	partitions := orderPartitions(disk.Partitions)
+	partitions := disk.SortByMountPoint()
 
 	// FIXME error handling
 	for _, p := range partitions {
 		err := createFilesystem(p)
 		if err != nil {
 			log.Error("mount partition create filesystem failed", "error", err)
+			return fmt.Errorf("mount partitions create fs failed: %v", err)
 		}
 
 		if p.MountPoint == "" {
@@ -205,12 +239,15 @@ func mountPartitions(prefix string, disk Disk) error {
 		err = os.MkdirAll(mountPoint, os.ModePerm)
 		if err != nil {
 			log.Error("mount partition create directory", "error", err)
+			return fmt.Errorf("mount partitions create directory failed: %v", err)
 		}
 		log.Info("mount partition", "partition", p.Device, "mountPoint", mountPoint)
 		// see man 2 mount
 		err = syscall.Mount(p.Device, mountPoint, string(p.Filesystem), 0, "")
 		if err != nil {
 			log.Error("unable to mount", "partition", p.Device, "mountPoint", mountPoint, "error", err)
+			return fmt.Errorf("mount partitions mount: %s to:%s failed: %v", p.Device, mountPoint, err)
+
 		}
 	}
 
@@ -258,15 +295,15 @@ func createFilesystem(p *Partition) error {
 	return nil
 }
 
-// orderPartitions ensures that "/" is the first, which is required for mounting
-func orderPartitions(partitions []*Partition) []*Partition {
+// SortByMountPoint ensures that "/" is the first, which is required for mounting
+func (d *Disk) SortByMountPoint() []*Partition {
 	ordered := make([]*Partition, 0)
-	for _, p := range partitions {
+	for _, p := range d.Partitions {
 		if p.MountPoint == "/" {
 			ordered = append(ordered, p)
 		}
 	}
-	for _, p := range partitions {
+	for _, p := range d.Partitions {
 		if p.MountPoint != "/" {
 			ordered = append(ordered, p)
 		}
@@ -274,101 +311,36 @@ func orderPartitions(partitions []*Partition) []*Partition {
 	return ordered
 }
 
-// pull a image by calling genuinetools/img pull
+// pull a image from s3
 func pull(image string) error {
 	log.Info("pull image", "image", image)
-	destination := "/tmp/os.tgz"
+	destination := osImageDestination
 	md5destination := destination + ".md5"
 	md5file := image + ".md5"
-	err := downloadFile(destination, image)
+	err := download(image, destination)
 	if err != nil {
 		return fmt.Errorf("unable to pull image %s error: %v", image, err)
 	}
-	err = downloadFile(md5destination, md5file)
+	err = download(md5file, md5destination)
 	defer os.Remove(md5destination)
 	if err != nil {
 		return fmt.Errorf("unable to pull md5 %s error: %v", md5file, err)
 	}
 	log.Info("check md5")
 	matches, err := checkMD5(destination, md5destination)
-	if err != nil {
-		return fmt.Errorf("unable to check md5sum error: %v", err)
-	}
-	if !matches {
-		log.Error("md5sum mismatch")
+	if err != nil || !matches {
+		return fmt.Errorf("md5sum mismatch %v", err)
 	}
 
-	log.Debug("pull image done", "image", image)
+	log.Info("pull image done", "image", image)
 	return nil
-}
-
-// downloadFile will download a url to a local file. It's efficient because it will
-// write as it downloads and not load the whole file into memory.
-func downloadFile(filepath string, url string) error {
-	log.Info("download", "from", url, "to", filepath)
-	// Create the file
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	fileSize := resp.ContentLength
-
-	bar := pb.New64(fileSize).SetUnits(pb.U_BYTES)
-	bar.SetWidth(80)
-	bar.ShowSpeed = true
-	bar.Start()
-	reader := bar.NewProxyReader(resp.Body)
-
-	// Write the body to file
-	_, err = io.Copy(out, reader)
-	if err != nil {
-		return err
-	}
-
-	bar.Finish()
-
-	return nil
-}
-
-func checkMD5(file, md5file string) (bool, error) {
-	md5fileContent, err := ioutil.ReadFile(md5file)
-	if err != nil {
-		return false, fmt.Errorf("unable to read md5sum file: %v", err)
-	}
-	expectedMD5 := strings.Split(string(md5fileContent), " ")[0]
-
-	f, err := os.Open(file)
-	if err != nil {
-		return false, fmt.Errorf("unable to read file: %v", err)
-	}
-	defer f.Close()
-
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return false, fmt.Errorf("unable to calculate md5sum of file: %v", err)
-	}
-	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
-	log.Info("checkMD5", "source md5", sourceMD5, "expected md5", expectedMD5)
-	if sourceMD5 != expectedMD5 {
-		return false, nil
-	}
-	return true, nil
 }
 
 // burn a image pulling a tarball and unpack to a specific directory
 func burn(prefix, image string) error {
 	log.Info("burn image", "image", image)
 
-	source := "/tmp/os.tgz"
+	source := osImageDestination
 
 	file, err := os.Open(source)
 	if err != nil {
@@ -426,15 +398,9 @@ type mount struct {
 	data   string
 }
 
-type bootinfo struct {
-	Initrd  string `yaml:"initrd"`
-	Cmdline string `yaml:"cmdline"`
-	Kernel  string `yaml:"kernel"`
-}
-
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func install(prefix string, device *Device) (*bootinfo, error) {
+func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 	log.Info("install image", "image", device.Image.Url)
 	mounts := []mount{
 		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
@@ -451,23 +417,15 @@ func install(prefix string, device *Device) (*bootinfo, error) {
 		}
 	}
 
-	log.Info("write installation configuration")
-	configdir := path.Join(prefix, "etc", "metal")
-	err := os.MkdirAll(configdir, 0755)
+	err := writeInstallerConfig(device)
 	if err != nil {
-		log.Error("mkdir of configuration in target os failed", "error", err)
-	}
-	configpath := path.Join(configdir, "install.yaml")
-	err = writeInstallerConfig(device, configpath)
-	if err != nil {
-		log.Error("writing configuration in target os failed", "configpath", configpath, "error", err)
+		return nil, fmt.Errorf("writing configuration install.yaml failed:%v", err)
 	}
 
 	log.Info("running /install.sh on", "prefix", prefix)
-
 	err = os.Chdir(prefix)
 	if err != nil {
-		log.Error("unable to chdir", "chroot", prefix, "error", err)
+		return nil, fmt.Errorf("unable to chdir to: %s error:%v", prefix, err)
 	}
 	cmd := exec.Command("/install.sh")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
@@ -480,27 +438,17 @@ func install(prefix string, device *Device) (*bootinfo, error) {
 		Chroot: prefix,
 	}
 	if err := cmd.Run(); err != nil {
-		log.Error("running install.sh in chroot failed", "error", err)
 		return nil, fmt.Errorf("running install.sh in chroot failed: %v", err)
 	}
 	err = os.Chdir("/")
 	if err != nil {
-		log.Error("unable to chdir to /", "error", err)
+		return nil, fmt.Errorf("unable to chdir to: / error:%v", err)
 	}
 	log.Info("finish running /install.sh")
 
-	log.Info("read /boot-info.yaml")
-	bi, err := ioutil.ReadFile(path.Join(prefix, "boot-info.yaml"))
+	info, err := readBootInfo()
 	if err != nil {
-		log.Error("could not read boot-info.yaml", "error", err)
-		return nil, err
-	}
-
-	var info bootinfo
-	err = yaml.Unmarshal(bi, &info)
-	if err != nil {
-		log.Error("could not unmarshal boot-info.yaml", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("unable to read boot-info.yaml: %v", err)
 	}
 
 	files := []string{info.Kernel, info.Initrd}
@@ -527,10 +475,18 @@ func install(prefix string, device *Device) (*bootinfo, error) {
 		}
 	}
 
-	return &info, nil
+	return info, nil
 }
 
-func writeInstallerConfig(device *Device, destination string) error {
+func writeInstallerConfig(device *Device) error {
+	log.Info("write installation configuration")
+	configdir := path.Join(prefix, "etc", "metal")
+	err := os.MkdirAll(configdir, 0755)
+	if err != nil {
+		return fmt.Errorf("mkdir of %s target os failed: %v", configdir, err)
+	}
+	destination := path.Join(configdir, "install.yaml")
+
 	y := &InstallerConfig{
 		Hostname:     device.Hostname,
 		SSHPublicKey: device.SSHPubKey,
@@ -541,4 +497,18 @@ func writeInstallerConfig(device *Device, destination string) error {
 	}
 
 	return ioutil.WriteFile(destination, yamlContent, 0600)
+}
+
+func readBootInfo() (*pkg.Bootinfo, error) {
+	bi, err := ioutil.ReadFile(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
+	if err != nil {
+		return nil, fmt.Errorf("could not read boot-info.yaml: %v", err)
+	}
+
+	info := &pkg.Bootinfo{}
+	err = yaml.Unmarshal(bi, info)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal boot-info.yaml: %v", err)
+	}
+	return info, nil
 }

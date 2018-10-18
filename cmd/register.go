@@ -10,7 +10,6 @@ import (
 	"time"
 
 	log "github.com/inconshreveable/log15"
-
 	"github.com/jaypipes/ghw"
 )
 
@@ -173,8 +172,8 @@ func register(url string, hw registerRequest) (string, error) {
 		return "", fmt.Errorf("POST of hw %s to register endpoint:%s did not succeed %v response body:%s", string(hwJSON), url, resp.Status, body)
 	}
 
-	result := make(map[string]interface{})
-	var uuid interface{}
+	result := make(map[string]string)
+	var uuid string
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		uuid = "unknown"
@@ -187,5 +186,5 @@ func register(url string, hw registerRequest) (string, error) {
 	} else if resp.StatusCode == http.StatusCreated {
 		log.Info("device registered", "uuid", uuid)
 	}
-	return hw.UUID, nil
+	return uuid, nil
 }
