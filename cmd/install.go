@@ -357,6 +357,7 @@ func burn(prefix, image string) error {
 	}
 
 	var creader io.ReadCloser
+	defer creader.Close()
 	var csize int64
 	isLZ4 := strings.HasSuffix(image, "lz4")
 	isGZIP := strings.HasSuffix(image, "gz")
@@ -385,8 +386,6 @@ func burn(prefix, image string) error {
 		return fmt.Errorf("unsupported image compression format of image:%s", image)
 	}
 
-	defer creader.Close()
-
 	bar := pb.New64(csize).SetUnits(pb.U_BYTES)
 	bar.Start()
 	bar.SetWidth(80)
@@ -405,8 +404,8 @@ func burn(prefix, image string) error {
 	if err != nil {
 		log.Warn("burn image unable to remove image source", "error", err)
 	}
-	duration := time.Since(begin)
-	log.Info("burn took", "duration", duration)
+
+	log.Info("burn took", "duration", time.Since(begin))
 	return nil
 }
 
