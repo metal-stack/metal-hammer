@@ -7,6 +7,7 @@ COPY go.mod /work/
 COPY go.sum /work/
 COPY main.go /work/
 COPY cmd /work/cmd/
+COPY pkg /work/pkg/
 COPY Makefile /work/
 RUN make bin/metal-hammer
 
