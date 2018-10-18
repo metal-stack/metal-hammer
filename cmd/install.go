@@ -446,18 +446,9 @@ func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 	}
 	log.Info("finish running /install.sh")
 
-	log.Info("read /etc/metal/boot-info.yaml")
-	bi, err := ioutil.ReadFile(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
+	info, err := readBootInfo()
 	if err != nil {
-		log.Error("could not read boot-info.yaml", "error", err)
-		return nil, err
-	}
-
-	var info pkg.Bootinfo
-	err = yaml.Unmarshal(bi, &info)
-	if err != nil {
-		log.Error("could not unmarshal boot-info.yaml", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("unable to read boot-info.yaml: %v", err)
 	}
 
 	files := []string{info.Kernel, info.Initrd}
@@ -484,7 +475,7 @@ func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 		}
 	}
 
-	return &info, nil
+	return info, nil
 }
 
 func writeInstallerConfig(device *Device) error {
@@ -506,4 +497,18 @@ func writeInstallerConfig(device *Device) error {
 	}
 
 	return ioutil.WriteFile(destination, yamlContent, 0600)
+}
+
+func readBootInfo() (*pkg.Bootinfo, error) {
+	bi, err := ioutil.ReadFile(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
+	if err != nil {
+		return nil, fmt.Errorf("could not read boot-info.yaml: %v", err)
+	}
+
+	info := &pkg.Bootinfo{}
+	err = yaml.Unmarshal(bi, info)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal boot-info.yaml: %v", err)
+	}
+	return info, nil
 }
