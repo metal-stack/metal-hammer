@@ -358,7 +358,9 @@ func burn(prefix, image string) error {
 
 	var creader io.ReadCloser
 	var csize int64
-	if strings.HasSuffix(image, "lz4") {
+	isLZ4 := strings.HasSuffix(image, "lz4")
+	isGZIP := strings.HasSuffix(image, "gz")
+	if isLZ4 {
 		lz4Reader := lz4.NewReader(file)
 		log.Info("lz4", "size", lz4Reader.Header.Size)
 		creader = ioutil.NopCloser(lz4Reader)
@@ -366,7 +368,7 @@ func burn(prefix, image string) error {
 		// lz4 is a stream format and therefore the
 		// final size cannot be calculated upfront
 		csize = stat.Size() * 2
-	} else {
+	} else if isGZIP {
 		creader, err = gzip.NewReader(file)
 		if err != nil {
 			return fmt.Errorf("error decompressing: %v", err)
@@ -379,7 +381,10 @@ func burn(prefix, image string) error {
 			return fmt.Errorf("cannot read uncompressed file size of gzip: %v", err)
 		}
 		csize = int64(binary.LittleEndian.Uint32(buf))
+	} else {
+		return fmt.Errorf("unsupported image compression format of image:%s", image)
 	}
+
 	defer creader.Close()
 
 	bar := pb.New64(csize).SetUnits(pb.U_BYTES)
