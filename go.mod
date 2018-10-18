@@ -14,7 +14,7 @@ require (
 	github.com/mholt/archiver v2.1.0+incompatible
 	github.com/mitchellh/go-homedir v1.0.0 // indirect
 	github.com/nwaples/rardecode v0.0.0-20171029023500-e06696f847ae // indirect
-	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
+	github.com/pierrec/lz4 v2.0.5+incompatible
 	github.com/u-root/u-root v2.0.0+incompatible
 	github.com/ulikunitz/xz v0.5.4 // indirect
 	golang.org/x/sys v0.0.0-20180921163948-d47a0f339242
