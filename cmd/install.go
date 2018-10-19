@@ -25,12 +25,8 @@ import (
 )
 
 var (
-	sgdiskCommand    = "/usr/bin/sgdisk"
-	ext4MkFsCommand  = "/sbin/mkfs.ext4"
-	ext3MkFsCommand  = "/sbin/mkfs.ext3"
-	fat32MkFsCommand = "/sbin/mkfs.vfat"
-	mkswapCommand    = "/sbin/mkswap"
-	defaultDisk      = Disk{
+	sgdiskCommand = "/usr/bin/sgdisk"
+	defaultDisk   = Disk{
 		Device: "/dev/sda",
 		Partitions: []*Partition{
 			&Partition{
@@ -256,47 +252,6 @@ func mountPartitions(prefix string, disk Disk) error {
 	return nil
 }
 
-func createFilesystem(p *Partition) error {
-	log.Info("create filesystem", "device", p.Device, "filesystem", p.Filesystem)
-	mkfs := ""
-	var args []string
-	switch p.Filesystem {
-	case EXT4:
-		mkfs = ext4MkFsCommand
-		args = append(args, "-v", "-F")
-		if p.Label != "" {
-			args = append(args, "-L", p.Label)
-		}
-	case EXT3:
-		mkfs = ext3MkFsCommand
-		args = append(args, "-v", "-F")
-		if p.Label != "" {
-			args = append(args, "-L", p.Label)
-		}
-	case FAT32, VFAT:
-		mkfs = fat32MkFsCommand
-		args = append(args, "-v", "-F", "32")
-		if p.Label != "" {
-			args = append(args, "-n", strings.ToUpper(p.Label))
-		}
-	case SWAP:
-		mkfs = mkswapCommand
-		args = append(args, "-f")
-		if p.Label != "" {
-			args = append(args, "-L", p.Label)
-		}
-	default:
-		return fmt.Errorf("unsupported filesystem format: %q", p.Filesystem)
-	}
-	args = append(args, p.Device)
-	err := executeCommand(mkfs, args...)
-	if err != nil {
-		return fmt.Errorf("mkfs failed with error:%v", err)
-	}
-
-	return nil
-}
-
 // SortByMountPoint ensures that "/" is the first, which is required for mounting
 func (d *Disk) SortByMountPoint() []*Partition {
 	ordered := make([]*Partition, 0)
@@ -357,7 +312,6 @@ func burn(prefix, image string) error {
 	}
 
 	var creader io.ReadCloser
-	defer creader.Close()
 	var csize int64
 	isLZ4 := strings.HasSuffix(image, "lz4")
 	isGZIP := strings.HasSuffix(image, "gz")
@@ -385,6 +339,7 @@ func burn(prefix, image string) error {
 	} else {
 		return fmt.Errorf("unsupported image compression format of image:%s", image)
 	}
+	defer creader.Close()
 
 	bar := pb.New64(csize).SetUnits(pb.U_BYTES)
 	bar.Start()
@@ -460,16 +415,16 @@ func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 		return nil, fmt.Errorf("running install.sh in chroot failed: %v", err)
 	}
 
-	err = os.Remove("/install.sh")
-	if err != nil {
-		log.Warn("unable to remove install.sh, ignoring... info:%v ", err)
-	}
-
 	err = os.Chdir("/")
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: / error:%v", err)
 	}
 	log.Info("finish running /install.sh")
+
+	err = os.Remove(path.Join(prefix, "/install.sh"))
+	if err != nil {
+		log.Warn("unable to remove install.sh, ignoring...", "error", err)
+	}
 
 	info, err := readBootInfo()
 	if err != nil {
