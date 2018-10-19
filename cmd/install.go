@@ -459,6 +459,12 @@ func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("running install.sh in chroot failed: %v", err)
 	}
+
+	err = os.Remove("/install.sh")
+	if err != nil {
+		log.Warn("unable to remove install.sh, ignoring... info:%v ", err)
+	}
+
 	err = os.Chdir("/")
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: / error:%v", err)
