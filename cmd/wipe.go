@@ -8,6 +8,17 @@ import (
 	"github.com/jaypipes/ghw"
 )
 
+// TODO, check with hdparm -i for Self Encrypting Device, sample output will look like:
+// Security:
+//         Master password revision code = 65534
+//                 supported
+//         not     enabled
+//         not     locked
+//                 frozen
+//         not     expired: security count
+//                 supported: enhanced erase
+//         6min for SECURITY ERASE UNIT. 32min for ENHANCED SECURITY ERASE UNIT.
+
 // WipeDisks will erase all content and partitions of all existing Disks
 func WipeDisks(spec *Specification) error {
 	log.Info("wipe all disks", "devmode", spec.DevMode)
