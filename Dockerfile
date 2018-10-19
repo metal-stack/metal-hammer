@@ -20,6 +20,7 @@ RUN apt-get update \
 	e2fsprogs \
 	gcc \
 	gdisk \
+	hdparm \
 	rng-tools
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \

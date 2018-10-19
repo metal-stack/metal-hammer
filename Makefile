@@ -45,6 +45,7 @@ fast: clean ${BINARY}
 		-files="/sbin/mke2fs:sbin/mke2fs" \
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/rngd:usr/sbin/rngd" \
+		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
