@@ -13,6 +13,11 @@ import (
 
 var hdparmCommand = "/sbin/hdparm"
 
+// TODO for NVMe disks nvme-cli must be used.
+// Secure erase is done via:
+// nvme-cli --format --ses=1 /dev/nvme0n1
+// see: https://github.com/linux-nvme/nvme-cli/blob/master/Documentation/nvme-format.txt
+
 // WipeDisks will erase all content and partitions of all existing Disks
 func WipeDisks(spec *Specification) error {
 	log.Info("wipe all disks", "devmode", spec.DevMode)
