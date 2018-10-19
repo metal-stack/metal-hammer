@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/cmd"
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
@@ -64,7 +65,10 @@ func main() {
 
 	err = cmd.Run(&spec)
 	if err != nil {
-		log.Error("metal-hammer run", "error", err)
+		wait := 5 * time.Second
+		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
+		time.Sleep(wait)
+		pkg.Reboot()
 	}
 }
 
