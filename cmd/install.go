@@ -25,8 +25,7 @@ import (
 )
 
 var (
-	sgdiskCommand = "/usr/bin/sgdisk"
-	defaultDisk   = Disk{
+	defaultDisk = Disk{
 		Device: "/dev/sda",
 		Partitions: []*Partition{
 			&Partition{
@@ -120,6 +119,13 @@ type InstallerConfig struct {
 	SSHPublicKey string `yaml:"sshpublickey"`
 }
 
+// init set calculated Device of every partition
+func init() {
+	for _, p := range defaultDisk.Partitions {
+		p.Device = fmt.Sprintf("%s%d", defaultDisk.Device, p.Number)
+	}
+}
+
 // Wait until a device create request was fired
 func Wait(url, uuid string) (*Device, error) {
 	log.Info("waiting for install, long polling", "uuid", uuid)
@@ -181,47 +187,11 @@ func Install(device *Device) (*pkg.Bootinfo, error) {
 	return info, nil
 }
 
-func partition(disk Disk) error {
-	log.Info("partition disk", "disk", disk)
-
-	err := executeCommand(sgdiskCommand, "-Z", disk.Device)
-	if err != nil {
-		log.Error("sgdisk zapping existing partitions failed, ignoring...", "error", err)
-	}
-	args := make([]string, 0)
-	for _, p := range disk.Partitions {
-		size := fmt.Sprintf("%dM", p.Size)
-		if p.Size == -1 {
-			size = "0"
-		}
-		args = append(args, fmt.Sprintf("-n=%d:0:%s", p.Number, size))
-		args = append(args, fmt.Sprintf(`-c=%d:"%s"`, p.Number, p.Label))
-		args = append(args, fmt.Sprintf("-t=%d:%s", p.Number, p.GPTType))
-		if p.GPTGuid != "" {
-			args = append(args, fmt.Sprintf("-u=%d:%s", p.Number, p.GPTGuid))
-		}
-
-		// TODO format must not have the side effect to change incoming data
-		p.Device = fmt.Sprintf("%s%d", disk.Device, p.Number)
-	}
-
-	args = append(args, disk.Device)
-	log.Info("sgdisk create partitions", "command", args)
-	err = executeCommand(sgdiskCommand, args...)
-	if err != nil {
-		log.Error("sgdisk creating partitions failed", "error", err)
-		return fmt.Errorf("unable to create partitions on %s error:%v", disk, err)
-	}
-
-	return nil
-}
-
 func mountPartitions(prefix string, disk Disk) error {
 	log.Info("mount disk", "disk", disk)
 	// "/" must be mounted first
 	partitions := disk.SortByMountPoint()
 
-	// FIXME error handling
 	for _, p := range partitions {
 		err := createFilesystem(p)
 		if err != nil {
@@ -245,7 +215,6 @@ func mountPartitions(prefix string, disk Disk) error {
 		if err != nil {
 			log.Error("unable to mount", "partition", p.Device, "mountPoint", mountPoint, "error", err)
 			return fmt.Errorf("mount partitions mount: %s to:%s failed: %v", p.Device, mountPoint, err)
-
 		}
 	}
 
