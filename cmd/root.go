@@ -39,6 +39,7 @@ func Run(spec *Specification) error {
 		}
 	}
 
+	installationStart := time.Now()
 	info, err := Install(device)
 	if err != nil {
 		return fmt.Errorf("install error: %v", err)
@@ -57,5 +58,6 @@ func Run(spec *Specification) error {
 		}
 	}
 
+	log.Info("installation", "took", time.Since(installationStart))
 	return pkg.RunKexec(info)
 }
