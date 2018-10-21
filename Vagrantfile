@@ -3,7 +3,7 @@
 
 current_file_path = File.dirname(__FILE__)
 kernel_path = File.join(current_file_path, "metal-hammer-kernel")
-initrd_path = File.join(current_file_path, "metal-hammer-initrd.img.gz")
+initrd_path = File.join(current_file_path, "metal-hammer-initrd.img.lz4")
 
 Vagrant.configure("2") do |config|
   config.vm.provider "libvirt" do |domain|
