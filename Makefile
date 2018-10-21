@@ -46,10 +46,11 @@ fast: clean ${BINARY}
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/rngd:usr/sbin/rngd" \
 		-files="/sbin/hdparm:sbin/hdparm" \
+		-files="/usr/sbin/nvme:usr/sbin/nvme" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 		-files="metal-hammer.sh:bbin/uinit" \
 	-o metal-hammer-initrd.img \
-	&& gzip -f metal-hammer-initrd.img \
+	&& lz4 -l metal-hammer-initrd.img \
 	&& rm -f metal-hammer-initrd.img
