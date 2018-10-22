@@ -11,12 +11,10 @@ import (
 	"github.com/jaypipes/ghw"
 )
 
-var hdparmCommand = "/sbin/hdparm"
-
-// TODO for NVMe disks nvme-cli must be used.
-// Secure erase is done via:
-// nvme-cli --format --ses=1 /dev/nvme0n1
-// see: https://github.com/linux-nvme/nvme-cli/blob/master/Documentation/nvme-format.txt
+var (
+	hdparmCommand = "/sbin/hdparm"
+	nvmeCommand   = "/usr/sbin/nvme"
+)
 
 // WipeDisks will erase all content and partitions of all existing Disks
 func WipeDisks(spec *Specification) error {
@@ -61,6 +59,8 @@ const bs = uint64(10240)
 func wipe(device string, bytes uint64) error {
 	if isSEDAvailable(device) {
 		return secureErase(device)
+	} else if isNVMeDisk(device) {
+		return secureEraseNVMe(device)
 	}
 	return wipeSlow(device, bytes)
 }
@@ -114,6 +114,25 @@ func isSEDAvailable(device string) bool {
 		return true
 	}
 	return false
+}
+
+func isNVMeDisk(device string) bool {
+	if strings.HasPrefix(device, "/dev/nvm") {
+		return true
+	}
+	return false
+}
+
+// Secure erase is done via:
+// nvme-cli --format --ses=1 /dev/nvme0n1
+// see: https://github.com/linux-nvme/nvme-cli/blob/master/Documentation/nvme-format.txt
+func secureEraseNVMe(device string) error {
+	log.Info("start very fast deleting of existing data on", "disk", device)
+	err := executeCommand(nvmeCommand, "--format", "--ses=1", device)
+	if err != nil {
+		return fmt.Errorf("unable to secure erase nvme disk %s error:%v", device, err)
+	}
+	return nil
 }
 
 func secureErase(device string) error {
