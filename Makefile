@@ -35,7 +35,7 @@ ${INITRD}:
 
 initrd: ${INITRD}
 
-fast: clean ${BINARY}
+ramdisk:
 	u-root \
 		-format=cpio -build=bb \
 		-files="bin/metal-hammer:bbin/metal-hammer" \
@@ -52,5 +52,5 @@ fast: clean ${BINARY}
 		-files="metal.key.pub:authorized_keys" \
 		-files="metal-hammer.sh:bbin/uinit" \
 	-o metal-hammer-initrd.img \
-	&& lz4 -l metal-hammer-initrd.img \
+	&& lz4 -f -l metal-hammer-initrd.img metal-hammer-initrd.img.lz4 \
 	&& rm -f metal-hammer-initrd.img

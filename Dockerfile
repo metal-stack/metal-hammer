@@ -21,6 +21,7 @@ RUN apt-get update \
 	gcc \
 	gdisk \
 	hdparm \
+	liblz4-tool \
 	nvme-cli \
 	rng-tools
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
@@ -33,25 +34,10 @@ WORKDIR /work
 COPY metal.key /work/
 COPY metal.key.pub /work/
 COPY metal-hammer.sh /work/
+COPY Makefile /work/
 COPY --from=metal-hammer-builder /work/bin/metal-hammer /work/bin/
-RUN u-root \
-		-format=cpio -build=bb \
-		-files="bin/metal-hammer:bbin/metal-hammer" \
-		-files="/sbin/sgdisk:usr/bin/sgdisk" \
-		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
-		-files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
-		-files="/sbin/mke2fs:sbin/mke2fs" \
-		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
-		-files="/usr/sbin/rngd:usr/sbin/rngd" \
-		-files="/sbin/hdparm:sbin/hdparm" \
-		-files="/usr/sbin/nvme:usr/sbin/nvme" \
-		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
-		-files="metal.key:id_rsa" \
-		-files="metal.key.pub:authorized_keys" \
-		-files="metal-hammer.sh:bbin/uinit" \
-	-o metal-hammer-initrd.img \
- && gzip -f metal-hammer-initrd.img
+RUN make ramdisk
 
 FROM scratch
 COPY --from=metal-hammer-builder /work/bin/metal-hammer /
-COPY --from=initrd-builder /work/metal-hammer-initrd.img.gz /
+COPY --from=initrd-builder /work/metal-hammer-initrd.img.lz4 /
