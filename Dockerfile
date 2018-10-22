@@ -22,8 +22,7 @@ RUN apt-get update \
 	gdisk \
 	hdparm \
 	liblz4-tool \
-	nvme-cli \
-	rng-tools
+	nvme-cli
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \

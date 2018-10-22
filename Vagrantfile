@@ -9,6 +9,7 @@ Vagrant.configure("2") do |config|
   config.vm.provider "libvirt" do |domain|
     domain.default_prefix = "metal-hammer"
     domain.keymap = 'de'
+    domain.random :model => 'random'
   end
 
   config.vm.define :pxeclient do |pxeclient|
