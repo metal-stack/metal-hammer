@@ -31,6 +31,7 @@ func Run(spec *Specification) error {
 			},
 			Hostname:  "devmode",
 			SSHPubKey: "not a valid ssh public key, can be specified during device create.",
+			IP:        "10.0.1.2/24",
 		}
 	} else {
 		device, err = Wait(spec.InstallURL, uuid)

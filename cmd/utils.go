@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -113,4 +114,19 @@ func executeCommand(name string, arg ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
 	return cmd.Run()
+}
+
+// we start to calculate ASNs for devices with the first ASN in the 32bit ASN range and
+// add the last 2 octets of the ip of the device to achieve unique ASNs per vrf
+const asnbase = 4200000000
+
+func ipToASN(ipaddress string) (int64, error) {
+
+	ip, _, err := net.ParseCIDR(ipaddress)
+	if err != nil {
+		return int64(-1), fmt.Errorf("unable to parse ip %v", err)
+	}
+
+	asn := asnbase + int64(ip[14])*256 + int64(ip[15])
+	return asn, nil
 }

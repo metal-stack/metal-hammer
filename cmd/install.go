@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -117,6 +118,10 @@ type Disk struct {
 type InstallerConfig struct {
 	Hostname     string `yaml:"hostname"`
 	SSHPublicKey string `yaml:"sshpublickey"`
+	// is expected to be in the form without mask
+	IPAddress string `yaml:"ipaddress"`
+	// must be calculated from the last 4 byte of the IPAddress
+	ASN string `yaml:"asn"`
 }
 
 // init set calculated Device of every partition
@@ -436,9 +441,21 @@ func writeInstallerConfig(device *Device) error {
 	}
 	destination := path.Join(configdir, "install.yaml")
 
+	ip, _, err := net.ParseCIDR(device.IP)
+	if err != nil {
+		return fmt.Errorf("unable to parse ip from device.ip: %v", err)
+	}
+
+	asn, err := ipToASN(device.IP)
+	if err != nil {
+		return fmt.Errorf("unable to parse ip from device.ip: %v", err)
+	}
+
 	y := &InstallerConfig{
 		Hostname:     device.Hostname,
 		SSHPublicKey: device.SSHPubKey,
+		IPAddress:    ip.String(),
+		ASN:          fmt.Sprintf("%d", asn),
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
