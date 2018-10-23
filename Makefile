@@ -5,7 +5,7 @@ BUILDDATE := $(shell date -Iseconds)
 VERSION := $(or ${VERSION},devel)
 
 BINARY := bin/metal-hammer
-INITRD := metal-hammer-initrd.img.gz
+INITRD := metal-hammer-initrd.img.lz4
 
 .PHONY: clean initrd
 
