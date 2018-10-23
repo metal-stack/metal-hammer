@@ -18,6 +18,8 @@ type Specification struct {
 	ImageURL string
 	// DevMode turn on devmode which prevents failing in some situations
 	DevMode bool
+	// BGPEnabled if set to true real bgp configuration is configured, otherwise dhcp will be used
+	BGPEnabled bool
 }
 
 // Log print configuration options
@@ -28,5 +30,6 @@ func (s *Specification) Log() {
 		"installURL", s.InstallURL,
 		"imageURL", s.ImageURL,
 		"devmode", s.DevMode,
+		"bgpenabled", s.BGPEnabled,
 	)
 }

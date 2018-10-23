@@ -25,13 +25,17 @@ func Run(spec *Specification) error {
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	var device *Device
 	if spec.DevMode {
+		ip := "10.0.1.2/24"
+		if !spec.BGPEnabled {
+			ip = "dhcp"
+		}
 		device = &Device{
 			Image: &Image{
 				Url: spec.ImageURL,
 			},
 			Hostname:  "devmode",
 			SSHPubKey: "not a valid ssh public key, can be specified during device create.",
-			IP:        "10.0.1.2/24",
+			IP:        ip,
 		}
 	} else {
 		device, err = Wait(spec.InstallURL, uuid)

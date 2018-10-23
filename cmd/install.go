@@ -441,20 +441,27 @@ func writeInstallerConfig(device *Device) error {
 	}
 	destination := path.Join(configdir, "install.yaml")
 
-	ip, _, err := net.ParseCIDR(device.IP)
-	if err != nil {
-		return fmt.Errorf("unable to parse ip from device.ip: %v", err)
-	}
+	var ipaddress string
+	var asn int64
+	if device.IP == "dhcp" {
+		ipaddress = device.IP
+	} else {
+		ip, _, err := net.ParseCIDR(device.IP)
+		if err != nil {
+			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
+		}
 
-	asn, err := ipToASN(device.IP)
-	if err != nil {
-		return fmt.Errorf("unable to parse ip from device.ip: %v", err)
+		asn, err = ipToASN(device.IP)
+		if err != nil {
+			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
+		}
+		ipaddress = ip.String()
 	}
 
 	y := &InstallerConfig{
 		Hostname:     device.Hostname,
 		SSHPublicKey: device.SSHPubKey,
-		IPAddress:    ip.String(),
+		IPAddress:    ipaddress,
 		ASN:          fmt.Sprintf("%d", asn),
 	}
 	yamlContent, err := yaml.Marshal(y)

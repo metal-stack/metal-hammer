@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/cmd"
@@ -45,7 +46,6 @@ func main() {
 	} else {
 		level = log.LvlInfo
 	}
-	spec.Log()
 
 	h := log.CallerFileHandler(log.StdoutHandler)
 	h = log.LvlFilterHandler(level, h)
@@ -62,6 +62,15 @@ func main() {
 		spec.ImageURL = i
 		spec.DevMode = true
 	}
+
+	if bgp, ok := envmap["BGP"]; ok {
+		enabled, err := strconv.ParseBool(bgp)
+		if err == nil {
+			spec.BGPEnabled = enabled
+		}
+	}
+
+	spec.Log()
 
 	err = cmd.Run(&spec)
 	if err != nil {
