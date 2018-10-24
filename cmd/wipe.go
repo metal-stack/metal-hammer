@@ -70,7 +70,7 @@ func wipeSlow(device string, bytes uint64) error {
 	count := bytes / bs
 	bsArg := fmt.Sprintf("bs=%d", bs)
 	countArg := fmt.Sprintf("count=%d", count)
-	err := executeCommand("/bbin/dd", "if=/dev/zero", "of="+device, bsArg, countArg)
+	err := executeCommand("/bbin/dd", "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
 	if err != nil {
 		log.Error("overwrite of existing data with dd failed", "disk", device, "error", err)
 		return err
