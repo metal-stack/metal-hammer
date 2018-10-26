@@ -8,7 +8,4 @@
 
 /bbin/sshd -port 22 &
 
-# golang hardware gather lib needs syslog file to get physical memory.
-/bbin/dmesg > /var/log/syslog
-
 /bbin/metal-hammer

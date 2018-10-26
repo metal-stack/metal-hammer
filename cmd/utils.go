@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
+	"unsafe"
 
 	log "github.com/inconshreveable/log15"
 	pb "gopkg.in/cheggaaa/pb.v1"
@@ -129,4 +131,18 @@ func ipToASN(ipaddress string) (int64, error) {
 
 	asn := asnbase + int64(ip[14])*256 + int64(ip[15])
 	return asn, nil
+}
+
+const _SYSLOG_ACTION_READ_ALL = 3
+
+func createSyslog() error {
+	level := uintptr(_SYSLOG_ACTION_READ_ALL)
+
+	b := make([]byte, 256*1024)
+	amt, _, err := syscall.Syscall(syscall.SYS_SYSLOG, level, uintptr(unsafe.Pointer(&b[0])), uintptr(len(b)))
+	if err != 0 {
+		return err
+	}
+
+	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0666)
 }

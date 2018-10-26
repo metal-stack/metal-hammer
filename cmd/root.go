@@ -17,6 +17,11 @@ func Run(spec *Specification) error {
 		return fmt.Errorf("wipe error: %v", err)
 	}
 
+	err = createSyslog()
+	if err != nil {
+		return fmt.Errorf("unable to write kernel boot message to /var/log/syslog, info:%v", err)
+	}
+
 	uuid, err := RegisterDevice(spec)
 	if !spec.DevMode && err != nil {
 		return fmt.Errorf("register error: %v", err)
