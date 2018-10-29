@@ -38,7 +38,7 @@ initrd: ${INITRD}
 ramdisk:
 	u-root \
 		-format=cpio -build=bb \
-		-files="bin/metal-hammer:bbin/metal-hammer" \
+		-files="bin/metal-hammer:bbin/uinit" \
 		-files="/sbin/sgdisk:usr/bin/sgdisk" \
 		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
 		-files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
@@ -49,7 +49,6 @@ ramdisk:
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
-		-files="metal-hammer.sh:bbin/uinit" \
 	-o metal-hammer-initrd.img \
 	&& lz4 -f -l metal-hammer-initrd.img metal-hammer-initrd.img.lz4 \
 	&& rm -f metal-hammer-initrd.img
