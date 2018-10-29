@@ -12,6 +12,7 @@ Vagrant.configure("2") do |config|
     domain.random :model => 'random'
   end
 
+  # dummy ip address to force vagrant to create a second interface in the guest.
   config.vm.network "private_network", :ip => "10.254.254.254", auto_config: false
 
   config.vm.define :pxeclient do |pxeclient|
@@ -30,7 +31,7 @@ Vagrant.configure("2") do |config|
       domain.initrd = initrd_path
       domain.cmd_line = "console=tty0 console=ttyS0 ip=dhcp " \
           "METAL_CORE_URL=http://192.168.121.110:4242 " \
-          "IMAGE_URL=http://192.168.121.1:4711/images/os/ubuntu/18.10/img.tar.lz4 " \
+          "IMAGE_URL=http://192.168.121.1:4711/images/os/alpine/3.8/img.tar.lz4 " \
           "BGP=1"
       domain.loader = "/usr/share/OVMF/OVMF_CODE.fd"
     end
