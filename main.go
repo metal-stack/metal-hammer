@@ -132,7 +132,6 @@ func getInternalIP() string {
 	}
 	if ip != nil {
 		return ip.String()
-	} else {
-		return ""
 	}
+	return ""
 }
