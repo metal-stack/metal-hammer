@@ -11,15 +11,9 @@ import (
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/cmd"
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metallib/version"
 	log "github.com/inconshreveable/log15"
 	"github.com/kelseyhightower/envconfig"
-)
-
-var (
-	version   = "devel"
-	revision  string
-	gitsha1   string
-	builddate string
 )
 
 func main() {
@@ -47,7 +41,7 @@ func main() {
 	}
 
 	fmt.Print(cmd.Hammer)
-	log.Info("metal-hammer", "version", getVersionString())
+	log.Info("metal-hammer", "version", version.V)
 	var level log.Lvl
 	if spec.Debug {
 		level = log.LvlDebug
@@ -87,20 +81,6 @@ func main() {
 		time.Sleep(wait)
 		pkg.Reboot()
 	}
-}
-
-func getVersionString() string {
-	var versionString = version
-	if gitsha1 != "" {
-		versionString += " (" + gitsha1 + ")"
-	}
-	if revision != "" {
-		versionString += ", " + revision
-	}
-	if builddate != "" {
-		versionString += ", " + builddate
-	}
-	return versionString
 }
 
 func startSSHD() error {

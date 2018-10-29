@@ -4,6 +4,8 @@ GITVERSION := $(shell git describe --long --all)
 BUILDDATE := $(shell date -Iseconds)
 VERSION := $(or ${VERSION},devel)
 
+export GOPROXY := https://gomods.fi-ts.io
+
 BINARY := bin/metal-hammer
 INITRD := metal-hammer-initrd.img.lz4
 
@@ -20,10 +22,10 @@ ${BINARY}: clean test
 	GO111MODULE=on \
 	go build \
 		-tags netgo \
-		-ldflags "-X 'main.version=$(VERSION)' \
-				  -X 'main.revision=$(GITVERSION)' \
-				  -X 'main.gitsha1=$(SHA)' \
-				  -X 'main.builddate=$(BUILDDATE)'" \
+		-ldflags "-X 'git.f-i-ts.de/cloud-native/metallib/version.Version=$(VERSION)' \
+				  -X 'git.f-i-ts.de/cloud-native/metallib/version.Revision=$(GITVERSION)' \
+				  -X 'git.f-i-ts.de/cloud-native/metallib/version.Gitsha1=$(SHA)' \
+				  -X 'git.f-i-ts.de/cloud-native/metallib/version.Builddate=$(BUILDDATE)'" \
 	-o $@
 
 clean:

@@ -1,6 +1,7 @@
 module git.f-i-ts.de/cloud-native/maas/metal-hammer
 
 require (
+	git.f-i-ts.de/cloud-native/metallib/version v0.0.0-20181029133253-78cdbc943347
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
