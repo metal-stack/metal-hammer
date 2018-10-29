@@ -32,7 +32,6 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
 WORKDIR /work
 COPY metal.key /work/
 COPY metal.key.pub /work/
-COPY metal-hammer.sh /work/
 COPY Makefile /work/
 COPY --from=metal-hammer-builder /work/bin/metal-hammer /work/bin/
 RUN make ramdisk
