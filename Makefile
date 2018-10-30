@@ -1,5 +1,7 @@
-INITRD := metal-hammer-initrd.img.lz4
 BINARY := metal-hammer
+INITRD := ${BINARY}-initrd.img
+COMPRESSOR := lz4
+INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../../common)
 
@@ -7,14 +9,14 @@ include $(COMMONDIR)/Makefile.inc
 
 .PHONY: clean
 clean::
-	rm ${INITRD}
+	rm -f ${INITRD} ${INITRD_COMPRESSED}
 
-${INITRD}:
-	rm -f ${INITRD}
+${INITRD_COMPRESSED}:
+	rm -f ${INITRD_COMPRESSED}
 	docker-make --no-push --Lint
 
 .PHONY: initrd
-initrd: ${INITRD}
+initrd: ${INITRD_COMPRESSED}
 
 .PHONY: ramdisk
 ramdisk:
@@ -31,6 +33,6 @@ ramdisk:
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
-	-o metal-hammer-initrd.img \
-	&& lz4 -f -l metal-hammer-initrd.img metal-hammer-initrd.img.lz4 \
-	&& rm -f metal-hammer-initrd.img
+	-o ${INITRD} \
+	&& lz4 -f -l ${INITRD} ${INITRD_COMPRESSED} \
+	&& rm -f ${INITRD}
