@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	gonet "net"
 	"net/http"
 	"strings"
 	"time"
@@ -106,7 +107,17 @@ func RegisterDevice(spec *Specification) (string, error) {
 		return "", fmt.Errorf("unable to get system nic(s), info:%v", err)
 	}
 	nics := []Nic{}
+	loFound := false
 	for _, n := range net.NICs {
+		_, err := gonet.ParseMAC(n.MacAddress)
+		if err != nil {
+			log.Debug("skip interface with invalid mac", "interface", n.Name, "mac", n.MacAddress)
+			continue
+		}
+		// check if after mac validation loopback is still present
+		if n.Name == "lo" {
+			loFound = true
+		}
 		features := []string{}
 		if n.EnabledFeatures != nil {
 			features = n.EnabledFeatures
@@ -119,6 +130,15 @@ func RegisterDevice(spec *Specification) (string, error) {
 		}
 		nics = append(nics, nic)
 	}
+	// add a lo interface if not present
+	if !loFound {
+		lo := Nic{
+			MacAddress: "00:00:00:00:00:00",
+			Name:       "lo",
+		}
+		nics = append(nics, lo)
+	}
+
 	hw.Nics = nics
 
 	blockInfo, err := ghw.Block()
@@ -155,7 +175,7 @@ func register(url string, hw registerRequest) (string, error) {
 	req, err := http.NewRequest(http.MethodPost, e, bytes.NewBuffer(hwJSON))
 	req.Header.Set("Content-Type", "application/json")
 
-	log.Info("registering device", "uuid", hw.UUID)
+	log.Info("registering device", "details", hw)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
