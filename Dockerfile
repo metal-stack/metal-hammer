@@ -1,15 +1,4 @@
-FROM golang:1.11-stretch as metal-hammer-builder
-RUN apt-get update \
- && apt-get install -y make git
-WORKDIR /work
-COPY .git /work/
-COPY go.mod /work/
-COPY go.sum /work/
-COPY main.go /work/
-COPY cmd /work/cmd/
-COPY pkg /work/pkg/
-COPY Makefile /work/
-RUN make bin/metal-hammer
+FROM registry.fi-ts.io/cloud-native/go-builder:latest as builder
 
 FROM golang:1.11-stretch as initrd-builder
 ENV UROOT_GIT_SHA=edd248adfa09bfe392ba0f552f6574dbd37e1747
@@ -33,9 +22,11 @@ WORKDIR /work
 COPY metal.key /work/
 COPY metal.key.pub /work/
 COPY Makefile /work/
-COPY --from=metal-hammer-builder /work/bin/metal-hammer /work/bin/
-RUN make ramdisk
+COPY .git /work/
+COPY --from=builder /common /common
+COPY --from=builder /work/bin/metal-hammer /work/bin/
+RUN COMMONDIR=/common make ramdisk
 
 FROM scratch
-COPY --from=metal-hammer-builder /work/bin/metal-hammer /
+COPY --from=builder /work/bin/metal-hammer /
 COPY --from=initrd-builder /work/metal-hammer-initrd.img.lz4 /

@@ -1,42 +1,22 @@
-.ONESHELL:
-SHA := $(shell git rev-parse --short=8 HEAD)
-GITVERSION := $(shell git describe --long --all)
-BUILDDATE := $(shell date -Iseconds)
-VERSION := $(or ${VERSION},devel)
-
-export GOPROXY := https://gomods.fi-ts.io
-
-BINARY := bin/metal-hammer
 INITRD := metal-hammer-initrd.img.lz4
+BINARY := metal-hammer
+MAINMODULE := .
+COMMONDIR := $(or ${COMMONDIR},../../common)
 
-.PHONY: clean initrd
+include $(COMMONDIR)/Makefile.inc
 
-all: $(BINARY)
-
-test:
-	GO111MODULE=on \
-	go test -v -race -cover $(shell go list ./...)
-
-${BINARY}: clean test
-	CGO_ENABLED=0 \
-	GO111MODULE=on \
-	go build \
-		-tags netgo \
-		-ldflags "-X 'git.f-i-ts.de/cloud-native/metallib/version.Version=$(VERSION)' \
-				  -X 'git.f-i-ts.de/cloud-native/metallib/version.Revision=$(GITVERSION)' \
-				  -X 'git.f-i-ts.de/cloud-native/metallib/version.Gitsha1=$(SHA)' \
-				  -X 'git.f-i-ts.de/cloud-native/metallib/version.Builddate=$(BUILDDATE)'" \
-	-o $@
-
-clean:
-	rm -f ${BINARY} ${INITRD}
+.PHONY: clean
+clean::
+	rm ${INITRD}
 
 ${INITRD}:
 	rm -f ${INITRD}
 	docker-make --no-push --Lint
 
+.PHONY: initrd
 initrd: ${INITRD}
 
+.PHONY: ramdisk
 ramdisk:
 	u-root \
 		-format=cpio -build=bb \
