@@ -443,15 +443,15 @@ func writeInstallerConfig(device *Device) error {
 
 	var ipaddress string
 	var asn int64
-	if device.IP == "dhcp" {
-		ipaddress = device.IP
+	if device.Cidr == "dhcp" {
+		ipaddress = device.Cidr
 	} else {
-		ip, _, err := net.ParseCIDR(device.IP)
+		ip, _, err := net.ParseCIDR(device.Cidr)
 		if err != nil {
 			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
 		}
 
-		asn, err = ipToASN(device.IP)
+		asn, err = ipToASN(device.Cidr)
 		if err != nil {
 			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
 		}
