@@ -192,10 +192,12 @@ func register(url string, hw registerRequest) (string, error) {
 		return "", fmt.Errorf("POST of hw %s to register endpoint:%s did not succeed %v response body:%s", string(hwJSON), url, resp.Status, body)
 	}
 
+	log.Info("register device returned", "response", body)
 	result := make(map[string]string)
 	var uuid string
 	err = json.Unmarshal(body, &result)
 	if err != nil {
+		log.Error("unable to unmarshal register response", "error", err)
 		uuid = "unknown"
 	} else {
 		uuid = result["id"]
