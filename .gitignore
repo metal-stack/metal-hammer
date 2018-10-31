@@ -3,6 +3,7 @@ vendor
 .idea
 .vscode
 .vagrant
+metal-core
 metal-hammer
 metal-hammer.tar
 metal-hammer-initrd.img.lz4
