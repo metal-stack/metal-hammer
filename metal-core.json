@@ -1,0 +1,490 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Resource for managing PXE clients",
+    "title": "metal-core",
+    "contact": {
+      "name": "Devops Team",
+      "url": "http://www.f-i-ts.de",
+      "email": "devops@f-i-ts.de"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "http://mit.org"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/device/install/{id}": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "device"
+        ],
+        "summary": "install device by ID",
+        "operationId": "installEndpoint",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "identifier of the device",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          }
+        }
+      }
+    },
+    "/device/register/{id}": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "device"
+        ],
+        "summary": "register device by ID",
+        "operationId": "registerEndpoint",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "identifier of the device",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/domain.MetalHammerRegisterDeviceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Accepted"
+          },
+          "default": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          }
+        }
+      }
+    },
+    "/device/report/{id}": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "device"
+        ],
+        "summary": "report device by ID",
+        "operationId": "reportEndpoint",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "identifier of the device",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/core.Report"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          },
+          "406": {
+            "description": "Not acceptable"
+          },
+          "500": {
+            "description": "Accepted"
+          },
+          "default": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          }
+        }
+      }
+    },
+    "/v1/boot/{mac}": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "boot"
+        ],
+        "summary": "boot device by mac",
+        "operationId": "bootEndpoint",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "mac of a network interface of the device",
+            "name": "mac",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/core.BootResponse"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/core.BootResponse"
+            }
+          },
+          "default": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/core.BootResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "core.BootResponse": {
+      "required": [
+        "kernel",
+        "initrd",
+        "cmdline"
+      ],
+      "properties": {
+        "cmdline": {
+          "type": "string"
+        },
+        "initrd": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "kernel": {
+          "type": "string"
+        }
+      }
+    },
+    "core.Report": {
+      "required": [
+        "success",
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "description": "if installation failed, the error message",
+          "type": "string"
+        },
+        "success": {
+          "description": "true if installation succeeded",
+          "type": "boolean"
+        }
+      }
+    },
+    "domain.MetalHammerRegisterDeviceRequest": {
+      "required": [
+        "cpu_cores",
+        "disks",
+        "memory",
+        "nics",
+        "uuid"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "disks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalBlockDevice"
+          }
+        },
+        "memory": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "nics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalNic"
+          }
+        },
+        "uuid": {
+          "description": "the uuid of the device to register",
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalBlockDevice": {
+      "required": [
+        "name",
+        "size"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "models.MetalDevice": {
+      "required": [
+        "cidr",
+        "hardware",
+        "hostname",
+        "id",
+        "image",
+        "name",
+        "project",
+        "site",
+        "size",
+        "ssh_pub_key"
+      ],
+      "properties": {
+        "changed": {
+          "type": "string"
+        },
+        "cidr": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "hardware": {
+          "$ref": "#/definitions/models.MetalDeviceHardware"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "image": {
+          "$ref": "#/definitions/models.MetalImage"
+        },
+        "name": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string"
+        },
+        "site": {
+          "$ref": "#/definitions/models.MetalFacility"
+        },
+        "size": {
+          "$ref": "#/definitions/models.MetalSize"
+        },
+        "ssh_pub_key": {
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalDeviceHardware": {
+      "required": [
+        "cpu_cores",
+        "disks",
+        "memory",
+        "nics"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "disks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalBlockDevice"
+          }
+        },
+        "memory": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "nics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalNic"
+          }
+        }
+      }
+    },
+    "models.MetalFacility": {
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "changed": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalImage": {
+      "required": [
+        "id",
+        "name",
+        "url"
+      ],
+      "properties": {
+        "changed": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalNic": {
+      "required": [
+        "features",
+        "mac",
+        "name",
+        "vendor"
+      ],
+      "properties": {
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mac": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalSize": {
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "changed": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Booting PXE clients",
+      "name": "boot"
+    },
+    {
+      "description": "Managing PXE boot clients",
+      "name": "device"
+    }
+  ]
+}

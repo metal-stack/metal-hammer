@@ -36,3 +36,7 @@ ramdisk:
 	-o ${INITRD} \
 	&& lz4 -f -l ${INITRD} ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}
+
+generate-client:
+	mkdir metal-core \
+	&& GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core
