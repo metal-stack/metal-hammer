@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
+
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
 	"github.com/mholt/archiver"
@@ -132,16 +134,16 @@ func init() {
 }
 
 // Wait until a device create request was fired
-func Wait(url, uuid string) (*Device, error) {
-	log.Info("waiting for install, long polling", "uuid", uuid)
-	e := fmt.Sprintf("%v/%v", url, uuid)
+func Wait(url, uuid string) (*models.ModelsMetalDevice, error) {
+	e := fmt.Sprintf("http://%v/device/install/%v", url, uuid)
+	log.Info("waiting for install, long polling", "url", e, "uuid", uuid)
 
 	var resp *http.Response
 	var err error
 	for {
 		resp, err = http.Get(e)
 		if err != nil || resp.StatusCode != http.StatusOK {
-			log.Warn("wait for install failed, retrying...", "error", err)
+			log.Warn("wait for install failed, retrying...", "error", err, "statuscode", resp.StatusCode)
 		} else {
 			break
 		}
@@ -153,7 +155,7 @@ func Wait(url, uuid string) (*Device, error) {
 		return nil, fmt.Errorf("wait for install reading response failed with: %v", err)
 	}
 
-	var device Device
+	var device models.ModelsMetalDevice
 	err = json.Unmarshal(deviceJSON, &device)
 	if err != nil {
 		return nil, fmt.Errorf("wait for install could not unmarshal response with error: %v", err)
@@ -164,8 +166,8 @@ func Wait(url, uuid string) (*Device, error) {
 }
 
 // Install a given image to the disk by using genuinetools/img
-func Install(device *Device) (*pkg.Bootinfo, error) {
-	image := device.Image.Url
+func Install(device *models.ModelsMetalDevice) (*pkg.Bootinfo, error) {
+	image := *device.Image.URL
 	err := partition(defaultDisk)
 	if err != nil {
 		return nil, err
@@ -348,8 +350,8 @@ type mount struct {
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
-	log.Info("install image", "image", device.Image.Url)
+func install(prefix string, device *models.ModelsMetalDevice) (*pkg.Bootinfo, error) {
+	log.Info("install image", "image", device.Image.URL)
 	mounts := []mount{
 		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
 		mount{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
@@ -432,7 +434,7 @@ func install(prefix string, device *Device) (*pkg.Bootinfo, error) {
 	return info, nil
 }
 
-func writeInstallerConfig(device *Device) error {
+func writeInstallerConfig(device *models.ModelsMetalDevice) error {
 	log.Info("write installation configuration")
 	configdir := path.Join(prefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -443,15 +445,15 @@ func writeInstallerConfig(device *Device) error {
 
 	var ipaddress string
 	var asn int64
-	if device.Cidr == "dhcp" {
-		ipaddress = device.Cidr
+	if *device.Cidr == "dhcp" {
+		ipaddress = *device.Cidr
 	} else {
-		ip, _, err := net.ParseCIDR(device.Cidr)
+		ip, _, err := net.ParseCIDR(*device.Cidr)
 		if err != nil {
 			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
 		}
 
-		asn, err = ipToASN(device.Cidr)
+		asn, err = ipToASN(*device.Cidr)
 		if err != nil {
 			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
 		}
@@ -459,8 +461,8 @@ func writeInstallerConfig(device *Device) error {
 	}
 
 	y := &InstallerConfig{
-		Hostname:     device.Hostname,
-		SSHPublicKey: device.SSHPubKey,
+		Hostname:     *device.Hostname,
+		SSHPublicKey: *device.SSHPubKey,
 		IPAddress:    ipaddress,
 		ASN:          fmt.Sprintf("%d", asn),
 	}

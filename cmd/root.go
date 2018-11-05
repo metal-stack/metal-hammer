@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
+
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
 )
@@ -28,19 +30,21 @@ func Run(spec *Specification) error {
 	}
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
-	var device *Device
+	var device *models.ModelsMetalDevice
 	if spec.DevMode {
 		cidr := "10.0.1.2/24"
 		if !spec.BGPEnabled {
 			cidr = "dhcp"
 		}
-		device = &Device{
-			Image: &Image{
-				Url: spec.ImageURL,
+		hostname := "devmode"
+		sshkey := "not a valid ssh public key, can be specified during device create."
+		device = &models.ModelsMetalDevice{
+			Image: &models.ModelsMetalImage{
+				URL: &spec.ImageURL,
 			},
-			Hostname:  "devmode",
-			SSHPubKey: "not a valid ssh public key, can be specified during device create.",
-			Cidr:      cidr,
+			Hostname:  &hostname,
+			SSHPubKey: &sshkey,
+			Cidr:      &cidr,
 		}
 	} else {
 		device, err = Wait(spec.InstallURL, uuid)

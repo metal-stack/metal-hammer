@@ -1,6 +1,7 @@
 BINARY := metal-hammer
 INITRD := ${BINARY}-initrd.img
 COMPRESSOR := lz4
+COMPRESSOR_ARGS := -f -l
 INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../../common)
@@ -34,9 +35,10 @@ ramdisk:
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 	-o ${INITRD} \
-	&& lz4 -f -l ${INITRD} ${INITRD_COMPRESSED} \
+	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}
 
 generate-client:
-	mkdir metal-core \
+	rm -rf metal-core \
+	&& mkdir metal-core \
 	&& GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core

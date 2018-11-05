@@ -54,10 +54,10 @@ func main() {
 	log.Root().SetHandler(h)
 
 	// METAL_CORE_URL must be in the form http://metal-core:4242
-	if i, ok := envmap["METAL_CORE_URL"]; ok {
-		spec.InstallURL = i + "/device/install"
-		spec.RegisterURL = i + "/device/register"
-		spec.ReportURL = i + "/device/report"
+	if url, ok := envmap["METAL_CORE_ADDRESS"]; ok {
+		spec.InstallURL = url
+		spec.RegisterURL = url
+		spec.ReportURL = url
 	}
 
 	if i, ok := envmap["IMAGE_URL"]; ok {
@@ -74,6 +74,7 @@ func main() {
 
 	spec.Log()
 
+	os.Setenv("DEBUG", "1")
 	err = cmd.Run(&spec)
 	if err != nil {
 		wait := 5 * time.Second
