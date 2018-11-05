@@ -9,7 +9,6 @@ before_script:
 metal-hammer:
   stage: build
   script:
-    - make generate-client
     - docker-make --no-push --Lint
     - mkdir images
     - mv metal-hammer-initrd.img.lz4 images

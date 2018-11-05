@@ -25,7 +25,7 @@ COPY Makefile /work/
 COPY .git /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/bin/metal-hammer /work/bin/
-RUN COMMONDIR=/common make ramdisk
+RUN COMMONDIR=/common make generate-client ramdisk
 
 FROM scratch
 COPY --from=builder /work/bin/metal-hammer /
