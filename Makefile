@@ -6,7 +6,7 @@ INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../../common)
 
-in-docker: genrate-client all;
+in-docker: generate-client all;
 
 include $(COMMONDIR)/Makefile.inc
 
