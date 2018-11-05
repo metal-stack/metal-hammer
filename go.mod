@@ -3,6 +3,12 @@ module git.f-i-ts.de/cloud-native/maas/metal-hammer
 require (
 	git.f-i-ts.de/cloud-native/metallib/version v0.0.0-20181029133253-78cdbc943347
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
+	github.com/fatih/color v1.7.0 // indirect
+	github.com/go-openapi/errors v0.17.0
+	github.com/go-openapi/runtime v0.17.2
+	github.com/go-openapi/strfmt v0.17.0
+	github.com/go-openapi/swag v0.17.0
+	github.com/go-openapi/validate v0.17.0
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
@@ -18,8 +24,8 @@ require (
 	github.com/pierrec/lz4 v2.0.5+incompatible
 	github.com/u-root/u-root v2.0.0+incompatible
 	github.com/ulikunitz/xz v0.5.4 // indirect
+	golang.org/x/net v0.0.0-20181005035420-146acd28ed58
 	golang.org/x/sys v0.0.0-20180921163948-d47a0f339242
-	golang.org/x/vgo v0.0.0-20180912184537-9d567625acf4 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.25
 	gopkg.in/yaml.v2 v2.2.1
 )
