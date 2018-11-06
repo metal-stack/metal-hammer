@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -42,6 +43,12 @@ func main() {
 
 	fmt.Print(cmd.Hammer)
 	log.Info("metal-hammer", "version", version.V)
+
+	if d, ok := envmap["DEBUG"]; ok && (d == "1" || strings.ToLower(d) == "true") {
+		spec.Debug = true
+		os.Setenv("DEBUG", "1")
+	}
+
 	var level log.Lvl
 	if spec.Debug {
 		level = log.LvlDebug
@@ -74,7 +81,6 @@ func main() {
 
 	spec.Log()
 
-	os.Setenv("DEBUG", "1")
 	err = cmd.Run(&spec)
 	if err != nil {
 		wait := 5 * time.Second
