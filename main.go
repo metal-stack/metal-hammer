@@ -89,6 +89,7 @@ func startSSHD() error {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
+	cmd.Env = os.Environ()
 	err := cmd.Start()
 	if err != nil {
 		return fmt.Errorf("unable to start sshd info:%v", err)
