@@ -3,11 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
-
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/client/device"
-	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
 
 	log "github.com/inconshreveable/log15"
 )
@@ -23,27 +20,23 @@ func (r *Report) String() string {
 }
 
 // ReportInstallation will tell metal-core the result of the installation
-func ReportInstallation(url, uuid string, installError error) error {
-	transport := httptransport.New(url, "", nil)
-	client := device.New(transport, strfmt.Default)
-
-	params := device.NewReportEndpointParams()
-
-	report := &models.CoreReport{}
-	report.Success = true
+func (h *Hammer) ReportInstallation(uuid string, installError error) error {
+	report := &models.CoreReport{
+		Success: true,
+	}
 	if installError != nil {
 		message := installError.Error()
 		report.Success = false
 		report.Message = &message
 	}
 
+	params := device.NewReportEndpointParams()
 	params.SetBody(report)
 	params.ID = uuid
-	resp, err := client.ReportEndpoint(params)
+	resp, err := h.Client.ReportEndpoint(params)
 	if err != nil {
 		return fmt.Errorf("unable to report image installation error:%v", err)
 	}
-
 	log.Info("report image installation was successful", "response", resp.Payload)
 	return nil
 }

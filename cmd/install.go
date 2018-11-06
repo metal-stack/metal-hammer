@@ -134,8 +134,8 @@ func init() {
 }
 
 // Wait until a device create request was fired
-func Wait(url, uuid string) (*models.ModelsMetalDevice, error) {
-	e := fmt.Sprintf("http://%v/device/install/%v", url, uuid)
+func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDevice, error) {
+	e := fmt.Sprintf("http://%v/device/install/%v", h.Spec.MetalCoreURL, uuid)
 	log.Info("waiting for install, long polling", "url", e, "uuid", uuid)
 
 	var resp *http.Response

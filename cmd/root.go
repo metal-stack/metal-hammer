@@ -4,17 +4,34 @@ import (
 	"fmt"
 	"time"
 
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/client/device"
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
+	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	log "github.com/inconshreveable/log15"
 )
+
+// Hammer is the machine which forms a bare metal to a working server
+type Hammer struct {
+	Client *device.Client
+	Spec   *Specification
+}
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(spec *Specification) error {
 	log.Info("metal-hammer run", "firmware", pkg.Firmware())
 
-	err := WipeDisks(spec)
+	transport := httptransport.New(spec.MetalCoreURL, "", nil)
+	client := device.New(transport, strfmt.Default)
+
+	hammer := &Hammer{
+		Client: client,
+		Spec:   spec,
+	}
+
+	err := hammer.WipeDisks()
 	if err != nil {
 		return fmt.Errorf("wipe error: %v", err)
 	}
@@ -24,7 +41,7 @@ func Run(spec *Specification) error {
 		return fmt.Errorf("unable to write kernel boot message to /var/log/syslog, info:%v", err)
 	}
 
-	uuid, err := RegisterDevice(spec)
+	uuid, err := hammer.RegisterDevice()
 	if !spec.DevMode && err != nil {
 		return fmt.Errorf("register error: %v", err)
 	}
@@ -47,7 +64,7 @@ func Run(spec *Specification) error {
 			Cidr:      &cidr,
 		}
 	} else {
-		device, err = Wait(spec.InstallURL, uuid)
+		device, err = hammer.Wait(uuid)
 		if err != nil {
 			return fmt.Errorf("wait for installation error: %v", err)
 		}
@@ -59,7 +76,7 @@ func Run(spec *Specification) error {
 		return fmt.Errorf("install error: %v", err)
 	}
 
-	err = ReportInstallation(spec.ReportURL, uuid, err)
+	err = hammer.ReportInstallation(uuid, err)
 	if err != nil {
 		wait := 10 * time.Second
 		log.Error("report installation failed", "reboot in", wait, "error", err)

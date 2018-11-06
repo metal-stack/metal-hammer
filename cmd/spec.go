@@ -8,12 +8,8 @@ import (
 type Specification struct {
 	// Debug turn on debug log
 	Debug bool
-	// ReportURL is the endpoint URL where to report installation success
-	ReportURL string
-	// RegisterURL is the endpoint where to send device discovery information
-	RegisterURL string
-	// InstallURL the url where to get the installation from
-	InstallURL string
+	// MetalCoreURL is the endpoint URL where the metalcore reside
+	MetalCoreURL string
 	// ImageURL if given grabs a fixed OS image to install, only suitable in DevMode
 	ImageURL string
 	// DevMode turn on devmode which prevents failing in some situations
@@ -26,8 +22,7 @@ type Specification struct {
 func (s *Specification) Log() {
 	log.Info("configuration",
 		"debug", s.Debug,
-		"reportURL", s.ReportURL,
-		"installURL", s.InstallURL,
+		"metalCoreURL", s.MetalCoreURL,
 		"imageURL", s.ImageURL,
 		"devmode", s.DevMode,
 		"bgpenabled", s.BGPEnabled,

@@ -17,8 +17,8 @@ var (
 )
 
 // WipeDisks will erase all content and partitions of all existing Disks
-func WipeDisks(spec *Specification) error {
-	log.Info("wipe all disks", "devmode", spec.DevMode)
+func (h *Hammer) WipeDisks() error {
+	log.Info("wipe all disks", "devmode", h.Spec.DevMode)
 	block, err := ghw.Block()
 	if err != nil {
 		return fmt.Errorf("unable to gather disks: %v", err)

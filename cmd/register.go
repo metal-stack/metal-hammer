@@ -8,8 +8,6 @@ import (
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/client/device"
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
-	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
 
 	log "github.com/inconshreveable/log15"
 
@@ -17,7 +15,7 @@ import (
 )
 
 // RegisterDevice register a device at the metal-api via metal-core
-func RegisterDevice(spec *Specification) (string, error) {
+func (h *Hammer) RegisterDevice() (string, error) {
 	hw := &models.DomainMetalHammerRegisterDeviceRequest{}
 
 	memory, err := ghw.Memory()
@@ -97,33 +95,25 @@ func RegisterDevice(spec *Specification) (string, error) {
 
 	uuid := strings.TrimSpace(string(productUUID))
 	hw.UUID = &uuid
-	return register(spec.RegisterURL, hw)
-}
-
-func register(url string, hw *models.DomainMetalHammerRegisterDeviceRequest) (string, error) {
-	log.Info("registering device", "uuid", *hw.UUID)
-
-	transport := httptransport.New(url, "", nil)
-	client := device.New(transport, strfmt.Default)
 
 	params := device.NewRegisterEndpointParams()
 	params.SetBody(hw)
-	params.ID = *hw.UUID
-	resp, err := client.RegisterEndpoint(params)
+	params.ID = uuid
+	resp, err := h.Client.RegisterEndpoint(params)
 
 	if err != nil {
-		return "", fmt.Errorf("unable to register device: %v", err.Error())
+		return "", fmt.Errorf("unable to register device:%#v error:%#v", hw, err.Error())
+	}
+	if resp == nil {
+		return "", fmt.Errorf("unable to register device:%#v response payload is nil", hw)
 	}
 
 	log.Info("register device returned", "response", resp.Payload)
-
-	uuid := *resp.Payload.ID
-
 	// FIXME add different logging based on created/already registered
 	// if resp.StatusCode() == http.StatusOK {
 	//	log.Info("device already registered", "uuid", uuid)
 	//} else if resp.StatusCode == http.StatusCreated {
 	//	log.Info("device registered", "uuid", uuid)
 	//}
-	return uuid, nil
+	return *resp.Payload.ID, nil
 }

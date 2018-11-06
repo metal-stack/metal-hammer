@@ -40,7 +40,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Print(cmd.Hammer)
+	fmt.Print(cmd.HammerBanner)
 	log.Info("metal-hammer", "version", version.V)
 	var level log.Lvl
 	if spec.Debug {
@@ -55,9 +55,7 @@ func main() {
 
 	// METAL_CORE_URL must be in the form http://metal-core:4242
 	if url, ok := envmap["METAL_CORE_ADDRESS"]; ok {
-		spec.InstallURL = url
-		spec.RegisterURL = url
-		spec.ReportURL = url
+		spec.MetalCoreURL = url
 	}
 
 	if i, ok := envmap["IMAGE_URL"]; ok {

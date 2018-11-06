@@ -7,12 +7,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/client/device"
+	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 )
 
 func TestReportInstallation(t *testing.T) {
 	expected := "an error occured"
 	resp := &Report{}
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			t.Error(err)
@@ -21,10 +26,23 @@ func TestReportInstallation(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-	}))
+	})
+	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
-	err := ReportInstallation(ts.URL, expected, errors.New("an error occured"))
+	spec := &Specification{
+		MetalCoreURL: ts.Listener.Addr().String(),
+	}
+
+	transport := httptransport.New(spec.MetalCoreURL, "", nil)
+	client := device.New(transport, strfmt.Default)
+
+	h := &Hammer{
+		Client: client,
+		Spec:   spec,
+	}
+
+	err := h.ReportInstallation(expected, errors.New("an error occured"))
 	if err != nil {
 		t.Error(err)
 	}
