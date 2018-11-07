@@ -124,9 +124,8 @@ func executeCommand(name string, arg ...string) error {
 
 // we start to calculate ASNs for devices with the first ASN in the 32bit ASN range and
 // add the last 2 octets of the ip of the device to achieve unique ASNs per vrf
-const asnbase = 4200000000
-
 func ipToASN(ipaddress string) (int64, error) {
+	const asnbase = 4200000000
 
 	ip, _, err := net.ParseCIDR(ipaddress)
 	if err != nil {
@@ -137,10 +136,11 @@ func ipToASN(ipaddress string) (int64, error) {
 	return asn, nil
 }
 
-const _SYSLOG_ACTION_READ_ALL = 3
-
+// save the content of kernel ringbuffer to /var/log/syslog
+// by calling the appropriate syscall.
 func createSyslog() error {
-	level := uintptr(_SYSLOG_ACTION_READ_ALL)
+	const SyslogActionReadAll = 3
+	level := uintptr(SyslogActionReadAll)
 
 	b := make([]byte, 256*1024)
 	amt, _, err := syscall.Syscall(syscall.SYS_SYSLOG, level, uintptr(unsafe.Pointer(&b[0])), uintptr(len(b)))
