@@ -26,6 +26,7 @@ ramdisk:
 	u-root \
 		-format=cpio -build=bb \
 		-files="bin/metal-hammer:bbin/uinit" \
+		-files="/sbin/ethtool:sbin/ethtool" \
 		-files="/sbin/sgdisk:usr/bin/sgdisk" \
 		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
 		-files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
