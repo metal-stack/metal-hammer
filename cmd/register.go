@@ -47,15 +47,9 @@ func (h *Hammer) RegisterDevice() (string, error) {
 		if n.Name == "lo" {
 			loFound = true
 		}
-		features := []string{}
-		if n.EnabledFeatures != nil {
-			features = n.EnabledFeatures
-		}
 		nic := &models.ModelsMetalNic{
-			Mac:      &n.MacAddress,
-			Name:     &n.Name,
-			Vendor:   &n.Vendor,
-			Features: features,
+			Mac:  &n.MacAddress,
+			Name: &n.Name,
 		}
 		nics = append(nics, nic)
 	}
