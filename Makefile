@@ -21,19 +21,21 @@ ${INITRD_COMPRESSED}:
 .PHONY: initrd
 initrd: ${INITRD_COMPRESSED}
 
+
+# place all binaries in the same directory (/sbin) which is in the PATH of root.
 .PHONY: ramdisk
 ramdisk:
 	u-root \
 		-format=cpio -build=bb \
 		-files="bin/metal-hammer:bbin/uinit" \
 		-files="/sbin/ethtool:sbin/ethtool" \
-		-files="/sbin/sgdisk:usr/bin/sgdisk" \
+		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
 		-files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
 		-files="/sbin/mke2fs:sbin/mke2fs" \
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/sbin/hdparm:sbin/hdparm" \
-		-files="/usr/sbin/nvme:usr/sbin/nvme" \
+		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \

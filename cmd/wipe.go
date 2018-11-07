@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	hdparmCommand = "/sbin/hdparm"
-	nvmeCommand   = "/usr/sbin/nvme"
+	hdparmCommand = "hdparm"
+	nvmeCommand   = "nvme"
 )
 
 // WipeDisks will erase all content and partitions of all existing Disks

@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	ext4MkFsCommand  = "/sbin/mkfs.ext4"
-	ext3MkFsCommand  = "/sbin/mkfs.ext3"
-	fat32MkFsCommand = "/sbin/mkfs.vfat"
-	mkswapCommand    = "/sbin/mkswap"
+	ext4MkFsCommand  = "mkfs.ext4"
+	ext3MkFsCommand  = "mkfs.ext3"
+	fat32MkFsCommand = "mkfs.vfat"
+	mkswapCommand    = "mkswap"
 )
 
 func createFilesystem(p *Partition) error {

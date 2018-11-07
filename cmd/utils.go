@@ -112,7 +112,11 @@ func checkMD5(file, md5file string) (bool, error) {
 
 // small helper to execute a command, redirect stdout/stderr.
 func executeCommand(name string, arg ...string) error {
-	cmd := exec.Command(name, arg...)
+	path, err := exec.LookPath(name)
+	if err != nil {
+		return fmt.Errorf("unable to locate program:%s in path info:%v", name, err)
+	}
+	cmd := exec.Command(path, arg...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
 	return cmd.Run()

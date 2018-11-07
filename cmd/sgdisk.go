@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	sgdiskCommand = "/usr/bin/sgdisk"
+	sgdiskCommand = "sgdisk"
 )
 
 func partition(disk Disk) error {
