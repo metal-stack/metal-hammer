@@ -134,7 +134,7 @@ func init() {
 }
 
 // Wait until a device create request was fired
-func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDevice, error) {
+func Wait(uuid string) (*models.ModelsMetalDeviceWithPhoneHomeToken, error) {
 	e := fmt.Sprintf("http://%v/device/install/%v", h.Spec.MetalCoreURL, uuid)
 	log.Info("waiting for install, long polling", "url", e, "uuid", uuid)
 
@@ -155,18 +155,20 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDevice, error) {
 		return nil, fmt.Errorf("wait for install reading response failed with: %v", err)
 	}
 
-	var device models.ModelsMetalDevice
-	err = json.Unmarshal(deviceJSON, &device)
+	var deviceWithToken models.ModelsMetalDeviceWithPhoneHomeToken
+	err = json.Unmarshal(deviceJSON, &deviceWithToken)
 	if err != nil {
 		return nil, fmt.Errorf("wait for install could not unmarshal response with error: %v", err)
 	}
-	log.Info("stopped waiting got", "device", device)
+	log.Info("stopped waiting got", "deviceWithToken", deviceWithToken)
 
-	return &device, nil
+	return &deviceWithToken, nil
 }
 
 // Install a given image to the disk by using genuinetools/img
-func Install(device *models.ModelsMetalDevice) (*pkg.Bootinfo, error) {
+func Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeToken) (*pkg.Bootinfo, error) {
+	device := deviceWithToken.Device
+	phtoken := deviceWithToken.PhoneHomeToken
 	image := *device.Image.URL
 	err := partition(defaultDisk)
 	if err != nil {
@@ -187,7 +189,7 @@ func Install(device *models.ModelsMetalDevice) (*pkg.Bootinfo, error) {
 		return nil, err
 	}
 
-	info, err := install(prefix, device)
+	info, err := install(prefix, device, *phtoken)
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +352,7 @@ type mount struct {
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func install(prefix string, device *models.ModelsMetalDevice) (*pkg.Bootinfo, error) {
+func install(prefix string, device *models.ModelsMetalDevice, phoneHomeToken string) (*pkg.Bootinfo, error) {
 	log.Info("install image", "image", device.Image.URL)
 	mounts := []mount{
 		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
@@ -370,6 +372,11 @@ func install(prefix string, device *models.ModelsMetalDevice) (*pkg.Bootinfo, er
 	err := writeInstallerConfig(device)
 	if err != nil {
 		return nil, fmt.Errorf("writing configuration install.yaml failed:%v", err)
+	}
+
+	err = writePhoneHomeToken(phoneHomeToken)
+	if err != nil {
+		return nil, fmt.Errorf("writing phoneHome.jwt failed:%v", err)
 	}
 
 	log.Info("running /install.sh on", "prefix", prefix)
@@ -432,6 +439,12 @@ func install(prefix string, device *models.ModelsMetalDevice) (*pkg.Bootinfo, er
 	}
 
 	return info, nil
+}
+
+func writePhoneHomeToken(phoneHomeToken string) error {
+	configdir := path.Join(prefix, "etc", "metal")
+	destination := path.Join(configdir, "phoneHome.jwt")
+	return ioutil.WriteFile(destination, []byte(phoneHomeToken), 0600)
 }
 
 func writeInstallerConfig(device *models.ModelsMetalDevice) error {

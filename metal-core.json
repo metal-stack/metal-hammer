@@ -41,7 +41,7 @@
      "200": {
       "description": "OK",
       "schema": {
-       "$ref": "#/definitions/models.MetalDevice"
+       "$ref": "#/definitions/models.MetalDeviceWithPhoneHomeToken"
       }
      },
      "404": {
@@ -50,8 +50,50 @@
      "default": {
       "description": "OK",
       "schema": {
-       "$ref": "#/definitions/models.MetalDevice"
+       "$ref": "#/definitions/models.MetalDeviceWithPhoneHomeToken"
       }
+     }
+    }
+   }
+  },
+  "/device/phoneHome": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "tags": [
+     "device"
+    ],
+    "summary": "phone back home from the device",
+    "operationId": "phoneHomeEndpoint",
+    "parameters": [
+     {
+      "name": "body",
+      "in": "body",
+      "required": true,
+      "schema": {
+       "$ref": "#/definitions/domain.MetalHammerPhoneHomeRequest"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     },
+     "400": {
+      "description": "Bad Request"
+     },
+     "404": {
+      "description": "Device could not be found by id"
+     },
+     "500": {
+      "description": "Internal Server Error"
+     },
+     "default": {
+      "description": "OK"
      }
     }
    }
@@ -246,12 +288,24 @@
     }
    }
   },
+  "domain.MetalHammerPhoneHomeRequest": {
+   "required": [
+    "phone_home_token"
+   ],
+   "properties": {
+    "phone_home_token": {
+     "description": "the jwt that was issued for the device",
+     "type": "string"
+    }
+   }
+  },
   "domain.MetalHammerRegisterDeviceRequest": {
    "required": [
+    "nics",
     "cpu_cores",
     "disks",
     "memory",
-    "nics"
+    "uuid"
    ],
    "properties": {
     "cpu_cores": {
@@ -333,6 +387,9 @@
     "image": {
      "$ref": "#/definitions/models.MetalImage"
     },
+    "last_ping": {
+     "type": "string"
+    },
     "name": {
      "type": "string"
     },
@@ -377,6 +434,20 @@
      "items": {
       "$ref": "#/definitions/models.MetalNic"
      }
+    }
+   }
+  },
+  "models.MetalDeviceWithPhoneHomeToken": {
+   "required": [
+    "device",
+    "phone_home_token"
+   ],
+   "properties": {
+    "device": {
+     "$ref": "#/definitions/models.MetalDevice"
+    },
+    "phone_home_token": {
+     "type": "string"
     }
    }
   },

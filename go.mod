@@ -30,7 +30,7 @@ require (
 	github.com/pierrec/lz4 v2.0.5+incompatible
 	github.com/u-root/u-root v2.0.0+incompatible
 	github.com/ulikunitz/xz v0.5.5 // indirect
-	golang.org/x/net v0.0.0-20181106065722-10aee1819953
+	golang.org/x/net v0.0.0-20181108082009-03003ca0c849
 	golang.org/x/sys v0.0.0-20181106135930-3a76605856fd
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.26
