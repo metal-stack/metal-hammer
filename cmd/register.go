@@ -88,7 +88,7 @@ func (h *Hammer) RegisterDevice() (string, error) {
 	}
 
 	uuid := strings.TrimSpace(string(productUUID))
-	hw.UUID = &uuid
+	hw.UUID = uuid
 
 	params := device.NewRegisterEndpointParams()
 	params.SetBody(hw)
