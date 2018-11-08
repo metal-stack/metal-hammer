@@ -16,6 +16,8 @@ type Specification struct {
 	DevMode bool
 	// BGPEnabled if set to true real bgp configuration is configured, otherwise dhcp will be used
 	BGPEnabled bool
+	// Cidr of BGP interface in DEV Mode
+	Cidr string
 }
 
 // Log print configuration options
@@ -26,5 +28,6 @@ func (s *Specification) Log() {
 		"imageURL", s.ImageURL,
 		"devmode", s.DevMode,
 		"bgpenabled", s.BGPEnabled,
+		"cidr", s.Cidr,
 	)
 }

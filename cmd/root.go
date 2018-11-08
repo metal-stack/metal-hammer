@@ -50,6 +50,10 @@ func Run(spec *Specification) error {
 	var device *models.ModelsMetalDevice
 	if spec.DevMode {
 		cidr := "10.0.1.2/24"
+		if spec.Cidr != "" {
+			cidr = spec.Cidr
+		}
+
 		if !spec.BGPEnabled {
 			cidr = "dhcp"
 		}
