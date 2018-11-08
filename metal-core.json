@@ -304,8 +304,7 @@
     "nics",
     "cpu_cores",
     "disks",
-    "memory",
-    "uuid"
+    "memory"
    ],
    "properties": {
     "cpu_cores": {
