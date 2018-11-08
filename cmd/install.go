@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"compress/gzip"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -18,7 +15,6 @@ import (
 	"time"
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
-
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
 	"github.com/mholt/archiver"
@@ -287,34 +283,17 @@ func burn(prefix, image string) error {
 		return fmt.Errorf("unable to stat %s error: %v", source, err)
 	}
 
-	var creader io.ReadCloser
-	var csize int64
-	isLZ4 := strings.HasSuffix(image, "lz4")
-	isGZIP := strings.HasSuffix(image, "gz")
-	if isLZ4 {
-		lz4Reader := lz4.NewReader(file)
-		log.Info("lz4", "size", lz4Reader.Header.Size)
-		creader = ioutil.NopCloser(lz4Reader)
-		// wild guess for lz4 compression ratio
-		// lz4 is a stream format and therefore the
-		// final size cannot be calculated upfront
-		csize = stat.Size() * 2
-	} else if isGZIP {
-		creader, err = gzip.NewReader(file)
-		if err != nil {
-			return fmt.Errorf("error decompressing: %v", err)
-		}
-		// last four bytes of the gzip contain the uncompressed file size
-		buf := make([]byte, 4)
-		start := stat.Size() - 4
-		_, err = file.ReadAt(buf, start)
-		if err != nil {
-			return fmt.Errorf("cannot read uncompressed file size of gzip: %v", err)
-		}
-		csize = int64(binary.LittleEndian.Uint32(buf))
-	} else {
+	if !strings.HasSuffix(image, "lz4") {
 		return fmt.Errorf("unsupported image compression format of image:%s", image)
 	}
+
+	lz4Reader := lz4.NewReader(file)
+	log.Info("lz4", "size", lz4Reader.Header.Size)
+	creader := ioutil.NopCloser(lz4Reader)
+	// wild guess for lz4 compression ratio
+	// lz4 is a stream format and therefore the
+	// final size cannot be calculated upfront
+	csize := stat.Size() * 2
 	defer creader.Close()
 
 	bar := pb.New64(csize).SetUnits(pb.U_BYTES)
@@ -379,6 +358,7 @@ func install(prefix string, device *models.ModelsMetalDevice) (*pkg.Bootinfo, er
 	}
 	cmd := exec.Command("/install.sh")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+	// these syscalls are required to execute the command in a chroot env.
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Credential: &syscall.Credential{
 			Uid:    uint32(0),
