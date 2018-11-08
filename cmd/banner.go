@@ -1,6 +1,6 @@
 package cmd
 
-// Hammer our mighty logo.
+// HammerBanner our mighty logo.
 const HammerBanner = `
       metal-hammer             .
                                |\
