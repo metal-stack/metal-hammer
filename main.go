@@ -67,6 +67,11 @@ func main() {
 		spec.DevMode = true
 	}
 
+	if c, ok := envmap["CIDR"]; ok {
+		spec.Cidr = c
+		spec.DevMode = true
+	}
+
 	if bgp, ok := envmap["BGP"]; ok {
 		enabled, err := strconv.ParseBool(bgp)
 		if err == nil {
