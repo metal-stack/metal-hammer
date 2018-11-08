@@ -13,7 +13,17 @@ metal-hammer:
     - mkdir images
     - md5sum metal-hammer-initrd.img.lz4 > metal-hammer-initrd.img.lz4.md5
     - mv metal-hammer-initrd.img.lz4* images/
-    - cp cmdline images/metal-hammer-cmdline
     - mc cp --recursive images fits/metal
   only:
     - master
+metal-hammer-tag:
+  stage: build
+  script:
+    - docker-make --no-push --Lint
+    - mkdir images
+    - mv metal-hammer-initrd.img.lz4 metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4
+    - md5sum metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4 > metal-hammer-initrd.img-${CI_COMMIT_TAG}.lz4.md5
+    - mv metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4* images/
+    - mc cp --recursive images fits/metal
+  only:
+    - tags
