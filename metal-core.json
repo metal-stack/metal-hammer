@@ -214,9 +214,7 @@
  "definitions": {
   "core.BootResponse": {
    "required": [
-    "kernel",
-    "initrd",
-    "cmdline"
+    "initrd"
    ],
    "properties": {
     "cmdline": {
