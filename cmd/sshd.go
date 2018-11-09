@@ -30,15 +30,18 @@ func StartSSHD() error {
 }
 
 func getInternalIP() string {
-	itf, _ := net.InterfaceByName("eth0")
-	item, _ := itf.Addrs()
 	var ip net.IP
-	for _, addr := range item {
-		switch v := addr.(type) {
-		case *net.IPNet:
-			if !v.IP.IsLoopback() {
-				if v.IP.To4() != nil { //Verify if IP is IPV4
-					ip = v.IP
+	interfaces := []string{"eth0", "eth1"}
+	for _, eth := range interfaces {
+		itf, _ := net.InterfaceByName(eth)
+		item, _ := itf.Addrs()
+		for _, addr := range item {
+			switch v := addr.(type) {
+			case *net.IPNet:
+				if !v.IP.IsLoopback() {
+					if v.IP.To4() != nil {
+						ip = v.IP
+					}
 				}
 			}
 		}
