@@ -16,24 +16,52 @@ import (
 
 // RegisterDevice register a device at the metal-api via metal-core
 func (h *Hammer) RegisterDevice() (string, error) {
+	hw, err := readHardwareDetails()
+	if err != nil {
+		return "", fmt.Errorf("unable to read all hardware details error:%v", err)
+	}
+	params := device.NewRegisterEndpointParams()
+	params.SetBody(hw)
+	params.ID = hw.UUID
+	resp, err := h.Client.RegisterEndpoint(params)
+
+	if err != nil {
+		return "", fmt.Errorf("unable to register device:%#v error:%#v", hw, err.Error())
+	}
+	if resp == nil {
+		return "", fmt.Errorf("unable to register device:%#v response payload is nil", hw)
+	}
+
+	log.Info("register device returned", "response", resp.Payload)
+	// FIXME add different logging based on created/already registered
+	// if resp.StatusCode() == http.StatusOK {
+	//	log.Info("device already registered", "uuid", uuid)
+	//} else if resp.StatusCode == http.StatusCreated {
+	//	log.Info("device registered", "uuid", uuid)
+	//}
+	return *resp.Payload.ID, nil
+}
+
+
+func readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceRequest, error) {
 	hw := &models.DomainMetalHammerRegisterDeviceRequest{}
 
 	memory, err := ghw.Memory()
 	if err != nil {
-		return "", fmt.Errorf("unable to get system memory, info:%v", err)
+		return nil, fmt.Errorf("unable to get system memory, info:%v", err)
 	}
 	hw.Memory = &memory.TotalPhysicalBytes
 
 	cpu, err := ghw.CPU()
 	if err != nil {
-		return "", fmt.Errorf("unable to get system cpu(s), info:%v", err)
+		return nil, fmt.Errorf("unable to get system cpu(s), info:%v", err)
 	}
 	cores := int64(cpu.TotalCores)
 	hw.CPUCores = &cores
 
 	net, err := ghw.Network()
 	if err != nil {
-		return "", fmt.Errorf("unable to get system nic(s), info:%v", err)
+		return nil, fmt.Errorf("unable to get system nic(s), info:%v", err)
 	}
 	nics := []*models.ModelsMetalNic{}
 	loFound := false
@@ -54,6 +82,8 @@ func (h *Hammer) RegisterDevice() (string, error) {
 		nics = append(nics, nic)
 	}
 	// add a lo interface if not present
+	// this is required to have this interface present
+	// in our DCIM management to add a ip later.
 	if !loFound {
 		mac := "00:00:00:00:00:00"
 		name := "lo"
@@ -68,7 +98,7 @@ func (h *Hammer) RegisterDevice() (string, error) {
 
 	blockInfo, err := ghw.Block()
 	if err != nil {
-		return "", fmt.Errorf("unable to get system block devices, info:%v", err)
+		return nil, fmt.Errorf("unable to get system block devices, info:%v", err)
 	}
 	disks := []*models.ModelsMetalBlockDevice{}
 	for _, disk := range blockInfo.Disks {
@@ -90,24 +120,5 @@ func (h *Hammer) RegisterDevice() (string, error) {
 	uuid := strings.TrimSpace(string(productUUID))
 	hw.UUID = uuid
 
-	params := device.NewRegisterEndpointParams()
-	params.SetBody(hw)
-	params.ID = uuid
-	resp, err := h.Client.RegisterEndpoint(params)
-
-	if err != nil {
-		return "", fmt.Errorf("unable to register device:%#v error:%#v", hw, err.Error())
-	}
-	if resp == nil {
-		return "", fmt.Errorf("unable to register device:%#v response payload is nil", hw)
-	}
-
-	log.Info("register device returned", "response", resp.Payload)
-	// FIXME add different logging based on created/already registered
-	// if resp.StatusCode() == http.StatusOK {
-	//	log.Info("device already registered", "uuid", uuid)
-	//} else if resp.StatusCode == http.StatusCreated {
-	//	log.Info("device registered", "uuid", uuid)
-	//}
-	return *resp.Payload.ID, nil
+	return hw, nil
 }
