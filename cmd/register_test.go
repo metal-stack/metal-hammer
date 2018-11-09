@@ -73,7 +73,7 @@ func Test_readHardwareDetails(t *testing.T) {
 				t.Errorf("readHardwareDetails() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got.UUID != tt.want.UUID {
+			if len(got.UUID) != len(tt.want.UUID) {
 				t.Errorf("readHardwareDetails() expected uuid: %s got %s", tt.want.UUID, got.UUID)
 			}
 			if *got.CPUCores == 0 {
