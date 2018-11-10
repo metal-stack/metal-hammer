@@ -147,12 +147,12 @@ func secureErase(device string) error {
 	// first we must set a secure erase password
 	err := executeCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", password, device)
 	if err != nil {
-		return fmt.Errorf("unable to enable secure erase disk %s error: %v", device, err)
+		return fmt.Errorf("unable to set secure erase password disk: %s error: %v", device, err)
 	}
 	// now we can start secure erase
 	err = executeCommand(hdparmCommand, "--user-master", "u", "--security-erase", password, device)
 	if err != nil {
-		return fmt.Errorf("unable to enable secure erase disk %s error: %v", device, err)
+		return fmt.Errorf("unable to secure erase disk: %s error: %v", device, err)
 	}
 	return nil
 }
