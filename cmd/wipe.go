@@ -80,7 +80,7 @@ func wipeSlow(device string, bytes uint64) error {
 }
 
 // isSEDAvailable check the disk if it is a Self Encryption Device
-// check with hdparm -i for Self Encrypting Device, sample output will look like:
+// check with hdparm -I for Self Encrypting Device, sample output will look like:
 // Security:
 //         Master password revision code = 65534
 //                 supported
@@ -92,7 +92,7 @@ func wipeSlow(device string, bytes uint64) error {
 //         6min for SECURITY ERASE UNIT. 32min for ENHANCED SECURITY ERASE UNIT.
 // explanation is here: https://wiki.ubuntuusers.de/SSD/Secure-Erase/
 func isSEDAvailable(device string) bool {
-	cmd := exec.Command(hdparmCommand, "-i", device)
+	cmd := exec.Command(hdparmCommand, "-I", device)
 	output, err := cmd.Output()
 	if err != nil {
 		log.Error("error executing hdparm", "error", err)
@@ -144,9 +144,15 @@ func secureErase(device string) error {
 	// hdparm --user-master u --security-set-pass GEHEIM /dev/sda
 	// FIXME random password
 	password := "GEHEIM"
+	// first we must set a secure erase password
 	err := executeCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", password, device)
 	if err != nil {
-		return fmt.Errorf("unable to secure erase disk %s error: %v", device, err)
+		return fmt.Errorf("unable to enable secure erase disk %s error: %v", device, err)
+	}
+	// now we can start secure erase
+	err = executeCommand(hdparmCommand, "--user-master", "u", "--security-erase", password, device)
+	if err != nil {
+		return fmt.Errorf("unable to enable secure erase disk %s error: %v", device, err)
 	}
 	return nil
 }
