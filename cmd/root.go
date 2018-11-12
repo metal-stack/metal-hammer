@@ -47,7 +47,7 @@ func Run(spec *Specification) error {
 	}
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
-	var device *models.ModelsMetalDevice
+	var deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeToken
 	if spec.DevMode {
 		cidr := "10.0.1.2/24"
 		if spec.Cidr != "" {
@@ -59,23 +59,27 @@ func Run(spec *Specification) error {
 		}
 		hostname := "devmode"
 		sshkey := "not a valid ssh public key, can be specified during device create."
-		device = &models.ModelsMetalDevice{
-			Image: &models.ModelsMetalImage{
-				URL: &spec.ImageURL,
+		fakeToken := "JWT"
+		deviceWithToken = &models.ModelsMetalDeviceWithPhoneHomeToken{
+			Device: &models.ModelsMetalDevice{
+				Image: &models.ModelsMetalImage{
+					URL: &spec.ImageURL,
+				},
+				Hostname:  &hostname,
+				SSHPubKey: &sshkey,
+				Cidr:      &cidr,
 			},
-			Hostname:  &hostname,
-			SSHPubKey: &sshkey,
-			Cidr:      &cidr,
+			PhoneHomeToken: &fakeToken,
 		}
 	} else {
-		device, err = hammer.Wait(uuid)
+		deviceWithToken, err = hammer.Wait(uuid)
 		if err != nil {
 			return fmt.Errorf("wait for installation error: %v", err)
 		}
 	}
 
 	installationStart := time.Now()
-	info, err := Install(device)
+	info, err := Install(deviceWithToken)
 	if err != nil {
 		return fmt.Errorf("install error: %v", err)
 	}
