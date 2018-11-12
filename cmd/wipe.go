@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg/password"
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
 )
@@ -92,7 +93,12 @@ func wipeSlow(device string, bytes uint64) error {
 //         6min for SECURITY ERASE UNIT. 32min for ENHANCED SECURITY ERASE UNIT.
 // explanation is here: https://wiki.ubuntuusers.de/SSD/Secure-Erase/
 func isSEDAvailable(device string) bool {
-	cmd := exec.Command(hdparmCommand, "-I", device)
+	path, err := exec.LookPath(hdparmCommand)
+	if err != nil {
+		log.Error("unable to locate", "command", hdparmCommand, "error", err)
+		return false
+	}
+	cmd := exec.Command(path, "-I", device)
 	output, err := cmd.Output()
 	if err != nil {
 		log.Error("error executing hdparm", "error", err)
@@ -100,19 +106,22 @@ func isSEDAvailable(device string) bool {
 	}
 	hdparmOutput := string(output)
 	if strings.Contains(hdparmOutput, "supported: enhanced erase") {
-
 		scanner := bufio.NewScanner(strings.NewReader(hdparmOutput))
 		for scanner.Scan() {
 			line := scanner.Text()
 			if strings.Contains(line, "frozen") && !strings.Contains(line, "not") {
+				log.Info("sed is not available, disk is frozen")
 				return false
 			}
 			if strings.Contains(line, "supported: enhanced erase") && strings.Contains(line, "not") {
+				log.Info("sed is not available, enhanced erase is not supported")
 				return false
 			}
 		}
+		log.Info("sed is available")
 		return true
 	}
+	log.Info("sed is not available, enhanced erase is not supported")
 	return false
 }
 
@@ -143,14 +152,14 @@ func secureErase(device string) error {
 	log.Info("start fast deleting of existing data on", "disk", device)
 	// hdparm --user-master u --security-set-pass GEHEIM /dev/sda
 	// FIXME random password
-	password := "GEHEIM"
+	pw := password.Generate(10)
 	// first we must set a secure erase password
-	err := executeCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", password, device)
+	err := executeCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", pw, device)
 	if err != nil {
 		return fmt.Errorf("unable to set secure erase password disk: %s error: %v", device, err)
 	}
 	// now we can start secure erase
-	err = executeCommand(hdparmCommand, "--user-master", "u", "--security-erase", password, device)
+	err = executeCommand(hdparmCommand, "--user-master", "u", "--security-erase", pw, device)
 	if err != nil {
 		return fmt.Errorf("unable to secure erase disk: %s error: %v", device, err)
 	}
