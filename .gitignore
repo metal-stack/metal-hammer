@@ -5,6 +5,7 @@ vendor
 .vagrant
 metal-core
 metal-hammer
+metal-hammer.md5
 metal-hammer.tar
 metal-hammer-initrd.img.lz4
 metal-hammer-kernel
