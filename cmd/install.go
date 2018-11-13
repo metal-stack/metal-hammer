@@ -453,9 +453,11 @@ func writeInstallerConfig(device *models.ModelsMetalDevice) error {
 		ipaddress = ip.String()
 	}
 
+	// FIXME
+	sshPubkeys := strings.Join(device.SSHPubKeys, "\n")
 	y := &InstallerConfig{
 		Hostname:     *device.Hostname,
-		SSHPublicKey: *device.SSHPubKey,
+		SSHPublicKey: sshPubkeys,
 		IPAddress:    ipaddress,
 		ASN:          fmt.Sprintf("%d", asn),
 	}

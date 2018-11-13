@@ -62,6 +62,11 @@ func main() {
 		spec.MetalCoreURL = url
 	}
 
+	if port, ok := envmap["IPMI_PORT"]; ok {
+		spec.IPMIPort = port
+		spec.DevMode = true
+	}
+
 	if i, ok := envmap["IMAGE_URL"]; ok {
 		spec.ImageURL = i
 		spec.DevMode = true
@@ -89,5 +94,3 @@ func main() {
 		pkg.Reboot()
 	}
 }
-
-

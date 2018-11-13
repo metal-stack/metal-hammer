@@ -56,48 +56,6 @@
     }
    }
   },
-  "/device/phoneHome": {
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "tags": [
-     "device"
-    ],
-    "summary": "phone back home from the device",
-    "operationId": "phoneHomeEndpoint",
-    "parameters": [
-     {
-      "name": "body",
-      "in": "body",
-      "required": true,
-      "schema": {
-       "$ref": "#/definitions/domain.MetalHammerPhoneHomeRequest"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK"
-     },
-     "400": {
-      "description": "Bad Request"
-     },
-     "404": {
-      "description": "Device could not be found by id"
-     },
-     "500": {
-      "description": "Internal Server Error"
-     },
-     "default": {
-      "description": "OK"
-     }
-    }
-   }
-  },
   "/device/register/{id}": {
    "post": {
     "consumes": [
@@ -288,34 +246,28 @@
     }
    }
   },
-  "domain.MetalHammerPhoneHomeRequest": {
-   "required": [
-    "phone_home_token"
-   ],
-   "properties": {
-    "phone_home_token": {
-     "description": "the jwt that was issued for the device",
-     "type": "string"
-    }
-   }
-  },
   "domain.MetalHammerRegisterDeviceRequest": {
    "required": [
-    "nics",
     "cpu_cores",
     "disks",
-    "memory"
+    "memory",
+    "nics",
+    "ipmi"
    ],
    "properties": {
     "cpu_cores": {
      "type": "integer",
-     "format": "int64"
+     "format": "int32"
     },
     "disks": {
      "type": "array",
      "items": {
       "$ref": "#/definitions/models.MetalBlockDevice"
      }
+    },
+    "ipmi": {
+     "description": "the IPMI connection configuration",
+     "$ref": "#/definitions/models.MetalIPMI"
     },
     "memory": {
      "type": "integer",
@@ -348,6 +300,32 @@
     }
    }
   },
+  "models.MetalConstraint": {
+   "required": [
+    "maxcores",
+    "maxmemory",
+    "mincores",
+    "minmemory"
+   ],
+   "properties": {
+    "maxcores": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxmemory": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "mincores": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minmemory": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
   "models.MetalDevice": {
    "required": [
     "cidr",
@@ -359,7 +337,7 @@
     "project",
     "site",
     "size",
-    "ssh_pub_key"
+    "ssh_pub_keys"
    ],
    "properties": {
     "changed": {
@@ -396,13 +374,16 @@
      "type": "string"
     },
     "site": {
-     "$ref": "#/definitions/models.MetalFacility"
+     "$ref": "#/definitions/models.MetalSite"
     },
     "size": {
      "$ref": "#/definitions/models.MetalSize"
     },
-    "ssh_pub_key": {
-     "type": "string"
+    "ssh_pub_keys": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
     }
    }
   },
@@ -416,7 +397,7 @@
    "properties": {
     "cpu_cores": {
      "type": "integer",
-     "format": "int64"
+     "format": "int32"
     },
     "disks": {
      "type": "array",
@@ -450,25 +431,28 @@
     }
    }
   },
-  "models.MetalFacility": {
+  "models.MetalIPMI": {
    "required": [
-    "id",
-    "name"
+    "address",
+    "interface",
+    "mac",
+    "password",
+    "user"
    ],
    "properties": {
-    "changed": {
+    "address": {
      "type": "string"
     },
-    "created": {
+    "interface": {
      "type": "string"
     },
-    "description": {
+    "mac": {
      "type": "string"
     },
-    "id": {
+    "password": {
      "type": "string"
     },
-    "name": {
+    "user": {
      "type": "string"
     }
    }
@@ -514,14 +498,45 @@
     }
    }
   },
-  "models.MetalSize": {
+  "models.MetalSite": {
    "required": [
+    "description",
     "id",
     "name"
    ],
    "properties": {
     "changed": {
      "type": "string"
+    },
+    "created": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "id": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    }
+   }
+  },
+  "models.MetalSize": {
+   "required": [
+    "constraints",
+    "id",
+    "name"
+   ],
+   "properties": {
+    "changed": {
+     "type": "string"
+    },
+    "constraints": {
+     "type": "array",
+     "items": {
+      "$ref": "#/definitions/models.MetalConstraint"
+     }
     },
     "created": {
      "type": "string"

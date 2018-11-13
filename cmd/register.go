@@ -3,11 +3,14 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	gonet "net"
 	"strings"
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/client/device"
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg/ipmi"
+	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg/password"
 
 	log "github.com/inconshreveable/log15"
 
@@ -16,7 +19,7 @@ import (
 
 // RegisterDevice register a device at the metal-api via metal-core
 func (h *Hammer) RegisterDevice() (string, error) {
-	hw, err := readHardwareDetails()
+	hw, err := h.readHardwareDetails()
 	if err != nil {
 		return "", fmt.Errorf("unable to read all hardware details error:%v", err)
 	}
@@ -42,8 +45,7 @@ func (h *Hammer) RegisterDevice() (string, error) {
 	return *resp.Payload.ID, nil
 }
 
-
-func readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceRequest, error) {
+func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceRequest, error) {
 	hw := &models.DomainMetalHammerRegisterDeviceRequest{}
 
 	memory, err := ghw.Memory()
@@ -56,7 +58,7 @@ func readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceRequest, erro
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system cpu(s), info:%v", err)
 	}
-	cores := int64(cpu.TotalCores)
+	cores := int32(cpu.TotalCores)
 	hw.CPUCores = &cores
 
 	net, err := ghw.Network()
@@ -120,5 +122,53 @@ func readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceRequest, erro
 	uuid := strings.TrimSpace(string(productUUID))
 	hw.UUID = uuid
 
+	ipmiconfig, err := h.readIPMIDetails()
+	if err != nil {
+		return nil, err
+	}
+	hw.IPMI = ipmiconfig
+
 	return hw, nil
+}
+
+const defaultIpmiPort = "623"
+
+var defaultIpmiUser = "metal"
+
+// IPMI configuration and
+func (h *Hammer) readIPMIDetails() (*models.ModelsMetalIPMI, error) {
+	config := ipmi.LanConfig{}
+	pw := password.Generate(10)
+	var i ipmi.Ipmi
+	if h.Spec.DevMode {
+		// Wild guess, set the last octet to 1 to get the gateway
+		gwip := net.ParseIP(h.IPAddress)
+		gwip = gwip.To4()
+		gwip[3] = 1
+
+		config.IP = fmt.Sprintf("%s:%s", gwip, h.Spec.IPMIPort)
+		config.Mac = "00:00:00:00:00:00"
+	} else {
+		var err error
+		i = ipmi.New()
+		// FIXME userid should be verified if available
+		err = i.CreateUser("metal", pw, 2, ipmi.Administrator)
+		if err != nil {
+			return nil, fmt.Errorf("ipmi error: %v", err)
+		}
+		config, err = i.GetLanConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to read ipmi lan configuration, info:%v", err)
+		}
+		config.IP = config.IP + ":" + defaultIpmiPort
+	}
+
+	details := &models.ModelsMetalIPMI{
+		Address:  &config.IP,
+		Mac:      &config.Mac,
+		Password: &pw,
+		User:     &defaultIpmiUser,
+	}
+
+	return details, nil
 }

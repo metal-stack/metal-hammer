@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"testing"
 
 	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/client/device"
@@ -53,8 +54,13 @@ func TestRegisterDevice(t *testing.T) {
 }
 
 func Test_readHardwareDetails(t *testing.T) {
+	type fields struct {
+		Client *device.Client
+		Spec   *Specification
+	}
 	tests := []struct {
 		name    string
+		fields  fields
 		want    *models.DomainMetalHammerRegisterDeviceRequest
 		wantErr bool
 	}{
@@ -68,7 +74,15 @@ func Test_readHardwareDetails(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := readHardwareDetails()
+			h := &Hammer{
+				Client: tt.fields.Client,
+				Spec: &Specification{
+					DevMode:  true,
+					IPMIPort: "6321",
+				},
+				IPAddress: "1.2.3.4",
+			}
+			got, err := h.readHardwareDetails()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("readHardwareDetails() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -81,6 +95,41 @@ func Test_readHardwareDetails(t *testing.T) {
 			}
 			if *got.Memory == 0 {
 				t.Errorf("readHardwareDetails() expected memory: %d", got.Memory)
+			}
+		})
+	}
+}
+
+func TestHammer_readIPMIDetails(t *testing.T) {
+	type fields struct {
+		Client *device.Client
+		Spec   *Specification
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    *models.ModelsMetalIPMI
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &Hammer{
+				Client: tt.fields.Client,
+				Spec: &Specification{
+					DevMode:  true,
+					IPMIPort: "6321",
+				},
+				IPAddress: "1.2.3.4",
+			}
+			got, err := h.readIPMIDetails()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Hammer.readIPMIDetails() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Hammer.readIPMIDetails() = %v, want %v", got, tt.want)
 			}
 		})
 	}

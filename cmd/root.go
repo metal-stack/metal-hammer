@@ -17,6 +17,8 @@ import (
 type Hammer struct {
 	Client *device.Client
 	Spec   *Specification
+	// IPAddress is the ip of the eth0 interface during installation
+	IPAddress string
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
@@ -27,8 +29,9 @@ func Run(spec *Specification) error {
 	client := device.New(transport, strfmt.Default)
 
 	hammer := &Hammer{
-		Client: client,
-		Spec:   spec,
+		Client:    client,
+		Spec:      spec,
+		IPAddress: getInternalIP(),
 	}
 
 	err := hammer.WipeDisks()
@@ -58,16 +61,16 @@ func Run(spec *Specification) error {
 			cidr = "dhcp"
 		}
 		hostname := "devmode"
-		sshkey := "not a valid ssh public key, can be specified during device create."
+		sshkeys := []string{"not a valid ssh public key, can be specified during device create."}
 		fakeToken := "JWT"
 		deviceWithToken = &models.ModelsMetalDeviceWithPhoneHomeToken{
 			Device: &models.ModelsMetalDevice{
 				Image: &models.ModelsMetalImage{
 					URL: &spec.ImageURL,
 				},
-				Hostname:  &hostname,
-				SSHPubKey: &sshkey,
-				Cidr:      &cidr,
+				Hostname:   &hostname,
+				SSHPubKeys: sshkeys,
+				Cidr:       &cidr,
 			},
 			PhoneHomeToken: &fakeToken,
 		}

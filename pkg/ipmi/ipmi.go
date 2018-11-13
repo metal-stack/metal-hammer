@@ -24,6 +24,19 @@ const (
 	NoAccess      = Privilege(15)
 )
 
+// Ipmi defines methods to interact with ipmi
+type Ipmi interface {
+	Run(arg ...string) (string, error)
+	CreateUser(username, password string, uid int, privilege Privilege) error
+	GetLanConfig() (LanConfig, error)
+}
+
+type ipmitool struct{}
+
+func New() Ipmi {
+	return &ipmitool{}
+}
+
 // LanConfig contains the config of ipmi.
 // tag must contain first column name of ipmitool lan print command output
 // to get the second column value be parsed into the field.
@@ -33,10 +46,10 @@ type LanConfig struct {
 }
 
 // GetLanConfig returns the LanConfig
-func GetLanConfig() (LanConfig, error) {
+func (i *ipmitool) GetLanConfig() (LanConfig, error) {
 	config := LanConfig{}
 
-	cmdOutput, err := ipmitool("lan", "print")
+	cmdOutput, err := i.Run("lan", "print")
 	if err != nil {
 		return config, fmt.Errorf("unable to execute ipmitool info:%v", err)
 	}
@@ -48,21 +61,21 @@ func GetLanConfig() (LanConfig, error) {
 }
 
 // CreateUser create a ipmi user with password and privilege level
-func CreateUser(username, password string, uid int, privilege Privilege) error {
-	_, err := ipmitool("user", "set", "name", string(uid), username)
+func (i *ipmitool) CreateUser(username, password string, uid int, privilege Privilege) error {
+	_, err := i.Run("user", "set", "name", string(uid), username)
 	if err != nil {
 		return fmt.Errorf("unable to create user %s info: %v", username, err)
 	}
-	_, err = ipmitool("user", "set", "password", string(uid), password)
+	_, err = i.Run("user", "set", "password", string(uid), password)
 	if err != nil {
 		return fmt.Errorf("unable to set password for user %s info: %v", username, err)
 	}
 	channelnumber := "1"
-	_, err = ipmitool("channel", "setaccess", channelnumber, string(uid), "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
+	_, err = i.Run("channel", "setaccess", channelnumber, string(uid), "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
 	if err != nil {
 		return fmt.Errorf("unable to set privilege for user %s info: %v", username, err)
 	}
-	_, err = ipmitool("user", "enable", string(uid))
+	_, err = i.Run("user", "enable", string(uid))
 	if err != nil {
 		return fmt.Errorf("unable to enable user %s info: %v", username, err)
 	}
@@ -87,7 +100,7 @@ func getLanConfig(cmdOutput string) map[string]string {
 
 var ipmitoolCommand = "ipmitool"
 
-func ipmitool(arg ...string) (string, error) {
+func (i *ipmitool) Run(arg ...string) (string, error) {
 	path, err := exec.LookPath(ipmitoolCommand)
 	if err != nil {
 		return "", fmt.Errorf("unable to locate program:%s in path info:%v", ipmitoolCommand, err)

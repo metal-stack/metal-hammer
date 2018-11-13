@@ -18,6 +18,8 @@ type Specification struct {
 	BGPEnabled bool
 	// Cidr of BGP interface in DEV Mode
 	Cidr string
+	// IPMIPort can be used to override the default IPMIPort during devmode
+	IPMIPort string
 }
 
 // Log print configuration options
@@ -29,5 +31,6 @@ func (s *Specification) Log() {
 		"devmode", s.DevMode,
 		"bgpenabled", s.BGPEnabled,
 		"cidr", s.Cidr,
+		"ipmiport", s.IPMIPort,
 	)
 }
