@@ -106,8 +106,6 @@ func (i *Ipmitool) Run(arg ...string) (string, error) {
 		return "", fmt.Errorf("unable to locate program:%s in path info:%v", i.Command, err)
 	}
 	cmd := exec.Command(path, arg...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stdout
 	output, err := cmd.Output()
 
 	return string(output), err
