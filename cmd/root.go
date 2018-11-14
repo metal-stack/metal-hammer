@@ -61,7 +61,7 @@ func Run(spec *Specification) error {
 			cidr = "dhcp"
 		}
 		hostname := "devmode"
-		sshkeys := []string{"not a valid ssh public key, can be specified during device create."}
+		sshkeys := []string{"not a valid ssh public key, can be specified during device create.", "second public key"}
 		fakeToken := "JWT"
 		deviceWithToken = &models.ModelsMetalDeviceWithPhoneHomeToken{
 			Device: &models.ModelsMetalDevice{

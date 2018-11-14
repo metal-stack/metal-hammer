@@ -32,14 +32,16 @@ func TestRegisterDevice(t *testing.T) {
 	defer ts.Close()
 	spec := &Specification{
 		MetalCoreURL: ts.Listener.Addr().String(),
+		DevMode:      true,
 	}
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := device.New(transport, strfmt.Default)
 
 	h := &Hammer{
-		Client: client,
-		Spec:   spec,
+		Client:    client,
+		Spec:      spec,
+		IPAddress: "1.2.3.4",
 	}
 
 	uuid, err := h.RegisterDevice()

@@ -31,10 +31,12 @@ type Ipmi interface {
 	GetLanConfig() (LanConfig, error)
 }
 
-type ipmitool struct{}
+type Ipmitool struct {
+	Command string
+}
 
 func New() Ipmi {
-	return &ipmitool{}
+	return &Ipmitool{Command: "ipmitool"}
 }
 
 // LanConfig contains the config of ipmi.
@@ -46,7 +48,7 @@ type LanConfig struct {
 }
 
 // GetLanConfig returns the LanConfig
-func (i *ipmitool) GetLanConfig() (LanConfig, error) {
+func (i *Ipmitool) GetLanConfig() (LanConfig, error) {
 	config := LanConfig{}
 
 	cmdOutput, err := i.Run("lan", "print")
@@ -61,7 +63,7 @@ func (i *ipmitool) GetLanConfig() (LanConfig, error) {
 }
 
 // CreateUser create a ipmi user with password and privilege level
-func (i *ipmitool) CreateUser(username, password string, uid int, privilege Privilege) error {
+func (i *Ipmitool) CreateUser(username, password string, uid int, privilege Privilege) error {
 	_, err := i.Run("user", "set", "name", string(uid), username)
 	if err != nil {
 		return fmt.Errorf("unable to create user %s info: %v", username, err)
@@ -98,12 +100,10 @@ func getLanConfig(cmdOutput string) map[string]string {
 	return result
 }
 
-var ipmitoolCommand = "ipmitool"
-
-func (i *ipmitool) Run(arg ...string) (string, error) {
-	path, err := exec.LookPath(ipmitoolCommand)
+func (i *Ipmitool) Run(arg ...string) (string, error) {
+	path, err := exec.LookPath(i.Command)
 	if err != nil {
-		return "", fmt.Errorf("unable to locate program:%s in path info:%v", ipmitoolCommand, err)
+		return "", fmt.Errorf("unable to locate program:%s in path info:%v", i.Command, err)
 	}
 	cmd := exec.Command(path, arg...)
 	cmd.Stdout = os.Stdout
