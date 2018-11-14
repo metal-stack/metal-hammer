@@ -140,7 +140,7 @@ func (h *Hammer) readIPMIDetails() (*models.ModelsMetalIPMI, error) {
 	config := ipmi.LanConfig{}
 	pw := password.Generate(10)
 	var i ipmi.Ipmi
-	if h.Spec.DevMode {
+	if h.Spec.IPMIPort != defaultIpmiPort {
 		// Wild guess, set the last octet to 1 to get the gateway
 		gwip := net.ParseIP(h.IPAddress)
 		gwip = gwip.To4()
