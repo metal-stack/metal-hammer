@@ -14,8 +14,8 @@ import (
 	"syscall"
 	"time"
 
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
 	log "github.com/inconshreveable/log15"
 	"github.com/mholt/archiver"
 	lz4 "github.com/pierrec/lz4"

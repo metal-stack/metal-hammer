@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg/password"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
 )

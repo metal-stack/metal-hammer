@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/client/device"
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 
 	log "github.com/inconshreveable/log15"
 )
@@ -21,7 +21,7 @@ func (r *Report) String() string {
 
 // ReportInstallation will tell metal-core the result of the installation
 func (h *Hammer) ReportInstallation(uuid string, installError error) error {
-	report := &models.CoreReport{
+	report := &models.DomainReport{
 		Success: true,
 	}
 	if installError != nil {
@@ -30,10 +30,10 @@ func (h *Hammer) ReportInstallation(uuid string, installError error) error {
 		report.Message = &message
 	}
 
-	params := device.NewReportEndpointParams()
+	params := device.NewReportParams()
 	params.SetBody(report)
 	params.ID = uuid
-	resp, err := h.Client.ReportEndpoint(params)
+	resp, err := h.Client.Report(params)
 	if err != nil {
 		return fmt.Errorf("unable to report image installation error:%v", err)
 	}

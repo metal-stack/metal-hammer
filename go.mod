@@ -1,4 +1,4 @@
-module git.f-i-ts.de/cloud-native/maas/metal-hammer
+module git.f-i-ts.de/cloud-native/metal/metal-hammer
 
 require (
 	git.f-i-ts.de/cloud-native/metallib v0.0.0-20181106124241-47681819e5fe
@@ -11,7 +11,7 @@ require (
 	github.com/go-openapi/jsonreference v0.17.2 // indirect
 	github.com/go-openapi/loads v0.17.2 // indirect
 	github.com/go-openapi/runtime v0.17.2
-	github.com/go-openapi/spec v0.17.2
+	github.com/go-openapi/spec v0.17.2 // indirect
 	github.com/go-openapi/strfmt v0.17.2
 	github.com/go-openapi/swag v0.17.2
 	github.com/go-openapi/validate v0.17.2

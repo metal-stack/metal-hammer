@@ -7,10 +7,10 @@ import (
 	gonet "net"
 	"strings"
 
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/client/device"
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/models"
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg/ipmi"
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg/password"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 
 	log "github.com/inconshreveable/log15"
 
@@ -23,10 +23,10 @@ func (h *Hammer) RegisterDevice() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to read all hardware details error:%v", err)
 	}
-	params := device.NewRegisterEndpointParams()
+	params := device.NewRegisterParams()
 	params.SetBody(hw)
 	params.ID = hw.UUID
-	resp, err := h.Client.RegisterEndpoint(params)
+	resp, err := h.Client.Register(params)
 
 	if err != nil {
 		return "", fmt.Errorf("unable to register device:%#v error:%#v", hw, err.Error())
