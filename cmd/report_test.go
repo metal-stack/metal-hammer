@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/metal-core/client/device"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 )

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/cmd"
-	"git.f-i-ts.de/cloud-native/maas/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
 	"git.f-i-ts.de/cloud-native/metallib/version"
 	log "github.com/inconshreveable/log15"
 	"github.com/kelseyhightower/envconfig"
