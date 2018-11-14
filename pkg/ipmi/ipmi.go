@@ -6,7 +6,6 @@ package ipmi
 import (
 	"bufio"
 	"fmt"
-	"os"
 	"os/exec"
 	"reflect"
 	"strings"
