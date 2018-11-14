@@ -3,7 +3,7 @@ FROM registry.fi-ts.io/cloud-native/go-builder:latest as builder
 FROM golang:1.11-stretch as initrd-builder
 ENV UROOT_GIT_SHA=e2c0251d0f279e32b90453ec7087d49211d73ce7
 RUN apt-get update \
- && apt-get install -y \
+ && apt-get install -y --no-install-recommends \
 	curl \
 	dosfstools \
 	e2fsprogs \
@@ -11,6 +11,7 @@ RUN apt-get update \
 	gcc \
 	gdisk \
 	hdparm \
+	ipmitool \
 	liblz4-tool \
 	nvme-cli
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
