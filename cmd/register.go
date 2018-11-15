@@ -163,11 +163,13 @@ func (h *Hammer) readIPMIDetails() (*models.ModelsMetalIPMI, error) {
 		config.IP = config.IP + ":" + defaultIpmiPort
 	}
 
+	intf := "lanplus"
 	details := &models.ModelsMetalIPMI{
-		Address:  &config.IP,
-		Mac:      &config.Mac,
-		Password: &pw,
-		User:     &defaultIpmiUser,
+		Address:   &config.IP,
+		Mac:       &config.Mac,
+		Password:  &pw,
+		User:      &defaultIpmiUser,
+		Interface: &intf,
 	}
 
 	return details, nil
