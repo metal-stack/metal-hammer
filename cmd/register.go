@@ -141,13 +141,20 @@ func (h *Hammer) readIPMIDetails() (*models.ModelsMetalIPMI, error) {
 	var i ipmi.Ipmi
 	var pw string
 	var user string
+	var port string
 	if h.Spec.IPMIPort != defaultIpmiPort {
 		// Wild guess, set the last octet to 1 to get the gateway
 		gwip := net.ParseIP(h.IPAddress)
 		gwip = gwip.To4()
 		gwip[3] = 1
 
-		config.IP = fmt.Sprintf("%s:%s", gwip, h.Spec.IPMIPort)
+		// FIXME ugly hack until we are able to set the port from outside
+		port = "6231"
+		if h.Spec.IPMIPort != "" {
+			port = h.Spec.IPMIPort
+		}
+
+		config.IP = fmt.Sprintf("%s:%s", gwip, port)
 		config.Mac = "00:00:00:00:00:00"
 		pw = "vagrant"
 		user = "vagrant"
