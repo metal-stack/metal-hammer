@@ -133,13 +133,14 @@ func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceR
 
 const defaultIpmiPort = "623"
 
-var defaultIpmiUser = "metal"
+const defaultIpmiUser = "metal"
 
 // IPMI configuration and
 func (h *Hammer) readIPMIDetails() (*models.ModelsMetalIPMI, error) {
 	config := ipmi.LanConfig{}
-	pw := password.Generate(10)
 	var i ipmi.Ipmi
+	var pw string
+	var user string
 	if h.Spec.IPMIPort != defaultIpmiPort {
 		// Wild guess, set the last octet to 1 to get the gateway
 		gwip := net.ParseIP(h.IPAddress)
@@ -148,11 +149,15 @@ func (h *Hammer) readIPMIDetails() (*models.ModelsMetalIPMI, error) {
 
 		config.IP = fmt.Sprintf("%s:%s", gwip, h.Spec.IPMIPort)
 		config.Mac = "00:00:00:00:00:00"
+		pw = "vagrant"
+		user = "vagrant"
 	} else {
 		var err error
 		i = ipmi.New()
+		pw = password.Generate(10)
+		user = defaultIpmiUser
 		// FIXME userid should be verified if available
-		err = i.CreateUser("metal", pw, 2, ipmi.Administrator)
+		err = i.CreateUser(user, pw, 2, ipmi.Administrator)
 		if err != nil {
 			return nil, fmt.Errorf("ipmi error: %v", err)
 		}
@@ -168,7 +173,7 @@ func (h *Hammer) readIPMIDetails() (*models.ModelsMetalIPMI, error) {
 		Address:   &config.IP,
 		Mac:       &config.Mac,
 		Password:  &pw,
-		User:      &defaultIpmiUser,
+		User:      &user,
 		Interface: &intf,
 	}
 
