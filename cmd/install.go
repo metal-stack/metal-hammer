@@ -138,8 +138,10 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDeviceWithPhoneHomeToken,
 	var err error
 	for {
 		resp, err = http.Get(e)
-		if err != nil || resp.StatusCode != http.StatusOK {
-			log.Warn("wait for install failed, retrying...", "error", err, "statuscode", resp.StatusCode)
+		if err != nil {
+			log.Warn("wait for install failed, retrying...", "error", err)
+		} else if resp.StatusCode != http.StatusOK {
+			log.Warn("wait for install failed, retrying...", "statuscode", resp.StatusCode)
 		} else {
 			break
 		}
