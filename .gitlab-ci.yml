@@ -10,9 +10,9 @@ metal-hammer:
   stage: build
   script:
     - docker-make --no-push --Lint
-    - mkdir images/metal-hammer
+    - mkdir -p images/metal-hammer
     - md5sum metal-hammer-initrd.img.lz4 > metal-hammer-initrd.img.lz4.md5
-    - mv metal-hammer-initrd.img.lz4* images/
+    - mv metal-hammer-initrd.img.lz4* images/metal-hammer
     - mc cp --recursive images fits/metal
   only:
     - master
@@ -20,10 +20,10 @@ metal-hammer-tag:
   stage: build
   script:
     - docker-make --no-push --Lint
-    - mkdir images/metal-hammer
+    - mkdir -p images/metal-hammer
     - mv metal-hammer-initrd.img.lz4 metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4
     - md5sum metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4 > metal-hammer-initrd.img-${CI_COMMIT_TAG}.lz4.md5
-    - mv metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4* images/
+    - mv metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4* images/metal-hammer
     - mc cp --recursive images fits/metal
   only:
     - tags
