@@ -65,12 +65,14 @@ func Run(spec *Specification) error {
 		fakeToken := "JWT"
 		deviceWithToken = &models.ModelsMetalDeviceWithPhoneHomeToken{
 			Device: &models.ModelsMetalDevice{
-				Image: &models.ModelsMetalImage{
-					URL: &spec.ImageURL,
+				Allocation: &models.ModelsMetalDeviceAllocation{
+					Image: &models.ModelsMetalImage{
+						URL: &spec.ImageURL,
+					},
+					Hostname:   &hostname,
+					SSHPubKeys: sshkeys,
+					Cidr:       &cidr,
 				},
-				Hostname:   &hostname,
-				SSHPubKeys: sshkeys,
-				Cidr:       &cidr,
 			},
 			PhoneHomeToken: &fakeToken,
 		}

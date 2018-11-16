@@ -167,7 +167,7 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDeviceWithPhoneHomeToken,
 func Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeToken) (*pkg.Bootinfo, error) {
 	device := deviceWithToken.Device
 	phtoken := deviceWithToken.PhoneHomeToken
-	image := *device.Image.URL
+	image := *device.Allocation.Image.URL
 	err := partition(defaultDisk)
 	if err != nil {
 		return nil, err
@@ -334,7 +334,7 @@ type mount struct {
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
 func install(prefix string, device *models.ModelsMetalDevice, phoneHomeToken string) (*pkg.Bootinfo, error) {
-	log.Info("install image", "image", device.Image.URL)
+	log.Info("install image", "image", device.Allocation.Image.URL)
 	mounts := []mount{
 		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
 		mount{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
@@ -440,15 +440,15 @@ func writeInstallerConfig(device *models.ModelsMetalDevice) error {
 
 	var ipaddress string
 	var asn int64
-	if *device.Cidr == "dhcp" {
-		ipaddress = *device.Cidr
+	if *device.Allocation.Cidr == "dhcp" {
+		ipaddress = *device.Allocation.Cidr
 	} else {
-		ip, _, err := net.ParseCIDR(*device.Cidr)
+		ip, _, err := net.ParseCIDR(*device.Allocation.Cidr)
 		if err != nil {
 			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
 		}
 
-		asn, err = ipToASN(*device.Cidr)
+		asn, err = ipToASN(*device.Allocation.Cidr)
 		if err != nil {
 			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
 		}
@@ -456,9 +456,9 @@ func writeInstallerConfig(device *models.ModelsMetalDevice) error {
 	}
 
 	// FIXME
-	sshPubkeys := strings.Join(device.SSHPubKeys, "\n")
+	sshPubkeys := strings.Join(device.Allocation.SSHPubKeys, "\n")
 	y := &InstallerConfig{
-		Hostname:     *device.Hostname,
+		Hostname:     *device.Allocation.Hostname,
 		SSHPublicKey: sshPubkeys,
 		IPAddress:    ipaddress,
 		ASN:          fmt.Sprintf("%d", asn),

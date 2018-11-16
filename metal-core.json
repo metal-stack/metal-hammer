@@ -27,7 +27,7 @@
      "device"
     ],
     "summary": "install device by ID",
-    "operationId": "installEndpoint",
+    "operationId": "Install",
     "parameters": [
      {
       "type": "string",
@@ -68,7 +68,7 @@
      "device"
     ],
     "summary": "register device by ID",
-    "operationId": "registerEndpoint",
+    "operationId": "Register",
     "parameters": [
      {
       "type": "string",
@@ -120,7 +120,7 @@
      "device"
     ],
     "summary": "report device by ID",
-    "operationId": "reportEndpoint",
+    "operationId": "Report",
     "parameters": [
      {
       "type": "string",
@@ -134,7 +134,7 @@
       "in": "body",
       "required": true,
       "schema": {
-       "$ref": "#/definitions/core.Report"
+       "$ref": "#/definitions/domain.Report"
       }
      }
     ],
@@ -172,7 +172,7 @@
      "boot"
     ],
     "summary": "boot device by mac",
-    "operationId": "bootEndpoint",
+    "operationId": "Boot",
     "parameters": [
      {
       "type": "string",
@@ -186,25 +186,25 @@
      "200": {
       "description": "OK",
       "schema": {
-       "$ref": "#/definitions/core.BootResponse"
+       "$ref": "#/definitions/domain.BootResponse"
       }
      },
      "202": {
       "description": "Accepted",
       "schema": {
-       "$ref": "#/definitions/core.BootResponse"
+       "$ref": "#/definitions/domain.BootResponse"
       }
      },
      "400": {
       "description": "Bad request",
       "schema": {
-       "$ref": "#/definitions/core.BootResponse"
+       "$ref": "#/definitions/domain.BootResponse"
       }
      },
      "default": {
       "description": "OK",
       "schema": {
-       "$ref": "#/definitions/core.BootResponse"
+       "$ref": "#/definitions/domain.BootResponse"
       }
      }
     }
@@ -212,7 +212,7 @@
   }
  },
  "definitions": {
-  "core.BootResponse": {
+  "domain.BootResponse": {
    "required": [
     "initrd"
    ],
@@ -228,21 +228,6 @@
     },
     "kernel": {
      "type": "string"
-    }
-   }
-  },
-  "core.Report": {
-   "required": [
-    "message"
-   ],
-   "properties": {
-    "message": {
-     "description": "if installation failed, the error message",
-     "type": "string"
-    },
-    "success": {
-     "description": "true if installation succeeded",
-     "type": "boolean"
     }
    }
   },
@@ -282,6 +267,21 @@
     "uuid": {
      "description": "the uuid of the device to register",
      "type": "string"
+    }
+   }
+  },
+  "domain.Report": {
+   "required": [
+    "message"
+   ],
+   "properties": {
+    "message": {
+     "description": "if installation failed, the error message",
+     "type": "string"
+    },
+    "success": {
+     "description": "true if installation succeeded",
+     "type": "boolean"
     }
    }
   },
@@ -328,37 +328,52 @@
   },
   "models.MetalDevice": {
    "required": [
-    "cidr",
+    "allocation",
     "hardware",
-    "hostname",
     "id",
-    "image",
-    "name",
-    "project",
     "site",
-    "size",
-    "ssh_pub_keys"
+    "size"
    ],
    "properties": {
-    "changed": {
-     "type": "string"
+    "allocation": {
+     "$ref": "#/definitions/models.MetalDeviceAllocation"
     },
-    "cidr": {
+    "changed": {
      "type": "string"
     },
     "created": {
      "type": "string"
     },
-    "description": {
-     "type": "string"
-    },
     "hardware": {
      "$ref": "#/definitions/models.MetalDeviceHardware"
     },
-    "hostname": {
+    "id": {
      "type": "string"
     },
-    "id": {
+    "site": {
+     "$ref": "#/definitions/models.MetalSite"
+    },
+    "size": {
+     "$ref": "#/definitions/models.MetalSize"
+    }
+   }
+  },
+  "models.MetalDeviceAllocation": {
+   "required": [
+    "cidr",
+    "hostname",
+    "name",
+    "project",
+    "ssh_pub_keys"
+   ],
+   "properties": {
+    "cidr": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "hostname": {
      "type": "string"
     },
     "image": {
@@ -372,12 +387,6 @@
     },
     "project": {
      "type": "string"
-    },
-    "site": {
-     "$ref": "#/definitions/models.MetalSite"
-    },
-    "size": {
-     "$ref": "#/definitions/models.MetalSize"
     },
     "ssh_pub_keys": {
      "type": "array",
