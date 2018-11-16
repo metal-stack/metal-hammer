@@ -1,7 +1,7 @@
 FROM registry.fi-ts.io/cloud-native/go-builder:latest as builder
 
 FROM golang:1.11-stretch as initrd-builder
-ENV UROOT_GIT_SHA=e2c0251d0f279e32b90453ec7087d49211d73ce7
+ENV UROOT_GIT_SHA=36f42bb80e19ce58d9aff0b7cd7b42b561e48f8d
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
