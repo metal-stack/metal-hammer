@@ -23,10 +23,10 @@ func (h *Hammer) RegisterDevice() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to read all hardware details error:%v", err)
 	}
-	params := device.NewRegisterParams()
+	params := device.NewRegisterEndpointParams()
 	params.SetBody(hw)
 	params.ID = hw.UUID
-	resp, err := h.Client.Register(params)
+	resp, err := h.Client.RegisterEndpoint(params)
 
 	if err != nil {
 		return "", fmt.Errorf("unable to register device:%#v error:%#v", hw, err.Error())

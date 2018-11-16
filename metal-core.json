@@ -27,7 +27,7 @@
      "device"
     ],
     "summary": "install device by ID",
-    "operationId": "Install",
+    "operationId": "installEndpoint",
     "parameters": [
      {
       "type": "string",
@@ -68,7 +68,7 @@
      "device"
     ],
     "summary": "register device by ID",
-    "operationId": "Register",
+    "operationId": "registerEndpoint",
     "parameters": [
      {
       "type": "string",
@@ -120,7 +120,7 @@
      "device"
     ],
     "summary": "report device by ID",
-    "operationId": "Report",
+    "operationId": "reportEndpoint",
     "parameters": [
      {
       "type": "string",
@@ -134,7 +134,7 @@
       "in": "body",
       "required": true,
       "schema": {
-       "$ref": "#/definitions/domain.Report"
+       "$ref": "#/definitions/core.Report"
       }
      }
     ],
@@ -172,7 +172,7 @@
      "boot"
     ],
     "summary": "boot device by mac",
-    "operationId": "Boot",
+    "operationId": "bootEndpoint",
     "parameters": [
      {
       "type": "string",
@@ -186,25 +186,25 @@
      "200": {
       "description": "OK",
       "schema": {
-       "$ref": "#/definitions/domain.BootResponse"
+       "$ref": "#/definitions/core.BootResponse"
       }
      },
      "202": {
       "description": "Accepted",
       "schema": {
-       "$ref": "#/definitions/domain.BootResponse"
+       "$ref": "#/definitions/core.BootResponse"
       }
      },
      "400": {
       "description": "Bad request",
       "schema": {
-       "$ref": "#/definitions/domain.BootResponse"
+       "$ref": "#/definitions/core.BootResponse"
       }
      },
      "default": {
       "description": "OK",
       "schema": {
-       "$ref": "#/definitions/domain.BootResponse"
+       "$ref": "#/definitions/core.BootResponse"
       }
      }
     }
@@ -212,7 +212,7 @@
   }
  },
  "definitions": {
-  "domain.BootResponse": {
+  "core.BootResponse": {
    "required": [
     "initrd"
    ],
@@ -231,12 +231,27 @@
     }
    }
   },
+  "core.Report": {
+   "required": [
+    "message"
+   ],
+   "properties": {
+    "message": {
+     "description": "if installation failed, the error message",
+     "type": "string"
+    },
+    "success": {
+     "description": "true if installation succeeded",
+     "type": "boolean"
+    }
+   }
+  },
   "domain.MetalHammerRegisterDeviceRequest": {
    "required": [
-    "cpu_cores",
-    "disks",
     "memory",
     "nics",
+    "cpu_cores",
+    "disks",
     "ipmi"
    ],
    "properties": {
@@ -267,21 +282,6 @@
     "uuid": {
      "description": "the uuid of the device to register",
      "type": "string"
-    }
-   }
-  },
-  "domain.Report": {
-   "required": [
-    "message"
-   ],
-   "properties": {
-    "message": {
-     "description": "if installation failed, the error message",
-     "type": "string"
-    },
-    "success": {
-     "description": "true if installation succeeded",
-     "type": "boolean"
     }
    }
   },
