@@ -44,6 +44,7 @@ func TestRegisterDevice(t *testing.T) {
 		IPAddress: "1.2.3.4",
 	}
 
+	eth0Mac = "00:00:00:00:00:01"
 	uuid, err := h.RegisterDevice()
 
 	if err != nil {
@@ -79,11 +80,11 @@ func Test_readHardwareDetails(t *testing.T) {
 			h := &Hammer{
 				Client: tt.fields.Client,
 				Spec: &Specification{
-					DevMode:  true,
-					IPMIPort: "6321",
+					DevMode: true,
 				},
 				IPAddress: "1.2.3.4",
 			}
+			eth0Mac = "00:00:00:00:00:01"
 			got, err := h.readHardwareDetails()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("readHardwareDetails() error = %v, wantErr %v", err, tt.wantErr)
@@ -120,12 +121,11 @@ func TestHammer_readIPMIDetails(t *testing.T) {
 			h := &Hammer{
 				Client: tt.fields.Client,
 				Spec: &Specification{
-					DevMode:  true,
-					IPMIPort: "6321",
+					DevMode: true,
 				},
 				IPAddress: "1.2.3.4",
 			}
-			got, err := h.readIPMIDetails()
+			got, err := h.readIPMIDetails("00:00:00:00:00:01")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Hammer.readIPMIDetails() error = %v, wantErr %v", err, tt.wantErr)
 				return

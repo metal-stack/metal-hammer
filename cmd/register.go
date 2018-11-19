@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net"
 	gonet "net"
+	"strconv"
 	"strings"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
@@ -45,6 +46,9 @@ func (h *Hammer) RegisterDevice() (string, error) {
 	return *resp.Payload.ID, nil
 }
 
+// this mac is used to calculate the IPMI Port offset in the metal-lab environment.
+var eth0Mac = ""
+
 func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceRequest, error) {
 	hw := &models.DomainMetalHammerRegisterDeviceRequest{}
 
@@ -76,6 +80,9 @@ func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceR
 		// check if after mac validation loopback is still present
 		if n.Name == "lo" {
 			loFound = true
+		}
+		if n.Name == "eth0" {
+			eth0Mac = n.MacAddress
 		}
 		nic := &models.ModelsMetalNic{
 			Mac:  &n.MacAddress,
@@ -122,7 +129,7 @@ func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceR
 	uuid := strings.TrimSpace(string(productUUID))
 	hw.UUID = uuid
 
-	ipmiconfig, err := h.readIPMIDetails()
+	ipmiconfig, err := h.readIPMIDetails(eth0Mac)
 	if err != nil {
 		return nil, err
 	}
@@ -136,35 +143,17 @@ const defaultIpmiPort = "623"
 const defaultIpmiUser = "metal"
 
 // IPMI configuration and
-func (h *Hammer) readIPMIDetails() (*models.ModelsMetalIPMI, error) {
+func (h *Hammer) readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 	config := ipmi.LanConfig{}
-	var i ipmi.Ipmi
+	i := ipmi.New()
 	var pw string
 	var user string
-	var port string
-	if h.Spec.IPMIPort != defaultIpmiPort {
-		// Wild guess, set the last octet to 1 to get the gateway
-		gwip := net.ParseIP(h.IPAddress)
-		gwip = gwip.To4()
-		gwip[3] = 1
-
-		// FIXME ugly hack until we are able to set the port from outside
-		port = "6231"
-		if h.Spec.IPMIPort != "" {
-			port = h.Spec.IPMIPort
-		}
-
-		config.IP = fmt.Sprintf("%s:%s", gwip, port)
-		config.Mac = "00:00:00:00:00:00"
-		pw = "vagrant"
-		user = "vagrant"
-	} else {
-		var err error
-		i = ipmi.New()
+	if i.DevicePresent() {
+		log.Info("ipmi details from bmc")
 		pw = password.Generate(10)
 		user = defaultIpmiUser
 		// FIXME userid should be verified if available
-		err = i.CreateUser(user, pw, 2, ipmi.Administrator)
+		err := i.CreateUser(user, pw, 2, ipmi.Administrator)
 		if err != nil {
 			return nil, fmt.Errorf("ipmi error: %v", err)
 		}
@@ -173,6 +162,26 @@ func (h *Hammer) readIPMIDetails() (*models.ModelsMetalIPMI, error) {
 			return nil, fmt.Errorf("unable to read ipmi lan configuration, info:%v", err)
 		}
 		config.IP = config.IP + ":" + defaultIpmiPort
+	} else {
+		log.Info("ipmi details faked")
+		// We are virtual
+		// Wild guess, set the last octet to 1 to get the gateway
+		gwip := net.ParseIP(h.IPAddress)
+		gwip = gwip.To4()
+		gwip[3] = 1
+
+		macParts := strings.Split(eth0Mac, ":")
+		lastOctet := macParts[len(macParts)-1]
+		port, err := strconv.ParseUint(lastOctet, 16, 32)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse last octet of eth0 mac to a integer: %v", err)
+		}
+
+		const baseIPMIPort = 6230
+		config.IP = fmt.Sprintf("%s:%d", gwip, baseIPMIPort+port)
+		config.Mac = "00:00:00:00:00:00"
+		pw = "vagrant"
+		user = "vagrant"
 	}
 
 	intf := "lanplus"

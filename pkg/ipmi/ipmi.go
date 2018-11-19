@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"strings"
 )
@@ -25,6 +26,7 @@ const (
 
 // Ipmi defines methods to interact with ipmi
 type Ipmi interface {
+	DevicePresent() bool
 	Run(arg ...string) (string, error)
 	CreateUser(username, password string, uid int, privilege Privilege) error
 	GetLanConfig() (LanConfig, error)
@@ -44,6 +46,16 @@ func New() Ipmi {
 type LanConfig struct {
 	IP  string `ipmitool:"IP Address"`
 	Mac string `ipmitool:"MAC Address"`
+}
+
+// DevicePresent returns true if the character device which is required to talk to the BMC is present.
+func (i *Ipmitool) DevicePresent() bool {
+	const ipmiDevicePrefix = "/dev/ipmi*"
+	matches, err := filepath.Glob(ipmiDevicePrefix)
+	if err != nil {
+		return false
+	}
+	return len(matches) > 0
 }
 
 // GetLanConfig returns the LanConfig
