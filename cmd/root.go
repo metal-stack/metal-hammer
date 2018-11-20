@@ -34,7 +34,12 @@ func Run(spec *Specification) error {
 		IPAddress: getInternalIP(),
 	}
 
-	err := hammer.WipeDisks()
+	err := hammer.EnsureUEFI()
+	if err != nil {
+		return fmt.Errorf("uefi error: %v", err)
+	}
+
+	err = hammer.WipeDisks()
 	if err != nil {
 		return fmt.Errorf("wipe error: %v", err)
 	}
