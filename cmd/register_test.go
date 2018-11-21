@@ -13,6 +13,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/google/uuid"
 )
 
 func TestRegisterDevice(t *testing.T) {
@@ -134,5 +135,18 @@ func TestHammer_readIPMIDetails(t *testing.T) {
 				t.Errorf("Hammer.readIPMIDetails() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestUUIDCreation(t *testing.T) {
+	uuidAsString, err := uuid.FromBytes([]byte("S167357X6205283" + " "))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("got: %s", uuidAsString)
+
+	uuidAsString2, err := uuid.FromBytes([]byte("S167357X6205283" + " "))
+	if uuidAsString != uuidAsString2 {
+		t.Errorf("expected same uuid, got different: %s vs: %s", uuidAsString, uuidAsString2)
 	}
 }

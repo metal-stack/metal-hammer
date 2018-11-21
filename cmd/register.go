@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net"
 	gonet "net"
+	"os"
 	"strconv"
 	"strings"
 
@@ -13,8 +14,8 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 
+	"github.com/google/uuid"
 	log "github.com/inconshreveable/log15"
-
 	"github.com/jaypipes/ghw"
 )
 
@@ -120,13 +121,7 @@ func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceR
 	}
 	hw.Disks = disks
 
-	productUUID, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
-	if err != nil {
-		log.Error("error getting product_uuid, use default uuid", "error", err)
-		productUUID = []byte("00000000-0000-0000-0000-000000000000")
-	}
-
-	uuid := strings.TrimSpace(string(productUUID))
+	uuid := getServerUUID()
 	hw.UUID = uuid
 
 	ipmiconfig, err := h.readIPMIDetails(eth0Mac)
@@ -136,6 +131,36 @@ func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceR
 	hw.IPMI = ipmiconfig
 
 	return hw, nil
+}
+
+const dmiUUID = "/sys/class/dmi/id/product_uuid"
+const dmiSerial = "/sys/class/dmi/id/product_serial"
+
+func getServerUUID() string {
+	result := []byte("00000000-0000-0000-0000-000000000000")
+	if _, err := os.Stat(dmiUUID); !os.IsNotExist(err) {
+		productUUID, err := ioutil.ReadFile(dmiUUID)
+		if err != nil {
+			log.Error("error getting product_uuid", "error", err)
+		} else {
+			result = productUUID
+		}
+	}
+
+	if _, err := os.Stat(dmiSerial); !os.IsNotExist(err) {
+		productSerial, err := ioutil.ReadFile(dmiSerial)
+		if err != nil {
+			log.Error("error getting product_serial", "error", err)
+		} else {
+			productSerialBytes, err := uuid.FromBytes([]byte(fmt.Sprintf("%16s", string(productSerial))))
+			if err != nil {
+				log.Error("error getting converting product_serial to uuid", "error", err)
+			}
+			result = []byte(productSerialBytes.String())
+		}
+	}
+
+	return strings.TrimSpace(string(result))
 }
 
 const defaultIpmiPort = "623"
