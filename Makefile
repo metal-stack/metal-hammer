@@ -30,7 +30,7 @@ ramdisk:
 		-files="bin/metal-hammer:bbin/uinit" \
 		-files="/sbin/ethtool:sbin/ethtool" \
 		-files="/sbin/hdparm:sbin/hdparm" \
-		-files="/usr/bin/ipmitool:sbin/ipmitool" \
+		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
 		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
 		-files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
 		-files="/sbin/mke2fs:sbin/mke2fs" \
