@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	fmt.Print(cmd.HammerBanner)
 	err := cmd.StartSSHD()
 	if err != nil {
 		log.Error("sshd error", "error", err)
@@ -38,7 +39,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Print(cmd.HammerBanner)
 	log.Info("metal-hammer", "version", version.V)
 
 	if d, ok := envmap["DEBUG"]; ok && (d == "1" || strings.ToLower(d) == "true") {
