@@ -143,6 +143,7 @@ func getServerUUID() string {
 		if err != nil {
 			log.Error("error getting product_uuid", "error", err)
 		} else {
+			log.Info("create UUID from", "source", dmiUUID)
 			result = productUUID
 		}
 	}
@@ -155,11 +156,13 @@ func getServerUUID() string {
 			productSerialBytes, err := uuid.FromBytes([]byte(fmt.Sprintf("%16s", string(productSerial))))
 			if err != nil {
 				log.Error("error getting converting product_serial to uuid", "error", err)
+			} else {
+				log.Info("create UUID from", "source", dmiSerial)
+				result = []byte(productSerialBytes.String())
 			}
-			result = []byte(productSerialBytes.String())
 		}
 	}
-
+	log.Info("no valid UUID found, return zero uuid")
 	return strings.TrimSpace(string(result))
 }
 
