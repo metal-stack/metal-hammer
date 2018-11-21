@@ -2,6 +2,9 @@ package ipmi
 
 // IPMI Wiki
 // https://www.thomas-krenn.com/de/wiki/IPMI_Konfiguration_unter_Linux_mittels_ipmitool
+//
+// Oder:
+// https://wiki.hetzner.de/index.php/IPMI
 
 import (
 	"bufio"
@@ -16,12 +19,18 @@ import (
 type Privilege int
 
 const (
-	Callback      = Privilege(1)
-	User          = Privilege(2)
-	Operator      = Privilege(3)
+	// Callback ipmi privilege
+	Callback = Privilege(1)
+	// User ipmi privilege
+	User = Privilege(2)
+	// Operator ipmi privilege
+	Operator = Privilege(3)
+	// Administrator ipmi privilege
 	Administrator = Privilege(4)
-	OEM           = Privilege(5)
-	NoAccess      = Privilege(15)
+	// OEM ipmi privilege
+	OEM = Privilege(5)
+	// NoAccess ipmi privilege
+	NoAccess = Privilege(15)
 )
 
 // Ipmi defines methods to interact with ipmi
@@ -30,19 +39,15 @@ type Ipmi interface {
 	Run(arg ...string) (string, error)
 	CreateUser(username, password string, uid int, privilege Privilege) error
 	GetLanConfig() (LanConfig, error)
-	EnableUEFI(bootdev string, persistent bool) error
+	EnableUEFI(bootdev Bootdev, persistent bool) error
 	UEFIEnabled() bool
-	BootOptionsPersitent() bool
+	BootOptionsPersistent() bool
+	GetSession() (Session, error)
 }
 
 // Ipmitool is used to query and modify the IPMI based BMC from the host os.
 type Ipmitool struct {
 	Command string
-}
-
-// New create a new Ipmitool with the default command
-func New() Ipmi {
-	return &Ipmitool{Command: "ipmitool"}
 }
 
 // LanConfig contains the config of ipmi.
@@ -51,6 +56,27 @@ func New() Ipmi {
 type LanConfig struct {
 	IP  string `ipmitool:"IP Address"`
 	Mac string `ipmitool:"MAC Address"`
+}
+
+// Session information of the current ipmi session
+type Session struct {
+	UserID    string `ipmitool:"user id"`
+	Privilege string `ipmitool:"privilege level"`
+}
+
+// Bootdev specifies from which device to boot
+type Bootdev string
+
+const (
+	// PXE boot server via PXE
+	PXE = Bootdev("pxe")
+	// Disk boot server from hard disk
+	Disk = Bootdev("disk")
+)
+
+// New create a new Ipmitool with the default command
+func New() Ipmi {
+	return &Ipmitool{Command: "ipmitool"}
 }
 
 // DevicePresent returns true if the character device which is required to talk to the BMC is present.
@@ -78,16 +104,25 @@ func (i *Ipmitool) Run(arg ...string) (string, error) {
 // GetLanConfig returns the LanConfig
 func (i *Ipmitool) GetLanConfig() (LanConfig, error) {
 	config := LanConfig{}
-
 	cmdOutput, err := i.Run("lan", "print")
 	if err != nil {
 		return config, fmt.Errorf("unable to execute ipmitool info:%v", err)
 	}
-	lanConfigMap := getLanConfig(cmdOutput)
-
-	config.from(lanConfigMap)
-
+	lanConfigMap := output2Map(cmdOutput)
+	from(config, lanConfigMap)
 	return config, nil
+}
+
+// GetSession returns the Session info
+func (i *Ipmitool) GetSession() (Session, error) {
+	session := Session{}
+	cmdOutput, err := i.Run("session", "info", "all")
+	if err != nil {
+		return session, fmt.Errorf("unable to execute ipmitool info:%v", err)
+	}
+	sessionMap := output2Map(cmdOutput)
+	from(session, sessionMap)
+	return session, nil
 }
 
 // CreateUser create a ipmi user with password and privilege level
@@ -115,13 +150,13 @@ func (i *Ipmitool) CreateUser(username, password string, uid int, privilege Priv
 // EnableUEFI set the firmware to boot with uefi for given bootdev,
 // bootdev can be one of pxe|disk
 // if persistent is set to true this will last for every subsequent boot, not only the next.
-func (i *Ipmitool) EnableUEFI(bootdev string, persistent bool) error {
+func (i *Ipmitool) EnableUEFI(bootdev Bootdev, persistent bool) error {
 	options := "options=efiboot"
 	if persistent {
 		options = options + ",persistent"
 	}
 
-	_, err := i.Run("chassis", "bootdev", bootdev, options)
+	_, err := i.Run("chassis", "bootdev", string(bootdev), options)
 	if err != nil {
 		return fmt.Errorf("unable to enable uefi on:%s persistent:%t info:%v", bootdev, persistent, err)
 	}
@@ -133,8 +168,8 @@ func (i *Ipmitool) UEFIEnabled() bool {
 	return i.matchBootParam("BIOS EFI boot")
 }
 
-// BootOptionsPersitent returns true of the boot parameters are set persistent.
-func (i *Ipmitool) BootOptionsPersitent() bool {
+// BootOptionsPersistent returns true of the boot parameters are set persistent.
+func (i *Ipmitool) BootOptionsPersistent() bool {
 	return i.matchBootParam("Options apply to all future boots")
 }
 
@@ -155,7 +190,7 @@ func (i *Ipmitool) matchBootParam(parameter string) bool {
 	return false
 }
 
-func getLanConfig(cmdOutput string) map[string]string {
+func output2Map(cmdOutput string) map[string]string {
 	result := make(map[string]string)
 	scanner := bufio.NewScanner(strings.NewReader(cmdOutput))
 	for scanner.Scan() {
@@ -171,8 +206,8 @@ func getLanConfig(cmdOutput string) map[string]string {
 	return result
 }
 
-// from uses reflection to fill the LanConfig struct based on the tags on it.
-func (c *LanConfig) from(output map[string]string) {
+// from uses reflection to fill a struct based on the tags on it.
+func from(c interface{}, output map[string]string) {
 	val := reflect.ValueOf(c).Elem()
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)

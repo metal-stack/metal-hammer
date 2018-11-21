@@ -18,17 +18,21 @@ func (h *Hammer) EnsureUEFI() error {
 		return nil
 	}
 
-	if i.UEFIEnabled() && i.BootOptionsPersitent() {
+	if i.UEFIEnabled() && i.BootOptionsPersistent() {
 		log.Info("ensureUEFI: all requirements are met.")
 		return nil
 	}
 
-	err := i.EnableUEFI("pxe", true)
+	err := i.EnableUEFI(ipmi.PXE, true)
 	if err != nil {
 		return fmt.Errorf("unable to ensureUEFI %v", err)
 	}
 
 	log.Info("ensureUEFI: set uefi persistent, reboot now.")
+	if h.Spec.DevMode {
+		log.Warn("ensureUEFI required reboot skipped in devmode")
+		return nil
+	}
 	err = pkg.Reboot()
 	if err != nil {
 		log.Error("reboot", "error", err)

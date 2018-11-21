@@ -56,7 +56,7 @@ func Test_getLanConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := getLanConfig(tt.cmdOutput)
+			got := output2Map(tt.cmdOutput)
 			for key, value := range tt.want {
 				if got[key] != value {
 					t.Errorf("getLanConfig() = %v, want %v", got[key], value)
@@ -97,7 +97,7 @@ func TestLanConfig_From(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		output map[string]string
+		input  map[string]string
 	}{
 		{
 			name: "simple",
@@ -105,7 +105,7 @@ func TestLanConfig_From(t *testing.T) {
 				IP:  "10.248.36.246",
 				Mac: "0c:c4:7a:ed:3e:27",
 			},
-			output: map[string]string{
+			input: map[string]string{
 				"IP Address":  "10.248.36.246",
 				"Subnet Mask": "255.255.252.0",
 				"MAC Address": "0c:c4:7a:ed:3e:27",
@@ -118,7 +118,13 @@ func TestLanConfig_From(t *testing.T) {
 				IP:  tt.fields.IP,
 				Mac: tt.fields.Mac,
 			}
-			c.from(tt.output)
+			from(c, tt.input)
+			if c.IP != tt.fields.IP {
+				t.Errorf("IP is not as expected")
+			}
+			if c.Mac != tt.fields.Mac {
+				t.Errorf("Mac is not as expected")
+			}
 		})
 	}
 }

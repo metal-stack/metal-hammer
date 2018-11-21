@@ -16,6 +16,7 @@ require (
 	github.com/go-openapi/swag v0.17.2
 	github.com/go-openapi/validate v0.17.2
 	github.com/go-stack/stack v1.8.0 // indirect
+	github.com/google/uuid v1.1.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/jaypipes/ghw v0.0.0-20181023082906-524701ced228
 	github.com/jaypipes/pcidb v0.0.0-20181022223140-21a3652c196f // indirect
