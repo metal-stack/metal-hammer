@@ -233,10 +233,10 @@
   },
   "domain.MetalHammerRegisterDeviceRequest": {
    "required": [
-    "memory",
-    "nics",
     "cpu_cores",
     "disks",
+    "memory",
+    "nics",
     "ipmi"
    ],
    "properties": {
@@ -361,13 +361,18 @@
   "models.MetalDeviceAllocation": {
    "required": [
     "cidr",
+    "created",
     "hostname",
     "name",
     "project",
-    "ssh_pub_keys"
+    "ssh_pub_keys",
+    "tenant"
    ],
    "properties": {
     "cidr": {
+     "type": "string"
+    },
+    "created": {
      "type": "string"
     },
     "description": {
@@ -393,6 +398,9 @@
      "items": {
       "type": "string"
      }
+    },
+    "tenant": {
+     "type": "string"
     }
    }
   },
