@@ -106,7 +106,7 @@ func (i *Ipmitool) GetLanConfig() (LanConfig, error) {
 	config := LanConfig{}
 	cmdOutput, err := i.Run("lan", "print")
 	if err != nil {
-		return config, fmt.Errorf("unable to execute ipmitool info:%v", err)
+		return config, fmt.Errorf("unable to execute ipmitool info:%v", cmdOutput)
 	}
 	lanConfigMap := output2Map(cmdOutput)
 	from(config, lanConfigMap)
@@ -118,7 +118,7 @@ func (i *Ipmitool) GetSession() (Session, error) {
 	session := Session{}
 	cmdOutput, err := i.Run("session", "info", "all")
 	if err != nil {
-		return session, fmt.Errorf("unable to execute ipmitool info:%v", err)
+		return session, fmt.Errorf("unable to execute ipmitool info:%v", cmdOutput)
 	}
 	sessionMap := output2Map(cmdOutput)
 	from(session, sessionMap)
@@ -127,22 +127,22 @@ func (i *Ipmitool) GetSession() (Session, error) {
 
 // CreateUser create a ipmi user with password and privilege level
 func (i *Ipmitool) CreateUser(username, password string, uid int, privilege Privilege) error {
-	_, err := i.Run("user", "set", "name", string(uid), username)
+	out, err := i.Run("user", "set", "name", string(uid), username)
 	if err != nil {
-		return fmt.Errorf("unable to create user %s info: %v", username, err)
+		return fmt.Errorf("unable to create user %s info: %v", username, out)
 	}
-	_, err = i.Run("user", "set", "password", string(uid), password)
+	out, err = i.Run("user", "set", "password", string(uid), password)
 	if err != nil {
-		return fmt.Errorf("unable to set password for user %s info: %v", username, err)
+		return fmt.Errorf("unable to set password for user %s info: %v", username, out)
 	}
 	channelnumber := "1"
-	_, err = i.Run("channel", "setaccess", channelnumber, string(uid), "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
+	out, err = i.Run("channel", "setaccess", channelnumber, string(uid), "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
 	if err != nil {
-		return fmt.Errorf("unable to set privilege for user %s info: %v", username, err)
+		return fmt.Errorf("unable to set privilege for user %s info: %v", username, out)
 	}
-	_, err = i.Run("user", "enable", string(uid))
+	out, err = i.Run("user", "enable", string(uid))
 	if err != nil {
-		return fmt.Errorf("unable to enable user %s info: %v", username, err)
+		return fmt.Errorf("unable to enable user %s info: %v", username, out)
 	}
 	return nil
 }
@@ -156,9 +156,9 @@ func (i *Ipmitool) EnableUEFI(bootdev Bootdev, persistent bool) error {
 		options = options + ",persistent"
 	}
 
-	_, err := i.Run("chassis", "bootdev", string(bootdev), options)
+	out, err := i.Run("chassis", "bootdev", string(bootdev), options)
 	if err != nil {
-		return fmt.Errorf("unable to enable uefi on:%s persistent:%t info:%v", bootdev, persistent, err)
+		return fmt.Errorf("unable to enable uefi on:%s persistent:%t info:%v", bootdev, persistent, out)
 	}
 	return nil
 }
