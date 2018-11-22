@@ -1,7 +1,7 @@
 FROM registry.fi-ts.io/cloud-native/go-builder:latest as builder
 
 FROM golang:1.11-stretch as initrd-builder
-ENV UROOT_GIT_SHA=36f42bb80e19ce58d9aff0b7cd7b42b561e48f8d
+ENV UROOT_GIT_SHA_OR_TAG=v3.0.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
@@ -18,7 +18,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \
  && cd u-root \
- && git checkout ${UROOT_GIT_SHA} \
+ && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && go install
 WORKDIR /work
 COPY metal.key /work/

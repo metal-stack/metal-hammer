@@ -28,6 +28,7 @@ ramdisk:
 	u-root \
 		-format=cpio -build=bb \
 		-files="bin/metal-hammer:bbin/uinit" \
+		-files="/bin/bash:bin/bash" \
 		-files="/sbin/ethtool:sbin/ethtool" \
 		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
