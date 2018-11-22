@@ -198,6 +198,10 @@ func (h *Hammer) readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error
 		gwip = gwip.To4()
 		gwip[3] = 1
 
+		if len(eth0Mac) == 0 {
+			eth0Mac = "00:00:00:00:00:00"
+		}
+
 		macParts := strings.Split(eth0Mac, ":")
 		lastOctet := macParts[len(macParts)-1]
 		port, err := strconv.ParseUint(lastOctet, 16, 32)
