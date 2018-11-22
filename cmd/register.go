@@ -162,7 +162,7 @@ func getServerUUID() string {
 			}
 		}
 	}
-	log.Info("no valid UUID found, return zero uuid")
+	log.Error("no valid UUID found", "return uuid", string(result))
 	return strings.TrimSpace(string(result))
 }
 
