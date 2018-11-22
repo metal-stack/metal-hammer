@@ -89,7 +89,7 @@ func Run(spec *Specification) error {
 	}
 
 	installationStart := time.Now()
-	info, err := Install(deviceWithToken)
+	info, err := hammer.Install(deviceWithToken)
 	if err != nil {
 		return fmt.Errorf("install error: %v", err)
 	}

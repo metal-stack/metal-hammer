@@ -16,6 +16,7 @@ import (
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	log "github.com/inconshreveable/log15"
 	"github.com/mholt/archiver"
 	lz4 "github.com/pierrec/lz4"
@@ -114,12 +115,18 @@ type Disk struct {
 // InstallerConfig contains configuration items which are
 // consumed by the install.sh of the individual target OS.
 type InstallerConfig struct {
-	Hostname     string `yaml:"hostname"`
-	SSHPublicKey string `yaml:"sshpublickey"`
-	// is expected to be in the form without mask
+	// Hostname of the device
+	Hostname string `yaml:"hostname"`
+	// IPAddress is expected to be in the form without mask
 	IPAddress string `yaml:"ipaddress"`
 	// must be calculated from the last 4 byte of the IPAddress
 	ASN string `yaml:"asn"`
+	// SSHPublicKey of the user
+	SSHPublicKey string `yaml:"sshpublickey"`
+	// Password is the password for the metal user.
+	Password string `yaml:"password"`
+	// Devmode passes mode of installation.
+	Devmode bool `yaml:"devmode"`
 }
 
 // init set calculated Device of every partition
@@ -164,7 +171,7 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDeviceWithPhoneHomeToken,
 }
 
 // Install a given image to the disk by using genuinetools/img
-func Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeToken) (*pkg.Bootinfo, error) {
+func (h *Hammer) Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeToken) (*pkg.Bootinfo, error) {
 	device := deviceWithToken.Device
 	phtoken := deviceWithToken.PhoneHomeToken
 	image := *device.Allocation.Image.URL
@@ -187,7 +194,7 @@ func Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeToken) (*pkg.
 		return nil, err
 	}
 
-	info, err := install(prefix, device, *phtoken)
+	info, err := h.install(prefix, device, *phtoken)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +340,7 @@ type mount struct {
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func install(prefix string, device *models.ModelsMetalDevice, phoneHomeToken string) (*pkg.Bootinfo, error) {
+func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneHomeToken string) (*pkg.Bootinfo, error) {
 	log.Info("install image", "image", device.Allocation.Image.URL)
 	mounts := []mount{
 		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
@@ -350,12 +357,12 @@ func install(prefix string, device *models.ModelsMetalDevice, phoneHomeToken str
 		}
 	}
 
-	err := writeInstallerConfig(device)
+	err := h.writeInstallerConfig(device)
 	if err != nil {
 		return nil, fmt.Errorf("writing configuration install.yaml failed:%v", err)
 	}
 
-	err = writePhoneHomeToken(phoneHomeToken)
+	err = h.writePhoneHomeToken(phoneHomeToken)
 	if err != nil {
 		return nil, fmt.Errorf("writing phoneHome.jwt failed:%v", err)
 	}
@@ -423,13 +430,13 @@ func install(prefix string, device *models.ModelsMetalDevice, phoneHomeToken str
 	return info, nil
 }
 
-func writePhoneHomeToken(phoneHomeToken string) error {
+func (h *Hammer) writePhoneHomeToken(phoneHomeToken string) error {
 	configdir := path.Join(prefix, "etc", "metal")
 	destination := path.Join(configdir, "phoneHome.jwt")
 	return ioutil.WriteFile(destination, []byte(phoneHomeToken), 0600)
 }
 
-func writeInstallerConfig(device *models.ModelsMetalDevice) error {
+func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
 	log.Info("write installation configuration")
 	configdir := path.Join(prefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -462,6 +469,8 @@ func writeInstallerConfig(device *models.ModelsMetalDevice) error {
 		SSHPublicKey: sshPubkeys,
 		IPAddress:    ipaddress,
 		ASN:          fmt.Sprintf("%d", asn),
+		Devmode:      h.Spec.DevMode,
+		Password:     password.Generate(16),
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
