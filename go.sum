@@ -1,5 +1,7 @@
 git.f-i-ts.de/cloud-native/metallib v0.0.0-20181119054320-00c7fc591684 h1:HT24HjN68A4+c2qjwPmEEqHxj548PBfS0JqKXA6Vy+E=
 git.f-i-ts.de/cloud-native/metallib v0.0.0-20181119054320-00c7fc591684/go.mod h1:YOSpJmxKmaGnyetL98IdUhabF9d6SFM8PgMQdGbthE0=
+git.f-i-ts.de/cloud-native/metallib v0.0.0-20181123141918-ca950b82af08 h1:kEg+PiYVziS23KBRO02GyDrpad2RZ5uAFKDxBxZ9CdQ=
+git.f-i-ts.de/cloud-native/metallib v0.0.0-20181123141918-ca950b82af08/go.mod h1:YOSpJmxKmaGnyetL98IdUhabF9d6SFM8PgMQdGbthE0=
 github.com/PuerkitoBio/purell v1.1.0 h1:rmGxhojJlM0tuKtfdvliR84CFHljx9ag64t2xmVkjK4=
 github.com/PuerkitoBio/purell v1.1.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=
