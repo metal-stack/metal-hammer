@@ -31,7 +31,7 @@ func StartSSHD() error {
 
 func getInternalIP() string {
 	var ip net.IP
-	interfaces := []string{"eth0", "eth1"}
+	interfaces := []string{"eth0", "eth1", "eth2", "eth3", "eth4", "eth5", "eth6", "eth7", "eth8", "eth9"}
 	for _, eth := range interfaces {
 		itf, _ := net.InterfaceByName(eth)
 		item, _ := itf.Addrs()
