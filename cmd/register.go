@@ -137,14 +137,13 @@ const dmiUUID = "/sys/class/dmi/id/product_uuid"
 const dmiSerial = "/sys/class/dmi/id/product_serial"
 
 func getServerUUID() string {
-	result := []byte("00000000-0000-0000-0000-000000000000")
 	if _, err := os.Stat(dmiUUID); !os.IsNotExist(err) {
 		productUUID, err := ioutil.ReadFile(dmiUUID)
 		if err != nil {
 			log.Error("error getting product_uuid", "error", err)
 		} else {
 			log.Info("create UUID from", "source", dmiUUID)
-			result = productUUID
+			return strings.TrimSpace(string(productUUID))
 		}
 	}
 
@@ -158,12 +157,12 @@ func getServerUUID() string {
 				log.Error("error getting converting product_serial to uuid", "error", err)
 			} else {
 				log.Info("create UUID from", "source", dmiSerial)
-				result = []byte(productSerialBytes.String())
+				return strings.TrimSpace(productSerialBytes.String())
 			}
 		}
 	}
-	log.Error("no valid UUID found", "return uuid", string(result))
-	return strings.TrimSpace(string(result))
+	log.Error("no valid UUID found", "return uuid", "00000000-0000-0000-0000-000000000000")
+	return "00000000-0000-0000-0000-000000000000"
 }
 
 const defaultIpmiPort = "623"
