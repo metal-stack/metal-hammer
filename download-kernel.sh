@@ -11,9 +11,8 @@ dirty() {
         --location \
         --remote-name \
         --silent \
-        --output checksum.md5 \
         "${BLOBSTORE}/metal/images/metal-hammer/${1}.md5"
-    local res=$(md5sum --check "checksum.md5" 2>/dev/null 1>&2; echo $?)
+    local res=$(md5sum --check $(basename "${1}") 2>/dev/null 1>&2; echo $?)
     echo "${res}"
 }
 
@@ -22,7 +21,7 @@ download() {
         --fail \
         --location \
         --remote-name \
-        "${BLOBSTORE}/metal/images/metal-hammer/$1"
+        "${BLOBSTORE}/metal/images/metal-hammer/${1}"
 }
 
 download_if_dirty() {
