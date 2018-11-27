@@ -11,8 +11,9 @@ dirty() {
         --location \
         --remote-name \
         --silent \
-        "${BLOBSTORE}/metal/images/metal-hammer/dev/${1}.md5"
-    local res=$(md5sum --check "${1}.md5" 2>/dev/null 1>&2; echo $?)
+        --output checksum.md5 \
+        "${BLOBSTORE}/metal/images/metal-hammer/${1}.md5"
+    local res=$(md5sum --check "checksum.md5" 2>/dev/null 1>&2; echo $?)
     echo "${res}"
 }
 
@@ -21,19 +22,19 @@ download() {
         --fail \
         --location \
         --remote-name \
-        "${BLOBSTORE}/metal/images/metal-hammer/dev/$1"
+        "${BLOBSTORE}/metal/images/metal-hammer/$1"
 }
 
 download_if_dirty() {
     local isDirty=$(dirty "${1}")
     if [[ "$isDirty" = "1" ]]
     then
-        echo "Downloading $i..."
+        echo "Downloading ${1}..."
         download ${1}
     fi
 }
 
-for i in "metal-hammer-kernel"
+for i in "dev/metal-hammer-kernel" "metal-hammer-initrd.img.lz4"
 do
     download_if_dirty $i
 done
