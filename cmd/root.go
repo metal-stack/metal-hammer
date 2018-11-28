@@ -34,7 +34,12 @@ func Run(spec *Specification) error {
 		IPAddress: getInternalIP(),
 	}
 
-	err := hammer.EnsureUEFI()
+	err := hammer.UpAllInterfaces()
+	if err != nil {
+		return fmt.Errorf("interfaces error: %v", err)
+	}
+
+	err = hammer.EnsureUEFI()
 	if err != nil {
 		return fmt.Errorf("uefi error: %v", err)
 	}
