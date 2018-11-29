@@ -41,3 +41,22 @@ func linkSetUp(name string) error {
 	}
 	return nil
 }
+
+// Neighbors of a interface, detected via ip neighbor detection
+func Neighbors(name string) ([]string, error) {
+	iface, err := netlink.LinkByName(name)
+	if err != nil {
+		return nil, err
+	}
+	neighbors := make([]string, 0)
+	neigh, err := netlink.NeighList(iface.Attrs().Index, 4)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, n := range neigh {
+		neighbors = append(neighbors, string(n.HardwareAddr))
+	}
+
+	return neighbors, nil
+}
