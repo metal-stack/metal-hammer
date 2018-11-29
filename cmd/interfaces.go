@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+
 	"github.com/jaypipes/ghw"
 	"github.com/vishvananda/netlink"
-	"strings"
 )
 
 // UpAllInterfaces set all available eth* interfaces up
@@ -43,19 +46,37 @@ func linkSetUp(name string) error {
 }
 
 // Neighbors of a interface, detected via ip neighbor detection
-func Neighbors(name string) ([]string, error) {
-	iface, err := netlink.LinkByName(name)
+func Neighbors(name string) ([]*models.ModelsMetalNeighbor, error) {
+	neighbors := make([]*models.ModelsMetalNeighbor, 0)
+
+	link, err := netlink.LinkByName(name)
 	if err != nil {
-		return nil, err
-	}
-	neighbors := make([]string, 0)
-	neigh, err := netlink.NeighList(iface.Attrs().Index, 4)
-	if err != nil {
-		return nil, err
+		return neighbors, err
 	}
 
-	for _, n := range neigh {
-		neighbors = append(neighbors, string(n.HardwareAddr))
+	// TODO: Maybe we can use FAMILY_ALL as well for both v4 and v6,
+	// but we need an environment with IPv6 neighbors to check if it's working
+	v4, err := netlink.NeighList(link.Attrs().Index, netlink.FAMILY_V4)
+	if err != nil {
+		return neighbors, err
+	}
+	v6, err := netlink.NeighList(link.Attrs().Index, netlink.FAMILY_V6)
+	if err != nil {
+		return neighbors, err
+	}
+
+	macs := map[string]bool{}
+
+	for _, n := range v4 {
+		macs[n.HardwareAddr.String()] = true
+	}
+	for _, n := range v6 {
+		macs[n.HardwareAddr.String()] = true
+	}
+
+	for mac := range macs {
+		macAddress := mac
+		neighbors = append(neighbors, &models.ModelsMetalNeighbor{Mac: &macAddress})
 	}
 
 	return neighbors, nil

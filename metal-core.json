@@ -372,6 +372,9 @@
     "cidr": {
      "type": "string"
     },
+    "console_password": {
+     "type": "string"
+    },
     "created": {
      "type": "string"
     },
@@ -501,10 +504,21 @@
     }
    }
   },
+  "models.MetalNeighbor": {
+   "required": [
+    "mac"
+   ],
+   "properties": {
+    "mac": {
+     "type": "string"
+    }
+   }
+  },
   "models.MetalNic": {
    "required": [
     "mac",
-    "name"
+    "name",
+    "neighbors"
    ],
    "properties": {
     "mac": {
@@ -512,6 +526,12 @@
     },
     "name": {
      "type": "string"
+    },
+    "neighbors": {
+     "type": "array",
+     "items": {
+      "$ref": "#/definitions/models.MetalNeighbor"
+     }
     }
    }
   },
