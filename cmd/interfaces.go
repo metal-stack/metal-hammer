@@ -46,8 +46,8 @@ func linkSetUp(name string) error {
 }
 
 // Neighbors of a interface, detected via ip neighbor detection
-func Neighbors(name string) ([]*models.ModelsMetalNeighbor, error) {
-	neighbors := make([]*models.ModelsMetalNeighbor, 0)
+func Neighbors(name string) ([]*models.ModelsMetalNic, error) {
+	neighbors := make([]*models.ModelsMetalNic, 0)
 
 	link, err := netlink.LinkByName(name)
 	if err != nil {
@@ -76,7 +76,7 @@ func Neighbors(name string) ([]*models.ModelsMetalNeighbor, error) {
 
 	for mac := range macs {
 		macAddress := mac
-		neighbors = append(neighbors, &models.ModelsMetalNeighbor{Mac: &macAddress})
+		neighbors = append(neighbors, &models.ModelsMetalNic{Mac: &macAddress})
 	}
 
 	return neighbors, nil

@@ -1,603 +1,598 @@
 {
- "swagger": "2.0",
- "info": {
-  "description": "Resource for managing PXE clients",
-  "title": "metal-core",
-  "contact": {
-   "name": "Devops Team",
-   "url": "http://www.f-i-ts.de",
-   "email": "devops@f-i-ts.de"
+  "swagger": "2.0",
+  "info": {
+    "description": "Resource for managing PXE clients",
+    "title": "metal-core",
+    "contact": {
+      "name": "Devops Team",
+      "url": "http://www.f-i-ts.de",
+      "email": "devops@f-i-ts.de"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "http://mit.org"
+    },
+    "version": "1.0.0"
   },
-  "license": {
-   "name": "MIT",
-   "url": "http://mit.org"
-  },
-  "version": "1.0.0"
- },
- "paths": {
-  "/device/install/{id}": {
-   "get": {
-    "consumes": [
-     "application/json"
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "tags": [
-     "device"
-    ],
-    "summary": "install device by ID",
-    "operationId": "Install",
-    "parameters": [
-     {
-      "type": "string",
-      "description": "identifier of the device",
-      "name": "id",
-      "in": "path",
-      "required": true
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "schema": {
-       "$ref": "#/definitions/models.MetalDeviceWithPhoneHomeToken"
+  "paths": {
+    "/device/install/{id}": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "device"
+        ],
+        "summary": "install device by ID",
+        "operationId": "Install",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "identifier of the device",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDeviceWithPhoneHomeToken"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDeviceWithPhoneHomeToken"
+            }
+          }
+        }
       }
-     },
-     "404": {
-      "description": "Not Found"
-     },
-     "default": {
-      "description": "OK",
-      "schema": {
-       "$ref": "#/definitions/models.MetalDeviceWithPhoneHomeToken"
+    },
+    "/device/register/{id}": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "device"
+        ],
+        "summary": "register device by ID",
+        "operationId": "Register",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "identifier of the device",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/domain.MetalHammerRegisterDeviceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Accepted"
+          },
+          "default": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          }
+        }
       }
-     }
-    }
-   }
-  },
-  "/device/register/{id}": {
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "tags": [
-     "device"
-    ],
-    "summary": "register device by ID",
-    "operationId": "Register",
-    "parameters": [
-     {
-      "type": "string",
-      "description": "identifier of the device",
-      "name": "id",
-      "in": "path",
-      "required": true
-     },
-     {
-      "name": "body",
-      "in": "body",
-      "required": true,
-      "schema": {
-       "$ref": "#/definitions/domain.MetalHammerRegisterDeviceRequest"
+    },
+    "/device/report/{id}": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "device"
+        ],
+        "summary": "report device by ID",
+        "operationId": "Report",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "identifier of the device",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/domain.Report"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          },
+          "406": {
+            "description": "Not acceptable"
+          },
+          "500": {
+            "description": "Accepted"
+          },
+          "default": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.MetalDevice"
+            }
+          }
+        }
       }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "schema": {
-       "$ref": "#/definitions/models.MetalDevice"
+    },
+    "/v1/boot/{mac}": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "boot"
+        ],
+        "summary": "boot device by mac",
+        "operationId": "Boot",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "mac of a network interface of the device",
+            "name": "mac",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/domain.BootResponse"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/domain.BootResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/domain.BootResponse"
+            }
+          },
+          "default": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/domain.BootResponse"
+            }
+          }
+        }
       }
-     },
-     "400": {
-      "description": "Bad request"
-     },
-     "500": {
-      "description": "Accepted"
-     },
-     "default": {
-      "description": "OK",
-      "schema": {
-       "$ref": "#/definitions/models.MetalDevice"
+    }
+  },
+  "definitions": {
+    "domain.BootResponse": {
+      "required": [
+        "initrd"
+      ],
+      "properties": {
+        "cmdline": {
+          "type": "string"
+        },
+        "initrd": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "kernel": {
+          "type": "string"
+        }
       }
-     }
-    }
-   }
-  },
-  "/device/report/{id}": {
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "tags": [
-     "device"
-    ],
-    "summary": "report device by ID",
-    "operationId": "Report",
-    "parameters": [
-     {
-      "type": "string",
-      "description": "identifier of the device",
-      "name": "id",
-      "in": "path",
-      "required": true
-     },
-     {
-      "name": "body",
-      "in": "body",
-      "required": true,
-      "schema": {
-       "$ref": "#/definitions/domain.Report"
+    },
+    "domain.MetalHammerRegisterDeviceRequest": {
+      "required": [
+        "disks",
+        "memory",
+        "nics",
+        "cpu_cores",
+        "ipmi"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "disks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalBlockDevice"
+          }
+        },
+        "ipmi": {
+          "description": "the IPMI connection configuration",
+          "$ref": "#/definitions/models.MetalIPMI"
+        },
+        "memory": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "nics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalNic"
+          }
+        },
+        "uuid": {
+          "description": "the uuid of the device to register",
+          "type": "string"
+        }
       }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "schema": {
-       "$ref": "#/definitions/models.MetalDevice"
+    },
+    "domain.Report": {
+      "required": [
+        "message",
+        "console_password"
+      ],
+      "properties": {
+        "console_password": {
+          "description": "the console password which was generated while provisioning",
+          "type": "string"
+        },
+        "message": {
+          "description": "if installation failed, the error message",
+          "type": "string"
+        },
+        "success": {
+          "description": "true if installation succeeded",
+          "type": "boolean"
+        }
       }
-     },
-     "406": {
-      "description": "Not acceptable"
-     },
-     "500": {
-      "description": "Accepted"
-     },
-     "default": {
-      "description": "OK",
-      "schema": {
-       "$ref": "#/definitions/models.MetalDevice"
+    },
+    "models.MetalBlockDevice": {
+      "required": [
+        "name",
+        "size"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int64"
+        }
       }
-     }
-    }
-   }
-  },
-  "/v1/boot/{mac}": {
-   "get": {
-    "consumes": [
-     "application/json"
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "tags": [
-     "boot"
-    ],
-    "summary": "boot device by mac",
-    "operationId": "Boot",
-    "parameters": [
-     {
-      "type": "string",
-      "description": "mac of a network interface of the device",
-      "name": "mac",
-      "in": "path",
-      "required": true
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "schema": {
-       "$ref": "#/definitions/domain.BootResponse"
+    },
+    "models.MetalConstraint": {
+      "required": [
+        "maxcores",
+        "maxmemory",
+        "mincores",
+        "minmemory"
+      ],
+      "properties": {
+        "maxcores": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "maxmemory": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "mincores": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "minmemory": {
+          "type": "integer",
+          "format": "int64"
+        }
       }
-     },
-     "202": {
-      "description": "Accepted",
-      "schema": {
-       "$ref": "#/definitions/domain.BootResponse"
+    },
+    "models.MetalDevice": {
+      "required": [
+        "allocation",
+        "hardware",
+        "id",
+        "site",
+        "size"
+      ],
+      "properties": {
+        "allocation": {
+          "$ref": "#/definitions/models.MetalDeviceAllocation"
+        },
+        "changed": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "hardware": {
+          "$ref": "#/definitions/models.MetalDeviceHardware"
+        },
+        "id": {
+          "type": "string"
+        },
+        "site": {
+          "$ref": "#/definitions/models.MetalSite"
+        },
+        "size": {
+          "$ref": "#/definitions/models.MetalSize"
+        }
       }
-     },
-     "400": {
-      "description": "Bad request",
-      "schema": {
-       "$ref": "#/definitions/domain.BootResponse"
+    },
+    "models.MetalDeviceAllocation": {
+      "required": [
+        "cidr",
+        "created",
+        "hostname",
+        "name",
+        "project",
+        "ssh_pub_keys",
+        "tenant"
+      ],
+      "properties": {
+        "cidr": {
+          "type": "string"
+        },
+        "console_password": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "image": {
+          "$ref": "#/definitions/models.MetalImage"
+        },
+        "last_ping": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string"
+        },
+        "ssh_pub_keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tenant": {
+          "type": "string"
+        }
       }
-     },
-     "default": {
-      "description": "OK",
-      "schema": {
-       "$ref": "#/definitions/domain.BootResponse"
+    },
+    "models.MetalDeviceHardware": {
+      "required": [
+        "cpu_cores",
+        "disks",
+        "memory",
+        "nics"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "disks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalBlockDevice"
+          }
+        },
+        "memory": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "nics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalNic"
+          }
+        }
       }
-     }
-    }
-   }
-  }
- },
- "definitions": {
-  "domain.BootResponse": {
-   "required": [
-    "initrd"
-   ],
-   "properties": {
-    "cmdline": {
-     "type": "string"
     },
-    "initrd": {
-     "type": "array",
-     "items": {
-      "type": "string"
-     }
+    "models.MetalDeviceWithPhoneHomeToken": {
+      "required": [
+        "device",
+        "phone_home_token"
+      ],
+      "properties": {
+        "device": {
+          "$ref": "#/definitions/models.MetalDevice"
+        },
+        "phone_home_token": {
+          "type": "string"
+        }
+      }
     },
-    "kernel": {
-     "type": "string"
+    "models.MetalIPMI": {
+      "required": [
+        "address",
+        "interface",
+        "mac",
+        "password",
+        "user"
+      ],
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "interface": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalImage": {
+      "required": [
+        "id",
+        "name",
+        "url"
+      ],
+      "properties": {
+        "changed": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalNic": {
+      "required": [
+        "mac",
+        "name",
+        "neighbors"
+      ],
+      "properties": {
+        "mac": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "neighbors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalNic"
+          }
+        }
+      }
+    },
+    "models.MetalSite": {
+      "required": [
+        "description",
+        "id",
+        "name"
+      ],
+      "properties": {
+        "changed": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalSize": {
+      "required": [
+        "constraints",
+        "id",
+        "name"
+      ],
+      "properties": {
+        "changed": {
+          "type": "string"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalConstraint"
+          }
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
     }
-   }
   },
-  "domain.MetalHammerRegisterDeviceRequest": {
-   "required": [
-    "cpu_cores",
-    "disks",
-    "memory",
-    "nics",
-    "ipmi"
-   ],
-   "properties": {
-    "cpu_cores": {
-     "type": "integer",
-     "format": "int32"
+  "tags": [
+    {
+      "description": "Booting PXE clients",
+      "name": "boot"
     },
-    "disks": {
-     "type": "array",
-     "items": {
-      "$ref": "#/definitions/models.MetalBlockDevice"
-     }
-    },
-    "ipmi": {
-     "description": "the IPMI connection configuration",
-     "$ref": "#/definitions/models.MetalIPMI"
-    },
-    "memory": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "nics": {
-     "type": "array",
-     "items": {
-      "$ref": "#/definitions/models.MetalNic"
-     }
-    },
-    "uuid": {
-     "description": "the uuid of the device to register",
-     "type": "string"
+    {
+      "description": "Managing PXE boot clients",
+      "name": "device"
     }
-   }
-  },
-  "domain.Report": {
-   "required": [
-    "message"
-   ],
-   "properties": {
-    "message": {
-     "description": "if installation failed, the error message",
-     "type": "string"
-    },
-    "success": {
-     "description": "true if installation succeeded",
-     "type": "boolean"
-    }
-   }
-  },
-  "models.MetalBlockDevice": {
-   "required": [
-    "name",
-    "size"
-   ],
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "size": {
-     "type": "integer",
-     "format": "int64"
-    }
-   }
-  },
-  "models.MetalConstraint": {
-   "required": [
-    "maxcores",
-    "maxmemory",
-    "mincores",
-    "minmemory"
-   ],
-   "properties": {
-    "maxcores": {
-     "type": "integer",
-     "format": "int32"
-    },
-    "maxmemory": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "mincores": {
-     "type": "integer",
-     "format": "int32"
-    },
-    "minmemory": {
-     "type": "integer",
-     "format": "int64"
-    }
-   }
-  },
-  "models.MetalDevice": {
-   "required": [
-    "allocation",
-    "hardware",
-    "id",
-    "site",
-    "size"
-   ],
-   "properties": {
-    "allocation": {
-     "$ref": "#/definitions/models.MetalDeviceAllocation"
-    },
-    "changed": {
-     "type": "string"
-    },
-    "created": {
-     "type": "string"
-    },
-    "hardware": {
-     "$ref": "#/definitions/models.MetalDeviceHardware"
-    },
-    "id": {
-     "type": "string"
-    },
-    "site": {
-     "$ref": "#/definitions/models.MetalSite"
-    },
-    "size": {
-     "$ref": "#/definitions/models.MetalSize"
-    }
-   }
-  },
-  "models.MetalDeviceAllocation": {
-   "required": [
-    "cidr",
-    "created",
-    "hostname",
-    "name",
-    "project",
-    "ssh_pub_keys",
-    "tenant"
-   ],
-   "properties": {
-    "cidr": {
-     "type": "string"
-    },
-    "console_password": {
-     "type": "string"
-    },
-    "created": {
-     "type": "string"
-    },
-    "description": {
-     "type": "string"
-    },
-    "hostname": {
-     "type": "string"
-    },
-    "image": {
-     "$ref": "#/definitions/models.MetalImage"
-    },
-    "last_ping": {
-     "type": "string"
-    },
-    "name": {
-     "type": "string"
-    },
-    "project": {
-     "type": "string"
-    },
-    "ssh_pub_keys": {
-     "type": "array",
-     "items": {
-      "type": "string"
-     }
-    },
-    "tenant": {
-     "type": "string"
-    }
-   }
-  },
-  "models.MetalDeviceHardware": {
-   "required": [
-    "cpu_cores",
-    "disks",
-    "memory",
-    "nics"
-   ],
-   "properties": {
-    "cpu_cores": {
-     "type": "integer",
-     "format": "int32"
-    },
-    "disks": {
-     "type": "array",
-     "items": {
-      "$ref": "#/definitions/models.MetalBlockDevice"
-     }
-    },
-    "memory": {
-     "type": "integer",
-     "format": "int64"
-    },
-    "nics": {
-     "type": "array",
-     "items": {
-      "$ref": "#/definitions/models.MetalNic"
-     }
-    }
-   }
-  },
-  "models.MetalDeviceWithPhoneHomeToken": {
-   "required": [
-    "device",
-    "phone_home_token"
-   ],
-   "properties": {
-    "device": {
-     "$ref": "#/definitions/models.MetalDevice"
-    },
-    "phone_home_token": {
-     "type": "string"
-    }
-   }
-  },
-  "models.MetalIPMI": {
-   "required": [
-    "address",
-    "interface",
-    "mac",
-    "password",
-    "user"
-   ],
-   "properties": {
-    "address": {
-     "type": "string"
-    },
-    "interface": {
-     "type": "string"
-    },
-    "mac": {
-     "type": "string"
-    },
-    "password": {
-     "type": "string"
-    },
-    "user": {
-     "type": "string"
-    }
-   }
-  },
-  "models.MetalImage": {
-   "required": [
-    "id",
-    "name",
-    "url"
-   ],
-   "properties": {
-    "changed": {
-     "type": "string"
-    },
-    "created": {
-     "type": "string"
-    },
-    "description": {
-     "type": "string"
-    },
-    "id": {
-     "type": "string"
-    },
-    "name": {
-     "type": "string"
-    },
-    "url": {
-     "type": "string"
-    }
-   }
-  },
-  "models.MetalNeighbor": {
-   "required": [
-    "mac"
-   ],
-   "properties": {
-    "mac": {
-     "type": "string"
-    }
-   }
-  },
-  "models.MetalNic": {
-   "required": [
-    "mac",
-    "name",
-    "neighbors"
-   ],
-   "properties": {
-    "mac": {
-     "type": "string"
-    },
-    "name": {
-     "type": "string"
-    },
-    "neighbors": {
-     "type": "array",
-     "items": {
-      "$ref": "#/definitions/models.MetalNeighbor"
-     }
-    }
-   }
-  },
-  "models.MetalSite": {
-   "required": [
-    "description",
-    "id",
-    "name"
-   ],
-   "properties": {
-    "changed": {
-     "type": "string"
-    },
-    "created": {
-     "type": "string"
-    },
-    "description": {
-     "type": "string"
-    },
-    "id": {
-     "type": "string"
-    },
-    "name": {
-     "type": "string"
-    }
-   }
-  },
-  "models.MetalSize": {
-   "required": [
-    "constraints",
-    "id",
-    "name"
-   ],
-   "properties": {
-    "changed": {
-     "type": "string"
-    },
-    "constraints": {
-     "type": "array",
-     "items": {
-      "$ref": "#/definitions/models.MetalConstraint"
-     }
-    },
-    "created": {
-     "type": "string"
-    },
-    "description": {
-     "type": "string"
-    },
-    "id": {
-     "type": "string"
-    },
-    "name": {
-     "type": "string"
-    }
-   }
-  }
- },
- "tags": [
-  {
-   "description": "Booting PXE clients",
-   "name": "boot"
-  },
-  {
-   "description": "Managing PXE boot clients",
-   "name": "device"
-  }
- ]
+  ]
 }
