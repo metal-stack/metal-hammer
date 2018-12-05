@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	gonet "net"
 	"os"
 	"strconv"
@@ -197,11 +196,6 @@ func (h *Hammer) readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error
 		config.IP = config.IP + ":" + defaultIpmiPort
 	} else {
 		log.Info("ipmi details faked")
-		// We are virtual
-		// Wild guess, set the last octet to 1 to get the gateway
-		gwip := net.ParseIP(h.IPAddress)
-		gwip = gwip.To4()
-		gwip[3] = 1
 
 		if len(eth0Mac) == 0 {
 			eth0Mac = "00:00:00:00:00:00"
@@ -215,7 +209,8 @@ func (h *Hammer) readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error
 		}
 
 		const baseIPMIPort = 6230
-		config.IP = fmt.Sprintf("%s:%d", gwip, baseIPMIPort+port)
+		// Fixed IP of vagrant environment gateway
+		config.IP = fmt.Sprintf("192.168.121.1:%d", baseIPMIPort+port)
 		config.Mac = "00:00:00:00:00:00"
 		pw = "vagrant"
 		user = "vagrant"
