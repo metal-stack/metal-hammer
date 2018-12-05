@@ -9,13 +9,15 @@ import (
 	"testing"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 )
 
 func TestReportInstallation(t *testing.T) {
 	expected := "an error occured"
-	resp := &Report{}
+	resp := &models.DomainReport{}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
@@ -47,8 +49,8 @@ func TestReportInstallation(t *testing.T) {
 		t.Error(err)
 	}
 
-	if resp.Message != expected {
-		t.Errorf("response message:%s expected:%s", resp.Message, expected)
+	if *resp.Message != expected {
+		t.Errorf("response message:%s expected:%s", *resp.Message, expected)
 	}
 	if resp.Success {
 		t.Errorf("response success:%t expected:False", resp.Success)

@@ -18,6 +18,8 @@ type Specification struct {
 	BGPEnabled bool
 	// Cidr of BGP interface in DEV Mode
 	Cidr string
+	// ConsolePassword of the metal user valid for one day.
+	ConsolePassword string
 }
 
 // Log print configuration options

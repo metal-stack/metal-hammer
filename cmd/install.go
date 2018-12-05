@@ -464,13 +464,14 @@ func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
 
 	// FIXME
 	sshPubkeys := strings.Join(device.Allocation.SSHPubKeys, "\n")
+	h.Spec.ConsolePassword = password.Generate(16)
 	y := &InstallerConfig{
 		Hostname:     *device.Allocation.Hostname,
 		SSHPublicKey: sshPubkeys,
 		IPAddress:    ipaddress,
 		ASN:          fmt.Sprintf("%d", asn),
 		Devmode:      h.Spec.DevMode,
-		Password:     password.Generate(16),
+		Password:     h.Spec.ConsolePassword,
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
