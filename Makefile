@@ -48,5 +48,4 @@ ramdisk:
 generate-client:
 	rm -rf metal-core \
 	&& mkdir metal-core \
-	&& cp ../metal-core/spec/metal-core.json . \
 	&& GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core
