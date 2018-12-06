@@ -6,9 +6,11 @@ INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../common)
 
-in-docker: generate-client test all;
+in-docker: clean-client generate-client test all;
 
 include $(COMMONDIR)/Makefile.inc
+
+release:: generate-client test all ;
 
 .PHONY: clean
 clean::
@@ -45,7 +47,10 @@ ramdisk:
 	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}
 
+clean-client:
+	rm -rf metal-core
+	mkdir metal-core
+	cp ../metal-core/spec/metal-core.json metal-core.json
+
 generate-client:
-	rm -rf metal-core \
-	&& mkdir metal-core \
-	&& GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core
+	GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core
