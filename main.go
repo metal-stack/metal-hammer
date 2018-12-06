@@ -21,6 +21,12 @@ func main() {
 		log.Error("sshd error", "error", err)
 		os.Exit(1)
 	}
+	err = cmd.StartDHClient()
+	if err != nil {
+		log.Error("dhclient error", "error", err)
+		os.Exit(1)
+	}
+
 	var spec cmd.Specification
 	err = envconfig.Process("metal-hammer", &spec)
 	if err != nil {
