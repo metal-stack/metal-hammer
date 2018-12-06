@@ -47,10 +47,11 @@ ramdisk:
 	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}
 
-clean-client:
+clean-local-dirs:
 	rm -rf metal-core
 	mkdir metal-core
+clean-client: clean-local-dirs
 	cp ../metal-core/spec/metal-core.json metal-core.json
 
-generate-client:
+generate-client: clean-local-dirs
 	GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core
