@@ -29,6 +29,9 @@ func (h *Hammer) UpAllInterfaces() error {
 		if err != nil {
 			return fmt.Errorf("Error set link %s up: %v", nic.Name, err)
 		}
+
+		// background lldpd
+		go h.StartLLDPD(nic.Name)
 	}
 	return nil
 }
