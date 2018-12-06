@@ -4,7 +4,7 @@ COMPRESSOR := lz4
 COMPRESSOR_ARGS := -f -l
 INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
-COMMONDIR := $(or ${COMMONDIR},../../common)
+COMMONDIR := $(or ${COMMONDIR},../common)
 
 in-docker: generate-client test all;
 
@@ -48,4 +48,5 @@ ramdisk:
 generate-client:
 	rm -rf metal-core \
 	&& mkdir metal-core \
+	&& cp ../metal-core/spec/metal-core.json . \
 	&& GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core
