@@ -44,7 +44,7 @@ func TestRegisterDevice(t *testing.T) {
 		Spec:      spec,
 		IPAddress: "1.2.3.4",
 	}
-
+	host.done = true
 	eth0Mac = "00:00:00:00:00:01"
 	uuid, err := h.RegisterDevice()
 
@@ -76,6 +76,7 @@ func Test_readHardwareDetails(t *testing.T) {
 			wantErr: false,
 		},
 	}
+	host.done = true
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &Hammer{

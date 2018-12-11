@@ -63,6 +63,8 @@ github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db h1:woRePGFeVFfLKN/pO
 github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
 github.com/google/go-cmp v0.2.0 h1:+dTQ8DZQJz0Mb/HjFlkptS1FeQ4cWSnN941F8aEG4SQ=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
+github.com/google/gopacket v1.1.15 h1:M6W3hwQXo5rq1wyhRByGhqOw0m9p+HWtUJ3Bj4/fT6E=
+github.com/google/gopacket v1.1.15/go.mod h1:UCLx9mCmAwsVbn6qQl1WIEt2SO7Nd2fD0th1TBAsqBw=
 github.com/google/uuid v1.0.0 h1:b4Gk+7WdP/d3HZH8EJsZpvV7EtDOgaZLtnaNGIu1adA=
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.0 h1:Jf4mxPC/ziBnoPIdpQdPJ9OeiomAUHLvxmPRSPH9m4s=
@@ -73,8 +75,6 @@ github.com/jaypipes/ghw v0.0.0-20181023082906-524701ced228 h1:ad1/oCrYoAL/ro3elT
 github.com/jaypipes/ghw v0.0.0-20181023082906-524701ced228/go.mod h1:d4vBgnp8ae8OOU5uJLwjor0uu3TJwAOk1Jt5DNPlnQ4=
 github.com/jaypipes/pcidb v0.0.0-20181022223140-21a3652c196f h1:QymevThbt9f4hH+TuEXVqdDwLoXgLKFE13FGjvE9tws=
 github.com/jaypipes/pcidb v0.0.0-20181022223140-21a3652c196f/go.mod h1:kPBABoOV7RNkrLIqtAdYQeUeHhmWK+NQaYdBNOFB0Iw=
-github.com/jsimonetti/rtnetlink v0.0.0-20181115200209-87df7d513118 h1:jx14T4NtNm2v2p4D5c7aF8/G5IB1bHrWdnyvU1ihtxw=
-github.com/jsimonetti/rtnetlink v0.0.0-20181115200209-87df7d513118/go.mod h1:/tBJRbcbiTTSIRvnEajZBJ9fiCsi6SMBRIYRq4+ttGM=
 github.com/kelseyhightower/envconfig v1.3.0 h1:IvRS4f2VcIQy6j4ORGIf9145T/AsUB+oY8LyvN8BXNM=
 github.com/kelseyhightower/envconfig v1.3.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
@@ -90,12 +90,6 @@ github.com/mattn/go-isatty v0.0.4 h1:bnP0vzxcAdeI1zdubAl5PjU6zsERjGZb7raWodagDYs
 github.com/mattn/go-isatty v0.0.4/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
 github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8BzLR4=
 github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
-github.com/mdlayher/ethernet v0.0.0-20181025151932-d5c0834fe478 h1:bEAtbhf6nyR5xgIMnIKetszzEDQtU+tdo1tuQrQpW3E=
-github.com/mdlayher/ethernet v0.0.0-20181025151932-d5c0834fe478/go.mod h1:/Q2hs4vCpD4WukymNvY0paizjh6zBK1rdb6ZHM2LDQY=
-github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 h1:i4JJtLb5iDVsncU7splD9ZCQXvxN13tGDUWihfKOq18=
-github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/4B6NhGzofHK/+I+N31NTUz/hrEm4ssUwA=
-github.com/mdlayher/netlink v0.0.0-20181130185118-15d1a65c495e h1:pzQTWPBv7CTtasO7CIDzWX8ugS+R1OT3LSf7hlPVzak=
-github.com/mdlayher/netlink v0.0.0-20181130185118-15d1a65c495e/go.mod h1:a3TlQHkJH2m32RF224Z7LhD5N4mpyR8eUbCoYHywrwg=
 github.com/mdlayher/raw v0.0.0-20181016155347-fa5ef3332ca9 h1:tOtO8DXiNGj9NshRKHWiZuGlSldPFzFCFYhNtsKTBCs=
 github.com/mdlayher/raw v0.0.0-20181016155347-fa5ef3332ca9/go.mod h1:rC/yE65s/DoHB6BzVOUBNYBGTg772JVytyAytffIZkY=
 github.com/mholt/archiver v2.1.0+incompatible h1:1ivm7KAHPtPere1YDOdrY6xGdbMNGRWThZbYh5lWZT0=

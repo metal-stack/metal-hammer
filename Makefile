@@ -5,6 +5,7 @@ COMPRESSOR_ARGS := -f -l
 INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../common)
+CGO_ENABLED := 1
 
 in-docker: clean-client generate-client test all;
 
