@@ -56,7 +56,7 @@ func Neighbors(name string) ([]*models.ModelsMetalNic, error) {
 	neighbors := make([]*models.ModelsMetalNic, 0)
 
 	for !host.done {
-		log.Info("not all lldp pdu's are received, waiting...", "interface", name)
+		log.Info("not all lldp pdu's received, waiting...", "interface", name)
 		time.Sleep(1 * time.Second)
 	}
 	log.Info("all lldp pdu's received", "interface", name)
