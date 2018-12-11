@@ -17,25 +17,21 @@ require (
 	github.com/go-openapi/validate v0.17.2
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/google/go-cmp v0.2.0 // indirect
+	github.com/google/gopacket v1.1.15
 	github.com/google/uuid v1.1.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/jaypipes/ghw v0.0.0-20181023082906-524701ced228
 	github.com/jaypipes/pcidb v0.0.0-20181022223140-21a3652c196f // indirect
-	github.com/jsimonetti/rtnetlink v0.0.0-20181115200209-87df7d513118
 	github.com/kelseyhightower/envconfig v1.3.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
-	github.com/mdlayher/ethernet v0.0.0-20181025151932-d5c0834fe478
-	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
-	github.com/mdlayher/netlink v0.0.0-20181130185118-15d1a65c495e
-	github.com/mdlayher/raw v0.0.0-20181016155347-fa5ef3332ca9
+	github.com/mdlayher/raw v0.0.0-20181016155347-fa5ef3332ca9 // indirect
 	github.com/mholt/archiver v2.1.0+incompatible
 	github.com/mitchellh/go-homedir v1.0.0 // indirect
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.0.5+incompatible
-	github.com/pkg/errors v0.8.0
 	github.com/u-root/u-root v2.0.0+incompatible
 	github.com/ulikunitz/xz v0.5.5 // indirect
 	github.com/vishvananda/netlink v1.0.0

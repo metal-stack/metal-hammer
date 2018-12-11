@@ -1,0 +1,125 @@
+package lldp
+
+import (
+	"fmt"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
+	log "github.com/inconshreveable/log15"
+	"net"
+	"time"
+)
+
+type LinkType string
+
+var (
+	Interface LinkType = "Interface"
+	Mac       LinkType = "Mac"
+)
+
+type Chassis struct {
+	Type  LinkType
+	Value string
+}
+type Port struct {
+	Type  LinkType
+	Value string
+}
+
+type Neighbor struct {
+	Name        string
+	Description string
+	Interface   string
+	Chassis     Chassis
+	Port        Port
+}
+
+func (c Chassis) String() string {
+	return fmt.Sprintf("%s:%s", c.Type, c.Value)
+}
+func (p Port) String() string {
+	return fmt.Sprintf("%s:%s", p.Type, p.Value)
+}
+func (n Neighbor) String() string {
+	return fmt.Sprintf("Name:%s Desc:%s Chassis:%s  Port:%s", n.Name, n.Description, n.Chassis, n.Port)
+}
+
+type LLDP struct {
+	Source    *gopacket.PacketSource
+	Handle    *pcap.Handle
+	Interface string
+}
+
+func NewLLDPClient(ifi string) (*LLDP, error) {
+	iface, err := net.InterfaceByName(ifi)
+	if err != nil {
+		return nil, fmt.Errorf("unable to lookup interface:%s info:%v", ifi, err)
+	}
+	log.Info("lldp", "listen on interface", iface.Name)
+
+	handle, err := pcap.OpenLive(iface.Name, 65536, true, 5*time.Second)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to open interface:%s in promiscous mode info:%v", iface.Name, err)
+	}
+	// Only snoop for LLDP Packets
+	err = handle.SetBPFFilter("ether proto 0x88cc")
+	if err != nil {
+		return nil, fmt.Errorf("unable to filter ethernet traffic 088cc on interface:%s info:%v", iface.Name, err)
+	}
+	src := gopacket.NewPacketSource(handle, handle.LinkType())
+	return &LLDP{Source: src, Handle: handle, Interface: ifi}, nil
+}
+
+func (l *LLDP) Close() {
+	l.Handle.Close()
+}
+
+// Neighbors search on a interface for neighbors announced via lldp
+func (l *LLDP) Neighbors(neighCan chan Neighbor) {
+	for {
+		for packet := range l.Source.Packets() {
+			switch packet.LinkLayer().LayerType() {
+			case layers.LayerTypeEthernet:
+				neigh := Neighbor{}
+				for _, layer := range packet.Layers() {
+					layerType := layer.LayerType()
+					switch layerType {
+					case layers.LayerTypeLinkLayerDiscovery:
+						lldp := layer.(*layers.LinkLayerDiscovery)
+						chassis := Chassis{}
+						port := Port{}
+						var chassismac net.HardwareAddr
+						var portmac net.HardwareAddr
+						switch lldp.PortID.Subtype {
+						case layers.LLDPPortIDSubtypeMACAddr:
+							portmac = lldp.PortID.ID
+							port.Type = Mac
+							port.Value = portmac.String()
+						case layers.LLDPPortIDSubtypeIfaceName:
+							port.Type = Interface
+							port.Value = string(lldp.PortID.ID)
+						}
+						switch lldp.ChassisID.Subtype {
+						case layers.LLDPChassisIDSubTypeMACAddr:
+							chassismac = lldp.ChassisID.ID
+							chassis.Type = Mac
+							chassis.Value = chassismac.String()
+						case layers.LLDPChassisIDSubtypeIfaceName:
+							chassis.Type = Interface
+							chassis.Value = string(lldp.ChassisID.ID)
+						}
+						neigh.Chassis = chassis
+						neigh.Port = port
+					case layers.LayerTypeLinkLayerDiscoveryInfo:
+						lldpi := layer.(*layers.LinkLayerDiscoveryInfo)
+						neigh.Name = lldpi.SysName
+						neigh.Description = lldpi.SysDescription
+						neigh.Interface = l.Interface
+						neighCan <- neigh
+					}
+				}
+			}
+		}
+	}
+}

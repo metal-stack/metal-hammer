@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	log "github.com/inconshreveable/log15"
 	"strings"
+	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
-
 	"github.com/jaypipes/ghw"
 	"github.com/vishvananda/netlink"
 )
@@ -20,19 +21,21 @@ func (h *Hammer) UpAllInterfaces() error {
 		return fmt.Errorf("Error getting network info: %v", err)
 	}
 
+	interfaces := make([]string, 0)
 	for _, nic := range net.NICs {
 		if !strings.HasPrefix(nic.Name, "eth") {
 			continue
 		}
+		interfaces = append(interfaces, nic.Name)
 
 		err := linkSetUp(nic.Name)
 		if err != nil {
 			return fmt.Errorf("Error set link %s up: %v", nic.Name, err)
 		}
-
-		// background lldpd
-		go h.StartLLDPD(nic.Name)
 	}
+
+	go h.StartLLDPDClient(interfaces)
+
 	return nil
 }
 
@@ -52,35 +55,16 @@ func linkSetUp(name string) error {
 func Neighbors(name string) ([]*models.ModelsMetalNic, error) {
 	neighbors := make([]*models.ModelsMetalNic, 0)
 
-	link, err := netlink.LinkByName(name)
-	if err != nil {
-		return neighbors, err
+	for !host.done {
+		log.Info("not all lldp pdu's are received, waiting...", "interface", name)
+		time.Sleep(1 * time.Second)
 	}
+	log.Info("all lldp pdu's received", "interface", name)
 
-	// TODO: Maybe we can use FAMILY_ALL as well for both v4 and v6,
-	// but we need an environment with IPv6 neighbors to check if it's working
-	v4, err := netlink.NeighList(link.Attrs().Index, netlink.FAMILY_V4)
-	if err != nil {
-		return neighbors, err
-	}
-	v6, err := netlink.NeighList(link.Attrs().Index, netlink.FAMILY_V6)
-	if err != nil {
-		return neighbors, err
-	}
-
-	macs := map[string]bool{}
-
-	for _, n := range v4 {
-		macs[n.HardwareAddr.String()] = true
-	}
-	for _, n := range v6 {
-		macs[n.HardwareAddr.String()] = true
-	}
-
-	for mac := range macs {
-		macAddress := mac
+	neighs, _ := host.neighbors[name]
+	for _, neigh := range neighs {
+		macAddress := neigh.Chassis.Value
 		neighbors = append(neighbors, &models.ModelsMetalNic{Mac: &macAddress})
 	}
-
 	return neighbors, nil
 }
