@@ -90,6 +90,10 @@ github.com/mattn/go-isatty v0.0.4 h1:bnP0vzxcAdeI1zdubAl5PjU6zsERjGZb7raWodagDYs
 github.com/mattn/go-isatty v0.0.4/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
 github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8BzLR4=
 github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
+github.com/mdlayher/ethernet v0.0.0-20181025151932-d5c0834fe478 h1:bEAtbhf6nyR5xgIMnIKetszzEDQtU+tdo1tuQrQpW3E=
+github.com/mdlayher/ethernet v0.0.0-20181025151932-d5c0834fe478/go.mod h1:/Q2hs4vCpD4WukymNvY0paizjh6zBK1rdb6ZHM2LDQY=
+github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 h1:i4JJtLb5iDVsncU7splD9ZCQXvxN13tGDUWihfKOq18=
+github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/4B6NhGzofHK/+I+N31NTUz/hrEm4ssUwA=
 github.com/mdlayher/raw v0.0.0-20181016155347-fa5ef3332ca9 h1:tOtO8DXiNGj9NshRKHWiZuGlSldPFzFCFYhNtsKTBCs=
 github.com/mdlayher/raw v0.0.0-20181016155347-fa5ef3332ca9/go.mod h1:rC/yE65s/DoHB6BzVOUBNYBGTg772JVytyAytffIZkY=
 github.com/mholt/archiver v2.1.0+incompatible h1:1ivm7KAHPtPere1YDOdrY6xGdbMNGRWThZbYh5lWZT0=

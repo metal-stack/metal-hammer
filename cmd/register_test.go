@@ -82,7 +82,8 @@ func Test_readHardwareDetails(t *testing.T) {
 			h := &Hammer{
 				Client: tt.fields.Client,
 				Spec: &Specification{
-					DevMode: true,
+					DevMode:    true,
+					DeviceUUID: "00000000-0000-0000-0000-000000000000",
 				},
 				IPAddress: "1.2.3.4",
 			}

@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"fmt"
-	log "github.com/inconshreveable/log15"
-	"strings"
-	"time"
-
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/lldp"
+	"git.f-i-ts.de/cloud-native/metallib/version"
+	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
 	"github.com/vishvananda/netlink"
+	"strings"
+	"time"
 )
 
 // UpAllInterfaces set all available eth* interfaces up
@@ -21,6 +22,7 @@ func (h *Hammer) UpAllInterfaces() error {
 		return fmt.Errorf("Error getting network info: %v", err)
 	}
 
+	description := fmt.Sprintf("metal-hammer IP:%s version:%s waiting since %s for installation", h.IPAddress, version.V, h.Started)
 	interfaces := make([]string, 0)
 	for _, nic := range net.NICs {
 		if !strings.HasPrefix(nic.Name, "eth") {
@@ -32,6 +34,12 @@ func (h *Hammer) UpAllInterfaces() error {
 		if err != nil {
 			return fmt.Errorf("Error set link %s up: %v", nic.Name, err)
 		}
+
+		lldpd, err := lldp.NewLLDPD(h.Spec.DeviceUUID, description, nic.Name, 5*time.Second)
+		if err != nil {
+			return fmt.Errorf("Error start lldpd on %s info: %v", nic.Name, err)
+		}
+		lldpd.Start()
 	}
 
 	go h.StartLLDPDClient(interfaces)
