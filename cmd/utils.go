@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/google/uuid"
 	log "github.com/inconshreveable/log15"
 	pb "gopkg.in/cheggaaa/pb.v1"
 )
@@ -149,4 +150,60 @@ func createSyslog() error {
 	}
 
 	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0666)
+}
+
+const dmiUUID = "/sys/class/dmi/id/product_uuid"
+const dmiSerial = "/sys/class/dmi/id/product_serial"
+
+// DeviceUUID calculates a unique uuid for this (hardware) device
+func DeviceUUID() string {
+	if _, err := os.Stat(dmiUUID); !os.IsNotExist(err) {
+		productUUID, err := ioutil.ReadFile(dmiUUID)
+		if err != nil {
+			log.Error("error getting product_uuid", "error", err)
+		} else {
+			log.Info("create UUID from", "source", dmiUUID)
+			return strings.TrimSpace(string(productUUID))
+		}
+	}
+
+	if _, err := os.Stat(dmiSerial); !os.IsNotExist(err) {
+		productSerial, err := ioutil.ReadFile(dmiSerial)
+		if err != nil {
+			log.Error("error getting product_serial", "error", err)
+		} else {
+			productSerialBytes, err := uuid.FromBytes([]byte(fmt.Sprintf("%16s", string(productSerial))))
+			if err != nil {
+				log.Error("error getting converting product_serial to uuid", "error", err)
+			} else {
+				log.Info("create UUID from", "source", dmiSerial)
+				return strings.TrimSpace(productSerialBytes.String())
+			}
+		}
+	}
+	log.Error("no valid UUID found", "return uuid", "00000000-0000-0000-0000-000000000000")
+	return "00000000-0000-0000-0000-000000000000"
+}
+
+func InternalIP() string {
+	var ip net.IP
+	interfaces := []string{"eth0", "eth1", "eth2", "eth3", "eth4", "eth5", "eth6", "eth7", "eth8", "eth9"}
+	for _, eth := range interfaces {
+		itf, _ := net.InterfaceByName(eth)
+		item, _ := itf.Addrs()
+		for _, addr := range item {
+			switch v := addr.(type) {
+			case *net.IPNet:
+				if !v.IP.IsLoopback() {
+					if v.IP.To4() != nil {
+						ip = v.IP
+					}
+				}
+			}
+		}
+	}
+	if ip != nil {
+		return ip.String()
+	}
+	return ""
 }

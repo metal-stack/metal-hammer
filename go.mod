@@ -27,7 +27,9 @@ require (
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
-	github.com/mdlayher/raw v0.0.0-20181016155347-fa5ef3332ca9 // indirect
+	github.com/mdlayher/ethernet v0.0.0-20181025151932-d5c0834fe478
+	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
+	github.com/mdlayher/raw v0.0.0-20181016155347-fa5ef3332ca9
 	github.com/mholt/archiver v2.1.0+incompatible
 	github.com/mitchellh/go-homedir v1.0.0 // indirect
 	github.com/nwaples/rardecode v1.0.0 // indirect

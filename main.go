@@ -16,7 +16,8 @@ import (
 
 func main() {
 	fmt.Print(cmd.HammerBanner)
-	err := cmd.StartSSHD()
+	ip := cmd.InternalIP()
+	err := cmd.StartSSHD(ip)
 	if err != nil {
 		log.Error("sshd error", "error", err)
 		os.Exit(1)
@@ -78,6 +79,9 @@ func main() {
 			spec.BGPEnabled = enabled
 		}
 	}
+
+	spec.DeviceUUID = cmd.DeviceUUID()
+	spec.Ip = ip
 
 	spec.Log()
 

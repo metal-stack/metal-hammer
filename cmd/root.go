@@ -19,6 +19,7 @@ type Hammer struct {
 	Spec   *Specification
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress string
+	Started   time.Time
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
@@ -31,7 +32,8 @@ func Run(spec *Specification) error {
 	hammer := &Hammer{
 		Client:    client,
 		Spec:      spec,
-		IPAddress: getInternalIP(),
+		IPAddress: spec.Ip,
+		Started:   time.Now(),
 	}
 
 	err := hammer.UpAllInterfaces()
