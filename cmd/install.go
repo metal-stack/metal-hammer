@@ -119,6 +119,8 @@ type InstallerConfig struct {
 	Hostname string `yaml:"hostname"`
 	// IPAddress is expected to be in the form without mask
 	IPAddress string `yaml:"ipaddress"`
+	// DeviceUUID is the unique UUID for this device, usually the board serial.
+	DeviceUUID string `yaml:"deviceuuid"`
 	// must be calculated from the last 4 byte of the IPAddress
 	ASN string `yaml:"asn"`
 	// SSHPublicKey of the user
@@ -469,6 +471,7 @@ func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
 		Hostname:     *device.Allocation.Hostname,
 		SSHPublicKey: sshPubkeys,
 		IPAddress:    ipaddress,
+		DeviceUUID:   h.Spec.DeviceUUID,
 		ASN:          fmt.Sprintf("%d", asn),
 		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,
