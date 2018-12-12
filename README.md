@@ -11,7 +11,7 @@ make initrd
 ## Local Testing
 
 ```
-vagrant destroy -f && make initrd && vagrant up && virsh console metal-hammer_pxeclient
+vagrant destroy -f && make clean initrd && vagrant up && virsh console metal-hammer_pxeclient
 ```
 
 ## Create a PXE boot initrd with u-root

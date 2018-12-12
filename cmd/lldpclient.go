@@ -58,17 +58,16 @@ func (h *Hammer) StartLLDPDClient(interfaces []string) {
 		select {
 		case neigh := <-neighChan:
 			log.Debug("lldp", "neigh", neigh)
-			found := false
-			for _, value := range host.neighbors {
-				for _, v := range value {
-					if v.Chassis.Value == neigh.Chassis.Value &&
-						v.Port.Value == neigh.Port.Value {
-						found = true
-						log.Debug("lldp", "neigh known", neigh)
+			neighExists := false
+			for _, existingNeigh := range host.neighbors {
+				for _, en := range existingNeigh {
+					if en.Chassis.Value == neigh.Chassis.Value &&
+						en.Port.Value == neigh.Port.Value {
+						neighExists = true
 					}
 				}
 			}
-			if found {
+			if neighExists {
 				break
 			}
 			host.mutex.Lock()

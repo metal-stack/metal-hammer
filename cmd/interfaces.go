@@ -72,7 +72,10 @@ func Neighbors(name string) ([]*models.ModelsMetalNic, error) {
 
 	neighs, _ := host.neighbors[name]
 	for _, neigh := range neighs {
-		macAddress := neigh.Chassis.Value
+		if neigh.Port.Type != lldp.Mac {
+			continue
+		}
+		macAddress := neigh.Port.Value
 		neighbors = append(neighbors, &models.ModelsMetalNic{Mac: &macAddress})
 	}
 	return neighbors, nil
