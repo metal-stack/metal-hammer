@@ -40,7 +40,7 @@ func (h *Hammer) StartLLDPDClient(interfaces []string) {
 	log.Info("lldp start discovery")
 	neighChan := make(chan lldp.Neighbor)
 	for _, ifi := range interfaces {
-		lldpcli, err := lldp.NewLLDPClient(ifi)
+		lldpcli, err := lldp.NewClient(ifi)
 		if err != nil {
 			log.Error("lldp", "unable to start client on", ifi, "error", err)
 			continue

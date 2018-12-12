@@ -15,12 +15,16 @@ const (
 	// Make use of an LLDP EtherType.
 	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
 	etherType = 0x88cc
+)
+
+var (
 	// See https://en.wikipedia.org/wiki/Link_Layer_Discovery_Protocol#Frame_structure
 	// for explanation why this destination mac.
 	destinationMac = net.HardwareAddr{0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e}
 )
 
-type LLDPD struct {
+// Daemon is a lldp daemon
+type Daemon struct {
 	SystemName        string
 	SystemDescription string
 	Interface         *net.Interface
@@ -29,8 +33,8 @@ type LLDPD struct {
 	LLDPMessage       []byte
 }
 
-// NewLLDPD create a new LLDPD instance for the given interface
-func NewLLDPD(systemName, systemDescription, interfaceName string, interval time.Duration) (*LLDPD, error) {
+// NewDaemon create a new LLDPD instance for the given interface
+func NewDaemon(systemName, systemDescription, interfaceName string, interval time.Duration) (*Daemon, error) {
 	// Open a raw socket on the specified interface, and configure it to accept
 	// traffic with etherecho's EtherType.
 	ifi, err := net.InterfaceByName(interfaceName)
@@ -45,7 +49,7 @@ func NewLLDPD(systemName, systemDescription, interfaceName string, interval time
 
 	log.Info("lldpd", "listen on", ifi.Name)
 
-	l := &LLDPD{
+	l := &Daemon{
 		SystemName:        systemName,
 		SystemDescription: systemDescription,
 		Interface:         ifi,
@@ -61,13 +65,13 @@ func NewLLDPD(systemName, systemDescription, interfaceName string, interval time
 }
 
 // Start spawn a goroutine which sends LLDP PDU's every interval given.
-func (l *LLDPD) Start() error {
+func (l *Daemon) Start() error {
 	go l.sendMessages()
 	log.Info("lldpd", "interface", l.Interface.Name, "interval", l.Interval)
 	return nil
 }
 
-func createLLDPMessage(lldpd *LLDPD) ([]byte, error) {
+func createLLDPMessage(lldpd *Daemon) ([]byte, error) {
 	lf := lldp.Frame{
 		ChassisID: &lldp.ChassisID{
 			Subtype: lldp.ChassisIDSubtypeMACAddress,
@@ -101,7 +105,7 @@ func createLLDPMessage(lldpd *LLDPD) ([]byte, error) {
 
 // sendMessages continuously sends a message over a connection at regular intervals,
 // sourced from specified hardware address.
-func (l *LLDPD) sendMessages() {
+func (l *Daemon) sendMessages() {
 	// Message is LLDP destination.
 	f := &ethernet.Frame{
 		Destination: destinationMac,

@@ -9,7 +9,7 @@ import (
 func main() {
 	iface := os.Args[1]
 
-	lldpd, err := lldp.NewLLDPD("metal-hammer", "waiting for installation", iface, 2*time.Second)
+	lldpd, err := lldp.NewDaemon("metal-hammer", "waiting for installation", iface, 2*time.Second)
 	if err != nil {
 		panic(err)
 	}

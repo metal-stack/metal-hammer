@@ -35,7 +35,8 @@ func (h *Hammer) UpAllInterfaces() error {
 			return fmt.Errorf("Error set link %s up: %v", nic.Name, err)
 		}
 
-		lldpd, err := lldp.NewLLDPD(h.Spec.DeviceUUID, description, nic.Name, 5*time.Second)
+		lldpd, err := lldp.NewDaemon(h.Spec.DeviceUUID, description, nic.Name, 5*time.Second)
+
 		if err != nil {
 			return fmt.Errorf("Error start lldpd on %s info: %v", nic.Name, err)
 		}
