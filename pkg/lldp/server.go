@@ -11,9 +11,14 @@ import (
 	"github.com/mdlayher/raw"
 )
 
-// Make use of an LLDP EtherType.
-// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
-const etherType = 0x88cc
+const (
+	// Make use of an LLDP EtherType.
+	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
+	etherType = 0x88cc
+	// See https://en.wikipedia.org/wiki/Link_Layer_Discovery_Protocol#Frame_structure
+	// for explanation why this destination mac.
+	destinationMac = net.HardwareAddr{0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e}
+)
 
 type LLDPD struct {
 	SystemName        string
@@ -99,7 +104,7 @@ func createLLDPMessage(lldpd *LLDPD) ([]byte, error) {
 func (l *LLDPD) sendMessages() {
 	// Message is LLDP destination.
 	f := &ethernet.Frame{
-		Destination: net.HardwareAddr{0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e},
+		Destination: destinationMac,
 		Source:      l.Interface.HardwareAddr,
 		EtherType:   etherType,
 		Payload:     l.LLDPMessage,
