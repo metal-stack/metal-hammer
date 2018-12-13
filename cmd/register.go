@@ -81,15 +81,10 @@ func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceR
 		if n.Name == "eth0" {
 			eth0Mac = n.MacAddress
 		}
-		neighbors, err := h.Neighbors(n.Name)
-		if err != nil {
-			log.Error("unable to determine neighbors of interface", "interface", n.Name, "error", err)
-		}
 
 		nic := &models.ModelsMetalNic{
-			Mac:       &n.MacAddress,
-			Name:      &n.Name,
-			Neighbors: neighbors,
+			Mac:  &n.MacAddress,
+			Name: &n.Name,
 		}
 		nics = append(nics, nic)
 	}
@@ -104,6 +99,16 @@ func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceR
 			Name: &name,
 		}
 		nics = append(nics, lo)
+	}
+
+	// now attach neighbors, this will wait up to 2*tx-intervall
+	// if during this timeout not all required neighbors where found abort and reboot.
+	for _, n := range nics {
+		neighbors, err := h.Neighbors(*n.Name)
+		if err != nil {
+			return nil, fmt.Errorf("unable to determine neighbors of interface:%s error:%v", *n.Name, err)
+		}
+		n.Neighbors = neighbors
 	}
 
 	hw.Nics = nics

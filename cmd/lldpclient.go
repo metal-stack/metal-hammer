@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-//LLDPClient act as a small wrapper about low level lldp primitives.
+// LLDPClient act as a small wrapper about low level lldp primitives.
 type LLDPClient struct {
 	Host *Host
 }
