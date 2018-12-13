@@ -55,7 +55,7 @@ func (n Neighbor) String() string {
 type Client struct {
 	Source    *gopacket.PacketSource
 	Handle    *pcap.Handle
-	Interface string
+	Interface *net.Interface
 }
 
 // NewClient create a new lldp client.
@@ -71,13 +71,14 @@ func NewClient(ifi string) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to open interface:%s in promiscous mode info:%v", iface.Name, err)
 	}
-	// Only snoop for LLDP Packets
-	err = handle.SetBPFFilter("ether proto 0x88cc")
+	// Only snoop for LLDP Packets not comming from this interface
+	bpfFilter := fmt.Sprintf("ether proto 0x88cc and not ether host %s", iface.HardwareAddr)
+	err = handle.SetBPFFilter(bpfFilter)
 	if err != nil {
 		return nil, fmt.Errorf("unable to filter ethernet traffic 088cc on interface:%s info:%v", iface.Name, err)
 	}
 	src := gopacket.NewPacketSource(handle, handle.LinkType())
-	return &Client{Source: src, Handle: handle, Interface: ifi}, nil
+	return &Client{Source: src, Handle: handle, Interface: iface}, nil
 }
 
 // Close the lldp client
@@ -125,7 +126,7 @@ func (l *Client) Neighbors(neighCan chan Neighbor) {
 						lldpi := layer.(*layers.LinkLayerDiscoveryInfo)
 						neigh.Name = lldpi.SysName
 						neigh.Description = lldpi.SysDescription
-						neigh.Interface = l.Interface
+						neigh.Interface = l.Interface.Name
 						neighCan <- neigh
 					}
 				}
