@@ -43,7 +43,9 @@ func (h *Hammer) UpAllInterfaces() error {
 		lldpd.Start()
 	}
 
-	go h.StartLLDPDClient(interfaces)
+	lc := NewLLDPClient(interfaces)
+	h.LLDPClient = lc
+	go lc.Start()
 
 	return nil
 }
@@ -61,12 +63,19 @@ func linkSetUp(name string) error {
 }
 
 // Neighbors of a interface, detected via ip neighbor detection
-func Neighbors(name string) ([]*models.ModelsMetalNic, error) {
+func (h *Hammer) Neighbors(name string) ([]*models.ModelsMetalNic, error) {
 	neighbors := make([]*models.ModelsMetalNic, 0)
+
+	host := h.LLDPClient.Host
 
 	for !host.done {
 		log.Info("not all lldp pdu's received, waiting...", "interface", name)
 		time.Sleep(1 * time.Second)
+
+		duration := time.Now().Sub(host.start)
+		if duration > LLDPTxIntervalTimeout {
+			return nil, fmt.Errorf("not all neighbor requirements where met within: %s, exiting", LLDPTxIntervalTimeout)
+		}
 	}
 	log.Info("all lldp pdu's received", "interface", name)
 

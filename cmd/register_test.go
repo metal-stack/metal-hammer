@@ -43,8 +43,13 @@ func TestRegisterDevice(t *testing.T) {
 		Client:    client,
 		Spec:      spec,
 		IPAddress: "1.2.3.4",
+		LLDPClient: &LLDPClient{
+			Host: &Host{
+				done: true,
+			},
+		},
 	}
-	host.done = true
+
 	eth0Mac = "00:00:00:00:00:01"
 	uuid, err := h.RegisterDevice()
 
@@ -76,7 +81,6 @@ func Test_readHardwareDetails(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	host.done = true
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &Hammer{
@@ -86,6 +90,11 @@ func Test_readHardwareDetails(t *testing.T) {
 					DeviceUUID: "00000000-0000-0000-0000-000000000000",
 				},
 				IPAddress: "1.2.3.4",
+				LLDPClient: &LLDPClient{
+					Host: &Host{
+						done: true,
+					},
+				},
 			}
 			eth0Mac = "00:00:00:00:00:01"
 			got, err := h.readHardwareDetails()
@@ -139,7 +148,6 @@ func TestHammer_readIPMIDetails(t *testing.T) {
 		})
 	}
 }
-
 func TestUUIDCreation(t *testing.T) {
 	uuidAsString, err := uuid.FromBytes([]byte("S167357X6205283" + " "))
 	if err != nil {
