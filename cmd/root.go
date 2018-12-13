@@ -15,8 +15,9 @@ import (
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
-	Client *device.Client
-	Spec   *Specification
+	Client     *device.Client
+	Spec       *Specification
+	LLDPClient *LLDPClient
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress string
 	Started   time.Time

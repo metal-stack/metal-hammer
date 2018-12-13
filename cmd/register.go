@@ -81,9 +81,9 @@ func (h *Hammer) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceR
 		if n.Name == "eth0" {
 			eth0Mac = n.MacAddress
 		}
-		neighbors, err := Neighbors(n.Name)
+		neighbors, err := h.Neighbors(n.Name)
 		if err != nil {
-			log.Error("unable to determine neighbors of interface", "interface", n.Name)
+			log.Error("unable to determine neighbors of interface", "interface", n.Name, "error", err)
 		}
 
 		nic := &models.ModelsMetalNic{

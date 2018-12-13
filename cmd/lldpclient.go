@@ -7,23 +7,19 @@ import (
 	"time"
 )
 
-type (
-	neighbor map[string][]*lldp.Neighbor
+//LLDPClient act as a small wrapper about low level lldp primitives.
+type LLDPClient struct {
+	Host *Host
+}
 
-	Host struct {
-		mutex     sync.Mutex
-		neighbors neighbor
-		done      bool
-	}
-)
-
-var (
-	host = Host{
-		mutex:     sync.Mutex{},
-		neighbors: make(map[string][]*lldp.Neighbor),
-		done:      false,
-	}
-)
+// Host collects lldp neighbor information's.
+type Host struct {
+	mutex      sync.Mutex
+	neighbors  map[string][]*lldp.Neighbor
+	interfaces []string
+	start      time.Time
+	done       bool
+}
 
 const (
 	// LLDPTxInterval is set to 10 seconds in /etc/lldpd.d/tx-interval.conf on each leaf.
@@ -35,11 +31,24 @@ const (
 	LLDPTxIntervalTimeout = (2 * LLDPTxInterval) + 2
 )
 
-// StartLLDPDClient will start lldpd for neighbor discovery.
-func (h *Hammer) StartLLDPDClient(interfaces []string) {
+// NewLLDPClient create a lldp client.
+func NewLLDPClient(interfaces []string) *LLDPClient {
+	return &LLDPClient{
+		Host: &Host{
+			mutex:      sync.Mutex{},
+			neighbors:  make(map[string][]*lldp.Neighbor),
+			interfaces: interfaces,
+			start:      time.Now(),
+			done:       false,
+		},
+	}
+}
+
+// Start will start lldpd for neighbor discovery.
+func (l *LLDPClient) Start() {
 	log.Info("lldp start discovery")
 	neighChan := make(chan lldp.Neighbor)
-	for _, ifi := range interfaces {
+	for _, ifi := range l.Host.interfaces {
 		lldpcli, err := lldp.NewClient(ifi)
 		if err != nil {
 			log.Error("lldp", "unable to start client on", ifi, "error", err)
@@ -48,18 +57,12 @@ func (h *Hammer) StartLLDPDClient(interfaces []string) {
 		go lldpcli.Neighbors(neighChan)
 	}
 
-	go func(timeout time.Duration) {
-		log.Info("lldp", "wait", timeout)
-		time.Sleep(timeout)
-		host.done = true
-	}(LLDPTxIntervalTimeout)
-
 	for {
 		select {
 		case neigh := <-neighChan:
 			log.Debug("lldp", "neigh", neigh)
 			neighExists := false
-			for _, existingNeigh := range host.neighbors {
+			for _, existingNeigh := range l.Host.neighbors {
 				for _, en := range existingNeigh {
 					if en.Chassis.Value == neigh.Chassis.Value &&
 						en.Port.Value == neigh.Port.Value {
@@ -70,10 +73,37 @@ func (h *Hammer) StartLLDPDClient(interfaces []string) {
 			if neighExists {
 				break
 			}
-			host.mutex.Lock()
-			host.neighbors[neigh.Interface] = append(host.neighbors[neigh.Interface], &neigh)
-			host.mutex.Unlock()
-			log.Info("lldp", "neighbors", host.neighbors)
+			l.Host.mutex.Lock()
+			l.Host.neighbors[neigh.Interface] = append(l.Host.neighbors[neigh.Interface], &neigh)
+			l.Host.mutex.Unlock()
+			l.Host.done = l.requirementsMet()
+			log.Info("lldp", "neighbors", l.Host.neighbors)
 		}
 	}
+}
+
+const minimumInterfaces = 2
+const minimumNeighbors = 2
+
+func (l *LLDPClient) requirementsMet() bool {
+	// First check we have at least neighbors for 2 interfaces found
+	if len(l.Host.neighbors) < minimumInterfaces {
+		return false
+	}
+	// Then check if 2 distinct Chassis neighbors where found
+	neighMap := make(map[string]string)
+	for iface, neighs := range l.Host.neighbors {
+		for _, neigh := range neighs {
+			if neigh.Chassis.Type == lldp.Mac {
+				neighMap[neigh.Chassis.Value] = iface
+			}
+		}
+	}
+	// OK we found 2 distinct chassis mac's
+	if len(neighMap) >= minimumNeighbors {
+		return true
+	}
+
+	// Requirements are not met
+	return false
 }
