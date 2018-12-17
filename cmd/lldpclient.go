@@ -75,8 +75,8 @@ func (l *LLDPClient) Start() {
 			}
 			l.Host.mutex.Lock()
 			l.Host.neighbors[neigh.Interface] = append(l.Host.neighbors[neigh.Interface], &neigh)
-			l.Host.mutex.Unlock()
 			l.Host.done = l.requirementsMet()
+			l.Host.mutex.Unlock()
 			log.Info("lldp", "neighbors", l.Host.neighbors)
 		}
 	}
