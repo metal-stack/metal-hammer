@@ -42,11 +42,11 @@ func Test_assembleSGDiskCommand(t *testing.T) {
 			},
 			want: []string{
 				"-n=1:0:300M",
-				"-c=1:\"efi\"",
+				"-c=1:efi",
 				"-t=1:ef00",
 				"-u=1:C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
 				"-n=2:0:0",
-				"-c=2:\"root\"",
+				"-c=2:root",
 				"-t=2:8300",
 				"/dev/sda"},
 		},

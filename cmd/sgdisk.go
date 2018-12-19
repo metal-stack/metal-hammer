@@ -37,7 +37,7 @@ func assembleSGDiskCommand(disk Disk) []string {
 			size = "0"
 		}
 		args = append(args, fmt.Sprintf("-n=%d:0:%s", p.Number, size))
-		args = append(args, fmt.Sprintf(`-c=%d:"%s"`, p.Number, p.Label))
+		args = append(args, fmt.Sprintf("-c=%d:%s", p.Number, p.Label))
 		args = append(args, fmt.Sprintf("-t=%d:%s", p.Number, p.GPTType))
 		if p.GPTGuid != "" {
 			args = append(args, fmt.Sprintf("-u=%d:%s", p.Number, p.GPTGuid))
