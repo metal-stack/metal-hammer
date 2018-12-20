@@ -36,6 +36,7 @@ var (
 				GPTType:    GPTBoot,
 				GPTGuid:    EFISystemPartition,
 				Size:       300,
+				Properties: make(map[string]string),
 			},
 			&Partition{
 				Label:      "root",
@@ -44,6 +45,7 @@ var (
 				Filesystem: EXT4,
 				GPTType:    GPTLinux,
 				Size:       -1,
+				Properties: make(map[string]string),
 			},
 		},
 	}
@@ -96,6 +98,9 @@ type Partition struct {
 	Filesystem FSType
 	GPTType    GPTType
 	GPTGuid    GPTGuid
+
+	// Properties from blkid
+	Properties map[string]string
 }
 
 func (p *Partition) String() string {
@@ -209,11 +214,19 @@ func mountPartitions(prefix string, disk Disk) error {
 	partitions := disk.SortByMountPoint()
 
 	for _, p := range partitions {
+
 		err := createFilesystem(p)
 		if err != nil {
 			log.Error("mount partition create filesystem failed", "error", err)
 			return fmt.Errorf("mount partitions create fs failed: %v", err)
 		}
+
+		err = p.fetchBlockIDProperties()
+		if err != nil {
+			log.Error("reading blkid properties failed", "error", err)
+			return fmt.Errorf("reading blkid properties failed: %v", err)
+		}
+		log.Info("set partition properties", "device", p.Device, "properties", p.Properties)
 
 		if p.MountPoint == "" {
 			continue
@@ -364,6 +377,11 @@ func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneH
 		return nil, fmt.Errorf("writing configuration install.yaml failed:%v", err)
 	}
 
+	err = h.writeDiskConfig()
+	if err != nil {
+		return nil, fmt.Errorf("writing configuration disk.json failed:%v", err)
+	}
+
 	err = h.writePhoneHomeToken(phoneHomeToken)
 	if err != nil {
 		return nil, fmt.Errorf("writing phoneHome.jwt failed:%v", err)
@@ -430,6 +448,16 @@ func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneH
 	}
 
 	return info, nil
+}
+
+func (h *Hammer) writeDiskConfig() error {
+	configdir := path.Join(prefix, "etc", "metal")
+	destination := path.Join(configdir, "disk.json")
+	j, err := json.MarshalIndent(defaultDisk, "", "  ")
+	if err != nil {
+		return fmt.Errorf("unable to marshal to json: %v", err)
+	}
+	return ioutil.WriteFile(destination, j, 0600)
 }
 
 func (h *Hammer) writePhoneHomeToken(phoneHomeToken string) error {
