@@ -13,7 +13,8 @@ RUN apt-get update \
 	hdparm \
 	ipmitool \
 	liblz4-tool \
-	nvme-cli
+	nvme-cli \
+	util-linux
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \
