@@ -145,13 +145,20 @@ func init() {
 
 // Wait until a device create request was fired
 func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDeviceWithPhoneHomeToken, error) {
+	// We do not use the swagger client because this has no ability to specify a timeout.
 	e := fmt.Sprintf("http://%v/device/install/%v", h.Spec.MetalCoreURL, uuid)
 	log.Info("waiting for install, long polling", "url", e, "uuid", uuid)
 
 	var resp *http.Response
 	var err error
+	// Create a http client with a specific timeout to prevent a infinite wait
+	// which could lead to a situation where e.g network outages would never be
+	// detected and we will never recover from this situation.
+	client := http.Client{
+		Timeout: time.Duration(5 * time.Minute),
+	}
 	for {
-		resp, err = http.Get(e)
+		resp, err = client.Get(e)
 		if err != nil {
 			log.Warn("wait for install failed, retrying...", "error", err)
 		} else if resp.StatusCode != http.StatusOK {
@@ -159,7 +166,6 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDeviceWithPhoneHomeToken,
 		} else {
 			break
 		}
-		time.Sleep(2 * time.Second)
 	}
 
 	deviceJSON, err := ioutil.ReadAll(resp.Body)
