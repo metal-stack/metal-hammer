@@ -16,7 +16,7 @@ import (
 )
 
 func TestReportInstallation(t *testing.T) {
-	expected := "an error occured"
+	expected := "an error occurred"
 	resp := &models.DomainReport{}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +44,7 @@ func TestReportInstallation(t *testing.T) {
 		Spec:   spec,
 	}
 
-	err := h.ReportInstallation(expected, errors.New("an error occured"))
+	err := h.ReportInstallation(expected, errors.New("an error occurred"))
 	if err != nil {
 		t.Error(err)
 	}

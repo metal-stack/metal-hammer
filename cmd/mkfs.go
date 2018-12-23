@@ -18,6 +18,9 @@ func createFilesystem(p *Partition) error {
 	log.Info("create filesystem", "device", p.Device, "filesystem", p.Filesystem)
 
 	mkfs, args, err := assembleMKFSCommand(p)
+	if err != nil {
+		return fmt.Errorf("mkfs failed with error:%v", err)
+	}
 	err = executeCommand(mkfs, args...)
 	if err != nil {
 		return fmt.Errorf("mkfs failed with error:%v", err)
