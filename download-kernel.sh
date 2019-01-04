@@ -38,5 +38,5 @@ do
     download_if_dirty $i
 done
 
-# Ensure files remain writable for group to enable re-download (libvirt takes ownership for unknown reason)
+# Ensure files remain writable for group to enable re-download (libvirt takes ownership for unkown reson)
 chmod 660 metal-hammer-* 2>/dev/null || true
