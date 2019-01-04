@@ -2,13 +2,12 @@ package lldp
 
 import (
 	"fmt"
-	"net"
-	"time"
-
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	log "github.com/inconshreveable/log15"
+	"net"
+	"time"
 )
 
 // LinkType can be Interface or Mac
@@ -70,9 +69,9 @@ func NewClient(ifi string) (*Client, error) {
 	handle, err := pcap.OpenLive(iface.Name, 65536, true, 5*time.Second)
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to open interface:%s in promiscuous mode info:%v", iface.Name, err)
+		return nil, fmt.Errorf("unable to open interface:%s in promiscous mode info:%v", iface.Name, err)
 	}
-	// Only snoop for LLDP Packets not coming from this interface
+	// Only snoop for LLDP Packets not comming from this interface
 	bpfFilter := fmt.Sprintf("ether proto 0x88cc and not ether host %s", iface.HardwareAddr)
 	err = handle.SetBPFFilter(bpfFilter)
 	if err != nil {
