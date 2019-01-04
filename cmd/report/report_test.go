@@ -1,4 +1,4 @@
-package cmd
+package report
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ import (
 )
 
 func TestReportInstallation(t *testing.T) {
-	expected := "an error occured"
+	expected := "an error occurred"
 	resp := &models.DomainReport{}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -32,19 +32,17 @@ func TestReportInstallation(t *testing.T) {
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
-	spec := &Specification{
-		MetalCoreURL: ts.Listener.Addr().String(),
-	}
+	metalCoreURL := ts.Listener.Addr().String()
 
-	transport := httptransport.New(spec.MetalCoreURL, "", nil)
+	transport := httptransport.New(metalCoreURL, "", nil)
 	client := device.New(transport, strfmt.Default)
 
-	h := &Hammer{
-		Client: client,
-		Spec:   spec,
+	r := &Report{
+		Client:       client,
+		InstallError: errors.New("an error occurred"),
 	}
 
-	err := h.ReportInstallation(expected, errors.New("an error occured"))
+	err := r.ReportInstallation()
 	if err != nil {
 		t.Error(err)
 	}

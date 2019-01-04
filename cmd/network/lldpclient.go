@@ -1,4 +1,4 @@
-package cmd
+package network
 
 import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/lldp"
@@ -14,11 +14,14 @@ type LLDPClient struct {
 
 // Host collects lldp neighbor information's.
 type Host struct {
-	mutex      sync.Mutex
-	neighbors  map[string][]*lldp.Neighbor
-	interfaces []string
-	start      time.Time
-	done       bool
+	mutex             sync.Mutex
+	neighbors         map[string][]*lldp.Neighbor
+	interfaces        []string
+	start             time.Time
+	done              bool
+	timeout           time.Duration
+	minimumInterfaces int
+	minimumNeighbors  int
 }
 
 const (
@@ -32,14 +35,20 @@ const (
 )
 
 // NewLLDPClient create a lldp client.
-func NewLLDPClient(interfaces []string) *LLDPClient {
+func NewLLDPClient(interfaces []string, minimumInterfaces, minimumNeighbors int, timeout time.Duration) *LLDPClient {
+	if timeout == 0 {
+		timeout = LLDPTxIntervalTimeout
+	}
 	return &LLDPClient{
 		Host: &Host{
-			mutex:      sync.Mutex{},
-			neighbors:  make(map[string][]*lldp.Neighbor),
-			interfaces: interfaces,
-			start:      time.Now(),
-			done:       false,
+			mutex:             sync.Mutex{},
+			neighbors:         make(map[string][]*lldp.Neighbor),
+			interfaces:        interfaces,
+			start:             time.Now(),
+			done:              false,
+			timeout:           timeout,
+			minimumInterfaces: minimumInterfaces,
+			minimumNeighbors:  minimumNeighbors,
 		},
 	}
 }
@@ -82,12 +91,12 @@ func (l *LLDPClient) Start() {
 	}
 }
 
-const minimumInterfaces = 2
-const minimumNeighbors = 2
-
 func (l *LLDPClient) requirementsMet() bool {
 	// First check we have at least neighbors for 2 interfaces found
-	if len(l.Host.neighbors) < minimumInterfaces {
+	if l.Host.minimumInterfaces == 0 && l.Host.minimumNeighbors == 0 {
+		return true
+	}
+	if len(l.Host.neighbors) < l.Host.minimumInterfaces {
 		return false
 	}
 	// Then check if 2 distinct Chassis neighbors where found
@@ -100,7 +109,7 @@ func (l *LLDPClient) requirementsMet() bool {
 		}
 	}
 	// OK we found 2 distinct chassis mac's
-	if len(neighMap) >= minimumNeighbors {
+	if len(neighMap) >= l.Host.minimumNeighbors {
 		return true
 	}
 

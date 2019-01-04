@@ -1,7 +1,8 @@
-package cmd
+package storage
 
 import (
 	"fmt"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 
 	log "github.com/inconshreveable/log15"
 )
@@ -10,17 +11,18 @@ var (
 	sgdiskCommand = "sgdisk"
 )
 
-func partition(disk Disk) error {
+// Partition a Disk
+func (disk Disk) Partition() error {
 	log.Info("partition disk", "disk", disk)
 
-	err := executeCommand(sgdiskCommand, "-Z", disk.Device)
+	err := os.ExecuteCommand(sgdiskCommand, "-Z", disk.Device)
 	if err != nil {
 		log.Error("sgdisk zapping existing partitions failed, ignoring...", "error", err)
 	}
 
 	args := assembleSGDiskCommand(disk)
 	log.Info("sgdisk create partitions", "command", args)
-	err = executeCommand(sgdiskCommand, args...)
+	err = os.ExecuteCommand(sgdiskCommand, args...)
 	if err != nil {
 		log.Error("sgdisk creating partitions failed", "error", err)
 		return fmt.Errorf("unable to create partitions on %s error:%v", disk, err)
