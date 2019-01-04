@@ -1,0 +1,54 @@
+# SET UEFI
+
+## CHECK
+root@gerrit:~# ipmitool chassis bootparam get 5
+Boot parameter version: 1
+Boot parameter 5 is valid/unlocked
+Boot parameter data: 0000000000
+ Boot Flags :
+   - Boot Flag Invalid
+   - Options apply to only next boot || Options apply to all future boots
+   - BIOS PC Compatible (legacy) boot  || BIOS EFI boot 
+   - Boot Device Selector : No override
+   - Console Redirection control : System Default
+   - BIOS verbosity : Console redirection occurs per BIOS configuration setting (default)
+   - BIOS Mux Control Override : BIOS uses recommended setting of the mux at the end of POST
+
+## Set UEFI
+root@gerrit:~# ipmitool chassis bootdev pxe options=help
+Legal options settings are:
+        help:   print this message
+        valid:  Boot flags valid
+        persistent:     Changes are persistent for all future boots
+        efiboot:        Extensible Firmware Interface Boot (EFI)
+        clear-cmos:     CMOS clear
+        lockkbd:        Lock Keyboard
+        screenblank:    Screen Blank
+        lockoutreset:   Lock out Resetbuttons
+        lockout_power:  Lock out (power off/sleep request) via Power Button
+        verbose=default:        Request quiet BIOS display
+        verbose=no:     Request quiet BIOS display
+        verbose=yes:    Request verbose BIOS display
+        force_pet:      Force progress event traps
+        upw_bypass:     User password bypass
+        lockout_sleep:  Log Out Sleep Button
+        cons_redirect=default:  Console redirection occurs per BIOS configuration setting
+        cons_redirect=skip:     Suppress (skip) console redirection if enabled
+        cons_redirect=enable:   Suppress (skip) console redirection if enabled
+
+## Command to set
+ipmitool chassis bootdev pxe options=efiboot,persistent
+
+
+#!ipxe
+dhcp
+set base http://blobstore.fi-ts.io
+kernel ${base}/metal/images/metal-hammer/metal-hammer-kernel console=ttyS1,115200n8 ip=dhcp IMAGE_URL=${base}/metal/images/os/alpine/3.8/img.tar.lz4 
+initrd ${base}/metal/images/metal-hammer/metal-hammer-initrd.img.lz4
+boot
+
+
+https://blobstore.fi-ts.io/metal/images/metal-hammer/packet-ipxe... Error 0x432f                                                                                                                                   
+e301 (http://ipxe.org/432fe301)                                                                                                                                                                                    
+Could not boot image: Error 0x432fe301 (http://ipxe.org/432fe301)                                                                                                                                                  
+No more network devices   

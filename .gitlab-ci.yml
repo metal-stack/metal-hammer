@@ -1,29 +1,28 @@
 image: registry.cloud.fits/fits/buildtools:1
 
 stages:
-    - build
+  - build
 
 before_script:
   - mc config host add fits https://blobstore.fi-ts.io $ACCESS_KEY "${SECRET_KEY}"
+  - docker-make --no-push --Lint
+  - mkdir -p images/metal-hammer
+after_script:
+  - mc cp --recursive images fits/metal
 
-metal-hammer:
+metal-hammer-master:
   stage: build
   script:
-    - docker-make --no-push --Lint
-    - mkdir -p images/metal-hammer
     - md5sum metal-hammer-initrd.img.lz4 > metal-hammer-initrd.img.lz4.md5
     - mv metal-hammer-initrd.img.lz4* images/metal-hammer
-    - mc cp --recursive images fits/metal
   only:
     - master
-metal-hammer-tag:
+
+metal-hammer-tag-or-branch:
   stage: build
   script:
-    - docker-make --no-push --Lint
-    - mkdir -p images/metal-hammer
-    - mv metal-hammer-initrd.img.lz4 metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4
-    - md5sum metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4 > metal-hammer-initrd.img-${CI_COMMIT_TAG}.lz4.md5
-    - mv metal-hammer-initrd-${CI_COMMIT_TAG}.img.lz4* images/metal-hammer
-    - mc cp --recursive images fits/metal
-  only:
-    - tags
+    - mv metal-hammer-initrd.img.lz4 metal-hammer-initrd-${CI_COMMIT_REF_NAME}.img.lz4
+    - md5sum metal-hammer-initrd-${CI_COMMIT_REF_NAME}.img.lz4 > metal-hammer-initrd.img-${CI_COMMIT_REF_NAME}.lz4.md5
+    - mv metal-hammer-initrd-${CI_COMMIT_REF_NAME}.img.lz4* images/metal-hammer
+  except:
+    - master

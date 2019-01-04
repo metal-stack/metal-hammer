@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/uuid"
 	"git.f-i-ts.de/cloud-native/metallib/version"
 	log "github.com/inconshreveable/log15"
 	"github.com/kelseyhightower/envconfig"
@@ -16,7 +18,7 @@ import (
 
 func main() {
 	fmt.Print(cmd.HammerBanner)
-	ip := cmd.InternalIP()
+	ip := network.InternalIP()
 	err := cmd.StartSSHD(ip)
 	if err != nil {
 		log.Error("sshd error", "error", err)
@@ -80,7 +82,7 @@ func main() {
 		}
 	}
 
-	spec.DeviceUUID = cmd.DeviceUUID()
+	spec.DeviceUUID = uuid.DeviceUUID()
 	spec.Ip = ip
 
 	spec.Log()

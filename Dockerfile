@@ -7,7 +7,6 @@ RUN apt-get update \
 	curl \
 	dosfstools \
 	e2fsprogs \
-	ethtool \
 	gcc \
 	gdisk \
 	hdparm \

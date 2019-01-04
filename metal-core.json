@@ -305,6 +305,24 @@
         }
       }
     },
+    "models.MetalBootConfiguration": {
+      "required": [
+        "commandline",
+        "imageurl",
+        "kernelurl"
+      ],
+      "properties": {
+        "commandline": {
+          "type": "string"
+        },
+        "imageurl": {
+          "type": "string"
+        },
+        "kernelurl": {
+          "type": "string"
+        }
+      }
+    },
     "models.MetalConstraint": {
       "required": [
         "maxcores",
@@ -541,9 +559,13 @@
     },
     "models.MetalSite": {
       "required": [
+        "bootconfig",
         "id"
       ],
       "properties": {
+        "bootconfig": {
+          "$ref": "#/definitions/models.MetalBootConfiguration"
+        },
         "changed": {
           "type": "string"
         },

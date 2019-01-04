@@ -7,7 +7,12 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/register"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/report"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	log "github.com/inconshreveable/log15"
@@ -17,7 +22,8 @@ import (
 type Hammer struct {
 	Client     *device.Client
 	Spec       *Specification
-	LLDPClient *LLDPClient
+	Disk       storage.Disk
+	LLDPClient *network.LLDPClient
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress string
 	Started   time.Time
@@ -34,10 +40,17 @@ func Run(spec *Specification) error {
 		Client:    client,
 		Spec:      spec,
 		IPAddress: spec.Ip,
-		Started:   time.Now(),
+		Disk:      storage.DefaultDisk(),
+	}
+	hammer.Spec.ConsolePassword = password.Generate(16)
+
+	n := &network.Network{
+		DeviceUUID: spec.DeviceUUID,
+		IPAddress:  spec.Ip,
+		Started:    time.Now(),
 	}
 
-	err := hammer.UpAllInterfaces()
+	err := n.UpAllInterfaces()
 	if err != nil {
 		return fmt.Errorf("interfaces error: %v", err)
 	}
@@ -47,17 +60,19 @@ func Run(spec *Specification) error {
 		return fmt.Errorf("uefi error: %v", err)
 	}
 
-	err = hammer.WipeDisks()
+	err = storage.WipeDisks()
 	if err != nil {
 		return fmt.Errorf("wipe error: %v", err)
 	}
 
-	err = createSyslog()
-	if err != nil {
-		return fmt.Errorf("unable to write kernel boot message to /var/log/syslog, info:%v", err)
+	reg := &register.Register{
+		DeviceUUID: spec.DeviceUUID,
+		Client:     client,
+		Network:    n,
 	}
 
-	uuid, err := hammer.RegisterDevice()
+	// Remove uuid return use DeviceUUID() above.
+	uuid, err := reg.RegisterDevice()
 	if !spec.DevMode && err != nil {
 		return fmt.Errorf("register error: %v", err)
 	}
@@ -98,11 +113,20 @@ func Run(spec *Specification) error {
 
 	installationStart := time.Now()
 	info, err := hammer.Install(deviceWithToken)
+
+	// FIXME, must not return here.
 	if err != nil {
 		return fmt.Errorf("install error: %v", err)
 	}
 
-	err = hammer.ReportInstallation(uuid, err)
+	rep := &report.Report{
+		DeviceUUID:      spec.DeviceUUID,
+		Client:          client,
+		ConsolePassword: spec.ConsolePassword,
+		InstallError:    err,
+	}
+
+	err = rep.ReportInstallation()
 	if err != nil {
 		wait := 10 * time.Second
 		log.Error("report installation failed", "reboot in", wait, "error", err)

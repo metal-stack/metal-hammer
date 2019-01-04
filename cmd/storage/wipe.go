@@ -1,4 +1,4 @@
-package cmd
+package storage
 
 import (
 	"bufio"
@@ -7,7 +7,9 @@ import (
 	"strings"
 	"sync"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
+
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
 )
@@ -18,8 +20,8 @@ var (
 )
 
 // WipeDisks will erase all content and partitions of all existing Disks
-func (h *Hammer) WipeDisks() error {
-	log.Info("wipe all disks", "devmode", h.Spec.DevMode)
+func WipeDisks() error {
+	log.Info("wipe")
 	block, err := ghw.Block()
 	if err != nil {
 		return fmt.Errorf("unable to gather disks: %v", err)
@@ -71,7 +73,7 @@ func wipeSlow(device string, bytes uint64) error {
 	count := bytes / bs
 	bsArg := fmt.Sprintf("bs=%d", bs)
 	countArg := fmt.Sprintf("count=%d", count)
-	err := executeCommand("/bbin/dd", "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
+	err := os.ExecuteCommand("/bbin/dd", "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
 	if err != nil {
 		log.Error("overwrite of existing data with dd failed", "disk", device, "error", err)
 		return err
@@ -141,7 +143,7 @@ func isNVMeDisk(device string) bool {
 // https://github.com/arunar/nvmeqemu
 func secureEraseNVMe(device string) error {
 	log.Info("start very fast deleting of existing data on", "disk", device)
-	err := executeCommand(nvmeCommand, "--format", "--ses=1", device)
+	err := os.ExecuteCommand(nvmeCommand, "--format", "--ses=1", device)
 	if err != nil {
 		return fmt.Errorf("unable to secure erase nvme disk %s error:%v", device, err)
 	}
@@ -154,12 +156,12 @@ func secureErase(device string) error {
 	// FIXME random password
 	pw := password.Generate(10)
 	// first we must set a secure erase password
-	err := executeCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", pw, device)
+	err := os.ExecuteCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", pw, device)
 	if err != nil {
 		return fmt.Errorf("unable to set secure erase password disk: %s error: %v", device, err)
 	}
 	// now we can start secure erase
-	err = executeCommand(hdparmCommand, "--user-master", "u", "--security-erase", pw, device)
+	err = os.ExecuteCommand(hdparmCommand, "--user-master", "u", "--security-erase", pw, device)
 	if err != nil {
 		return fmt.Errorf("unable to secure erase disk: %s error: %v", device, err)
 	}

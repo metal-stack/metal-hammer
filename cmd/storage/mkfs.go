@@ -1,10 +1,10 @@
-package cmd
+package storage
 
 import (
 	"fmt"
-	"strings"
-
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 	log "github.com/inconshreveable/log15"
+	"strings"
 )
 
 var (
@@ -14,11 +14,15 @@ var (
 	mkswapCommand    = "mkswap"
 )
 
-func createFilesystem(p *Partition) error {
+// MkFS create a filesystem on the Partition
+func (p *Partition) MkFS() error {
 	log.Info("create filesystem", "device", p.Device, "filesystem", p.Filesystem)
 
 	mkfs, args, err := assembleMKFSCommand(p)
-	err = executeCommand(mkfs, args...)
+	if err != nil {
+		return fmt.Errorf("mkfs failed with error:%v", err)
+	}
+	err = os.ExecuteCommand(mkfs, args...)
 	if err != nil {
 		return fmt.Errorf("mkfs failed with error:%v", err)
 	}
