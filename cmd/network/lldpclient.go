@@ -14,7 +14,7 @@ type LLDPClient struct {
 
 // Host collects lldp neighbor information's.
 type Host struct {
-	mutex             sync.Mutex
+	mutex             sync.RWMutex
 	neighbors         map[string][]*lldp.Neighbor
 	interfaces        []string
 	start             time.Time
@@ -41,7 +41,7 @@ func NewLLDPClient(interfaces []string, minimumInterfaces, minimumNeighbors int,
 	}
 	return &LLDPClient{
 		Host: &Host{
-			mutex:             sync.Mutex{},
+			mutex:             sync.RWMutex{},
 			neighbors:         make(map[string][]*lldp.Neighbor),
 			interfaces:        interfaces,
 			start:             time.Now(),
@@ -71,14 +71,20 @@ func (l *LLDPClient) Start() {
 		case neigh := <-neighChan:
 			log.Debug("lldp", "neigh", neigh)
 			neighExists := false
+			l.Host.mutex.RLock()
 			for _, existingNeigh := range l.Host.neighbors {
 				for _, en := range existingNeigh {
 					if en.Chassis.Value == neigh.Chassis.Value &&
 						en.Port.Value == neigh.Port.Value {
 						neighExists = true
+						break
 					}
 				}
+				if neighExists {
+					break
+				}
 			}
+			l.Host.mutex.RUnlock()
 			if neighExists {
 				break
 			}
