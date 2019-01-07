@@ -79,11 +79,11 @@ type mount struct {
 // MountSpecialFilesystems mounts all special filesystems needed by a chroot
 func MountSpecialFilesystems(prefix string) error {
 	mounts := []mount{
-		mount{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
-		mount{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
-		mount{source: "tmpfs", target: "/tmp", fstype: "tmpfs", flags: 0, data: ""},
+		{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
+		{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
+		{source: "tmpfs", target: "/tmp", fstype: "tmpfs", flags: 0, data: ""},
 		// /dev is a bind mount, a bind mount must have MS_BIND flags set see man 2 mount
-		mount{source: "/dev", target: "/dev", fstype: "", flags: syscall.MS_BIND, data: ""},
+		{source: "/dev", target: "/dev", fstype: "", flags: syscall.MS_BIND, data: ""},
 	}
 
 	for _, m := range mounts {

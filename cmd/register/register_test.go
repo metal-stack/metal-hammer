@@ -23,7 +23,7 @@ func TestRegisterDevice(t *testing.T) {
 	t.Skip()
 	os.Setenv("DEGUG", "1")
 	expected := "1234-1234"
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		metalDevice := &models.ModelsMetalDevice{
 			ID: &expected,

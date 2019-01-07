@@ -70,7 +70,7 @@ func DefaultDisk() Disk {
 	defaultDisk := Disk{
 		Device: "/dev/sda",
 		Partitions: []*Partition{
-			&Partition{
+			{
 				Label:      "efi",
 				Number:     1,
 				MountPoint: "/boot/efi",
@@ -80,7 +80,7 @@ func DefaultDisk() Disk {
 				Size:       300,
 				Properties: make(map[string]string),
 			},
-			&Partition{
+			{
 				Label:      "root",
 				Number:     2,
 				MountPoint: "/",

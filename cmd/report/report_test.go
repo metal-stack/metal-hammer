@@ -19,7 +19,7 @@ func TestReportInstallation(t *testing.T) {
 	expected := "an error occurred"
 	resp := &models.DomainReport{}
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			t.Error(err)
