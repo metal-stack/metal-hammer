@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"os/exec"
 	"strings"
 )
@@ -13,11 +13,11 @@ func (p *Partition) fetchBlockIDProperties() error {
 
 	path, err := exec.LookPath(blkidCommand)
 	if err != nil {
-		return fmt.Errorf("unable to locate program:%s in path info:%v", blkidCommand, err)
+		return errors.Wrapf(err, "unable to locate program:%s in path", blkidCommand)
 	}
 	out, err := exec.Command(path, "-o", "export", p.Device).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("unable to execute %s error:%v", blkidCommand, err)
+		return errors.Wrapf(err, "unable to execute %s", blkidCommand)
 	}
 
 	// output of

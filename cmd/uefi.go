@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"fmt"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
+	"github.com/pkg/errors"
 
 	log "github.com/inconshreveable/log15"
 )
@@ -25,7 +25,7 @@ func (h *Hammer) EnsureUEFI() error {
 
 	err := i.EnableUEFI(ipmi.PXE, true)
 	if err != nil {
-		return fmt.Errorf("unable to ensureUEFI %v", err)
+		return errors.Wrap(err, "unable to ensureUEFI")
 	}
 
 	log.Info("uefi set persistent, reboot now.")

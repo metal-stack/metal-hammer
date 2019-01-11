@@ -5,6 +5,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 
 	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -25,7 +26,7 @@ func (disk Disk) Partition() error {
 	err = os.ExecuteCommand(sgdiskCommand, args...)
 	if err != nil {
 		log.Error("sgdisk creating partitions failed", "error", err)
-		return fmt.Errorf("unable to create partitions on %s error:%v", disk, err)
+		return errors.Wrapf(err, "unable to create partitions on %s", disk)
 	}
 
 	return nil

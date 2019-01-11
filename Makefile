@@ -56,3 +56,9 @@ clean-client: clean-local-dirs
 
 generate-client: clean-local-dirs
 	GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core
+
+vagrant-destroy:
+	vagrant destroy -f
+
+vagrant-up:
+	vagrant up && virsh console metal-hammer_pxeclient

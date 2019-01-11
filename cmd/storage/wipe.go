@@ -12,6 +12,7 @@ import (
 
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -24,7 +25,7 @@ func WipeDisks() error {
 	log.Info("wipe")
 	block, err := ghw.Block()
 	if err != nil {
-		return fmt.Errorf("unable to gather disks: %v", err)
+		return errors.Wrap(err, "unable to gather disks")
 	}
 	disks := block.Disks
 
@@ -145,7 +146,7 @@ func secureEraseNVMe(device string) error {
 	log.Info("start very fast deleting of existing data on", "disk", device)
 	err := os.ExecuteCommand(nvmeCommand, "--format", "--ses=1", device)
 	if err != nil {
-		return fmt.Errorf("unable to secure erase nvme disk %s error:%v", device, err)
+		return errors.Wrapf(err, "unable to secure erase nvme disk %s", device)
 	}
 	return nil
 }
@@ -158,12 +159,12 @@ func secureErase(device string) error {
 	// first we must set a secure erase password
 	err := os.ExecuteCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", pw, device)
 	if err != nil {
-		return fmt.Errorf("unable to set secure erase password disk: %s error: %v", device, err)
+		return errors.Wrapf(err, "unable to set secure erase password disk: %s", device)
 	}
 	// now we can start secure erase
 	err = os.ExecuteCommand(hdparmCommand, "--user-master", "u", "--security-erase", pw, device)
 	if err != nil {
-		return fmt.Errorf("unable to secure erase disk: %s error: %v", device, err)
+		return errors.Wrapf(err, "unable to secure erase disk: %s", device)
 	}
 	return nil
 }

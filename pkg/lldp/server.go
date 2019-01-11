@@ -1,8 +1,8 @@
 package lldp
 
 import (
-	"fmt"
 	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 	"net"
 	"time"
 
@@ -39,12 +39,12 @@ func NewDaemon(systemName, systemDescription, interfaceName string, interval tim
 	// traffic with etherecho's EtherType.
 	ifi, err := net.InterfaceByName(interfaceName)
 	if err != nil {
-		return nil, fmt.Errorf("lldpd failed to find interface %q: %v", interfaceName, err)
+		return nil, errors.Wrapf(err, "lldpd failed to find interface %q", interfaceName)
 	}
 
 	c, err := raw.ListenPacket(ifi, etherType, nil)
 	if err != nil {
-		return nil, fmt.Errorf("lldpd failed to listen: %v", err)
+		return nil, errors.Wrap(err, "lldpd failed to listen")
 	}
 
 	log.Info("lldpd", "listen on", ifi.Name)
@@ -58,7 +58,7 @@ func NewDaemon(systemName, systemDescription, interfaceName string, interval tim
 	}
 	lldp, err := createLLDPMessage(l)
 	if err != nil {
-		return nil, fmt.Errorf("lldpd failed to create lldpd message: %v", err)
+		return nil, errors.Wrap(err, "lldpd failed to create lldp message")
 	}
 	l.LLDPMessage = lldp
 	return l, nil
