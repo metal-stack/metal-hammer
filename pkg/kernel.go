@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -27,7 +27,7 @@ type Bootinfo struct {
 func ParseCmdline() (map[string]string, error) {
 	cmdline, err := ioutil.ReadFile(cmdline)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read %s: %v", cmdline, err)
+		return nil, errors.Wrapf(err, "unable to read %s", cmdline)
 	}
 
 	cmdLineValues := strings.Split(string(cmdline), " ")
@@ -47,23 +47,23 @@ func ParseCmdline() (map[string]string, error) {
 func RunKexec(info *Bootinfo) error {
 	kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
 	if err != nil {
-		return fmt.Errorf("could not open kernel: %s error: %v", info.Kernel, err)
+		return errors.Wrapf(err, "could not open kernel: %s", info.Kernel)
 	}
 	defer kernel.Close()
 
 	ramfs, err := os.OpenFile(info.Initrd, os.O_RDONLY, 0)
 	if err != nil {
-		return fmt.Errorf("could not open initrd: %s error: %v", info.Initrd, err)
+		return errors.Wrapf(err, "could not open initrd: %s", info.Initrd)
 	}
 	defer ramfs.Close()
 
 	if err := kexec.FileLoad(kernel, ramfs, info.Cmdline); err != nil {
-		return fmt.Errorf("could not execute kexec load: %v error: %s", info, err)
+		return errors.Wrapf(err, "could not execute kexec load: %v", info)
 	}
 
 	err = kexec.Reboot()
 	if err != nil {
-		return fmt.Errorf("could not fire kexec reboot info: %v error: %v", info, err)
+		return errors.Wrapf(err, "could not fire kexec reboot info: %v", info)
 	}
 	return nil
 }
@@ -71,7 +71,7 @@ func RunKexec(info *Bootinfo) error {
 // Reboot reboots the the server
 func Reboot() error {
 	if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
-		return fmt.Errorf("unable to reboot error %v", err.Error())
+		return errors.Wrap(err, "unable to reboot")
 	}
 	return nil
 }

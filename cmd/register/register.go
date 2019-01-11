@@ -16,6 +16,7 @@ import (
 
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
+	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
 )
 
@@ -30,7 +31,7 @@ type Register struct {
 func (r *Register) RegisterDevice() (string, error) {
 	hw, err := r.readHardwareDetails()
 	if err != nil {
-		return "", fmt.Errorf("unable to read all hardware details error:%v", err)
+		return "", errors.Wrap(err, "unable to read all hardware details")
 	}
 	params := device.NewRegisterParams()
 	params.SetBody(hw)
@@ -38,10 +39,10 @@ func (r *Register) RegisterDevice() (string, error) {
 	resp, err := r.Client.Register(params)
 
 	if err != nil {
-		return "", fmt.Errorf("unable to register device:%#v error:%#v", hw, err.Error())
+		return "", errors.Wrapf(err, "unable to register device:%#v", hw)
 	}
 	if resp == nil {
-		return "", fmt.Errorf("unable to register device:%#v response payload is nil", hw)
+		return "", errors.Errorf("unable to register device:%#v response payload is nil", hw)
 	}
 
 	log.Info("register device returned", "response", resp.Payload)
@@ -60,21 +61,21 @@ var eth0Mac = ""
 func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceRequest, error) {
 	err := createSyslog()
 	if err != nil {
-		return nil, fmt.Errorf("unable to write kernel boot message to /var/log/syslog, info:%v", err)
+		return nil, errors.Wrap(err, "unable to write kernel boot message to /var/log/syslog")
 	}
 
 	hw := &models.DomainMetalHammerRegisterDeviceRequest{}
 
 	memory, err := ghw.Memory()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get system memory, info:%v", err)
+		return nil, errors.Wrap(err, "unable to get system memory")
 	}
 	hw.Memory = &memory.TotalPhysicalBytes
 
 	// FIXME can be replaced by runtime.NumCPU()
 	cpu, err := ghw.CPU()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get system cpu(s), info:%v", err)
+		return nil, errors.Wrap(err, "unable to get system cpu(s)")
 	}
 	cores := int32(cpu.TotalCores)
 	hw.CPUCores = &cores
@@ -83,7 +84,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterDevic
 	loFound := false
 	links, err := netlink.LinkList()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get all links:%v", err)
+		return nil, errors.Wrap(err, "unable to get all links")
 	}
 	for _, l := range links {
 		attrs := l.Attrs()
@@ -128,7 +129,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterDevic
 	for _, n := range nics {
 		neighbors, err := r.Network.Neighbors(*n.Name)
 		if err != nil {
-			return nil, fmt.Errorf("unable to determine neighbors of interface:%s error:%v", *n.Name, err)
+			return nil, errors.Wrapf(err, "unable to determine neighbors of interface:%s", *n.Name)
 		}
 		n.Neighbors = neighbors
 	}
@@ -137,7 +138,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterDevic
 
 	blockInfo, err := ghw.Block()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get system block devices, info:%v", err)
+		return nil, errors.Wrap(err, "unable to get system block devices")
 	}
 	disks := []*models.ModelsMetalBlockDevice{}
 	for _, disk := range blockInfo.Disks {
@@ -177,11 +178,11 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		// FIXME userid should be verified if available
 		err := i.CreateUser(user, pw, 2, ipmi.Administrator)
 		if err != nil {
-			return nil, fmt.Errorf("ipmi error: %v", err)
+			return nil, errors.Wrap(err, "ipmi create user failed")
 		}
 		config, err = i.GetLanConfig()
 		if err != nil {
-			return nil, fmt.Errorf("unable to read ipmi lan configuration, info:%v", err)
+			return nil, errors.Wrap(err, "unable to read ipmi lan configuration")
 		}
 		config.IP = config.IP + ":" + defaultIpmiPort
 	} else {
@@ -195,7 +196,7 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		lastOctet := macParts[len(macParts)-1]
 		port, err := strconv.ParseUint(lastOctet, 16, 32)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse last octet of eth0 mac to a integer: %v", err)
+			return nil, errors.Wrap(err, "unable to parse last octet of eth0 mac to a integer")
 		}
 
 		const baseIPMIPort = 6230

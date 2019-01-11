@@ -8,6 +8,7 @@ import (
 	pb "gopkg.in/cheggaaa/pb.v1"
 
 	"crypto/md5"
+	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -23,17 +24,17 @@ func Pull(image, destination string) error {
 	md5file := image + ".md5"
 	err := download(image, destination)
 	if err != nil {
-		return fmt.Errorf("unable to pull image %s error: %v", image, err)
+		return errors.Wrapf(err, "unable to pull image %s", image)
 	}
 	err = download(md5file, md5destination)
 	defer os.Remove(md5destination)
 	if err != nil {
-		return fmt.Errorf("unable to pull md5 %s error: %v", md5file, err)
+		return errors.Wrapf(err, "unable to pull md5 %s", md5file)
 	}
 	log.Info("check md5")
 	matches, err := checkMD5(destination, md5destination)
 	if err != nil || !matches {
-		return fmt.Errorf("md5sum mismatch %v", err)
+		return errors.New("md5sum mismatch")
 	}
 
 	log.Info("pull image done", "image", image)
@@ -47,18 +48,18 @@ func Burn(prefix, image, source string) error {
 
 	file, err := os.Open(source)
 	if err != nil {
-		return fmt.Errorf("%s: failed to open archive: %v", source, err)
+		return errors.Wrapf(err, "%s: failed to open archive", source)
 
 	}
 	defer file.Close()
 
 	stat, err := file.Stat()
 	if err != nil {
-		return fmt.Errorf("unable to stat %s error: %v", source, err)
+		return errors.Wrapf(err, "unable to stat %s", source)
 	}
 
 	if !strings.HasSuffix(image, "lz4") {
-		return fmt.Errorf("unsupported image compression format of image:%s", image)
+		return errors.Errorf("unsupported image compression format of image:%s", image)
 	}
 
 	lz4Reader := lz4.NewReader(file)
@@ -79,7 +80,7 @@ func Burn(prefix, image, source string) error {
 
 	err = archiver.Tar.Read(reader, prefix)
 	if err != nil {
-		return fmt.Errorf("unable to burn image %s error: %v", source, err)
+		return errors.Wrapf(err, "unable to burn image %s", source)
 	}
 
 	bar.Finish()
@@ -100,24 +101,24 @@ func Burn(prefix, image, source string) error {
 func checkMD5(file, md5file string) (bool, error) {
 	md5fileContent, err := ioutil.ReadFile(md5file)
 	if err != nil {
-		return false, fmt.Errorf("unable to read md5sum file: %v", err)
+		return false, errors.Wrapf(err, "unable to read md5sum file %s", md5file)
 	}
 	expectedMD5 := strings.Split(string(md5fileContent), " ")[0]
 
 	f, err := os.Open(file)
 	if err != nil {
-		return false, fmt.Errorf("unable to read file: %v", err)
+		return false, errors.Wrapf(err, "unable to read file: %s", file)
 	}
 	defer f.Close()
 
 	h := md5.New()
 	if _, err := io.Copy(h, f); err != nil {
-		return false, fmt.Errorf("unable to calculate md5sum of file: %v", err)
+		return false, errors.Wrapf(err, "unable to calculate md5sum of file: %s", file)
 	}
 	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
 	log.Info("checkMD5", "source md5", sourceMD5, "expected md5", expectedMD5)
 	if sourceMD5 != expectedMD5 {
-		return false, fmt.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
+		return false, errors.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
 	}
 	return true, nil
 }
@@ -129,7 +130,7 @@ func download(source, dest string) error {
 	log.Info("download", "from", source, "to", dest)
 	out, err := os.Create(dest)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to create destination %s", dest)
 	}
 	defer out.Close()
 
@@ -140,7 +141,7 @@ func download(source, dest string) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= http.StatusBadRequest {
-		return fmt.Errorf("download of %s did not work, statuscode was: %d", source, resp.StatusCode)
+		return errors.Errorf("download of %s did not work, statuscode was: %d", source, resp.StatusCode)
 	}
 
 	fileSize := resp.ContentLength

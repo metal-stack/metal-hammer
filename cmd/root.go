@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
@@ -16,6 +15,7 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 )
 
 // Hammer is the machine which forms a bare metal to a working server
@@ -52,17 +52,17 @@ func Run(spec *Specification) error {
 
 	err := n.UpAllInterfaces()
 	if err != nil {
-		return fmt.Errorf("interfaces error: %v", err)
+		return errors.Wrap(err, "interfaces")
 	}
 
 	err = hammer.EnsureUEFI()
 	if err != nil {
-		return fmt.Errorf("uefi error: %v", err)
+		return errors.Wrap(err, "uefi")
 	}
 
 	err = storage.WipeDisks()
 	if err != nil {
-		return fmt.Errorf("wipe error: %v", err)
+		return errors.Wrap(err, "wipe")
 	}
 
 	reg := &register.Register{
@@ -74,7 +74,7 @@ func Run(spec *Specification) error {
 	// Remove uuid return use DeviceUUID() above.
 	uuid, err := reg.RegisterDevice()
 	if !spec.DevMode && err != nil {
-		return fmt.Errorf("register error: %v", err)
+		return errors.Wrap(err, "register")
 	}
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
@@ -107,7 +107,7 @@ func Run(spec *Specification) error {
 	} else {
 		deviceWithToken, err = hammer.Wait(uuid)
 		if err != nil {
-			return fmt.Errorf("wait for installation error: %v", err)
+			return errors.Wrap(err, "wait for installation")
 		}
 	}
 
@@ -116,7 +116,7 @@ func Run(spec *Specification) error {
 
 	// FIXME, must not return here.
 	if err != nil {
-		return fmt.Errorf("install error: %v", err)
+		return errors.Wrap(err, "install")
 	}
 
 	rep := &report.Report{

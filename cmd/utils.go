@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"net"
 	"os"
@@ -14,7 +14,7 @@ func copy(src, dst string) (int64, error) {
 	}
 
 	if !sourceFileStat.Mode().IsRegular() {
-		return 0, fmt.Errorf("%s is not a regular file", src)
+		return 0, errors.Errorf("%s is not a regular file", src)
 	}
 
 	source, err := os.Open(src)
@@ -39,7 +39,7 @@ func ipToASN(ipaddress string) (int64, error) {
 
 	ip, _, err := net.ParseCIDR(ipaddress)
 	if err != nil {
-		return int64(-1), fmt.Errorf("unable to parse ip %v", err)
+		return int64(-1), errors.Wrapf(err, "unable to parse ip %s", ipaddress)
 	}
 
 	asn := asnbase + int64(ip[14])*256 + int64(ip[15])

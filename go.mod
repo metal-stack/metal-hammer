@@ -33,6 +33,7 @@ require (
 	github.com/mitchellh/go-homedir v1.0.0 // indirect
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.0.5+incompatible
+	github.com/pkg/errors v0.8.1
 	github.com/u-root/u-root v3.0.0+incompatible
 	github.com/ulikunitz/xz v0.5.5 // indirect
 	github.com/vishvananda/netlink v1.0.0

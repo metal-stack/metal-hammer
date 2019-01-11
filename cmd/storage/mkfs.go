@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"fmt"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -20,11 +20,11 @@ func (p *Partition) MkFS() error {
 
 	mkfs, args, err := assembleMKFSCommand(p)
 	if err != nil {
-		return fmt.Errorf("mkfs failed with error:%v", err)
+		return errors.Wrap(err, "mkfs failed")
 	}
 	err = os.ExecuteCommand(mkfs, args...)
 	if err != nil {
-		return fmt.Errorf("mkfs failed with error:%v", err)
+		return errors.Wrap(err, "mkfs failed")
 	}
 
 	return nil
@@ -59,7 +59,7 @@ func assembleMKFSCommand(p *Partition) (string, []string, error) {
 			args = append(args, "-L", p.Label)
 		}
 	default:
-		return "", nil, fmt.Errorf("unsupported filesystem format: %q", p.Filesystem)
+		return "", nil, errors.Errorf("unsupported filesystem format: %q", p.Filesystem)
 	}
 	args = append(args, p.Device)
 	return mkfs, args, nil

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -37,13 +38,13 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDeviceWithPhoneHomeToken,
 
 	deviceJSON, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("wait for install reading response failed with: %v", err)
+		return nil, errors.Wrap(err, "wait for install reading response failed")
 	}
 
 	var deviceWithToken models.ModelsMetalDeviceWithPhoneHomeToken
 	err = json.Unmarshal(deviceJSON, &deviceWithToken)
 	if err != nil {
-		return nil, fmt.Errorf("wait for install could not unmarshal response with error: %v", err)
+		return nil, errors.Wrap(err, "wait for install could not unmarshal response")
 	}
 	log.Info("stopped waiting got", "deviceWithToken", deviceWithToken)
 

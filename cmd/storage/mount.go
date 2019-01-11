@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -20,13 +20,13 @@ func (disk Disk) MountPartitions(prefix string) error {
 		err := p.MkFS()
 		if err != nil {
 			log.Error("mount partition create filesystem failed", "error", err)
-			return fmt.Errorf("mount partitions create fs failed: %v", err)
+			return errors.Wrap(err, "mount partitions create fs failed")
 		}
 
 		err = p.fetchBlockIDProperties()
 		if err != nil {
 			log.Error("reading blkid properties failed", "error", err)
-			return fmt.Errorf("reading blkid properties failed: %v", err)
+			return errors.Wrap(err, "reading blkid properties failed")
 		}
 		log.Info("set partition properties", "device", p.Device, "properties", p.Properties)
 
@@ -38,14 +38,14 @@ func (disk Disk) MountPartitions(prefix string) error {
 		err = os.MkdirAll(mountPoint, os.ModePerm)
 		if err != nil {
 			log.Error("mount partition create directory", "error", err)
-			return fmt.Errorf("mount partitions create directory failed: %v", err)
+			return errors.Wrap(err, "mount partitions create directory failed")
 		}
 		log.Info("mount partition", "partition", p.Device, "mountPoint", mountPoint)
 		// see man 2 mount
 		err = syscall.Mount(p.Device, mountPoint, string(p.Filesystem), 0, "")
 		if err != nil {
 			log.Error("unable to mount", "partition", p.Device, "mountPoint", mountPoint, "error", err)
-			return fmt.Errorf("mount partitions mount: %s to:%s failed: %v", p.Device, mountPoint, err)
+			return errors.Wrapf(err, "mount partitions mount: %s to:%s failed", p.Device, mountPoint)
 		}
 	}
 
@@ -89,7 +89,7 @@ func MountSpecialFilesystems(prefix string) error {
 	for _, m := range mounts {
 		err := syscall.Mount(m.source, prefix+m.target, m.fstype, m.flags, m.data)
 		if err != nil {
-			return fmt.Errorf("mounting %s to %s failed: %v", m.source, m.target, err)
+			return errors.Wrapf(err, "mounting %s to %s failed", m.source, m.target)
 		}
 	}
 	return nil

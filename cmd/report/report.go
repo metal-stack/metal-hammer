@@ -1,12 +1,11 @@
 package report
 
 import (
-	"fmt"
-
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 
 	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 )
 
 type Report struct {
@@ -33,7 +32,7 @@ func (r *Report) ReportInstallation() error {
 	params.ID = r.DeviceUUID
 	resp, err := r.Client.Report(params)
 	if err != nil {
-		return fmt.Errorf("unable to report image installation error:%v", err)
+		return errors.Wrap(err, "unable to report image installation")
 	}
 	log.Info("report image installation was successful", "response", resp.Payload)
 	return nil

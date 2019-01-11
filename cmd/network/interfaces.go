@@ -6,6 +6,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/lldp"
 	"git.f-i-ts.de/cloud-native/metallib/version"
 	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
 	"net"
 	"strings"
@@ -35,13 +36,13 @@ func (n *Network) UpAllInterfaces() error {
 
 		err := linkSetUp(name)
 		if err != nil {
-			return fmt.Errorf("Error set link %s up: %v", name, err)
+			return errors.Wrapf(err, "Error set link %s up", name)
 		}
 
 		lldpd, err := lldp.NewDaemon(n.DeviceUUID, description, name, 5*time.Second)
 
 		if err != nil {
-			return fmt.Errorf("Error start lldpd on %s info: %v", name, err)
+			return errors.Wrapf(err, "Error start lldpd on %s", name)
 		}
 		lldpd.Start()
 	}
@@ -77,7 +78,7 @@ func (n *Network) Neighbors(name string) ([]*models.ModelsMetalNic, error) {
 
 		duration := time.Now().Sub(host.start)
 		if duration > host.timeout {
-			return nil, fmt.Errorf("not all neighbor requirements where met within: %s, exiting", host.timeout)
+			return nil, errors.Errorf("not all neighbor requirements where met within: %s, exiting", host.timeout)
 		}
 	}
 	log.Info("all lldp pdu's received", "interface", name)

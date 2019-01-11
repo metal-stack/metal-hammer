@@ -14,6 +14,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metallib/version"
 	log "github.com/inconshreveable/log15"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/pkg/errors"
 )
 
 func main() {
@@ -90,6 +91,8 @@ func main() {
 	err = cmd.Run(&spec)
 	if err != nil {
 		wait := 5 * time.Second
+		st := errors.WithStack(err)
+		fmt.Printf("%+v", st)
 		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
 		time.Sleep(wait)
 		pkg.Reboot()

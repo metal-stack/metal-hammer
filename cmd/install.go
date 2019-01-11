@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net"
 	"os"
@@ -91,23 +92,23 @@ func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneH
 
 	err := h.writeInstallerConfig(device)
 	if err != nil {
-		return nil, fmt.Errorf("writing configuration install.yaml failed:%v", err)
+		return nil, errors.Wrap(err, "writing configuration install.yaml failed")
 	}
 
 	err = h.writeDiskConfig()
 	if err != nil {
-		return nil, fmt.Errorf("writing configuration disk.json failed:%v", err)
+		return nil, errors.Wrap(err, "writing configuration disk.json failed")
 	}
 
 	err = h.writePhoneHomeToken(phoneHomeToken)
 	if err != nil {
-		return nil, fmt.Errorf("writing phoneHome.jwt failed:%v", err)
+		return nil, errors.Wrap(err, "writing phoneHome.jwt failed")
 	}
 
 	log.Info("running /install.sh on", "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
-		return nil, fmt.Errorf("unable to chdir to: %s error:%v", prefix, err)
+		return nil, errors.Wrapf(err, "unable to chdir to: %s error", prefix)
 	}
 	cmd := exec.Command("/install.sh")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
@@ -121,23 +122,23 @@ func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneH
 		Chroot: prefix,
 	}
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("running install.sh in chroot failed: %v", err)
+		return nil, errors.Wrap(err, "running install.sh in chroot failed")
 	}
 
 	err = os.Chdir("/")
 	if err != nil {
-		return nil, fmt.Errorf("unable to chdir to: / error:%v", err)
+		return nil, errors.Wrap(err, "unable to chdir to: / error")
 	}
 	log.Info("finish running /install.sh")
 
 	err = os.Remove(path.Join(prefix, "/install.sh"))
 	if err != nil {
-		log.Warn("unable to remove install.sh, ignoring...", "error", err)
+		log.Warn("unable to remove install.sh, ignoring...", "error")
 	}
 
 	info, err := readBootInfo()
 	if err != nil {
-		return nil, fmt.Errorf("unable to read boot-info.yaml: %v", err)
+		return nil, errors.Wrap(err, "unable to read boot-info.yaml")
 	}
 
 	files := []string{info.Kernel, info.Initrd}
@@ -162,7 +163,7 @@ func (h *Hammer) writeDiskConfig() error {
 	destination := path.Join(configdir, "disk.json")
 	j, err := json.MarshalIndent(h.Disk, "", "  ")
 	if err != nil {
-		return fmt.Errorf("unable to marshal to json: %v", err)
+		return errors.Wrap(err, "unable to marshal to json")
 	}
 	return ioutil.WriteFile(destination, j, 0600)
 }
@@ -178,7 +179,7 @@ func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
 	configdir := path.Join(prefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
-		return fmt.Errorf("mkdir of %s target os failed: %v", configdir, err)
+		return errors.Wrapf(err, "mkdir of %s target os failed", configdir)
 	}
 	destination := path.Join(configdir, "install.yaml")
 
@@ -189,12 +190,12 @@ func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
 	} else {
 		ip, _, err := net.ParseCIDR(*device.Allocation.Cidr)
 		if err != nil {
-			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
+			return errors.Wrap(err, "unable to parse ip from device.ip")
 		}
 
 		asn, err = ipToASN(*device.Allocation.Cidr)
 		if err != nil {
-			return fmt.Errorf("unable to parse ip from device.ip: %v", err)
+			return errors.Wrap(err, "unable to parse ip from device.ip")
 		}
 		ipaddress = ip.String()
 	}
@@ -221,13 +222,13 @@ func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
 func readBootInfo() (*pkg.Bootinfo, error) {
 	bi, err := ioutil.ReadFile(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
 	if err != nil {
-		return nil, fmt.Errorf("could not read boot-info.yaml: %v", err)
+		return nil, errors.Wrap(err, "could not read boot-info.yaml")
 	}
 
 	info := &pkg.Bootinfo{}
 	err = yaml.Unmarshal(bi, info)
 	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal boot-info.yaml: %v", err)
+		return nil, errors.Wrap(err, "could not unmarshal boot-info.yaml")
 	}
 	return info, nil
 }
