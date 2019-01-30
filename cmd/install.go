@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
@@ -105,6 +106,11 @@ func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneH
 		return nil, errors.Wrap(err, "writing phoneHome.jwt failed")
 	}
 
+	err = h.writeUserData(device)
+	if err != nil {
+		return nil, errors.Wrap(err, "writing userdata failed")
+	}
+
 	log.Info("running /install.sh on", "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
@@ -172,6 +178,22 @@ func (h *Hammer) writePhoneHomeToken(phoneHomeToken string) error {
 	configdir := path.Join(prefix, "etc", "metal")
 	destination := path.Join(configdir, "phoneHome.jwt")
 	return ioutil.WriteFile(destination, []byte(phoneHomeToken), 0600)
+}
+
+func (h *Hammer) writeUserData(device *models.ModelsMetalDevice) error {
+	configdir := path.Join(prefix, "etc", "metal")
+	destination := path.Join(configdir, "userdata")
+
+	base64UserData := device.Allocation.UserData
+	if base64UserData != "" {
+		userdata, err := base64.StdEncoding.DecodeString(base64UserData)
+		if err != nil {
+			log.Error("install", "writing userdata failed", err)
+			return nil
+		}
+		return ioutil.WriteFile(destination, userdata, 0700)
+	}
+	return nil
 }
 
 func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
