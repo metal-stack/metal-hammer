@@ -60,5 +60,5 @@ generate-client: clean-local-dirs
 vagrant-destroy:
 	vagrant destroy -f
 
-vagrant-up:
+vagrant-up: vagrant-destroy
 	vagrant up && virsh console metal-hammer_pxeclient

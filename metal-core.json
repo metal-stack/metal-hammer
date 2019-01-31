@@ -437,6 +437,9 @@
         },
         "tenant": {
           "type": "string"
+        },
+        "user_data": {
+          "type": "string"
         }
       }
     },
