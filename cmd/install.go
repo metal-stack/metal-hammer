@@ -191,7 +191,7 @@ func (h *Hammer) writeUserData(device *models.ModelsMetalDevice) error {
 			log.Error("install", "writing userdata failed", err)
 			return nil
 		}
-		return ioutil.WriteFile(destination, userdata, 0700)
+		return ioutil.WriteFile(destination, userdata, 0600)
 	}
 	return nil
 }
