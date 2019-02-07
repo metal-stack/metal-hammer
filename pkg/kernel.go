@@ -51,11 +51,15 @@ func RunKexec(info *Bootinfo) error {
 	}
 	defer kernel.Close()
 
-	ramfs, err := os.OpenFile(info.Initrd, os.O_RDONLY, 0)
-	if err != nil {
-		return errors.Wrapf(err, "could not open initrd: %s", info.Initrd)
+	// Initrd can be empty, then we pass an empty pointer to kexec.FileLoad
+	var ramfs *os.File
+	if info.Initrd != "" {
+		ramfs, err = os.OpenFile(info.Initrd, os.O_RDONLY, 0)
+		if err != nil {
+			return errors.Wrapf(err, "could not open initrd: %s", info.Initrd)
+		}
+		defer ramfs.Close()
 	}
-	defer ramfs.Close()
 
 	if err := kexec.FileLoad(kernel, ramfs, info.Cmdline); err != nil {
 		return errors.Wrapf(err, "could not execute kexec load: %v", info)

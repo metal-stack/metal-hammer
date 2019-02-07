@@ -150,6 +150,10 @@ func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneH
 	files := []string{info.Kernel, info.Initrd}
 	tmp := "/tmp"
 	for _, f := range files {
+		if f == "" {
+			// initrd can be empty.
+			continue
+		}
 		src := path.Join(prefix, f)
 		dest := path.Join(tmp, filepath.Base(f))
 		_, err := copy(src, dest)

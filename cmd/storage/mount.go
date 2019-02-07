@@ -9,6 +9,28 @@ import (
 	log "github.com/inconshreveable/log15"
 )
 
+type mount struct {
+	source string
+	target string
+	fstype string
+	flags  uintptr
+	data   string
+}
+
+var (
+	// Order is important and must be preserved.
+	specialMounts = []mount{
+		{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
+		{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
+		{source: "efivarfs", target: "/sys/firmware/efi/efivars", fstype: "efivarfs", flags: 0, data: ""},
+		{source: "tmpfs", target: "/tmp", fstype: "tmpfs", flags: 0, data: ""},
+		// /dev is a bind mount, a bind mount must have MS_BIND flags set see man 2 mount
+		{source: "/dev", target: "/dev", fstype: "", flags: syscall.MS_BIND, data: ""},
+	}
+	// This slice is filled by MountPartitions to be able to unmount at the end.
+	diskMounts = []mount{}
+)
+
 // MountPartitions mounts all partitions under prefix
 func (disk Disk) MountPartitions(prefix string) error {
 	log.Info("mount disk", "disk", disk)
@@ -47,6 +69,7 @@ func (disk Disk) MountPartitions(prefix string) error {
 			log.Error("unable to mount", "partition", p.Device, "mountPoint", mountPoint, "error", err)
 			return errors.Wrapf(err, "mount partitions mount: %s to:%s failed", p.Device, mountPoint)
 		}
+		diskMounts = append(diskMounts, mount{target: p.MountPoint})
 	}
 
 	return nil
@@ -68,25 +91,9 @@ func (disk *Disk) SortByMountPoint() []*Partition {
 	return ordered
 }
 
-type mount struct {
-	source string
-	target string
-	fstype string
-	flags  uintptr
-	data   string
-}
-
 // MountSpecialFilesystems mounts all special filesystems needed by a chroot
 func MountSpecialFilesystems(prefix string) error {
-	mounts := []mount{
-		{source: "proc", target: "/proc", fstype: "proc", flags: 0, data: ""},
-		{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
-		{source: "tmpfs", target: "/tmp", fstype: "tmpfs", flags: 0, data: ""},
-		// /dev is a bind mount, a bind mount must have MS_BIND flags set see man 2 mount
-		{source: "/dev", target: "/dev", fstype: "", flags: syscall.MS_BIND, data: ""},
-	}
-
-	for _, m := range mounts {
+	for _, m := range specialMounts {
 		err := syscall.Mount(m.source, prefix+m.target, m.fstype, m.flags, m.data)
 		if err != nil {
 			return errors.Wrapf(err, "mounting %s to %s failed", m.source, m.target)
@@ -97,13 +104,15 @@ func MountSpecialFilesystems(prefix string) error {
 
 // UnMountAll will unmount all filesystems
 func UnMountAll(prefix string) {
-	umounts := [6]string{"/boot/efi", "/proc", "/sys", "/dev", "/tmp", "/"}
-	for _, m := range umounts {
-		p := prefix + m
-		log.Info("unmounting", "mountpoint", p)
-		err := syscall.Unmount(p, syscall.MNT_FORCE)
-		if err != nil {
-			log.Error("unable to unmount", "path", p, "error", err)
+	allmounts := [][]mount{specialMounts, diskMounts}
+	for _, mounts := range allmounts {
+		for index := len(mounts) - 1; index > 0; index-- {
+			m := prefix + mounts[index].target
+			log.Info("unmounting", "mountpoint", m)
+			err := syscall.Unmount(m, syscall.MNT_FORCE)
+			if err != nil {
+				log.Error("unable to unmount", "path", m, "error", err)
+			}
 		}
 	}
 }
