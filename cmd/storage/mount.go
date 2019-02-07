@@ -94,6 +94,7 @@ func (disk *Disk) SortByMountPoint() []*Partition {
 // MountSpecialFilesystems mounts all special filesystems needed by a chroot
 func MountSpecialFilesystems(prefix string) error {
 	for _, m := range specialMounts {
+		log.Info("mounting", "source", m.source, "target", prefix+m.target, "fstype", m.fstype, "flags", m.flags, "data", m.data)
 		err := syscall.Mount(m.source, prefix+m.target, m.fstype, m.flags, m.data)
 		if err != nil {
 			return errors.Wrapf(err, "mounting %s to %s failed", m.source, m.target)
