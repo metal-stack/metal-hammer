@@ -133,7 +133,7 @@ func GetDisk(image *models.ModelsMetalImage) Disk {
 	log.Info("getdisk", "imageID", *image.ID)
 	disk, ok := diskByImage[*image.ID]
 	if !ok {
-		log.Warn("getdisk", "imageID unknown, use default", *image.ID)
+		log.Warn("getdisk", "imageID unknown, using default", *image.ID)
 		disk = defaultDisk
 	}
 

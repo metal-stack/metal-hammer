@@ -12,7 +12,9 @@ type Specification struct {
 	MetalCoreURL string
 	// ImageURL if given grabs a fixed OS image to install, only suitable in DevMode
 	ImageURL string
-	// ImageID if given define which image like alpine, ubuntu should be installed, only suitable in DevMode
+	// ImageID if given defines the image.ID which normally comes from a allocation
+	// can be something like ubuntu-18.04, alpine-3.9 or "default"
+	// only suitable in DevMode
 	ImageID string
 	// DevMode turn on devmode which prevents failing in some situations
 	DevMode bool
