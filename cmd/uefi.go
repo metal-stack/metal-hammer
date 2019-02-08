@@ -14,12 +14,12 @@ func (h *Hammer) EnsureUEFI() error {
 	i := ipmi.New()
 
 	if !i.DevicePresent() {
-		log.Info("uefi no ipmi device present, no action")
+		log.Info("uefi", "message", "no ipmi device present, no action")
 		return nil
 	}
 
 	if i.UEFIEnabled() && i.BootOptionsPersistent() {
-		log.Info("uefi all requirements are met, no action")
+		log.Info("uefi", "message", "all requirements are met, no action")
 		return nil
 	}
 
@@ -28,7 +28,7 @@ func (h *Hammer) EnsureUEFI() error {
 		return errors.Wrap(err, "unable to ensureUEFI")
 	}
 
-	log.Info("uefi set persistent, reboot now.")
+	log.Info("uefi", "message", "set persistent, reboot now.")
 	if h.Spec.DevMode {
 		log.Warn("required reboot skipped", "devmode", h.Spec.DevMode)
 		return nil

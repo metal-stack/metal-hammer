@@ -66,6 +66,7 @@ func (h *Hammer) Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeT
 	if err != nil {
 		return nil, err
 	}
+
 	err = img.Burn(prefix, image, osImageDestination)
 	if err != nil {
 		return nil, err
@@ -89,7 +90,7 @@ func (h *Hammer) Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeT
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
 func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneHomeToken string) (*pkg.Bootinfo, error) {
-	log.Info("install image", "image", device.Allocation.Image.URL)
+	log.Info("install", "image", *device.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(device)
 	if err != nil {

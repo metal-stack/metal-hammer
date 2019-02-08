@@ -70,16 +70,16 @@ func wipe(device string, bytes uint64) error {
 }
 
 func wipeSlow(device string, bytes uint64) error {
-	log.Info("start slow deleting of existing data on", "disk", device)
+	log.Info("wipe", "disk", device, "message", "slow deleting of existing data")
 	count := bytes / bs
 	bsArg := fmt.Sprintf("bs=%d", bs)
 	countArg := fmt.Sprintf("count=%d", count)
 	err := os.ExecuteCommand("/bbin/dd", "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
 	if err != nil {
-		log.Error("overwrite of existing data with dd failed", "disk", device, "error", err)
+		log.Error("wipe", "disk", device, "message", "overwrite of existing data with dd failed", "error", err)
 		return err
 	}
-	log.Info("finish deleting of existing data on", "disk", device)
+	log.Info("wipe", "disk", device, "message", "finish deleting of existing data")
 	return nil
 }
 
@@ -113,18 +113,18 @@ func isSEDAvailable(device string) bool {
 		for scanner.Scan() {
 			line := scanner.Text()
 			if strings.Contains(line, "frozen") && !strings.Contains(line, "not") {
-				log.Info("sed is not available, disk is frozen")
+				log.Info("wipe", "message", "sed is not available, disk is frozen")
 				return false
 			}
 			if strings.Contains(line, "supported: enhanced erase") && strings.Contains(line, "not") {
-				log.Info("sed is not available, enhanced erase is not supported")
+				log.Info("wipe", "message", "sed is not available, enhanced erase is not supported")
 				return false
 			}
 		}
-		log.Info("sed is available")
+		log.Info("wipe", "message", "sed is available")
 		return true
 	}
-	log.Info("sed is not available, enhanced erase is not supported")
+	log.Info("wipe", "message", "sed is not available, enhanced erase is not supported")
 	return false
 }
 
@@ -143,7 +143,7 @@ func isNVMeDisk(device string) bool {
 // https://github.com/nvmecompliance/manage/blob/master/runQemu.sh
 // https://github.com/arunar/nvmeqemu
 func secureEraseNVMe(device string) error {
-	log.Info("start very fast deleting of existing data on", "disk", device)
+	log.Info("wipe", "disk", device, "message", "start very fast deleting of existing data")
 	err := os.ExecuteCommand(nvmeCommand, "--format", "--ses=1", device)
 	if err != nil {
 		return errors.Wrapf(err, "unable to secure erase nvme disk %s", device)
@@ -152,7 +152,7 @@ func secureEraseNVMe(device string) error {
 }
 
 func secureErase(device string) error {
-	log.Info("start fast deleting of existing data on", "disk", device)
+	log.Info("wipe", "disk", device, "message", "start fast deleting of existing data")
 	// hdparm --user-master u --security-set-pass GEHEIM /dev/sda
 	// FIXME random password
 	pw := password.Generate(10)
