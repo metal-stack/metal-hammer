@@ -107,7 +107,7 @@ func MountSpecialFilesystems(prefix string) error {
 func UnMountAll(prefix string) {
 	allmounts := [][]mount{specialMounts, diskMounts}
 	for _, mounts := range allmounts {
-		for index := len(mounts) - 1; index > 0; index-- {
+		for index := len(mounts) - 1; index >= 0; index-- {
 			m := prefix + mounts[index].target
 			log.Info("unmounting", "mountpoint", m)
 			err := syscall.Unmount(m, syscall.MNT_FORCE)
