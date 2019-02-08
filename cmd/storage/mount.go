@@ -33,7 +33,7 @@ var (
 
 // MountPartitions mounts all partitions under prefix
 func (disk Disk) MountPartitions(prefix string) error {
-	log.Info("mount disk", "disk", disk)
+	log.Info("mount", "disk", disk)
 	// "/" must be mounted first
 	partitions := disk.SortByMountPoint()
 
@@ -41,8 +41,8 @@ func (disk Disk) MountPartitions(prefix string) error {
 
 		err := p.MkFS()
 		if err != nil {
-			log.Error("mount partition create filesystem failed", "error", err)
-			return errors.Wrap(err, "mount partitions create fs failed")
+			log.Error("create filesystem failed", "error", err)
+			return errors.Wrap(err, "create filesystem failed")
 		}
 
 		err = p.fetchBlockIDProperties()
@@ -50,7 +50,7 @@ func (disk Disk) MountPartitions(prefix string) error {
 			log.Error("reading blkid properties failed", "error", err)
 			return errors.Wrap(err, "reading blkid properties failed")
 		}
-		log.Info("set partition properties", "device", p.Device, "properties", p.Properties)
+		log.Info("partition properties set", "device", p.Device, "properties", p.Properties)
 
 		if p.MountPoint == "" {
 			continue
@@ -59,15 +59,15 @@ func (disk Disk) MountPartitions(prefix string) error {
 		mountPoint := filepath.Join(prefix, p.MountPoint)
 		err = os.MkdirAll(mountPoint, os.ModePerm)
 		if err != nil {
-			log.Error("mount partition create directory", "error", err)
-			return errors.Wrap(err, "mount partitions create directory failed")
+			log.Error("create directory failed", "error", err)
+			return errors.Wrap(err, "create directory failed")
 		}
-		log.Info("mount partition", "partition", p.Device, "mountPoint", mountPoint)
+		log.Info("mount", "source", p.Device, "target", mountPoint, "fstype", p.Filesystem)
 		// see man 2 mount
 		err = syscall.Mount(p.Device, mountPoint, string(p.Filesystem), 0, "")
 		if err != nil {
-			log.Error("unable to mount", "partition", p.Device, "mountPoint", mountPoint, "error", err)
-			return errors.Wrapf(err, "mount partitions mount: %s to:%s failed", p.Device, mountPoint)
+			log.Error("mount failed", "partition", p.Device, "mountPoint", mountPoint, "error", err)
+			return errors.Wrapf(err, "mount: %s to:%s failed", p.Device, mountPoint)
 		}
 		diskMounts = append(diskMounts, mount{target: p.MountPoint})
 	}
@@ -94,8 +94,9 @@ func (disk *Disk) SortByMountPoint() []*Partition {
 // MountSpecialFilesystems mounts all special filesystems needed by a chroot
 func MountSpecialFilesystems(prefix string) error {
 	for _, m := range specialMounts {
-		log.Info("mounting", "source", m.source, "target", prefix+m.target, "fstype", m.fstype, "flags", m.flags, "data", m.data)
-		err := syscall.Mount(m.source, prefix+m.target, m.fstype, m.flags, m.data)
+		mountPoint := filepath.Join(prefix, m.target)
+		log.Info("mount", "source", m.source, "target", mountPoint, "fstype", m.fstype, "flags", m.flags, "data", m.data)
+		err := syscall.Mount(m.source, mountPoint, m.fstype, m.flags, m.data)
 		if err != nil {
 			return errors.Wrapf(err, "mounting %s to %s failed", m.source, m.target)
 		}
@@ -108,7 +109,7 @@ func UnMountAll(prefix string) {
 	allmounts := [][]mount{specialMounts, diskMounts}
 	for _, mounts := range allmounts {
 		for index := len(mounts) - 1; index >= 0; index-- {
-			m := prefix + mounts[index].target
+			m := filepath.Join(prefix, mounts[index].target)
 			log.Info("unmounting", "mountpoint", m)
 			err := syscall.Unmount(m, syscall.MNT_FORCE)
 			if err != nil {
