@@ -71,6 +71,11 @@ func main() {
 		spec.DevMode = true
 	}
 
+	if i, ok := envmap["IMAGE_ID"]; ok {
+		spec.ImageID = i
+		spec.DevMode = true
+	}
+
 	if c, ok := envmap["CIDR"]; ok {
 		spec.Cidr = c
 		spec.DevMode = true

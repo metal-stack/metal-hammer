@@ -12,6 +12,10 @@ type Specification struct {
 	MetalCoreURL string
 	// ImageURL if given grabs a fixed OS image to install, only suitable in DevMode
 	ImageURL string
+	// ImageID if given defines the image.ID which normally comes from a allocation
+	// can be something like ubuntu-18.04, alpine-3.9 or "default"
+	// only suitable in DevMode
+	ImageID string
 	// DevMode turn on devmode which prevents failing in some situations
 	DevMode bool
 	// BGPEnabled if set to true real bgp configuration is configured, otherwise dhcp will be used
@@ -32,6 +36,7 @@ func (s *Specification) Log() {
 		"debug", s.Debug,
 		"metalCoreURL", s.MetalCoreURL,
 		"imageURL", s.ImageURL,
+		"imageID", s.ImageID,
 		"devmode", s.DevMode,
 		"bgpenabled", s.BGPEnabled,
 		"cidr", s.Cidr,
