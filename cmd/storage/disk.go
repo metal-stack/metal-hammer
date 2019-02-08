@@ -2,6 +2,8 @@ package storage
 
 import (
 	"fmt"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	log "github.com/inconshreveable/log15"
 )
 
 const (
@@ -65,9 +67,8 @@ type Disk struct {
 	Partitions []*Partition
 }
 
-// DefaultDisk returns a default partitioning scheme for our devices
-func DefaultDisk() Disk {
-	defaultDisk := Disk{
+var (
+	defaultDisk = Disk{
 		Device: "/dev/sda",
 		Partitions: []*Partition{
 			{
@@ -92,8 +93,52 @@ func DefaultDisk() Disk {
 		},
 	}
 
-	for _, p := range defaultDisk.Partitions {
+	clearlinuxDisk = Disk{
+		Device: "/dev/sda",
+		Partitions: []*Partition{
+			{
+				Label:      "efi",
+				Number:     1,
+				MountPoint: "/boot",
+				Filesystem: VFAT,
+				GPTType:    GPTBoot,
+				GPTGuid:    EFISystemPartition,
+				Size:       300,
+				Properties: make(map[string]string),
+			},
+			{
+				Label:      "root",
+				Number:     2,
+				MountPoint: "/",
+				Filesystem: EXT4,
+				GPTType:    GPTLinux,
+				Size:       -1,
+				Properties: make(map[string]string),
+			},
+		},
+	}
+
+	diskByImage = map[string]Disk{
+		"default":      defaultDisk,
+		"ubuntu-18.04": defaultDisk,
+		"ubuntu-18.10": defaultDisk,
+		"alpine-3.8":   defaultDisk,
+		"alpine-3.9":   defaultDisk,
+		"clearlinux":   clearlinuxDisk,
+	}
+)
+
+// GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
+func GetDisk(image *models.ModelsMetalImage) Disk {
+	log.Info("getdisk", "imageID", *image.ID)
+	disk, ok := diskByImage[*image.ID]
+	if !ok {
+		log.Warn("getdisk", "imageID unknown, use default", *image.ID)
+		disk = defaultDisk
+	}
+
+	for _, p := range disk.Partitions {
 		p.Device = fmt.Sprintf("%s%d", defaultDisk.Device, p.Number)
 	}
-	return defaultDisk
+	return disk
 }

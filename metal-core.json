@@ -233,10 +233,10 @@
     },
     "domain.MetalHammerRegisterDeviceRequest": {
       "required": [
-        "cpu_cores",
         "disks",
         "memory",
         "nics",
+        "cpu_cores",
         "ipmi"
       ],
       "properties": {

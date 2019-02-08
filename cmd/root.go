@@ -40,7 +40,6 @@ func Run(spec *Specification) error {
 		Client:    client,
 		Spec:      spec,
 		IPAddress: spec.Ip,
-		Disk:      storage.DefaultDisk(),
 	}
 	hammer.Spec.ConsolePassword = password.Generate(16)
 
@@ -96,6 +95,7 @@ func Run(spec *Specification) error {
 				Allocation: &models.ModelsMetalDeviceAllocation{
 					Image: &models.ModelsMetalImage{
 						URL: &spec.ImageURL,
+						ID:  &spec.ImageID,
 					},
 					Hostname:   &hostname,
 					SSHPubKeys: sshkeys,
@@ -110,6 +110,8 @@ func Run(spec *Specification) error {
 			return errors.Wrap(err, "wait for installation")
 		}
 	}
+
+	hammer.Disk = storage.GetDisk(deviceWithToken.Device.Allocation.Image)
 
 	installationStart := time.Now()
 	info, err := hammer.Install(deviceWithToken)
