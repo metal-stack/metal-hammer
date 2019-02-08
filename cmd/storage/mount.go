@@ -41,16 +41,16 @@ func (disk Disk) MountPartitions(prefix string) error {
 
 		err := p.MkFS()
 		if err != nil {
-			log.Error("create filesystem failed", "error", err)
+			log.Error("mount", "message", "create filesystem failed", "error", err)
 			return errors.Wrap(err, "create filesystem failed")
 		}
 
 		err = p.fetchBlockIDProperties()
 		if err != nil {
-			log.Error("reading blkid properties failed", "error", err)
+			log.Error("mount", "message", "reading blkid properties failed", "error", err)
 			return errors.Wrap(err, "reading blkid properties failed")
 		}
-		log.Info("partition properties set", "device", p.Device, "properties", p.Properties)
+		log.Info("partition properties", "device", p.Device, "properties", p.Properties)
 
 		if p.MountPoint == "" {
 			continue
@@ -59,14 +59,14 @@ func (disk Disk) MountPartitions(prefix string) error {
 		mountPoint := filepath.Join(prefix, p.MountPoint)
 		err = os.MkdirAll(mountPoint, os.ModePerm)
 		if err != nil {
-			log.Error("create directory failed", "error", err)
+			log.Error("mount", "message", "create directory failed", "error", err)
 			return errors.Wrap(err, "create directory failed")
 		}
 		log.Info("mount", "source", p.Device, "target", mountPoint, "fstype", p.Filesystem)
 		// see man 2 mount
 		err = syscall.Mount(p.Device, mountPoint, string(p.Filesystem), 0, "")
 		if err != nil {
-			log.Error("mount failed", "partition", p.Device, "mountPoint", mountPoint, "error", err)
+			log.Error("mount", "partition", p.Device, "mountPoint", mountPoint, "error", err)
 			return errors.Wrapf(err, "mount: %s to:%s failed", p.Device, mountPoint)
 		}
 		diskMounts = append(diskMounts, mount{target: p.MountPoint})

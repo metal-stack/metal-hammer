@@ -116,7 +116,7 @@ func checkMD5(file, md5file string) (bool, error) {
 		return false, errors.Wrapf(err, "unable to calculate md5sum of file: %s", file)
 	}
 	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
-	log.Info("checkMD5", "source md5", sourceMD5, "expected md5", expectedMD5)
+	log.Info("check md5", "source md5", sourceMD5, "expected md5", expectedMD5)
 	if sourceMD5 != expectedMD5 {
 		return false, errors.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
 	}
