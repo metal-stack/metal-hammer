@@ -8,6 +8,7 @@ import (
 
 	"github.com/u-root/u-root/pkg/kexec"
 	"golang.org/x/sys/unix"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -21,6 +22,20 @@ type Bootinfo struct {
 	Initrd  string `yaml:"initrd"`
 	Cmdline string `yaml:"cmdline"`
 	Kernel  string `yaml:"kernel"`
+}
+
+func ReadBootinfo(file string) (*Bootinfo, error) {
+	bi, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not read boot-info.yaml")
+	}
+
+	info := &Bootinfo{}
+	err = yaml.Unmarshal(bi, info)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not unmarshal boot-info.yaml")
+	}
+	return info, nil
 }
 
 // ParseCmdline will put each key=value pair from /proc/cmdline into a map.

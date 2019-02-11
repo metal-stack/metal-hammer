@@ -143,27 +143,28 @@ func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneH
 		log.Warn("unable to remove install.sh, ignoring...", "error")
 	}
 
-	info, err := readBootInfo()
+	info, err := pkg.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read boot-info.yaml")
 	}
 
-	files := []string{info.Kernel, info.Initrd}
 	tmp := "/tmp"
-	for _, f := range files {
-		if f == "" {
-			// initrd can be empty.
-			continue
-		}
-		src := path.Join(prefix, f)
-		dest := path.Join(tmp, filepath.Base(f))
-		_, err := copy(src, dest)
-		if err != nil {
-			log.Error("could not copy", "src", src, "dest", dest, "error", err)
-			return nil, err
-		}
+	_, err = copy(path.Join(prefix, info.Kernel), path.Join(tmp, filepath.Base(info.Kernel)))
+	if err != nil {
+		log.Error("install", "could not copy kernel", "error", err)
+		return nil, err
 	}
 	info.Kernel = path.Join(tmp, filepath.Base(info.Kernel))
+
+	if info.Initrd == "" {
+		return info, nil
+	}
+
+	_, err = copy(path.Join(prefix, info.Initrd), path.Join(tmp, filepath.Base(info.Initrd)))
+	if err != nil {
+		log.Error("install", "could not copy initrd", "error", err)
+		return nil, err
+	}
 	info.Initrd = path.Join(tmp, filepath.Base(info.Initrd))
 
 	return info, nil
@@ -244,18 +245,4 @@ func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
 	}
 
 	return ioutil.WriteFile(destination, yamlContent, 0600)
-}
-
-func readBootInfo() (*pkg.Bootinfo, error) {
-	bi, err := ioutil.ReadFile(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
-	if err != nil {
-		return nil, errors.Wrap(err, "could not read boot-info.yaml")
-	}
-
-	info := &pkg.Bootinfo{}
-	err = yaml.Unmarshal(bi, info)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal boot-info.yaml")
-	}
-	return info, nil
 }
