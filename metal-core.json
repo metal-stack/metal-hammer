@@ -15,7 +15,7 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/device/install/{id}": {
+    "/machine/install/{id}": {
       "get": {
         "consumes": [
           "application/json"
@@ -24,14 +24,14 @@
           "application/json"
         ],
         "tags": [
-          "device"
+          "machine"
         ],
-        "summary": "install device by ID",
+        "summary": "install machine by ID",
         "operationId": "Install",
         "parameters": [
           {
             "type": "string",
-            "description": "identifier of the device",
+            "description": "identifier of the machine",
             "name": "id",
             "in": "path",
             "required": true
@@ -41,7 +41,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/models.MetalDeviceWithPhoneHomeToken"
+              "$ref": "#/definitions/models.MetalMachineWithPhoneHomeToken"
             }
           },
           "404": {
@@ -50,13 +50,13 @@
           "default": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/models.MetalDeviceWithPhoneHomeToken"
+              "$ref": "#/definitions/models.MetalMachineWithPhoneHomeToken"
             }
           }
         }
       }
     },
-    "/device/register/{id}": {
+    "/machine/register/{id}": {
       "post": {
         "consumes": [
           "application/json"
@@ -65,14 +65,14 @@
           "application/json"
         ],
         "tags": [
-          "device"
+          "machine"
         ],
-        "summary": "register device by ID",
+        "summary": "register machine by ID",
         "operationId": "Register",
         "parameters": [
           {
             "type": "string",
-            "description": "identifier of the device",
+            "description": "identifier of the machine",
             "name": "id",
             "in": "path",
             "required": true
@@ -82,7 +82,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/domain.MetalHammerRegisterDeviceRequest"
+              "$ref": "#/definitions/domain.MetalHammerRegisterMachineRequest"
             }
           }
         ],
@@ -90,7 +90,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/models.MetalDevice"
+              "$ref": "#/definitions/models.MetalMachine"
             }
           },
           "400": {
@@ -102,13 +102,13 @@
           "default": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/models.MetalDevice"
+              "$ref": "#/definitions/models.MetalMachine"
             }
           }
         }
       }
     },
-    "/device/report/{id}": {
+    "/machine/report/{id}": {
       "post": {
         "consumes": [
           "application/json"
@@ -117,14 +117,14 @@
           "application/json"
         ],
         "tags": [
-          "device"
+          "machine"
         ],
-        "summary": "report device by ID",
+        "summary": "report machine by ID",
         "operationId": "Report",
         "parameters": [
           {
             "type": "string",
-            "description": "identifier of the device",
+            "description": "identifier of the machine",
             "name": "id",
             "in": "path",
             "required": true
@@ -142,7 +142,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/models.MetalDevice"
+              "$ref": "#/definitions/models.MetalMachine"
             }
           },
           "406": {
@@ -154,7 +154,7 @@
           "default": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/models.MetalDevice"
+              "$ref": "#/definitions/models.MetalMachine"
             }
           }
         }
@@ -171,12 +171,12 @@
         "tags": [
           "boot"
         ],
-        "summary": "boot device by mac",
+        "summary": "boot machine by mac",
         "operationId": "Boot",
         "parameters": [
           {
             "type": "string",
-            "description": "mac of a network interface of the device",
+            "description": "mac of a network interface of the machine",
             "name": "mac",
             "in": "path",
             "required": true
@@ -231,12 +231,12 @@
         }
       }
     },
-    "domain.MetalHammerRegisterDeviceRequest": {
+    "domain.MetalHammerRegisterMachineRequest": {
       "required": [
-        "disks",
         "memory",
         "nics",
         "cpu_cores",
+        "disks",
         "ipmi"
       ],
       "properties": {
@@ -265,7 +265,7 @@
           }
         },
         "uuid": {
-          "description": "the uuid of the device to register",
+          "description": "the uuid of the machine to register",
           "type": "string"
         }
       }
@@ -349,144 +349,6 @@
         }
       }
     },
-    "models.MetalDevice": {
-      "required": [
-        "allocation",
-        "hardware",
-        "id",
-        "rackid",
-        "site",
-        "size"
-      ],
-      "properties": {
-        "allocation": {
-          "$ref": "#/definitions/models.MetalDeviceAllocation"
-        },
-        "changed": {
-          "type": "string"
-        },
-        "created": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "hardware": {
-          "$ref": "#/definitions/models.MetalDeviceHardware"
-        },
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "rackid": {
-          "type": "string"
-        },
-        "site": {
-          "$ref": "#/definitions/models.MetalSite"
-        },
-        "size": {
-          "$ref": "#/definitions/models.MetalSize"
-        }
-      }
-    },
-    "models.MetalDeviceAllocation": {
-      "required": [
-        "cidr",
-        "created",
-        "hostname",
-        "name",
-        "project",
-        "ssh_pub_keys",
-        "tenant"
-      ],
-      "properties": {
-        "cidr": {
-          "type": "string"
-        },
-        "console_password": {
-          "type": "string"
-        },
-        "created": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "hostname": {
-          "type": "string"
-        },
-        "image": {
-          "$ref": "#/definitions/models.MetalImage"
-        },
-        "last_ping": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "project": {
-          "type": "string"
-        },
-        "ssh_pub_keys": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "tenant": {
-          "type": "string"
-        },
-        "user_data": {
-          "type": "string"
-        }
-      }
-    },
-    "models.MetalDeviceHardware": {
-      "required": [
-        "cpu_cores",
-        "disks",
-        "memory",
-        "nics"
-      ],
-      "properties": {
-        "cpu_cores": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "disks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/models.MetalBlockDevice"
-          }
-        },
-        "memory": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "nics": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/models.MetalNic"
-          }
-        }
-      }
-    },
-    "models.MetalDeviceWithPhoneHomeToken": {
-      "required": [
-        "device",
-        "phone_home_token"
-      ],
-      "properties": {
-        "device": {
-          "$ref": "#/definitions/models.MetalDevice"
-        },
-        "phone_home_token": {
-          "type": "string"
-        }
-      }
-    },
     "models.MetalIPMI": {
       "required": [
         "address",
@@ -539,6 +401,149 @@
         }
       }
     },
+    "models.MetalMachine": {
+      "required": [
+        "allocation",
+        "hardware",
+        "id",
+        "partition",
+        "rackid",
+        "size"
+      ],
+      "properties": {
+        "allocation": {
+          "$ref": "#/definitions/models.MetalMachineAllocation"
+        },
+        "changed": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "hardware": {
+          "$ref": "#/definitions/models.MetalMachineHardware"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "partition": {
+          "$ref": "#/definitions/models.MetalPartition"
+        },
+        "rackid": {
+          "type": "string"
+        },
+        "size": {
+          "$ref": "#/definitions/models.MetalSize"
+        }
+      }
+    },
+    "models.MetalMachineAllocation": {
+      "required": [
+        "cidr",
+        "created",
+        "hostname",
+        "name",
+        "project",
+        "ssh_pub_keys",
+        "tenant",
+        "vrf"
+      ],
+      "properties": {
+        "cidr": {
+          "type": "string"
+        },
+        "console_password": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "image": {
+          "$ref": "#/definitions/models.MetalImage"
+        },
+        "last_ping": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string"
+        },
+        "ssh_pub_keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tenant": {
+          "type": "string"
+        },
+        "user_data": {
+          "type": "string"
+        },
+        "vrf": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "models.MetalMachineHardware": {
+      "required": [
+        "cpu_cores",
+        "disks",
+        "memory",
+        "nics"
+      ],
+      "properties": {
+        "cpu_cores": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "disks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalBlockDevice"
+          }
+        },
+        "memory": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "nics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalNic"
+          }
+        }
+      }
+    },
+    "models.MetalMachineWithPhoneHomeToken": {
+      "required": [
+        "machine",
+        "phone_home_token"
+      ],
+      "properties": {
+        "machine": {
+          "$ref": "#/definitions/models.MetalMachine"
+        },
+        "phone_home_token": {
+          "type": "string"
+        }
+      }
+    },
     "models.MetalNic": {
       "required": [
         "mac",
@@ -557,10 +562,13 @@
           "items": {
             "$ref": "#/definitions/models.MetalNic"
           }
+        },
+        "vrf": {
+          "type": "string"
         }
       }
     },
-    "models.MetalSite": {
+    "models.MetalPartition": {
       "required": [
         "bootconfig",
         "id"
@@ -623,7 +631,7 @@
     },
     {
       "description": "Managing PXE boot clients",
-      "name": "device"
+      "name": "machine"
     }
   ]
 }

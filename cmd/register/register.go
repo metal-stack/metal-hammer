@@ -3,7 +3,7 @@ package register
 import (
 	"fmt"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
@@ -20,37 +20,37 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-// Register the Device
+// Register the Machine
 type Register struct {
-	DeviceUUID string
-	Client     *device.Client
-	Network    *network.Network
+	MachineUUID string
+	Client      *machine.Client
+	Network     *network.Network
 }
 
-// RegisterDevice register a device at the metal-api via metal-core
-func (r *Register) RegisterDevice() (string, error) {
+// RegisterMachine register a machine at the metal-api via metal-core
+func (r *Register) RegisterMachine() (string, error) {
 	hw, err := r.readHardwareDetails()
 	if err != nil {
 		return "", errors.Wrap(err, "unable to read all hardware details")
 	}
-	params := device.NewRegisterParams()
+	params := machine.NewRegisterParams()
 	params.SetBody(hw)
 	params.ID = hw.UUID
 	resp, err := r.Client.Register(params)
 
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to register device:%#v", hw)
+		return "", errors.Wrapf(err, "unable to register machine:%#v", hw)
 	}
 	if resp == nil {
-		return "", errors.Errorf("unable to register device:%#v response payload is nil", hw)
+		return "", errors.Errorf("unable to register machine:%#v response payload is nil", hw)
 	}
 
-	log.Info("register device returned", "response", resp.Payload)
+	log.Info("register machine returned", "response", resp.Payload)
 	// FIXME add different logging based on created/already registered
 	// if resp.StatusCode() == http.StatusOK {
-	//	log.Info("device already registered", "uuid", uuid)
+	//	log.Info("machine already registered", "uuid", uuid)
 	//} else if resp.StatusCode == http.StatusCreated {
-	//	log.Info("device registered", "uuid", uuid)
+	//	log.Info("machine registered", "uuid", uuid)
 	//}
 	return *resp.Payload.ID, nil
 }
@@ -58,13 +58,13 @@ func (r *Register) RegisterDevice() (string, error) {
 // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
 var eth0Mac = ""
 
-func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterDeviceRequest, error) {
+func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachineRequest, error) {
 	err := createSyslog()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to write kernel boot message to /var/log/syslog")
 	}
 
-	hw := &models.DomainMetalHammerRegisterDeviceRequest{}
+	hw := &models.DomainMetalHammerRegisterMachineRequest{}
 
 	memory, err := ghw.Memory()
 	if err != nil {
@@ -150,7 +150,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterDevic
 		disks = append(disks, blockDevice)
 	}
 	hw.Disks = disks
-	hw.UUID = r.DeviceUUID
+	hw.UUID = r.MachineUUID
 
 	ipmiconfig, err := readIPMIDetails(eth0Mac)
 	if err != nil {

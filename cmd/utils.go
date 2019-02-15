@@ -32,8 +32,8 @@ func copy(src, dst string) (int64, error) {
 	return nBytes, err
 }
 
-// we start to calculate ASNs for devices with the first ASN in the 32bit ASN range and
-// add the last 2 octets of the ip of the device to achieve unique ASNs per vrf
+// we start to calculate ASNs for machines with the first ASN in the 32bit ASN range and
+// add the last 2 octets of the ip of the machine to achieve unique ASNs per vrf
 func ipToASN(ipaddress string) (int64, error) {
 	const asnbase = 4200000000
 

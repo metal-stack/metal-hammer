@@ -3,7 +3,7 @@ package cmd
 import (
 	"time"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
@@ -20,7 +20,7 @@ import (
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
-	Client     *device.Client
+	Client     *machine.Client
 	Spec       *Specification
 	Disk       storage.Disk
 	LLDPClient *network.LLDPClient
@@ -34,7 +34,7 @@ func Run(spec *Specification) error {
 	log.Info("metal-hammer run", "firmware", pkg.Firmware())
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
-	client := device.New(transport, strfmt.Default)
+	client := machine.New(transport, strfmt.Default)
 
 	hammer := &Hammer{
 		Client:    client,
@@ -44,9 +44,9 @@ func Run(spec *Specification) error {
 	hammer.Spec.ConsolePassword = password.Generate(16)
 
 	n := &network.Network{
-		DeviceUUID: spec.DeviceUUID,
-		IPAddress:  spec.Ip,
-		Started:    time.Now(),
+		MachineUUID: spec.MachineUUID,
+		IPAddress:   spec.Ip,
+		Started:     time.Now(),
 	}
 
 	err := n.UpAllInterfaces()
@@ -65,19 +65,19 @@ func Run(spec *Specification) error {
 	}
 
 	reg := &register.Register{
-		DeviceUUID: spec.DeviceUUID,
-		Client:     client,
-		Network:    n,
+		MachineUUID: spec.MachineUUID,
+		Client:      client,
+		Network:     n,
 	}
 
-	// Remove uuid return use DeviceUUID() above.
-	uuid, err := reg.RegisterDevice()
+	// Remove uuid return use MachineUUID() above.
+	uuid, err := reg.RegisterMachine()
 	if !spec.DevMode && err != nil {
 		return errors.Wrap(err, "register")
 	}
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
-	var deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeToken
+	var machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken
 	if spec.DevMode {
 		cidr := "10.0.1.2/24"
 		if spec.Cidr != "" {
@@ -88,11 +88,11 @@ func Run(spec *Specification) error {
 			cidr = "dhcp"
 		}
 		hostname := "devmode"
-		sshkeys := []string{"not a valid ssh public key, can be specified during device create.", "second public key"}
+		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
 		fakeToken := "JWT"
-		deviceWithToken = &models.ModelsMetalDeviceWithPhoneHomeToken{
-			Device: &models.ModelsMetalDevice{
-				Allocation: &models.ModelsMetalDeviceAllocation{
+		machineWithToken = &models.ModelsMetalMachineWithPhoneHomeToken{
+			Machine: &models.ModelsMetalMachine{
+				Allocation: &models.ModelsMetalMachineAllocation{
 					Image: &models.ModelsMetalImage{
 						URL: &spec.ImageURL,
 						ID:  &spec.ImageID,
@@ -105,16 +105,16 @@ func Run(spec *Specification) error {
 			PhoneHomeToken: &fakeToken,
 		}
 	} else {
-		deviceWithToken, err = hammer.Wait(uuid)
+		machineWithToken, err = hammer.Wait(uuid)
 		if err != nil {
 			return errors.Wrap(err, "wait for installation")
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(deviceWithToken.Device.Allocation.Image)
+	hammer.Disk = storage.GetDisk(machineWithToken.Machine.Allocation.Image)
 
 	installationStart := time.Now()
-	info, err := hammer.Install(deviceWithToken)
+	info, err := hammer.Install(machineWithToken)
 
 	// FIXME, must not return here.
 	if err != nil {
@@ -122,7 +122,7 @@ func Run(spec *Specification) error {
 	}
 
 	rep := &report.Report{
-		DeviceUUID:      spec.DeviceUUID,
+		MachineUUID:     spec.MachineUUID,
 		Client:          client,
 		ConsolePassword: spec.ConsolePassword,
 		InstallError:    err,

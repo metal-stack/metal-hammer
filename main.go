@@ -88,7 +88,7 @@ func main() {
 		}
 	}
 
-	spec.DeviceUUID = uuid.DeviceUUID()
+	spec.MachineUUID = uuid.MachineUUID()
 	spec.Ip = ip
 
 	spec.Log()

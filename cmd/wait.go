@@ -11,10 +11,10 @@ import (
 	"time"
 )
 
-// Wait until a device create request was fired
-func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDeviceWithPhoneHomeToken, error) {
+// Wait until a machine create request was fired
+func (h *Hammer) Wait(uuid string) (*models.ModelsMetalMachineWithPhoneHomeToken, error) {
 	// We do not use the swagger client because this has no ability to specify a timeout.
-	e := fmt.Sprintf("http://%v/device/install/%v", h.Spec.MetalCoreURL, uuid)
+	e := fmt.Sprintf("http://%v/machine/install/%v", h.Spec.MetalCoreURL, uuid)
 	log.Info("waiting for install, long polling", "url", e, "uuid", uuid)
 
 	var resp *http.Response
@@ -36,17 +36,17 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalDeviceWithPhoneHomeToken,
 		}
 	}
 
-	deviceJSON, err := ioutil.ReadAll(resp.Body)
+	machineJSON, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "wait for install reading response failed")
 	}
 
-	var deviceWithToken models.ModelsMetalDeviceWithPhoneHomeToken
-	err = json.Unmarshal(deviceJSON, &deviceWithToken)
+	var machineWithToken models.ModelsMetalMachineWithPhoneHomeToken
+	err = json.Unmarshal(machineJSON, &machineWithToken)
 	if err != nil {
 		return nil, errors.Wrap(err, "wait for install could not unmarshal response")
 	}
-	log.Info("stopped waiting got", "deviceWithToken", deviceWithToken)
+	log.Info("stopped waiting got", "machineWithToken", machineWithToken)
 
-	return &deviceWithToken, nil
+	return &machineWithToken, nil
 }
