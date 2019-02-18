@@ -1,6 +1,6 @@
-# Discover a device with metal-hammer
+# Discover a machine with metal-hammer
 
-in order to be able to register a new device, or check whether a device is already registered, we execute from the pxeboot image a binary which does the hardware discovery and send the output to the metal api.
+in order to be able to register a new machine, or check whether a machine is already registered, we execute from the pxeboot image a binary which does the hardware discovery and send the output to the metal api.
 
 ## Build
 

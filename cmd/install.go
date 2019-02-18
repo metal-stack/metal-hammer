@@ -30,12 +30,12 @@ const (
 // InstallerConfig contains configuration items which are
 // consumed by the install.sh of the individual target OS.
 type InstallerConfig struct {
-	// Hostname of the device
+	// Hostname of the machine
 	Hostname string `yaml:"hostname"`
 	// IPAddress is expected to be in the form without mask
 	IPAddress string `yaml:"ipaddress"`
-	// DeviceUUID is the unique UUID for this device, usually the board serial.
-	DeviceUUID string `yaml:"deviceuuid"`
+	// MachineUUID is the unique UUID for this machine, usually the board serial.
+	MachineUUID string `yaml:"machineuuid"`
 	// must be calculated from the last 4 byte of the IPAddress
 	ASN string `yaml:"asn"`
 	// SSHPublicKey of the user
@@ -47,10 +47,10 @@ type InstallerConfig struct {
 }
 
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeToken) (*pkg.Bootinfo, error) {
-	device := deviceWithToken.Device
-	phtoken := deviceWithToken.PhoneHomeToken
-	image := *device.Allocation.Image.URL
+func (h *Hammer) Install(machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken) (*pkg.Bootinfo, error) {
+	machine := machineWithToken.Machine
+	phtoken := machineWithToken.PhoneHomeToken
+	image := *machine.Allocation.Image.URL
 
 	err := h.Disk.Partition()
 	if err != nil {
@@ -77,7 +77,7 @@ func (h *Hammer) Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeT
 		return nil, err
 	}
 
-	info, err := h.install(prefix, device, *phtoken)
+	info, err := h.install(prefix, machine, *phtoken)
 	if err != nil {
 		return nil, err
 	}
@@ -89,10 +89,10 @@ func (h *Hammer) Install(deviceWithToken *models.ModelsMetalDeviceWithPhoneHomeT
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneHomeToken string) (*pkg.Bootinfo, error) {
-	log.Info("install", "image", *device.Allocation.Image.URL)
+func (h *Hammer) install(prefix string, machine *models.ModelsMetalMachine, phoneHomeToken string) (*pkg.Bootinfo, error) {
+	log.Info("install", "image", *machine.Allocation.Image.URL)
 
-	err := h.writeInstallerConfig(device)
+	err := h.writeInstallerConfig(machine)
 	if err != nil {
 		return nil, errors.Wrap(err, "writing configuration install.yaml failed")
 	}
@@ -107,7 +107,7 @@ func (h *Hammer) install(prefix string, device *models.ModelsMetalDevice, phoneH
 		return nil, errors.Wrap(err, "writing phoneHome.jwt failed")
 	}
 
-	err = h.writeUserData(device)
+	err = h.writeUserData(machine)
 	if err != nil {
 		return nil, errors.Wrap(err, "writing userdata failed")
 	}
@@ -186,11 +186,11 @@ func (h *Hammer) writePhoneHomeToken(phoneHomeToken string) error {
 	return ioutil.WriteFile(destination, []byte(phoneHomeToken), 0600)
 }
 
-func (h *Hammer) writeUserData(device *models.ModelsMetalDevice) error {
+func (h *Hammer) writeUserData(machine *models.ModelsMetalMachine) error {
 	configdir := path.Join(prefix, "etc", "metal")
 	destination := path.Join(configdir, "userdata")
 
-	base64UserData := device.Allocation.UserData
+	base64UserData := machine.Allocation.UserData
 	if base64UserData != "" {
 		userdata, err := base64.StdEncoding.DecodeString(base64UserData)
 		if err != nil {
@@ -202,7 +202,7 @@ func (h *Hammer) writeUserData(device *models.ModelsMetalDevice) error {
 	return nil
 }
 
-func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
+func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error {
 	log.Info("write installation configuration")
 	configdir := path.Join(prefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -213,28 +213,28 @@ func (h *Hammer) writeInstallerConfig(device *models.ModelsMetalDevice) error {
 
 	var ipaddress string
 	var asn int64
-	if *device.Allocation.Cidr == "dhcp" {
-		ipaddress = *device.Allocation.Cidr
+	if *machine.Allocation.Cidr == "dhcp" {
+		ipaddress = *machine.Allocation.Cidr
 	} else {
-		ip, _, err := net.ParseCIDR(*device.Allocation.Cidr)
+		ip, _, err := net.ParseCIDR(*machine.Allocation.Cidr)
 		if err != nil {
-			return errors.Wrap(err, "unable to parse ip from device.ip")
+			return errors.Wrap(err, "unable to parse ip from machine.ip")
 		}
 
-		asn, err = ipToASN(*device.Allocation.Cidr)
+		asn, err = ipToASN(*machine.Allocation.Cidr)
 		if err != nil {
-			return errors.Wrap(err, "unable to parse ip from device.ip")
+			return errors.Wrap(err, "unable to parse ip from machine.ip")
 		}
 		ipaddress = ip.String()
 	}
 
 	// FIXME
-	sshPubkeys := strings.Join(device.Allocation.SSHPubKeys, "\n")
+	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
 	y := &InstallerConfig{
-		Hostname:     *device.Allocation.Hostname,
+		Hostname:     *machine.Allocation.Hostname,
 		SSHPublicKey: sshPubkeys,
 		IPAddress:    ipaddress,
-		DeviceUUID:   h.Spec.DeviceUUID,
+		MachineUUID:  h.Spec.MachineUUID,
 		ASN:          fmt.Sprintf("%d", asn),
 		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,

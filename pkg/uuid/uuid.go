@@ -12,8 +12,8 @@ import (
 const dmiUUID = "/sys/class/dmi/id/product_uuid"
 const dmiSerial = "/sys/class/dmi/id/product_serial"
 
-// DeviceUUID calculates a unique uuid for this (hardware) device
-func DeviceUUID() string {
+// MachineUUID calculates a unique uuid for this (hardware) machine
+func MachineUUID() string {
 	if _, err := os.Stat(dmiUUID); !os.IsNotExist(err) {
 		productUUID, err := ioutil.ReadFile(dmiUUID)
 		if err != nil {

@@ -24,8 +24,8 @@ type Specification struct {
 	Cidr string
 	// ConsolePassword of the metal user valid for one day.
 	ConsolePassword string
-	// DeviceUUID is the unique identifier of this device
-	DeviceUUID string
+	// MachineUUID is the unique identifier of this machine
+	MachineUUID string
 	// Ip of this instance
 	Ip string
 }

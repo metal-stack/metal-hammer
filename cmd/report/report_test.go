@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 
 	httptransport "github.com/go-openapi/runtime/client"
@@ -35,7 +35,7 @@ func TestReportInstallation(t *testing.T) {
 	metalCoreURL := ts.Listener.Addr().String()
 
 	transport := httptransport.New(metalCoreURL, "", nil)
-	client := device.New(transport, strfmt.Default)
+	client := machine.New(transport, strfmt.Default)
 
 	r := &Report{
 		Client:       client,

@@ -11,24 +11,24 @@ import (
 	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 )
 
-func TestRegisterDevice(t *testing.T) {
+func TestRegisterMachine(t *testing.T) {
 	// FIXME
 	t.Skip()
 	os.Setenv("DEGUG", "1")
 	expected := "1234-1234"
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		metalDevice := &models.ModelsMetalDevice{
+		metalMachine := &models.ModelsMetalMachine{
 			ID: &expected,
 		}
-		response, err := json.Marshal(metalDevice)
+		response, err := json.Marshal(metalMachine)
 		if err != nil {
 			fmt.Fprint(w, err)
 		}
@@ -37,7 +37,7 @@ func TestRegisterDevice(t *testing.T) {
 	defer ts.Close()
 	metalCoreURL := ts.Listener.Addr().String()
 	transport := httptransport.New(metalCoreURL, "", nil)
-	client := device.New(transport, strfmt.Default)
+	client := machine.New(transport, strfmt.Default)
 
 	interfaces := make([]string, 0)
 	lldpc := network.NewLLDPClient(interfaces, 0, 0, 2*time.Second)
@@ -46,13 +46,13 @@ func TestRegisterDevice(t *testing.T) {
 		LLDPClient: lldpc,
 	}
 	r := &Register{
-		Client:     client,
-		Network:    n,
-		DeviceUUID: expected,
+		Client:      client,
+		Network:     n,
+		MachineUUID: expected,
 	}
 
 	eth0Mac = "00:00:00:00:00:01"
-	uuid, err := r.RegisterDevice()
+	uuid, err := r.RegisterMachine()
 
 	if err != nil {
 		t.Error(err)
@@ -67,17 +67,17 @@ func Test_readHardwareDetails(t *testing.T) {
 	// FIXME
 	t.Skip()
 	type fields struct {
-		Client *device.Client
+		Client *machine.Client
 	}
 	tests := []struct {
 		name    string
 		fields  fields
-		want    *models.DomainMetalHammerRegisterDeviceRequest
+		want    *models.DomainMetalHammerRegisterMachineRequest
 		wantErr bool
 	}{
 		{
 			name: "simple",
-			want: &models.DomainMetalHammerRegisterDeviceRequest{
+			want: &models.DomainMetalHammerRegisterMachineRequest{
 				UUID: "00000000-0000-0000-0000-000000000000",
 			},
 			wantErr: false,
@@ -86,8 +86,8 @@ func Test_readHardwareDetails(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Register{
-				Client:     tt.fields.Client,
-				DeviceUUID: "00000000-0000-0000-0000-000000000000",
+				Client:      tt.fields.Client,
+				MachineUUID: "00000000-0000-0000-0000-000000000000",
 			}
 			eth0Mac = "00:00:00:00:00:01"
 			got, err := r.readHardwareDetails()
@@ -110,7 +110,7 @@ func Test_readHardwareDetails(t *testing.T) {
 
 func TestHammer_readIPMIDetails(t *testing.T) {
 	type fields struct {
-		Client *device.Client
+		Client *machine.Client
 	}
 	tests := []struct {
 		name    string

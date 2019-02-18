@@ -15,10 +15,10 @@ import (
 
 // Network provides networking operations.
 type Network struct {
-	IPAddress  string
-	Started    time.Time
-	DeviceUUID string
-	LLDPClient *LLDPClient
+	IPAddress   string
+	Started     time.Time
+	MachineUUID string
+	LLDPClient  *LLDPClient
 }
 
 // UpAllInterfaces set all available eth* interfaces up
@@ -39,7 +39,7 @@ func (n *Network) UpAllInterfaces() error {
 			return errors.Wrapf(err, "Error set link %s up", name)
 		}
 
-		lldpd, err := lldp.NewDaemon(n.DeviceUUID, description, name, 5*time.Second)
+		lldpd, err := lldp.NewDaemon(n.MachineUUID, description, name, 5*time.Second)
 
 		if err != nil {
 			return errors.Wrapf(err, "Error start lldpd on %s", name)

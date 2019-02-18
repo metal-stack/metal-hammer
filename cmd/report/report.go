@@ -1,7 +1,7 @@
 package report
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/device"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 
 	log "github.com/inconshreveable/log15"
@@ -9,9 +9,9 @@ import (
 )
 
 type Report struct {
-	Client          *device.Client
+	Client          *machine.Client
 	ConsolePassword string
-	DeviceUUID      string
+	MachineUUID     string
 	InstallError    error
 }
 
@@ -27,9 +27,9 @@ func (r *Report) ReportInstallation() error {
 		report.Message = &message
 	}
 
-	params := device.NewReportParams()
+	params := machine.NewReportParams()
 	params.SetBody(report)
-	params.ID = r.DeviceUUID
+	params.ID = r.MachineUUID
 	resp, err := r.Client.Report(params)
 	if err != nil {
 		return errors.Wrap(err, "unable to report image installation")
