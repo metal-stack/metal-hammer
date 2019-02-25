@@ -21,6 +21,10 @@ type Network struct {
 	LLDPClient  *LLDPClient
 }
 
+// We expect to have storage and MTU of 9000 supports efficient transmission.
+// In our clos topology MTU 9000 (non vxlan)/9216 (vxlan) is status quo.
+const MTU = 9000
+
 // UpAllInterfaces set all available eth* interfaces up
 // to ensure they do ipv6 link local autoconfiguration and
 // therefore neighbor discovery,
@@ -34,7 +38,12 @@ func (n *Network) UpAllInterfaces() error {
 		}
 		interfaces = append(interfaces, name)
 
-		err := linkSetUp(name)
+		err := linkSetMTU(name, MTU)
+		if err != nil {
+			return errors.Wrapf(err, "Error set link %s up", name)
+		}
+
+		err = linkSetUp(name)
 		if err != nil {
 			return errors.Wrapf(err, "Error set link %s up", name)
 		}
@@ -54,11 +63,25 @@ func (n *Network) UpAllInterfaces() error {
 	return nil
 }
 
+func linkSetMTU(name string, mtu int) error {
+	iface, err := netlink.LinkByName(name)
+	if err != nil {
+		return err
+	}
+
+	err = netlink.LinkSetMTU(iface, mtu)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 func linkSetUp(name string) error {
 	iface, err := netlink.LinkByName(name)
 	if err != nil {
 		return err
 	}
+
 	err = netlink.LinkSetUp(iface)
 	if err != nil {
 		return err
