@@ -73,6 +73,7 @@ func linkSetMTU(name string, mtu int) error {
 	if err != nil {
 		return err
 	}
+	return err
 }
 
 func linkSetUp(name string) error {
