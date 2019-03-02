@@ -1,6 +1,6 @@
 FROM registry.fi-ts.io/cloud-native/go-builder:latest as builder
 
-FROM golang:1.11-stretch as initrd-builder
+FROM golang:1.12-stretch as initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v4.0.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
