@@ -4,6 +4,8 @@ FROM golang:1.12-stretch as storcli-builder
 # Check here for latestes releases, there is no public deb repo unfortunately
 # given download directory can even not listed.
 # https://www.broadcom.com/support/download-search/?pg=&pf=&pn=&pa=&po=&dk=storcli
+# TODO FIRMWARE:
+# ftp://ftp.supermicro.com/driver/SAS/LSI/3108/Firmware/
 ENV STORCLI_VERSION=7.8-007.0813.0000.0000 \
     STORCLI_DOWNLOAD_URL=https://docs.broadcom.com/docs-and-downloads/raid-controllers/raid-controllers-common-files
 RUN wget -q ${STORCLI_DOWNLOAD_URL}/MR_SAS_Unified_StorCLI_${STORCLI_VERSION}.zip -O storcli.zip \
