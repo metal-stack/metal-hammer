@@ -10,8 +10,8 @@ make initrd
 
 ## Local Testing
 
-```
-vagrant destroy -f && make clean initrd && vagrant up && virsh console metal-hammer_pxeclient
+```bash
+make clean initrd vagrant-up
 ```
 
 ## Create a PXE boot initrd with u-root
@@ -22,7 +22,7 @@ In order to be able to create an initrd image which is suitable to boot a bare m
 
 - download u-root:
 
-```
+```bash
 go get -u github.com/u-root/u-root
 ```
 
@@ -34,12 +34,12 @@ make initrd
 
 ### check content
 
-```
+```bash
 cpio -itv < metal-hammer-initrd.img
 ```
 
 ### start it
 
-```
-vagrant up
+```bash
+make vagrant-up
 ```
