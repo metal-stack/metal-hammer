@@ -41,6 +41,7 @@ ramdisk:
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
+		-files="bin/storcli64:sbin/storcli" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
