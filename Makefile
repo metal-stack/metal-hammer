@@ -42,6 +42,7 @@ ramdisk:
 		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="bin/storcli64:sbin/storcli" \
+		-files="bin/smc3108.rom:bin/smc3108.rom" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
