@@ -16,7 +16,7 @@ require (
 	github.com/go-openapi/validate v0.18.0
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/google/go-cmp v0.2.0 // indirect
-	github.com/google/gopacket v1.1.15
+	github.com/google/gopacket v1.1.16
 	github.com/google/uuid v1.1.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/jaypipes/ghw v0.0.0-20190102220436-783bc6943ce0
