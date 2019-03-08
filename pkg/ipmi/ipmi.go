@@ -9,6 +9,7 @@ package ipmi
 import (
 	"bufio"
 	"fmt"
+	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 	"os/exec"
 	"path/filepath"
@@ -166,12 +167,16 @@ func (i *Ipmitool) EnableUEFI(bootdev Bootdev, persistent bool) error {
 
 // UEFIEnabled returns true if the firmware is set to boot with uefi, otherwise false
 func (i *Ipmitool) UEFIEnabled() bool {
-	return i.matchBootParam("BIOS EFI boot")
+	enabled := i.matchBootParam("BIOS EFI boot")
+	log.Info("ipmi", "uefi enabled", enabled)
+	return enabled
 }
 
 // BootOptionsPersistent returns true of the boot parameters are set persistent.
 func (i *Ipmitool) BootOptionsPersistent() bool {
-	return i.matchBootParam("Options apply to all future boots")
+	persistent := i.matchBootParam("Options apply to all future boots")
+	log.Info("ipmi", "boot params persistent", persistent)
+	return persistent
 }
 
 func (i *Ipmitool) matchBootParam(parameter string) bool {
@@ -181,6 +186,7 @@ func (i *Ipmitool) matchBootParam(parameter string) bool {
 	if err != nil {
 		return false
 	}
+	log.Info("ipmi", "bootparams", output)
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {
 		line := scanner.Text()
