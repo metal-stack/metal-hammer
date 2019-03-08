@@ -176,11 +176,12 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		pw = password.Generate(10)
 		user = defaultIpmiUser
 		// FIXME userid should be verified if available
-		err := i.CreateUser(user, pw, 2, ipmi.Administrator)
-		if err != nil {
-			return nil, errors.Wrap(err, "ipmi create user failed")
-		}
-		config, err = i.GetLanConfig()
+		// FIXME ipmi usercreation does not work aktually
+		// err := i.CreateUser(user, pw, 2, ipmi.Administrator)
+		//if err != nil {
+		//	return nil, errors.Wrap(err, "ipmi create user failed")
+		//}
+		config, err := i.GetLanConfig()
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read ipmi lan configuration")
 		}
