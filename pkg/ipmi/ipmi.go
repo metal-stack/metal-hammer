@@ -92,14 +92,15 @@ func (i *Ipmitool) DevicePresent() bool {
 }
 
 // Run execute ipmitool
-func (i *Ipmitool) Run(arg ...string) (string, error) {
+func (i *Ipmitool) Run(args ...string) (string, error) {
 	path, err := exec.LookPath(i.Command)
 	if err != nil {
 		return "", errors.Wrapf(err, "unable to locate program:%s in path", i.Command)
 	}
-	cmd := exec.Command(path, arg...)
+	cmd := exec.Command(path, args...)
 	output, err := cmd.Output()
 
+	log.Debug("run ipmitool", "args", args, "output", string(output), "error", err)
 	return string(output), err
 }
 
@@ -214,14 +215,15 @@ func output2Map(cmdOutput string) map[string]string {
 }
 
 // from uses reflection to fill a struct based on the tags on it.
-func from(c interface{}, output map[string]string) {
-	val := reflect.ValueOf(c).Elem()
+func from(target interface{}, input map[string]string) {
+	log.Debug("from", "target", target, "input", input)
+	val := reflect.ValueOf(target).Elem()
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
 		tag := typeField.Tag
 
 		ipmitoolKey := tag.Get("ipmitool")
-		valueField.SetString(output[ipmitoolKey])
+		valueField.SetString(input[ipmitoolKey])
 	}
 }

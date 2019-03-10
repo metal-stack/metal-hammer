@@ -233,10 +233,10 @@
     },
     "domain.MetalHammerRegisterMachineRequest": {
       "required": [
-        "memory",
-        "nics",
         "cpu_cores",
         "disks",
+        "memory",
+        "nics",
         "ipmi"
       ],
       "properties": {
@@ -408,7 +408,8 @@
         "id",
         "partition",
         "rackid",
-        "size"
+        "size",
+        "tags"
       ],
       "properties": {
         "allocation": {
@@ -440,6 +441,12 @@
         },
         "size": {
           "$ref": "#/definitions/models.MetalSize"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
