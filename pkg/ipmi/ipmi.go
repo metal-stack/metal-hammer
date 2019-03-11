@@ -211,6 +211,9 @@ func output2Map(cmdOutput string) map[string]string {
 		value := strings.TrimSpace(strings.Join(parts[1:], ""))
 		result[key] = value
 	}
+	for k, v := range result {
+		log.Debug("output", "key", k, "value", v)
+	}
 	return result
 }
 
