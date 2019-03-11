@@ -21,6 +21,12 @@ import (
 func main() {
 	fmt.Print(cmd.HammerBanner)
 	go handleSignals()
+	// in case of an error/panic which let the whole app die, recover.
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+		}
+	}()
 	ip := network.InternalIP()
 	err := cmd.StartSSHD(ip)
 	if err != nil {
