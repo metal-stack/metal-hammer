@@ -26,51 +26,49 @@ const (
 	EFISystemPartition = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 )
 
-// GPTType is the GUID Partition table type
-type GPTType string
+type (
+	// GPTType is the GUID Partition table type
+	GPTType string
 
-// GPTGuid is the UID of the GPT partition to create
-type GPTGuid string
+	// GPTGuid is the UID of the GPT partition to create
+	GPTGuid string
 
-// FSType defines the Filesystem of a Partition
-type FSType string
+	// FSType defines the Filesystem of a Partition
+	FSType string
 
-// MountOption a option given to a mountpoint
-type MountOption string
+	// MountOption a option given to a mountpoint
+	MountOption string
 
-// Partition defines a disk partition
-type Partition struct {
-	Label        string
-	Device       string
-	Number       uint
-	MountPoint   string
-	MountOptions []*MountOption
+	// Partition defines a disk partition
+	Partition struct {
+		Label        string
+		Device       string
+		Number       uint
+		MountPoint   string
+		MountOptions []*MountOption
 
-	// Size in mebiBytes. If negative all available space is used.
-	Size       int64
-	Filesystem FSType
-	GPTType    GPTType
-	GPTGuid    GPTGuid
+		// Size in mebiBytes. If negative all available space is used.
+		Size       int64
+		Filesystem FSType
+		GPTType    GPTType
+		GPTGuid    GPTGuid
 
-	// Properties from blkid
-	Properties map[string]string
-}
+		// Properties from blkid
+		Properties map[string]string
+	}
 
-type DeviceSpec struct {
-	DeviceName      string
-	PartitionPrefix string
-}
+	DeviceSpec struct {
+		DeviceName      string
+		PartitionPrefix string
+	}
 
-func (p *Partition) String() string {
-	return fmt.Sprintf("%s", p.Device)
-}
-
-// Disk is a physical Disk
-type Disk struct {
-	Device string
-	// Partitions to create on this disk, order is preserved
-	Partitions []*Partition
-}
+	// Disk is a physical Disk
+	Disk struct {
+		Device string
+		// Partitions to create on this disk, order is preserved
+		Partitions []*Partition
+	}
+)
 
 var (
 	defaultDisk = Disk{
@@ -140,6 +138,11 @@ var (
 		},
 	}
 )
+
+// String for a Partition
+func (p *Partition) String() string {
+	return fmt.Sprintf("%s", p.Device)
+}
 
 // GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
 func GetDisk(image *models.ModelsMetalImage, size *models.ModelsMetalSize) Disk {
