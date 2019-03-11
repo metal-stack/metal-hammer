@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
 	"time"
@@ -20,7 +19,6 @@ import (
 
 func main() {
 	fmt.Print(cmd.HammerBanner)
-	go handleSignals()
 	ip := network.InternalIP()
 	err := cmd.StartSSHD(ip)
 	if err != nil {
@@ -104,22 +102,4 @@ func main() {
 		time.Sleep(wait)
 		pkg.Reboot()
 	}
-}
-
-// handleSignals is just used to show what signals where sent to metal-hammer.
-// this is useful to nail down production problems.
-// FIXME think if we need to have this forever.
-func handleSignals() {
-	// Set up channel on which to send signal notifications.
-	// We must use a buffered channel or risk missing the signal
-	// if we're not ready to receive when the signal is sent.
-	c := make(chan os.Signal, 1)
-
-	// Passing no signals to Notify means that
-	// all signals will be sent to the channel.
-	signal.Notify(c)
-
-	// Block until any signal is received.
-	s := <-c
-	log.Info("main", "got signal", s)
 }
