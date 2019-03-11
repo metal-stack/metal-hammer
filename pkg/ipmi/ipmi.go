@@ -208,6 +208,9 @@ func output2Map(cmdOutput string) map[string]string {
 			continue
 		}
 		key := strings.TrimSpace(parts[0])
+		if key == "" {
+			continue
+		}
 		value := strings.TrimSpace(strings.Join(parts[1:], ""))
 		result[key] = value
 	}
