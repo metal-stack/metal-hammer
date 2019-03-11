@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	log "github.com/inconshreveable/log15"
 )
@@ -56,7 +57,7 @@ type Partition struct {
 	Properties map[string]string
 }
 
-type DeviceSpec struct {
+type PrimaryDevice struct {
 	DeviceName      string
 	PartitionPrefix string
 }
@@ -129,12 +130,12 @@ var (
 		"alpine-3.9":   defaultDisk,
 		"clearlinux":   clearlinuxDisk,
 	}
-	deviceBySize = map[string]DeviceSpec{
-		"t1-small-x86": DeviceSpec{
+	primaryDeviceBySize = map[string]PrimaryDevice{
+		"t1-small-x86": PrimaryDevice{
 			DeviceName:      "/dev/sda",
 			PartitionPrefix: "",
 		},
-		"c1-large-x86": DeviceSpec{
+		"c1-large-x86": PrimaryDevice{
 			DeviceName:      "/dev/nvme0n1",
 			PartitionPrefix: "p",
 		},
@@ -150,18 +151,18 @@ func GetDisk(image *models.ModelsMetalImage, size *models.ModelsMetalSize) Disk 
 		disk = defaultDisk
 	}
 
-	deviceSpec, ok := deviceBySize[*size.ID]
+	primaryDevice, ok := primaryDeviceBySize[*size.ID]
 	if !ok {
 		log.Warn("getdisk", "sizeID unknown, using default", *size.ID)
-		deviceSpec = DeviceSpec{
+		primaryDevice = PrimaryDevice{
 			DeviceName:      "/dev/sda",
 			PartitionPrefix: "",
 		}
 	}
-	disk.Device = deviceSpec.DeviceName
+	disk.Device = primaryDevice.DeviceName
 
 	for _, p := range disk.Partitions {
-		p.Device = fmt.Sprintf("%s%s%d", disk.Device, deviceSpec.PartitionPrefix, p.Number)
+		p.Device = fmt.Sprintf("%s%s%d", disk.Device, primaryDevice.PartitionPrefix, p.Number)
 	}
 	return disk
 }
