@@ -111,7 +111,7 @@ func Run(spec *Specification) error {
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(machineWithToken.Machine.Allocation.Image)
+	hammer.Disk = storage.GetDisk(machineWithToken.Machine.Allocation.Image, machineWithToken.Machine.Size)
 
 	installationStart := time.Now()
 	info, err := hammer.Install(machineWithToken)

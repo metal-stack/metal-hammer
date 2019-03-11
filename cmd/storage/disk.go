@@ -56,6 +56,11 @@ type Partition struct {
 	Properties map[string]string
 }
 
+type DeviceSpec struct {
+	DeviceName      string
+	PartitionPrefix string
+}
+
 func (p *Partition) String() string {
 	return fmt.Sprintf("%s", p.Device)
 }
@@ -69,7 +74,6 @@ type Disk struct {
 
 var (
 	defaultDisk = Disk{
-		Device: "/dev/sda",
 		Partitions: []*Partition{
 			{
 				Label:      "efi",
@@ -94,7 +98,6 @@ var (
 	}
 
 	clearlinuxDisk = Disk{
-		Device: "/dev/sda",
 		Partitions: []*Partition{
 			{
 				Label:      "efi",
@@ -126,10 +129,20 @@ var (
 		"alpine-3.9":   defaultDisk,
 		"clearlinux":   clearlinuxDisk,
 	}
+	deviceBySize = map[string]DeviceSpec{
+		"t1-small-x86": DeviceSpec{
+			DeviceName:      "/dev/sda",
+			PartitionPrefix: "",
+		},
+		"c1-large-x86": DeviceSpec{
+			DeviceName:      "/dev/nvme0n1",
+			PartitionPrefix: "p",
+		},
+	}
 )
 
 // GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
-func GetDisk(image *models.ModelsMetalImage) Disk {
+func GetDisk(image *models.ModelsMetalImage, size *models.ModelsMetalSize) Disk {
 	log.Info("getdisk", "imageID", *image.ID)
 	disk, ok := diskByImage[*image.ID]
 	if !ok {
@@ -137,8 +150,18 @@ func GetDisk(image *models.ModelsMetalImage) Disk {
 		disk = defaultDisk
 	}
 
+	deviceSpec, ok := deviceBySize[*size.ID]
+	if !ok {
+		log.Warn("getdisk", "sizeID unknown, using default", *size.ID)
+		deviceSpec = DeviceSpec{
+			DeviceName:      "/dev/sda",
+			PartitionPrefix: "",
+		}
+	}
+	disk.Device = deviceSpec.DeviceName
+
 	for _, p := range disk.Partitions {
-		p.Device = fmt.Sprintf("%s%d", defaultDisk.Device, p.Number)
+		p.Device = fmt.Sprintf("%s%s%d", disk.Device, deviceSpec.PartitionPrefix, p.Number)
 	}
 	return disk
 }
