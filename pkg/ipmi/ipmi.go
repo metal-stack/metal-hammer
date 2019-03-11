@@ -106,26 +106,26 @@ func (i *Ipmitool) Run(args ...string) (string, error) {
 
 // GetLanConfig returns the LanConfig
 func (i *Ipmitool) GetLanConfig() (LanConfig, error) {
-	config := LanConfig{}
+	config := &LanConfig{}
 	cmdOutput, err := i.Run("lan", "print")
 	if err != nil {
-		return config, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
+		return *config, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
 	}
 	lanConfigMap := output2Map(cmdOutput)
 	from(config, lanConfigMap)
-	return config, nil
+	return *config, nil
 }
 
 // GetSession returns the Session info
 func (i *Ipmitool) GetSession() (Session, error) {
-	session := Session{}
+	session := &Session{}
 	cmdOutput, err := i.Run("session", "info", "all")
 	if err != nil {
-		return session, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
+		return *session, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
 	}
 	sessionMap := output2Map(cmdOutput)
 	from(session, sessionMap)
-	return session, nil
+	return *session, nil
 }
 
 // CreateUser create a ipmi user with password and privilege level

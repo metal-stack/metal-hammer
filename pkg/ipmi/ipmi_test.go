@@ -120,10 +120,7 @@ func TestLanConfig_From(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := &LanConfig{
-				IP:  tt.fields.IP,
-				Mac: tt.fields.Mac,
-			}
+			c := &LanConfig{}
 			from(c, tt.input)
 			if c.IP != tt.fields.IP {
 				t.Errorf("IP is not as expected")
