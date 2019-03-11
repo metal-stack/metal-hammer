@@ -37,6 +37,7 @@ Cipher Suite Priv Max   : XaaaXXaaaXXaaXX
                         :     O=OEM
 Bad Password Threshold  : Not Available
 `
+const lanPrint2 = "Set in Progress         : Set Complete\nAuth Type Support       : NONE MD2 MD5 PASSWORD \nAuth Type Enable        : Callback : MD2 MD5 PASSWORD \n                        : User     : MD2 MD5 PASSWORD \n                        : Operator : MD2 MD5 PASSWORD \n                        : Admin    : MD2 MD5 PASSWORD \n                        : OEM      : MD2 MD5 PASSWORD \nIP Address Source       : DHCP Address\nIP Address              : 192.168.2.53\nSubnet Mask             : 255.255.255.0\nMAC Address             : ac:1f:6b:73:c9:f0\nSNMP Community String   : public\nIP Header               : TTL=0x00 Flags=0x00 Precedence=0x00 TOS=0x00\nBMC ARP Control         : ARP Responses Enabled, Gratuitous ARP Disabled\nDefault Gateway IP      : 192.168.2.1\nDefault Gateway MAC     : 00:00:00:00:00:00\nBackup Gateway IP       : 0.0.0.0\nBackup Gateway MAC      : 00:00:00:00:00:00\n802.1q VLAN ID          : Disabled\n802.1q VLAN Priority    : 0\nRMCP+ Cipher Suites     : 1,2,3,6,7,8,11,12\nCipher Suite Priv Max   : XaaaXXaaaXXaaXX\n                        :     X=Cipher Suite Unused\n                        :     c=CALLBACK\n                        :     u=USER\n                        :     o=OPERATOR\n                        :     a=ADMIN\n                        :     O=OEM\nBad Password Threshold  : 0\nInvalid password disable: no\nAttempt Count Reset Int.: 0\nUser Lockout Interval   : 0\n"
 
 func Test_getLanConfig(t *testing.T) {
 	tests := []struct {
@@ -51,6 +52,15 @@ func Test_getLanConfig(t *testing.T) {
 				"IP Address":  "10.248.36.246",
 				"Subnet Mask": "255.255.252.0",
 				"MAC Address": "0c:c4:7a:ed:3e:27",
+			},
+		},
+		{
+			name:      "from real",
+			cmdOutput: lanPrint2,
+			want: map[string]string{
+				"IP Address":  "192.168.2.53",
+				"Subnet Mask": "255.255.255.0",
+				"MAC Address": "ac:1f:6b:73:c9:f0",
 			},
 		},
 	}
@@ -102,14 +112,10 @@ func TestLanConfig_From(t *testing.T) {
 		{
 			name: "simple",
 			fields: fields{
-				IP:  "10.248.36.246",
-				Mac: "0c:c4:7a:ed:3e:27",
+				IP:  "192.168.2.53",
+				Mac: "ac:1f:6b:73:c9:f0",
 			},
-			input: map[string]string{
-				"IP Address":  "10.248.36.246",
-				"Subnet Mask": "255.255.252.0",
-				"MAC Address": "0c:c4:7a:ed:3e:27",
-			},
+			input: output2Map(lanPrint2),
 		},
 	}
 	for _, tt := range tests {
