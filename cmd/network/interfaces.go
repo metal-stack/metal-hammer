@@ -49,7 +49,6 @@ func (n *Network) UpAllInterfaces() error {
 		}
 
 		lldpd, err := lldp.NewDaemon(n.MachineUUID, description, name, 5*time.Second)
-
 		if err != nil {
 			return errors.Wrapf(err, "Error start lldpd on %s", name)
 		}
