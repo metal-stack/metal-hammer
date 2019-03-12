@@ -16,11 +16,14 @@ RUN set -ex \
  && wget -q https://github.com/Microsoft/ethr/releases/download/v0.2.1/ethr_linux.zip -O ethr.zip \
  && wget -q ${STORCLI_DOWNLOAD_URL}/MR_SAS_Unified_StorCLI_${STORCLI_VERSION}.zip -O storcli.zip \
  && wget -q ${RAID_FIRMWARE_DOWNLOAD_URL}/${RAID_FIRMWARE_VERSION}.zip -O firmware.zip \
+ && wget -q http://www.mellanox.com/downloads/MFT/mft-4.11.0-103-x86_64-deb.tgz -O mft.tgz \
  && apt-get update \
  && apt-get install -y --no-install-recommends unzip \
  && unzip storcli.zip \
  && unzip firmware.zip \
  && unzip ethr.zip \
+ && tar -xf mft.tgz \
+ && dpkg -i mft-4.11.0-103-x86_64-deb/DEBS/mft-4.11.0-103.amd64.deb \
  && dpkg -i Unified_storcli_all_os/Ubuntu/storcli*.deb
 
 FROM golang:1.12-stretch as initrd-builder
@@ -53,6 +56,8 @@ COPY .git /work/
 COPY --from=storcli-builder /opt/MegaRAID/storcli/storcli64 /work/bin/
 COPY --from=storcli-builder /work/smc3108.rom /work/bin/
 COPY --from=storcli-builder /work/ethr /work/bin/
+COPY --from=storcli-builder /usr/bin/mlxconfig /work/bin/
+COPY --from=storcli-builder /usr/share/mft/mlxconfig_dbs/* /work/usr/share/mft/mlxconfig_dbs/
 COPY --from=builder /common /common
 COPY --from=builder /work/bin/metal-hammer /work/bin/
 RUN COMMONDIR=/common make ramdisk

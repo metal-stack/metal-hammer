@@ -34,8 +34,10 @@ ramdisk:
 		-files="/bin/bash:bin/bash" \
 		-files="/sbin/blkid:sbin/blkid" \
 		-files="/sbin/ethtool:sbin/ethtool" \
+		-files="bin/ethr:bin/ethr" \
 		-files="/bin/netstat:bin/netstat" \
-		-files="/bin/ethr:bin/ethr" \
+		-files="bin/mlxconfig:bin/mlxconfig" \
+		-files="usr/share/mft/mlxconfig_dbs:usr/share/mft/mlxconfig_dbs" \
 		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
 		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
