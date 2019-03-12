@@ -35,6 +35,7 @@ ramdisk:
 		-files="/sbin/blkid:sbin/blkid" \
 		-files="/sbin/ethtool:sbin/ethtool" \
 		-files="/bin/netstat:bin/netstat" \
+		-files="/bin/ethr:bin/ethr" \
 		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
 		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
