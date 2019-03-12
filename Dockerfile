@@ -28,11 +28,13 @@ RUN apt-get update \
 	curl \
 	dosfstools \
 	e2fsprogs \
+	ethtool \
 	gcc \
 	gdisk \
 	hdparm \
 	ipmitool \
 	liblz4-tool \
+	net-tools \
 	nvme-cli \
 	util-linux
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
