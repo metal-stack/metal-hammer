@@ -42,6 +42,7 @@ RUN apt-get update \
 	mstflint \
 	net-tools \
 	nvme-cli \
+	pciutils \
 	util-linux
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \

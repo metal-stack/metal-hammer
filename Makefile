@@ -35,6 +35,7 @@ ramdisk:
 		-files="/sbin/blkid:sbin/blkid" \
 		-files="/sbin/ethtool:sbin/ethtool" \
 		-files="/usr/bin/mstflint:bin/mstflint" \
+		-files="/usr/bin/lscpi:bin/lspci" \
 		-files="bin/ethr:bin/ethr" \
 		-files="/bin/netstat:bin/netstat" \
 		-files="bin/mlxconfig:bin/mlxconfig" \
