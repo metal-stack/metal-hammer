@@ -24,7 +24,7 @@ func (h *Hammer) EnsureUEFI() error {
 		return nil
 	}
 
-	err := i.EnableUEFI(ipmi.PXE, false)
+	err := i.EnableUEFI(ipmi.PXE, true)
 	if err != nil {
 		return errors.Wrap(err, "unable to ensureUEFI")
 	}
