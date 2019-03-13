@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	// "git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
+
 	"github.com/pkg/errors"
 
 	log "github.com/inconshreveable/log15"
@@ -23,7 +24,7 @@ func (h *Hammer) EnsureUEFI() error {
 		return nil
 	}
 
-	err := i.EnableUEFI(ipmi.PXE, true)
+	err := i.EnableUEFI(ipmi.PXE, false)
 	if err != nil {
 		return errors.Wrap(err, "unable to ensureUEFI")
 	}
@@ -33,10 +34,9 @@ func (h *Hammer) EnsureUEFI() error {
 		log.Warn("required reboot skipped", "devmode", h.Spec.DevMode)
 		return nil
 	}
-	// FIXME enable once ipmi works.
-	//err = pkg.Reboot()
-	//if err != nil {
-	//	log.Error("reboot", "error", err)
-	//}
+	err = pkg.Reboot()
+	if err != nil {
+		log.Error("reboot", "error", err)
+	}
 	return nil
 }
