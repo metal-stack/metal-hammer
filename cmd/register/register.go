@@ -167,7 +167,7 @@ const defaultIpmiPort = "623"
 const defaultIpmiUser = "metal"
 
 // defaultIpmiUserID the id of the user created by metal in the ipmi config
-const defaultIpmiUserID = 10
+const defaultIpmiUserID = "10"
 
 // IPMI configuration and
 func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {

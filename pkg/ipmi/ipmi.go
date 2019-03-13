@@ -39,7 +39,7 @@ const (
 type Ipmi interface {
 	DevicePresent() bool
 	Run(arg ...string) (string, error)
-	CreateUser(username, password string, uid int, privilege Privilege) error
+	CreateUser(username, password, uid string, privilege Privilege) error
 	GetLanConfig() (LanConfig, error)
 	EnableUEFI(bootdev Bootdev, persistent bool) error
 	UEFIEnabled() bool
@@ -133,21 +133,21 @@ func (i *Ipmitool) GetSession() (Session, error) {
 }
 
 // CreateUser create a ipmi user with password and privilege level
-func (i *Ipmitool) CreateUser(username, password string, uid int, privilege Privilege) error {
-	out, err := i.Run("user", "set", "name", string(uid), username)
+func (i *Ipmitool) CreateUser(username, password, uid string, privilege Privilege) error {
+	out, err := i.Run("user", "set", "name", uid, username)
 	if err != nil {
 		return errors.Errorf("unable to create user %s info: %v", username, out)
 	}
-	out, err = i.Run("user", "set", "password", string(uid), password)
+	out, err = i.Run("user", "set", "password", uid, password)
 	if err != nil {
 		return errors.Errorf("unable to set password for user %s info: %v", username, out)
 	}
 	channelnumber := "1"
-	out, err = i.Run("channel", "setaccess", channelnumber, string(uid), "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
+	out, err = i.Run("channel", "setaccess", channelnumber, uid, "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
 	if err != nil {
 		return errors.Errorf("unable to set privilege for user %s info: %v", username, out)
 	}
-	out, err = i.Run("user", "enable", string(uid))
+	out, err = i.Run("user", "enable", uid)
 	if err != nil {
 		return errors.Errorf("unable to enable user %s info: %v", username, out)
 	}

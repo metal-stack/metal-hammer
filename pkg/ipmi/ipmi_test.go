@@ -75,7 +75,6 @@ func Test_getLanConfig(t *testing.T) {
 		})
 	}
 }
-
 func TestGetLanConfig(t *testing.T) {
 	tests := []struct {
 		name    string
