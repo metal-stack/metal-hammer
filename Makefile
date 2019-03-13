@@ -36,11 +36,9 @@ ramdisk:
 		-files="/sbin/ethtool:sbin/ethtool" \
 		-files="/usr/bin/mstflint:bin/mstflint" \
 		-files="/usr/bin/mstconfig:bin/mstconfig" \
-		-files="/usr/bin/lscpi:bin/lspci" \
+		-files="/usr/bin/lspci:bin/lspci" \
 		-files="bin/ethr:bin/ethr" \
 		-files="/bin/netstat:bin/netstat" \
-		-files="bin/mlxconfig:bin/mlxconfig" \
-		-files="usr/share/mft/mlxconfig_dbs:usr/share/mft/mlxconfig_dbs" \
 		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
 		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \

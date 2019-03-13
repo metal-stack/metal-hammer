@@ -32,6 +32,7 @@ const MTU = 9000
 func (n *Network) UpAllInterfaces() error {
 	description := fmt.Sprintf("metal-hammer IP:%s version:%s waiting since %s for installation", n.IPAddress, version.V, n.Started)
 	interfaces := make([]string, 0)
+	ethtool := NewEthtool()
 	for _, name := range Interfaces() {
 		if !strings.HasPrefix(name, "eth") {
 			continue
@@ -47,6 +48,8 @@ func (n *Network) UpAllInterfaces() error {
 		if err != nil {
 			return errors.Wrapf(err, "Error set link %s up", name)
 		}
+
+		ethtool.disableFirmwareLLDP(name)
 
 		lldpd, err := lldp.NewDaemon(n.MachineUUID, description, name, 5*time.Second)
 		if err != nil {
