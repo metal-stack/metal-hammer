@@ -34,6 +34,7 @@ ramdisk:
 		-files="/bin/bash:bin/bash" \
 		-files="/sbin/blkid:sbin/blkid" \
 		-files="/sbin/ethtool:sbin/ethtool" \
+		-files="/usr/bin/mstflint:bin/mstflint" \
 		-files="bin/ethr:bin/ethr" \
 		-files="/bin/netstat:bin/netstat" \
 		-files="bin/mlxconfig:bin/mlxconfig" \

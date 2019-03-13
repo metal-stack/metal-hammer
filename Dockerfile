@@ -39,6 +39,7 @@ RUN apt-get update \
 	hdparm \
 	ipmitool \
 	liblz4-tool \
+	mstflint \
 	net-tools \
 	nvme-cli \
 	util-linux
