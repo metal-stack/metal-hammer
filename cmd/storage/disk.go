@@ -137,6 +137,10 @@ var (
 			DeviceName:      "/dev/nvme0n1",
 			PartitionPrefix: "p",
 		},
+		"c1-xlarge-x86": PrimaryDevice{
+			DeviceName:      "/dev/nvme0n1",
+			PartitionPrefix: "p",
+		},
 	}
 )
 
