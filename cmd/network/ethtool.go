@@ -54,7 +54,9 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 		}
 	}
 
-	log.Info("ethtool", "interface", ifi, "disable-fw-lldp is set to", fwLLDP)
+	if fwLLDP != "" {
+		log.Info("ethtool", "interface", ifi, "disable-fw-lldp is set to", fwLLDP)
+	}
 
 	if fwLLDP == "off" {
 		_, err := e.Run("--set-priv-flags", ifi, "disable-fw-lldp", "on")

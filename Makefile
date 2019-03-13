@@ -36,6 +36,7 @@ ramdisk:
 		-files="/sbin/ethtool:sbin/ethtool" \
 		-files="/usr/bin/mstflint:bin/mstflint" \
 		-files="/usr/bin/mstconfig:bin/mstconfig" \
+		-files="/usr/share/mstflint/mlxconfig_dbs/mlxconfig.db:usr/share/mstflint/mlxconfig_dbs/mlxconfig.db" \
 		-files="/usr/bin/lspci:bin/lspci" \
 		-files="bin/ethr:bin/ethr" \
 		-files="/bin/netstat:bin/netstat" \
