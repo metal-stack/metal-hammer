@@ -60,6 +60,10 @@ type LanConfig struct {
 	Mac string `ipmitool:"MAC Address"`
 }
 
+func (l *LanConfig) String() string {
+	return fmt.Sprintf("ip: %s mac:%s", l.IP, l.Mac)
+}
+
 // Session information of the current ipmi session
 type Session struct {
 	UserID    string `ipmitool:"user id"`

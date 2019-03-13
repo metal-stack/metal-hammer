@@ -185,6 +185,7 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read ipmi lan configuration")
 		}
+		log.Debug("register", "ipmi lanconfig", config)
 		config.IP = config.IP + ":" + defaultIpmiPort
 	} else {
 		log.Info("ipmi details faked")
