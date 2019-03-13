@@ -33,6 +33,7 @@ func (r *Report) ReportInstallation() error {
 	resp, err := r.Client.Report(params)
 	if err != nil {
 		log.Error("report", "error", err)
+		return nil
 		// FIXME enable once reporting works
 		//return errors.Wrap(err, "unable to report image installation")
 	}
