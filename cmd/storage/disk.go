@@ -129,6 +129,10 @@ var (
 		"clearlinux":   clearlinuxDisk,
 	}
 	primaryDeviceBySize = map[string]PrimaryDevice{
+		"v1-small-x86": PrimaryDevice{
+			DeviceName:      "/dev/sda",
+			PartitionPrefix: "",
+		},
 		"t1-small-x86": PrimaryDevice{
 			DeviceName:      "/dev/sda",
 			PartitionPrefix: "",
