@@ -13,6 +13,12 @@ import (
 // EnsureUEFI check if the boot firmware is set to uefi when booting via pxe permanent.
 // If not already set, make required modifications and reboot the machine.
 func (h *Hammer) EnsureUEFI() error {
+	firmware := pkg.Firmware()
+	if firmware == "efi" {
+		log.Info("uefi", "message", "machine booted with efi, no action")
+		return nil
+	}
+
 	i := ipmi.New()
 
 	if !i.DevicePresent() {
