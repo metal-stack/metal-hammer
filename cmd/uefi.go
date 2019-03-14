@@ -3,6 +3,7 @@ package cmd
 import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -29,11 +30,12 @@ func (h *Hammer) EnsureUEFI() error {
 		return errors.Wrap(err, "unable to ensureUEFI")
 	}
 
-	log.Info("uefi", "message", "set persistent, reboot now.")
+	log.Info("uefi", "message", "set persistent, reboot in 10 sec.")
 	if h.Spec.DevMode {
 		log.Warn("required reboot skipped", "devmode", h.Spec.DevMode)
 		return nil
 	}
+	time.Sleep(10 * time.Second)
 	err = pkg.Reboot()
 	if err != nil {
 		log.Error("reboot", "error", err)
