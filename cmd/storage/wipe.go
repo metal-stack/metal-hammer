@@ -66,7 +66,22 @@ func wipe(device string, bytes uint64) error {
 	} else if isNVMeDisk(device) {
 		return secureEraseNVMe(device)
 	}
-	return wipeSlow(device, bytes)
+	err := discard(device)
+	if err != nil {
+		return wipeSlow(device, bytes)
+	}
+	return nil
+}
+
+func discard(device string) error {
+	log.Info("wipe", "disk", device, "message", "discard existing data")
+	err := os.ExecuteCommand("mkfs.ext4", "-F", "-E", "discard", device)
+	if err != nil {
+		log.Error("wipe", "disk", device, "message", "discard of existing data failed", "error", err)
+		return err
+	}
+	log.Info("wipe", "disk", device, "message", "finish discard of existing data")
+	return nil
 }
 
 func wipeSlow(device string, bytes uint64) error {
