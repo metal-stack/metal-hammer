@@ -101,6 +101,9 @@ func Run(spec *Specification) error {
 					SSHPubKeys: sshkeys,
 					Cidr:       &cidr,
 				},
+				Size: &models.ModelsMetalSize{
+					ID: &spec.SizeID,
+				},
 			},
 			PhoneHomeToken: &fakeToken,
 		}

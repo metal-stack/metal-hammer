@@ -16,6 +16,10 @@ type Specification struct {
 	// can be something like ubuntu-18.04, alpine-3.9 or "default"
 	// only suitable in DevMode
 	ImageID string
+	// SizeID if given defines the size.ID which normally comes from a allocation
+	// can be something like v1-small-x86
+	// only suitable in DevMode
+	SizeID string
 	// DevMode turn on devmode which prevents failing in some situations
 	DevMode bool
 	// BGPEnabled if set to true real bgp configuration is configured, otherwise dhcp will be used
@@ -37,6 +41,7 @@ func (s *Specification) Log() {
 		"metalCoreURL", s.MetalCoreURL,
 		"imageURL", s.ImageURL,
 		"imageID", s.ImageID,
+		"sizeID", s.SizeID,
 		"devmode", s.DevMode,
 		"bgpenabled", s.BGPEnabled,
 		"cidr", s.Cidr,
