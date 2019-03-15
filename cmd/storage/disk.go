@@ -143,7 +143,7 @@ var (
 		},
 		"c1-medium-x86": PrimaryDevice{
 			DeviceName:      "/dev/sda",
-			PartitionPrefix: "p",
+			PartitionPrefix: "",
 		},
 		"c1-large-x86": PrimaryDevice{
 			DeviceName:      "/dev/nvme0n1",
