@@ -26,7 +26,7 @@ func (h *Hammer) EnsureUEFI() error {
 		return nil
 	}
 
-	if i.UEFIEnabled() && i.BootOptionsPersistent() {
+	if i.BootOptionsPersistent() {
 		log.Info("uefi", "message", "all requirements are met, no action")
 		return nil
 	}

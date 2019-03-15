@@ -128,6 +128,7 @@ var (
 		"alpine-3.9":   defaultDisk,
 		"clearlinux":   clearlinuxDisk,
 	}
+
 	primaryDeviceBySize = map[string]PrimaryDevice{
 		"v1-small-x86": PrimaryDevice{
 			DeviceName:      "/dev/sda",
