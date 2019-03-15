@@ -44,6 +44,8 @@ type InstallerConfig struct {
 	Password string `yaml:"password"`
 	// Devmode passes mode of installation.
 	Devmode bool `yaml:"devmode"`
+	// Console specifies where the kernel should connect its console to.
+	Console string `yaml:"console"`
 }
 
 // Install a given image to the disk by using genuinetools/img
@@ -230,6 +232,16 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error 
 
 	// FIXME
 	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
+	cmdline, err := pkg.ParseCmdline()
+	if err != nil {
+		return errors.Wrap(err, "unable to get kernel cmdline map")
+	}
+
+	console, ok := cmdline["console"]
+	if !ok {
+		console = "ttyS0"
+	}
+
 	y := &InstallerConfig{
 		Hostname:     *machine.Allocation.Hostname,
 		SSHPublicKey: sshPubkeys,
@@ -238,6 +250,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error 
 		ASN:          fmt.Sprintf("%d", asn),
 		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,
+		Console:      console,
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
