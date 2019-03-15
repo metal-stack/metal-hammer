@@ -76,6 +76,11 @@ func main() {
 		spec.DevMode = true
 	}
 
+	if s, ok := envmap["SIZE_ID"]; ok {
+		spec.SizeID = s
+		spec.DevMode = true
+	}
+
 	if c, ok := envmap["CIDR"]; ok {
 		spec.Cidr = c
 		spec.DevMode = true
