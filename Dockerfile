@@ -24,7 +24,7 @@ RUN set -ex \
  && dpkg -i Unified_storcli_all_os/Ubuntu/storcli*.deb
 
 FROM golang:1.12-stretch as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=metal-fixes
+ENV UROOT_GIT_SHA_OR_TAG=4.0.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
@@ -43,7 +43,7 @@ RUN apt-get update \
 	util-linux
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
- && git clone https://github.com/majst01/u-root \
+ && git clone https://github.com/u-root/u-root \
  && cd u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && go install
