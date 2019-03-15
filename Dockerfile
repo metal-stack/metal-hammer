@@ -24,7 +24,7 @@ RUN set -ex \
  && dpkg -i Unified_storcli_all_os/Ubuntu/storcli*.deb
 
 FROM golang:1.12-stretch as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=4.0.0
+ENV UROOT_GIT_SHA_OR_TAG=v4.0.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
