@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unsafe"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/u-root/u-root/pkg/kexec"
@@ -109,6 +110,7 @@ func Firmware() string {
 }
 
 // Watchdog periodically pings the hardware watchdog.
+// from https://github.com/gokrazy/gokrazy
 func Watchdog() {
 	f, err := os.OpenFile("/dev/watchdog", os.O_WRONLY, 0)
 	if err != nil {
@@ -116,6 +118,12 @@ func Watchdog() {
 		return
 	}
 	defer f.Close()
+	// timeout in seconds after which a reboot will be triggered if no write to /dev/watchdog was made.
+	timeout := uint32(60)
+	if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_SETTIMEOUT, uintptr(unsafe.Pointer(&timeout))); errno != 0 {
+		log.Error("watchdog", "set timeout failed", errno)
+	}
+
 	for {
 		if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_KEEPALIVE, 0); errno != 0 {
 			log.Error("watchdog", "hardware watchdog ping failed", errno)
