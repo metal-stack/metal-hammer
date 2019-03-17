@@ -19,6 +19,7 @@ import (
 
 func main() {
 	fmt.Print(cmd.HammerBanner)
+	go pkg.Watchdog()
 	ip := network.InternalIP()
 	err := cmd.StartSSHD(ip)
 	if err != nil {

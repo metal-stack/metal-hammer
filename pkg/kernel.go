@@ -5,7 +5,9 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
+	log "github.com/inconshreveable/log15"
 	"github.com/u-root/u-root/pkg/kexec"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
@@ -24,6 +26,8 @@ type Bootinfo struct {
 	Kernel  string `yaml:"kernel"`
 }
 
+// ReadBootinfo read boot-info.yaml which was written by the OS install.sh
+// to get all information required to do kexec.
 func ReadBootinfo(file string) (*Bootinfo, error) {
 	bi, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -102,4 +106,20 @@ func Firmware() string {
 		return "bios"
 	}
 	return "efi"
+}
+
+// Watchdog periodically pings the hardware watchdog.
+func Watchdog() {
+	f, err := os.OpenFile("/dev/watchdog", os.O_WRONLY, 0)
+	if err != nil {
+		log.Error("watchdog", "disabling hardware watchdog, as it could not be opened.", err)
+		return
+	}
+	defer f.Close()
+	for {
+		if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_KEEPALIVE, 0); errno != 0 {
+			log.Error("watchdog", "hardware watchdog ping failed", errno)
+		}
+		time.Sleep(1 * time.Second)
+	}
 }
