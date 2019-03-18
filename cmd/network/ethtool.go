@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// Ethtool to query/set ethernet interfaces
 type Ethtool struct {
 	command string
 }
@@ -26,7 +27,7 @@ func (e *Ethtool) Run(args ...string) (string, error) {
 	cmd := exec.Command(path, args...)
 	output, err := cmd.Output()
 
-	log.Debug("run ethtool", "args", args, "output", string(output), "error", err)
+	log.Debug("run", "command", e.command, "args", args, "output", string(output), "error", err)
 	return string(output), err
 }
 
