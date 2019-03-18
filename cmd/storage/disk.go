@@ -58,6 +58,7 @@ type (
 		Properties map[string]string
 	}
 
+	// PrimaryDevice is the device where the installation happens.
 	PrimaryDevice struct {
 		DeviceName      string
 		PartitionPrefix string
