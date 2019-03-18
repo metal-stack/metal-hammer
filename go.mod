@@ -38,7 +38,7 @@ require (
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.0.5+incompatible
 	github.com/pkg/errors v0.8.1
-	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/stretchr/testify v1.3.0
 	github.com/u-root/u-root v4.0.0+incompatible
 	github.com/ulikunitz/xz v0.5.6 // indirect
 	github.com/vishvananda/netlink v1.0.0
