@@ -6,6 +6,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/firmware"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/register"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/report"
@@ -48,6 +49,9 @@ func Run(spec *Specification) error {
 		IPAddress:   spec.Ip,
 		Started:     time.Now(),
 	}
+
+	firmware := firmware.New()
+	firmware.Update()
 
 	err := n.UpAllInterfaces()
 	if err != nil {

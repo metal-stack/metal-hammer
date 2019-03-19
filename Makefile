@@ -39,6 +39,7 @@ ramdisk:
 		-files="/usr/share/mstflint/mlxconfig_dbs/mlxconfig.db:usr/share/mstflint/mlxconfig_dbs/mlxconfig.db" \
 		-files="/usr/bin/lspci:bin/lspci" \
 		-files="bin/ethr:bin/ethr" \
+		-files="intel:intel" \
 		-files="/bin/netstat:bin/netstat" \
 		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
