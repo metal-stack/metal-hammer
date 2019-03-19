@@ -17,7 +17,7 @@ func (r intel) String() string {
 // firmware update via
 // /intel/nvmupdate64e -u -s
 func (r intel) update() error {
-	output, err := run("nvmupdate64e", "-u", "-s")
+	output, err := run("/intel/nvmupdate64e", "-u", "-s", "-a", "/intel")
 	if err != nil {
 		return errors.Wrap(err, "unable to update intel firmware")
 	}
