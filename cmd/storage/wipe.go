@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"sync"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
@@ -31,28 +30,15 @@ func WipeDisks() error {
 
 	log.Info("wipe existing disks", "disks", disks)
 
-	wipeErrors := make(chan error)
-	var wg sync.WaitGroup
-	wg.Add(len(disks))
 	for _, disk := range disks {
-		go func(disk *ghw.Disk) {
-			defer wg.Done()
-			device := fmt.Sprintf("/dev/%s", disk.Name)
-			bytes := disk.SizeBytes
+		device := fmt.Sprintf("/dev/%s", disk.Name)
+		bytes := disk.SizeBytes
 
-			err := wipe(device, bytes)
-			if err != nil {
-				wipeErrors <- err
-			}
-		}(disk)
-	}
-
-	go func() {
-		for e := range wipeErrors {
-			log.Error("failed to wipe disk", "error", e)
+		err := wipe(device, bytes)
+		if err != nil {
+			log.Error("wipe", "unable to wipe", "disk", disk.Name, "error", err)
 		}
-	}()
-	wg.Wait()
+	}
 
 	return nil
 }
