@@ -17,7 +17,7 @@ import (
 	img "git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/image"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	log "github.com/inconshreveable/log15"
 	"gopkg.in/yaml.v2"
 )
@@ -49,7 +49,7 @@ type InstallerConfig struct {
 }
 
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken) (*pkg.Bootinfo, error) {
+func (h *Hammer) Install(machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken) (*kernel.Bootinfo, error) {
 	machine := machineWithToken.Machine
 	phtoken := machineWithToken.PhoneHomeToken
 	image := *machine.Allocation.Image.URL
@@ -91,7 +91,7 @@ func (h *Hammer) Install(machineWithToken *models.ModelsMetalMachineWithPhoneHom
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.ModelsMetalMachine, phoneHomeToken string) (*pkg.Bootinfo, error) {
+func (h *Hammer) install(prefix string, machine *models.ModelsMetalMachine, phoneHomeToken string) (*kernel.Bootinfo, error) {
 	log.Info("install", "image", *machine.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(machine)
@@ -145,7 +145,7 @@ func (h *Hammer) install(prefix string, machine *models.ModelsMetalMachine, phon
 		log.Warn("unable to remove install.sh, ignoring...", "error")
 	}
 
-	info, err := pkg.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
+	info, err := kernel.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read boot-info.yaml")
 	}
@@ -232,7 +232,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error 
 
 	// FIXME
 	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
-	cmdline, err := pkg.ParseCmdline()
+	cmdline, err := kernel.ParseCmdline()
 	if err != nil {
 		return errors.Wrap(err, "unable to get kernel cmdline map")
 	}

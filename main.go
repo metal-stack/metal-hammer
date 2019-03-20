@@ -9,7 +9,7 @@ import (
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/uuid"
 	"git.f-i-ts.de/cloud-native/metallib/version"
 	log "github.com/inconshreveable/log15"
@@ -19,7 +19,7 @@ import (
 
 func main() {
 	fmt.Print(cmd.HammerBanner)
-	// go pkg.Watchdog()
+	// go kernel.Watchdog()
 	ip := network.InternalIP()
 	err := cmd.StartSSHD(ip)
 	if err != nil {
@@ -38,7 +38,7 @@ func main() {
 	}
 
 	// Grab metal-hammer configuration from kernel commandline
-	envmap, err := pkg.ParseCmdline()
+	envmap, err := kernel.ParseCmdline()
 	if err != nil {
 		log.Error("parse cmdline", "error", err)
 		os.Exit(1)
@@ -106,6 +106,6 @@ func main() {
 		fmt.Printf("%+v", st)
 		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
 		time.Sleep(wait)
-		pkg.Reboot()
+		kernel.Reboot()
 	}
 }

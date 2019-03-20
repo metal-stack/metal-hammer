@@ -11,7 +11,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/register"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/report"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
@@ -32,7 +32,7 @@ type Hammer struct {
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(spec *Specification) error {
-	log.Info("metal-hammer run", "firmware", pkg.Firmware())
+	log.Info("metal-hammer run", "firmware", kernel.Firmware())
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := machine.New(transport, strfmt.Default)
@@ -147,7 +147,7 @@ func Run(spec *Specification) error {
 		log.Error("report installation failed", "reboot in", wait, "error", err)
 		time.Sleep(wait)
 		if !spec.DevMode {
-			err = pkg.Reboot()
+			err = kernel.Reboot()
 			if err != nil {
 				log.Error("reboot", "error", err)
 			}
@@ -155,5 +155,5 @@ func Run(spec *Specification) error {
 	}
 
 	log.Info("installation", "took", time.Since(installationStart))
-	return pkg.RunKexec(info)
+	return kernel.RunKexec(info)
 }

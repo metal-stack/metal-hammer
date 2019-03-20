@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	"time"
 
 	"github.com/pkg/errors"
@@ -13,7 +13,7 @@ import (
 // EnsureUEFI check if the boot firmware is set to uefi when booting via pxe permanent.
 // If not already set, make required modifications and reboot the machine.
 func (h *Hammer) EnsureUEFI() error {
-	firmware := pkg.Firmware()
+	firmware := kernel.Firmware()
 	if firmware == "efi" {
 		log.Info("uefi", "message", "machine booted with efi, no action")
 		return nil
@@ -42,7 +42,7 @@ func (h *Hammer) EnsureUEFI() error {
 		return nil
 	}
 	time.Sleep(10 * time.Second)
-	err = pkg.Reboot()
+	err = kernel.Reboot()
 	if err != nil {
 		log.Error("reboot", "error", err)
 	}
