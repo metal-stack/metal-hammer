@@ -109,7 +109,7 @@ func Firmware() string {
 	return "efi"
 }
 
-// Watchdog periodically pings the hardware watchdog.
+// Watchdog periodically pings kernel software watchdog.
 // from https://github.com/gokrazy/gokrazy
 func Watchdog() {
 	f, err := os.OpenFile("/dev/watchdog", os.O_WRONLY, 0)
@@ -128,6 +128,6 @@ func Watchdog() {
 		if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_KEEPALIVE, 0); errno != 0 {
 			log.Error("watchdog", "hardware watchdog ping failed", errno)
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
 }
