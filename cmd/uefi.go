@@ -36,7 +36,7 @@ func (h *Hammer) EnsureUEFI() error {
 		return errors.Wrap(err, "unable to ensureUEFI")
 	}
 
-	log.Info("uefi", "message", "set persistent, reboot in 10 sec.")
+	log.Warn("uefi", "message", "set persistent, reboot in 10 sec.")
 	if h.Spec.DevMode {
 		log.Warn("required reboot skipped", "devmode", h.Spec.DevMode)
 		return nil
