@@ -39,7 +39,6 @@ ramdisk:
 		-files="/usr/share/mstflint/mlxconfig_dbs/mlxconfig.db:usr/share/mstflint/mlxconfig_dbs/mlxconfig.db" \
 		-files="/usr/bin/lspci:bin/lspci" \
 		-files="bin/ethr:bin/ethr" \
-		-files="intel:intel" \
 		-files="/bin/netstat:bin/netstat" \
 		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
@@ -50,7 +49,6 @@ ramdisk:
 		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="bin/storcli64:sbin/storcli" \
-		-files="bin/smc3108.rom:bin/smc3108.rom" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
