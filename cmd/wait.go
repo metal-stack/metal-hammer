@@ -30,6 +30,8 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalMachineWithPhoneHomeToken
 		if err != nil {
 			log.Error("wait for install failed, retrying in 30sec...", "error", err)
 			time.Sleep(30 * time.Second)
+		} else if resp.StatusCode == http.StatusNotModified {
+			log.Info("wait for install failed, retrying...", "statuscode", http.StatusNotModified)
 		} else if resp.StatusCode != http.StatusOK {
 			log.Info("wait for install timeout retrying...", "statuscode", resp.StatusCode)
 		} else {
