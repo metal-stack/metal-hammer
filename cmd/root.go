@@ -53,13 +53,13 @@ func Run(spec *Specification) error {
 	firmware := firmware.New()
 	firmware.Update()
 
-	// lsi := storage.NewStorcli()
-	// err := lsi.EnableJBOD()
-	// if err != nil {
-	// 	log.Warn("root", "unable to format raid controller", err)
-	// }
+	lsi := storage.NewStorcli()
+	err := lsi.EnableJBOD()
+	if err != nil {
+		log.Warn("root", "unable to format raid controller", err)
+	}
 
-	err := n.UpAllInterfaces()
+	err = n.UpAllInterfaces()
 	if err != nil {
 		return errors.Wrap(err, "interfaces")
 	}
