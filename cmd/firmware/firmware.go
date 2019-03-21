@@ -27,12 +27,12 @@ func New() *Firmware {
 		name:           "lsi3108",
 		desiredVersion: "4.680.00-8290",
 	}
-	i := intel{
+	_ = intel{
 		name:           "intel nics",
 		desiredVersion: "6.8",
 	}
 	return &Firmware{
-		updaters: []updater{i},
+		updaters: []updater{},
 	}
 }
 
