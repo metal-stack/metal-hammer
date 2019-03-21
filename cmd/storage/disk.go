@@ -66,6 +66,7 @@ type (
 
 	// Disk is a physical Disk
 	Disk struct {
+		// Device the name of the disk device visible from kernel side, e.g. sda
 		Device string
 		// Partitions to create on this disk, order is preserved
 		Partitions []*Partition
