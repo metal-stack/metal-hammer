@@ -3,8 +3,10 @@ package storage
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
@@ -30,15 +32,29 @@ func WipeDisks() error {
 
 	log.Info("wipe existing disks", "disks", disks)
 
+	wipeErrors := make(chan error)
+	var wg sync.WaitGroup
+	wg.Add(len(disks))
 	for _, disk := range disks {
-		device := fmt.Sprintf("/dev/%s", disk.Name)
-		bytes := disk.SizeBytes
+		go func(disk *ghw.Disk) {
+			defer wg.Done()
+			device := fmt.Sprintf("/dev/%s", disk.Name)
+			bytes := disk.SizeBytes
+			rotational := isRotational(disk.Name)
 
-		err := wipe(device, bytes)
-		if err != nil {
-			log.Error("wipe", "unable to wipe", "disk", disk.Name, "error", err)
-		}
+			err := wipe(device, bytes, rotational)
+			if err != nil {
+				wipeErrors <- err
+			}
+		}(disk)
 	}
+
+	go func() {
+		for e := range wipeErrors {
+			log.Error("failed to wipe disk", "error", e)
+		}
+	}()
+	wg.Wait()
 
 	return nil
 }
@@ -46,7 +62,13 @@ func WipeDisks() error {
 // bs is the blocksize in bytes to be used by dd
 const bs = uint64(10240)
 
-func wipe(device string, bytes uint64) error {
+func wipe(device string, bytes uint64, rotational bool) error {
+	if rotational {
+		err := discard(device)
+		if err != nil {
+			return wipeSlow(device, bytes)
+		}
+	}
 	if isSEDAvailable(device) {
 		return secureErase(device)
 	} else if isNVMeDisk(device) {
@@ -168,4 +190,20 @@ func secureErase(device string) error {
 		return errors.Wrapf(err, "unable to secure erase disk: %s", device)
 	}
 	return nil
+}
+
+func isRotational(deviceName string) bool {
+	sysfsRotational := fmt.Sprintf("/sys/block/%s/queue/rotational", deviceName)
+	rotational, err := ioutil.ReadFile(sysfsRotational)
+	result := true
+	if err != nil {
+		// defensive guess, fall back to hdd if unknown
+		log.Warn("wipe", "unable to detect if disk is rotational", "disk", deviceName, "error", err)
+		return true
+	}
+	if strings.Contains(string(rotational), "0") {
+		result = false
+	}
+	log.Debug("wipe", "disk", deviceName, "rotational", result)
+	return result
 }
