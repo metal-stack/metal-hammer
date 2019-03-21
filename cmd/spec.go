@@ -37,8 +37,8 @@ type Specification struct {
 	ConsolePassword string
 	// MachineUUID is the unique identifier of this machine
 	MachineUUID string
-	// Ip of this instance
-	Ip string
+	// IP of this instance
+	IP string
 }
 
 // NewSpec fills Specification with configuration made by kernel commandline
@@ -89,7 +89,7 @@ func NewSpec(ip string) *Specification {
 	}
 
 	spec.MachineUUID = uuid.MachineUUID()
-	spec.Ip = ip
+	spec.IP = ip
 	return spec
 }
 

@@ -40,13 +40,13 @@ func Run(spec *Specification) error {
 	hammer := &Hammer{
 		Client:    client,
 		Spec:      spec,
-		IPAddress: spec.Ip,
+		IPAddress: spec.IP,
 	}
 	hammer.Spec.ConsolePassword = password.Generate(16)
 
 	n := &network.Network{
 		MachineUUID: spec.MachineUUID,
-		IPAddress:   spec.Ip,
+		IPAddress:   spec.IP,
 		Started:     time.Now(),
 	}
 

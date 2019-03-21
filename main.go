@@ -15,6 +15,7 @@ import (
 
 func main() {
 	fmt.Print(cmd.HammerBanner)
+	// FIXME enable
 	// go kernel.Watchdog()
 	ip := network.InternalIP()
 	err := cmd.StartSSHD(ip)
@@ -25,7 +26,7 @@ func main() {
 
 	if len(os.Args) > 1 {
 		log.Error("cmd args are not supported")
-		os.Exit(0)
+		os.Exit(1)
 	}
 
 	log.Info("metal-hammer", "version", version.V)
