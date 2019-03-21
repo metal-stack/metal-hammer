@@ -1,6 +1,13 @@
 package cmd
 
 import (
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/uuid"
+	"strconv"
+	"strings"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
+	"os"
+
 	log "github.com/inconshreveable/log15"
 )
 
@@ -32,6 +39,58 @@ type Specification struct {
 	MachineUUID string
 	// Ip of this instance
 	Ip string
+}
+
+// NewSpec fills Specification with configuration made by kernel commandline
+func NewSpec(ip string) *Specification {
+	spec := &Specification{}
+	// Grab metal-hammer configuration from kernel commandline
+	envmap, err := kernel.ParseCmdline()
+	if err != nil {
+		log.Error("parse cmdline", "error", err)
+		os.Exit(1)
+	}
+
+	if d, ok := envmap["DEBUG"]; ok && (d == "1" || strings.ToLower(d) == "true") {
+		spec.Debug = true
+		os.Setenv("DEBUG", "1")
+	}
+
+	// METAL_CORE_URL must be in the form http://metal-core:4242
+	if url, ok := envmap["METAL_CORE_ADDRESS"]; ok {
+		spec.MetalCoreURL = url
+	}
+
+	if i, ok := envmap["IMAGE_URL"]; ok {
+		spec.ImageURL = i
+		spec.DevMode = true
+	}
+
+	if i, ok := envmap["IMAGE_ID"]; ok {
+		spec.ImageID = i
+		spec.DevMode = true
+	}
+
+	if s, ok := envmap["SIZE_ID"]; ok {
+		spec.SizeID = s
+		spec.DevMode = true
+	}
+
+	if c, ok := envmap["CIDR"]; ok {
+		spec.Cidr = c
+		spec.DevMode = true
+	}
+
+	if bgp, ok := envmap["BGP"]; ok {
+		enabled, err := strconv.ParseBool(bgp)
+		if err == nil {
+			spec.BGPEnabled = enabled
+		}
+	}
+
+	spec.MachineUUID = uuid.MachineUUID()
+	spec.Ip = ip
+	return spec
 }
 
 // Log print configuration options

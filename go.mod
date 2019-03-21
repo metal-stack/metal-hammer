@@ -23,7 +23,6 @@ require (
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/jaypipes/ghw v0.0.0-20190308192452-c318cd4d80c5
 	github.com/jaypipes/pcidb v0.0.0-20190216134740-adf5a9192458 // indirect
-	github.com/kelseyhightower/envconfig v1.3.0
 	github.com/mailru/easyjson v0.0.0-20190312143242-1de009706dbe // indirect
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
