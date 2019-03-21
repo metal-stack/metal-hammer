@@ -68,6 +68,7 @@ func wipe(device string, bytes uint64, rotational bool) error {
 		if err != nil {
 			return wipeSlow(device, bytes)
 		}
+		return nil
 	}
 	if isSEDAvailable(device) {
 		return secureErase(device)
