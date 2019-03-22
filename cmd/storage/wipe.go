@@ -64,7 +64,7 @@ const bs = uint64(10240)
 
 func wipe(device string, bytes uint64, rotational bool) error {
 	if rotational {
-		return unsecureErase(device, bytes)
+		return insecureErase(device, bytes)
 	}
 	if isSEDAvailable(device) {
 		return secureErase(device)
@@ -72,12 +72,12 @@ func wipe(device string, bytes uint64, rotational bool) error {
 	if isNVMeDisk(device) {
 		return secureEraseNVMe(device)
 	}
-	return unsecureErase(device, bytes)
+	return insecureErase(device, bytes)
 }
 
-// unsecureErase will first try to format the device with discard, if this fails
+// insecureErase will first try to format the device with discard, if this fails
 // overwrite it with dd
-func unsecureErase(device string, bytes uint64) error {
+func insecureErase(device string, bytes uint64) error {
 	err := discard(device)
 	if err != nil {
 		return wipeSlow(device, bytes)
