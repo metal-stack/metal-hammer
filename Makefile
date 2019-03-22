@@ -38,6 +38,7 @@ ramdisk:
 		-files="/usr/bin/mstconfig:bin/mstconfig" \
 		-files="/usr/share/mstflint/mlxconfig_dbs/mlxconfig.db:usr/share/mstflint/mlxconfig_dbs/mlxconfig.db" \
 		-files="/usr/bin/lspci:bin/lspci" \
+		-files="/usr/share/misc/pci.ids:usr/share/misc/pci.ids" \
 		-files="bin/ethr:bin/ethr" \
 		-files="/bin/netstat:bin/netstat" \
 		-files="/sbin/hdparm:sbin/hdparm" \
