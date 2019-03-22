@@ -1,4 +1,4 @@
-module git.f-i-ts.de/cloud-native/metal/metal-hammer
+﻿module git.f-i-ts.de/cloud-native/metal/metal-hammer
 
 require (
 	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190301131329-6c63ddc79a36
@@ -42,7 +42,7 @@ require (
 	github.com/u-root/u-root v4.0.0+incompatible
 	github.com/ulikunitz/xz v0.5.6 // indirect
 	github.com/vishvananda/netlink v1.0.0
-	golang.org/x/net v0.0.0-20190301231341-16b79f2e4e95
+	golang.org/x/net v0.0.0-20190301231341-16b79f2e4e95 // indirect
 	golang.org/x/sys v0.0.0-20190303192550-c2f5717e611c
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.2.2

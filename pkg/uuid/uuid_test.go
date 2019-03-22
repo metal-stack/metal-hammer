@@ -6,7 +6,7 @@ import (
 
 func TestMachineUUID(t *testing.T) {
 
-	mockedFkt := func(filename string) ([]byte, error) {
+	mocked_ioutil_ReadFile := func(filename string) ([]byte, error) {
 		return []byte("4C4C4544-0042-4810-8056-B4C04F395332"), nil
 	}
 
@@ -21,7 +21,7 @@ func TestMachineUUID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := _MachineUUID(mockedFkt); got != tt.want {
+			if got := _MachineUUID(mocked_ioutil_ReadFile); got != tt.want {
 				t.Errorf("MachineUUID() = %v, want %v", got, tt.want)
 			}
 		})

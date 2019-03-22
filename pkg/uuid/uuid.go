@@ -2,12 +2,11 @@ package uuid
 
 import (
 	"fmt"
+	guuid "github.com/google/uuid"
+	log "github.com/inconshreveable/log15"
 	"io/ioutil"
 	"os"
 	"strings"
-
-	guuid "github.com/google/uuid"
-	log "github.com/inconshreveable/log15"
 )
 
 const dmiUUID = "/sys/class/dmi/id/product_uuid"
