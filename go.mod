@@ -1,7 +1,7 @@
 module git.f-i-ts.de/cloud-native/metal/metal-hammer
 
 require (
-	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190320074721-bc1e2f1a232a
+	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190321214202-7385bee99861
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.7.0 // indirect
@@ -40,7 +40,7 @@ require (
 	github.com/u-root/u-root v4.0.0+incompatible
 	github.com/vishvananda/netlink v1.0.0
 	golang.org/x/net v0.0.0-20190320064053-1272bf9dcd53 // indirect
-	golang.org/x/sys v0.0.0-20190318195719-6c81ef8f67ca
+	golang.org/x/sys v0.0.0-20190322080309-f49334f85ddc
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.2.2
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
