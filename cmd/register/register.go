@@ -46,12 +46,6 @@ func (r *Register) RegisterMachine() (string, error) {
 	}
 
 	log.Info("register machine returned", "response", resp.Payload)
-	// FIXME add different logging based on created/already registered
-	// if resp.StatusCode() == http.StatusOK {
-	//	log.Info("machine already registered", "uuid", uuid)
-	//} else if resp.StatusCode == http.StatusCreated {
-	//	log.Info("machine registered", "uuid", uuid)
-	//}
 	return *resp.Payload.ID, nil
 }
 

@@ -181,7 +181,6 @@ func secureEraseNVMe(device string) error {
 func secureErase(device string) error {
 	log.Info("wipe", "disk", device, "message", "start fast deleting of existing data")
 	// hdparm --user-master u --security-set-pass GEHEIM /dev/sda
-	// FIXME random password
 	pw := password.Generate(10)
 	// first we must set a secure erase password
 	err := os.ExecuteCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", pw, device)

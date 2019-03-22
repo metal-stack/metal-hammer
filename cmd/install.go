@@ -230,7 +230,6 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error 
 		ipaddress = ip.String()
 	}
 
-	// FIXME
 	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
 	cmdline, err := kernel.ParseCmdline()
 	if err != nil {
