@@ -1,4 +1,4 @@
-﻿module git.f-i-ts.de/cloud-native/metal/metal-hammer
+module git.f-i-ts.de/cloud-native/metal/metal-hammer
 
 require (
 	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190301131329-6c63ddc79a36
@@ -48,3 +48,4 @@ require (
 	gopkg.in/yaml.v2 v2.2.2
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 )
+
