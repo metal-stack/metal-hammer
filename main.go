@@ -15,8 +15,10 @@ import (
 
 func main() {
 	fmt.Print(cmd.HammerBanner)
-	// FIXME enable
-	// go kernel.Watchdog()
+	// Reboot if metal-hammer crashes after 60sec.
+	go kernel.Watchdog()
+	// Reboot after 24Hours if no allocation was requested.
+	go kernel.AutoReboot(24 * time.Hour)
 	ip := network.InternalIP()
 	err := cmd.StartSSHD(ip)
 	if err != nil {
@@ -44,9 +46,6 @@ func main() {
 	h := log.CallerFileHandler(log.StdoutHandler)
 	h = log.LvlFilterHandler(level, h)
 	log.Root().SetHandler(h)
-
-	// Reboot after 24Hours if no allocation was requested.
-	go cmd.AutoReboot(24 * time.Hour)
 
 	err = cmd.Run(spec)
 	if err != nil {
