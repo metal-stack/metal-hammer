@@ -132,27 +132,27 @@ var (
 	}
 
 	primaryDeviceBySize = map[string]PrimaryDevice{
-		"v1-small-x86": PrimaryDevice{
+		"v1-small-x86": {
 			DeviceName:      "/dev/sda",
 			PartitionPrefix: "",
 		},
-		"t1-small-x86": PrimaryDevice{
+		"t1-small-x86": {
 			DeviceName:      "/dev/sda",
 			PartitionPrefix: "",
 		},
-		"s1-large-x86": PrimaryDevice{
+		"s1-large-x86": {
 			DeviceName:      "/dev/nvme0n1",
 			PartitionPrefix: "p",
 		},
-		"c1-medium-x86": PrimaryDevice{
+		"c1-medium-x86": {
 			DeviceName:      "/dev/sda",
 			PartitionPrefix: "",
 		},
-		"c1-large-x86": PrimaryDevice{
+		"c1-large-x86": {
 			DeviceName:      "/dev/nvme0n1",
 			PartitionPrefix: "p",
 		},
-		"c1-xlarge-x86": PrimaryDevice{
+		"c1-xlarge-x86": {
 			DeviceName:      "/dev/nvme0n1",
 			PartitionPrefix: "p",
 		},
