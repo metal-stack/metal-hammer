@@ -45,6 +45,9 @@ func main() {
 	h = log.LvlFilterHandler(level, h)
 	log.Root().SetHandler(h)
 
+	// Reboot after 24Hours if no allocation was requested.
+	go cmd.AutoReboot(24 * time.Hour)
+
 	err = cmd.Run(spec)
 	if err != nil {
 		wait := 5 * time.Second
