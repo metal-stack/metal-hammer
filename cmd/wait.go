@@ -45,7 +45,7 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalMachineWithPhoneHomeToken
 	if err != nil {
 		return nil, errors.Wrap(err, "wait for install reading response failed")
 	}
-	log.Info("wait finished", "statuscode", resp.StatusCode, "response", machineJSON)
+	log.Info("wait finished", "statuscode", resp.StatusCode, "response", string(machineJSON))
 
 	var machineWithToken models.ModelsMetalMachineWithPhoneHomeToken
 	err = json.Unmarshal(machineJSON, &machineWithToken)
