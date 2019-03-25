@@ -44,6 +44,9 @@
               "$ref": "#/definitions/models.MetalMachineWithPhoneHomeToken"
             }
           },
+          "304": {
+            "description": "No allocation"
+          },
           "404": {
             "description": "Not Found"
           },
@@ -325,27 +328,21 @@
     },
     "models.MetalConstraint": {
       "required": [
-        "maxcores",
-        "maxmemory",
-        "mincores",
-        "minmemory"
+        "max",
+        "min",
+        "type"
       ],
       "properties": {
-        "maxcores": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "maxmemory": {
+        "max": {
           "type": "integer",
           "format": "int64"
         },
-        "mincores": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "minmemory": {
+        "min": {
           "type": "integer",
           "format": "int64"
+        },
+        "type": {
+          "type": "string"
         }
       }
     },

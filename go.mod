@@ -1,21 +1,20 @@
 module git.f-i-ts.de/cloud-native/metal/metal-hammer
 
 require (
-	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190321214202-7385bee99861
-	github.com/PuerkitoBio/purell v1.1.1 // indirect
+	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190325060705-6afecabf1671
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
-	github.com/go-openapi/analysis v0.18.0 // indirect
-	github.com/go-openapi/errors v0.18.0
-	github.com/go-openapi/jsonpointer v0.18.0 // indirect
-	github.com/go-openapi/jsonreference v0.18.0 // indirect
-	github.com/go-openapi/loads v0.18.0 // indirect
-	github.com/go-openapi/runtime v0.18.0
-	github.com/go-openapi/spec v0.18.0 // indirect
-	github.com/go-openapi/strfmt v0.18.0
-	github.com/go-openapi/swag v0.18.0
-	github.com/go-openapi/validate v0.18.0
+	github.com/go-openapi/analysis v0.19.0 // indirect
+	github.com/go-openapi/errors v0.19.0
+	github.com/go-openapi/jsonpointer v0.19.0 // indirect
+	github.com/go-openapi/jsonreference v0.19.0 // indirect
+	github.com/go-openapi/loads v0.19.0 // indirect
+	github.com/go-openapi/runtime v0.19.0
+	github.com/go-openapi/spec v0.19.0 // indirect
+	github.com/go-openapi/strfmt v0.19.0
+	github.com/go-openapi/swag v0.19.0
+	github.com/go-openapi/validate v0.19.0
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/gopacket v1.1.16
@@ -23,7 +22,6 @@ require (
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/jaypipes/ghw v0.0.0-20190308192452-c318cd4d80c5
 	github.com/jaypipes/pcidb v0.0.0-20190216134740-adf5a9192458 // indirect
-	github.com/mailru/easyjson v0.0.0-20190312143242-1de009706dbe // indirect
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
@@ -39,7 +37,6 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/u-root/u-root v4.0.0+incompatible
 	github.com/vishvananda/netlink v1.0.0
-	golang.org/x/net v0.0.0-20190320064053-1272bf9dcd53 // indirect
 	golang.org/x/sys v0.0.0-20190322080309-f49334f85ddc
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.2.2
