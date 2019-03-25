@@ -50,6 +50,9 @@
           "404": {
             "description": "Not Found"
           },
+          "500": {
+            "description": "Error"
+          },
           "default": {
             "description": "OK",
             "schema": {
@@ -100,7 +103,7 @@
             "description": "Bad request"
           },
           "500": {
-            "description": "Accepted"
+            "description": "Error"
           },
           "default": {
             "description": "OK",
@@ -152,7 +155,7 @@
             "description": "Not acceptable"
           },
           "500": {
-            "description": "Accepted"
+            "description": "Error"
           },
           "default": {
             "description": "OK",
