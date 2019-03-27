@@ -44,6 +44,7 @@ type Ipmi interface {
 	EnableUEFI(bootdev Bootdev, persistent bool) error
 	UEFIEnabled() bool
 	BootOptionsPersistent() bool
+	GetFru() (Fru, error)
 	GetSession() (Session, error)
 }
 
@@ -68,6 +69,33 @@ func (l *LanConfig) String() string {
 type Session struct {
 	UserID    string `ipmitool:"user id"`
 	Privilege string `ipmitool:"privilege level"`
+}
+
+// Fru contains Field Replacable Unit information, retrieved with ipmitool fru
+type Fru struct {
+	// 	FRU Device Description : Builtin FRU Device (ID 0)
+	//  Chassis Type          : Other
+	//  Chassis Part Number   : CSE-217BHQ+-R2K22BP2
+	//  Chassis Serial        : C217BAH31AG0535
+	//  Board Mfg Date        : Mon Jan  1 01:00:00 1996
+	//  Board Mfg             : Supermicro
+	//  Board Product         : NONE
+	//  Board Serial          : HM187S003231
+	//  Board Part Number     : X11DPT-B
+	//  Product Manufacturer  : Supermicro
+	//  Product Name          : NONE
+	//  Product Part Number   : SYS-2029BT-HNTR
+	//  Product Version       : NONE
+	//  Product Serial        : A328789X9108135
+
+	ChassisPartNumber   string `ipmitool:"Chassis Part Number"`
+	ChassisPartSerial   string `ipmitool:"Chassis Serial"`
+	BoardMfg            string `ipmitool:"Board Mfg"`
+	BoardMfgSerial      string `ipmitool:"Board Mfg Serial"`
+	BoardPartNumber     string `ipmitool:"Board Part Number"`
+	ProductManufacturer string `ipmitool:"Product Manufacturer"`
+	ProductPartNumber   string `ipmitool:"Product Part Number"`
+	ProductSerial       string `ipmitool:"Product Serial"`
 }
 
 // Bootdev specifies from which device to boot
@@ -106,6 +134,18 @@ func (i *Ipmitool) Run(args ...string) (string, error) {
 
 	log.Debug("run ipmitool", "args", args, "output", string(output), "error", err)
 	return string(output), err
+}
+
+// GetFru returns the LanConfig
+func (i *Ipmitool) GetFru() (Fru, error) {
+	config := &Fru{}
+	cmdOutput, err := i.Run("fru")
+	if err != nil {
+		return *config, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
+	}
+	fruMap := output2Map(cmdOutput)
+	from(config, fruMap)
+	return *config, nil
 }
 
 // GetLanConfig returns the LanConfig
