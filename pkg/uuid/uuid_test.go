@@ -27,3 +27,7 @@ func TestMachineUUID(t *testing.T) {
 		})
 	}
 }
+
+func Test_MachineUUID(t *testing.T) {
+	// already done in TestMachineUUID
+}
