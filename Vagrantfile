@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
       domain.boot 'hd'
       domain.kernel = kernel_path
       domain.initrd = initrd_path
-      domain.cmd_line = "console=ttyS0 ip=dhcp " \
+      domain.cmd_line = "console=ttyS0,115200n8 ip=dhcp " \
           "METAL_CORE_ADDRESS=192.168.121.110:4242 " \
           "IMAGE_ID=default " \
           "SIZE_ID=v1-small-x86 " \
