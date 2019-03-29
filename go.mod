@@ -2,6 +2,7 @@ module git.f-i-ts.de/cloud-native/metal/metal-hammer
 
 require (
 	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190325060705-6afecabf1671
+	github.com/beevik/ntp v0.2.0
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect

@@ -31,6 +31,7 @@ ramdisk:
 	u-root \
 		-format=cpio -build=bb \
 		-files="bin/metal-hammer:bbin/uinit" \
+		-files="/etc/localtime:etc/localtime" \
 		-files="/bin/bash:bin/bash" \
 		-files="/sbin/blkid:sbin/blkid" \
 		-files="/sbin/ethtool:sbin/ethtool" \

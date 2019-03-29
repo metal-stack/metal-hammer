@@ -64,6 +64,9 @@ func Run(spec *Specification) error {
 		return errors.Wrap(err, "interfaces")
 	}
 
+	// Set Time from ntp
+	network.NtpDate()
+
 	err = hammer.EnsureUEFI()
 	if err != nil {
 		return errors.Wrap(err, "uefi")
