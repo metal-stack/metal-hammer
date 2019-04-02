@@ -191,6 +191,11 @@ func (i *Ipmitool) CreateUser(username, password, uid string, privilege Privileg
 	if err != nil {
 		return errors.Errorf("unable to enable user %s info: %v", username, out)
 	}
+	out, err = i.Run("sol", "payload", "enable", channelnumber, uid)
+	if err != nil {
+		return errors.Errorf("unable to enable user %s for sol access info: %v", username, out)
+	}
+
 	return nil
 }
 
