@@ -166,6 +166,7 @@ const defaultIpmiUserID = "10"
 // IPMI configuration and
 func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 	config := ipmi.LanConfig{}
+	var fru models.ModelsMetalFru
 	i := ipmi.New()
 	var pw string
 	var user string
@@ -184,6 +185,20 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		}
 		log.Debug("register", "ipmi lanconfig", config)
 		config.IP = config.IP + ":" + defaultIpmiPort
+		f, err := i.GetFru()
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to read ipmi fru configuration")
+		}
+		fru = models.ModelsMetalFru{
+			ChassisPartNumber:   f.ChassisPartNumber,
+			ChassisPartSerial:   f.ChassisPartSerial,
+			BoardMfg:            f.BoardMfg,
+			BoardMfgSerial:      f.BoardMfgSerial,
+			BoardPartNumber:     f.BoardPartNumber,
+			ProductManufacturer: f.ProductManufacturer,
+			ProductPartNumber:   f.ProductPartNumber,
+			ProductSerial:       f.ProductSerial,
+		}
 	} else {
 		log.Info("ipmi details faked")
 
@@ -204,6 +219,9 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		config.Mac = "00:00:00:00:00:00"
 		pw = "vagrant"
 		user = "vagrant"
+		fru = models.ModelsMetalFru{
+			ProductPartNumber: "vagrant",
+		}
 	}
 
 	intf := "lanplus"
@@ -213,6 +231,7 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		Password:  &pw,
 		User:      &user,
 		Interface: &intf,
+		Fru:       &fru,
 	}
 
 	return details, nil
