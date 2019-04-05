@@ -17,8 +17,6 @@ func main() {
 	fmt.Print(cmd.HammerBanner)
 	// Reboot if metal-hammer crashes after 60sec.
 	go kernel.Watchdog()
-	// Reboot after 24Hours if no allocation was requested.
-	go kernel.AutoReboot(24 * time.Hour)
 	ip := network.InternalIP()
 	err := cmd.StartSSHD(ip)
 	if err != nil {

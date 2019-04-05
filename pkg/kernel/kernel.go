@@ -133,11 +133,12 @@ func Watchdog() {
 }
 
 // AutoReboot will start a timer and reboot after given duration
-func AutoReboot(after time.Duration) {
+func AutoReboot(after time.Duration, callback func()) {
 	log.Info("autoreboot", "after", after)
 	rebootTimer := time.NewTimer(after)
 	<-rebootTimer.C
 	log.Info("autoreboot", "timeout reached", "rebooting in 10sec")
+	callback()
 	time.Sleep(10 * time.Second)
 	err := Reboot()
 	if err != nil {

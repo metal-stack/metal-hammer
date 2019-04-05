@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
@@ -26,8 +27,9 @@ type Hammer struct {
 	Disk       storage.Disk
 	LLDPClient *network.LLDPClient
 	// IPAddress is the ip of the eth0 interface during installation
-	IPAddress string
-	Started   time.Time
+	IPAddress    string
+	Started      time.Time
+	EventEmitter *event.EventEmitter
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
@@ -36,12 +38,22 @@ func Run(spec *Specification) error {
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := machine.New(transport, strfmt.Default)
+	eventEmitter := event.NewEventEmitter(client, spec.MachineUUID)
+
+	eventEmitter.Emit(event.ProvisioningEventPreparing, "starting metal-hammer")
 
 	hammer := &Hammer{
-		Client:    client,
-		Spec:      spec,
-		IPAddress: spec.IP,
+		Client:       client,
+		Spec:         spec,
+		IPAddress:    spec.IP,
+		EventEmitter: eventEmitter,
 	}
+
+	// Reboot after 24Hours if no allocation was requested.
+	go kernel.AutoReboot(24*time.Hour, func() {
+		eventEmitter.Emit(event.ProvisioningEventPlannedReboot, "autoreboot after 24h")
+	})
+
 	hammer.Spec.ConsolePassword = password.Generate(16)
 
 	n := &network.Network{
@@ -83,11 +95,13 @@ func Run(spec *Specification) error {
 		Network:     n,
 	}
 
+	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
 	// Remove uuid return use MachineUUID() above.
 	uuid, err := reg.RegisterMachine()
 	if !spec.DevMode && err != nil {
 		return errors.Wrap(err, "register")
 	}
+	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	var machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken
@@ -129,6 +143,7 @@ func Run(spec *Specification) error {
 
 	hammer.Disk = storage.GetDisk(machineWithToken.Machine.Allocation.Image, machineWithToken.Machine.Size)
 
+	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
 	info, err := hammer.Install(machineWithToken)
 
@@ -158,5 +173,6 @@ func Run(spec *Specification) error {
 	}
 
 	log.Info("installation", "took", time.Since(installationStart))
+	eventEmitter.Emit(event.ProvisioningEventBootingNewKernel, "booting into distro kernel")
 	return kernel.RunKexec(info)
 }
