@@ -15,6 +15,7 @@ type ProvisioningEventType string
 // The enums for the machine provisioning events.
 const (
 	ProvisioningEventAlive            ProvisioningEventType = "Alive"
+	ProvisioningEventCrashed          ProvisioningEventType = "Crashed"
 	ProvisioningEventPlannedReboot    ProvisioningEventType = "Planned Reboot"
 	ProvisioningEventPreparing        ProvisioningEventType = "Preparing"
 	ProvisioningEventRegistering      ProvisioningEventType = "Registering"

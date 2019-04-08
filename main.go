@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	log "github.com/inconshreveable/log15"
@@ -45,12 +46,13 @@ func main() {
 	h = log.LvlFilterHandler(level, h)
 	log.Root().SetHandler(h)
 
-	err = cmd.Run(spec)
+	emitter, err := cmd.Run(spec)
 	if err != nil {
 		wait := 5 * time.Second
 		st := errors.WithStack(err)
 		fmt.Printf("%+v", st)
 		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
+		emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
 		time.Sleep(wait)
 		kernel.Reboot()
 	}

@@ -33,7 +33,7 @@ type Hammer struct {
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
-func Run(spec *Specification) error {
+func Run(spec *Specification) (*event.EventEmitter, error) {
 	log.Info("metal-hammer run", "firmware", kernel.Firmware())
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
@@ -73,7 +73,7 @@ func Run(spec *Specification) error {
 
 	err = n.UpAllInterfaces()
 	if err != nil {
-		return errors.Wrap(err, "interfaces")
+		return eventEmitter, errors.Wrap(err, "interfaces")
 	}
 
 	// Set Time from ntp
@@ -81,12 +81,12 @@ func Run(spec *Specification) error {
 
 	err = hammer.EnsureUEFI()
 	if err != nil {
-		return errors.Wrap(err, "uefi")
+		return eventEmitter, errors.Wrap(err, "uefi")
 	}
 
 	err = storage.WipeDisks()
 	if err != nil {
-		return errors.Wrap(err, "wipe")
+		return eventEmitter, errors.Wrap(err, "wipe")
 	}
 
 	reg := &register.Register{
@@ -99,7 +99,7 @@ func Run(spec *Specification) error {
 	// Remove uuid return use MachineUUID() above.
 	uuid, err := reg.RegisterMachine()
 	if !spec.DevMode && err != nil {
-		return errors.Wrap(err, "register")
+		return eventEmitter, errors.Wrap(err, "register")
 	}
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
@@ -137,7 +137,7 @@ func Run(spec *Specification) error {
 	} else {
 		machineWithToken, err = hammer.Wait(uuid)
 		if err != nil {
-			return errors.Wrap(err, "wait for installation")
+			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}
 	}
 
@@ -149,7 +149,7 @@ func Run(spec *Specification) error {
 
 	// FIXME, must not return here.
 	if err != nil {
-		return errors.Wrap(err, "install")
+		return eventEmitter, errors.Wrap(err, "install")
 	}
 
 	rep := &report.Report{
@@ -174,5 +174,5 @@ func Run(spec *Specification) error {
 
 	log.Info("installation", "took", time.Since(installationStart))
 	eventEmitter.Emit(event.ProvisioningEventBootingNewKernel, "booting into distro kernel")
-	return kernel.RunKexec(info)
+	return eventEmitter, kernel.RunKexec(info)
 }

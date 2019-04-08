@@ -285,10 +285,10 @@
     },
     "domain.MetalHammerRegisterMachineRequest": {
       "required": [
-        "memory",
-        "nics",
         "cpu_cores",
         "disks",
+        "memory",
+        "nics",
         "ipmi"
       ],
       "properties": {
