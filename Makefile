@@ -64,8 +64,10 @@ clean-local-dirs:
 clean-client: clean-local-dirs
 	cp ../metal-core/spec/metal-core.json metal-core.json
 
-generate-client: clean-local-dirs
-	GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core
+# 'swaggergenerate' generates swagger client with SWAGGERSPEC="swagger.json" SWAGGERTARGET="./".
+generate-client: SWAGGERSPEC="metal-core.json"
+generate-client: SWAGGERTARGET="metal-core"
+generate-client: clean-local-dirs swaggergenerate
 
 vagrant-destroy:
 	vagrant destroy -f
