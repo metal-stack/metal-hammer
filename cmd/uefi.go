@@ -27,7 +27,7 @@ func (h *Hammer) EnsureUEFI() error {
 		return nil
 	}
 
-	if i.BootOptionsPersistent() {
+	if i.BootOptionsPersistent() && firmware == "efi" {
 		log.Info("uefi", "message", "all requirements are met, no action")
 		return nil
 	}
