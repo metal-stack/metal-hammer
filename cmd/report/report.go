@@ -5,7 +5,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 
 	log "github.com/inconshreveable/log15"
-	// "github.com/pkg/errors"
+	"github.com/pkg/errors"
 )
 
 type Report struct {
@@ -33,9 +33,7 @@ func (r *Report) ReportInstallation() error {
 	resp, err := r.Client.Report(params)
 	if err != nil {
 		log.Error("report", "error", err)
-		return nil
-		// FIXME enable once reporting works
-		//return errors.Wrap(err, "unable to report image installation")
+		return errors.Wrap(err, "unable to report image installation")
 	}
 	log.Info("report image installation was successful", "response", resp.Payload)
 	return nil
