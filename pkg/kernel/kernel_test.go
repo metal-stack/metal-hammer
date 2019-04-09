@@ -1,4 +1,4 @@
-package pkg
+package kernel
 
 import (
 	"fmt"

@@ -3,6 +3,7 @@ package storage
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os/exec"
 	"strings"
 	"sync"
@@ -39,8 +40,9 @@ func WipeDisks() error {
 			defer wg.Done()
 			device := fmt.Sprintf("/dev/%s", disk.Name)
 			bytes := disk.SizeBytes
+			rotational := isRotational(disk.Name)
 
-			err := wipe(device, bytes)
+			err := wipe(device, bytes, rotational)
 			if err != nil {
 				wipeErrors <- err
 			}
@@ -60,13 +62,38 @@ func WipeDisks() error {
 // bs is the blocksize in bytes to be used by dd
 const bs = uint64(10240)
 
-func wipe(device string, bytes uint64) error {
+func wipe(device string, bytes uint64, rotational bool) error {
+	if rotational {
+		return insecureErase(device, bytes)
+	}
 	if isSEDAvailable(device) {
 		return secureErase(device)
-	} else if isNVMeDisk(device) {
+	}
+	if isNVMeDisk(device) {
 		return secureEraseNVMe(device)
 	}
-	return wipeSlow(device, bytes)
+	return insecureErase(device, bytes)
+}
+
+// insecureErase will first try to format the device with discard, if this fails
+// overwrite it with dd
+func insecureErase(device string, bytes uint64) error {
+	err := discard(device)
+	if err != nil {
+		return wipeSlow(device, bytes)
+	}
+	return nil
+}
+
+func discard(device string) error {
+	log.Info("wipe", "disk", device, "message", "discard existing data")
+	err := os.ExecuteCommand("mkfs.ext4", "-F", "-E", "discard", device)
+	if err != nil {
+		log.Error("wipe", "disk", device, "message", "discard of existing data failed", "error", err)
+		return err
+	}
+	log.Info("wipe", "disk", device, "message", "finish discard of existing data")
+	return nil
 }
 
 func wipeSlow(device string, bytes uint64) error {
@@ -154,7 +181,6 @@ func secureEraseNVMe(device string) error {
 func secureErase(device string) error {
 	log.Info("wipe", "disk", device, "message", "start fast deleting of existing data")
 	// hdparm --user-master u --security-set-pass GEHEIM /dev/sda
-	// FIXME random password
 	pw := password.Generate(10)
 	// first we must set a secure erase password
 	err := os.ExecuteCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", pw, device)
@@ -167,4 +193,20 @@ func secureErase(device string) error {
 		return errors.Wrapf(err, "unable to secure erase disk: %s", device)
 	}
 	return nil
+}
+
+func isRotational(deviceName string) bool {
+	sysfsRotational := fmt.Sprintf("/sys/block/%s/queue/rotational", deviceName)
+	rotational, err := ioutil.ReadFile(sysfsRotational)
+	result := true
+	if err != nil {
+		// defensive guess, fall back to hdd if unknown
+		log.Warn("wipe", "unable to detect if disk is rotational", "disk", deviceName, "error", err)
+		return true
+	}
+	if strings.Contains(string(rotational), "0") {
+		result = false
+	}
+	log.Debug("wipe", "disk", deviceName, "rotational", result)
+	return result
 }

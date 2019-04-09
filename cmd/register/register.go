@@ -46,12 +46,6 @@ func (r *Register) RegisterMachine() (string, error) {
 	}
 
 	log.Info("register machine returned", "response", resp.Payload)
-	// FIXME add different logging based on created/already registered
-	// if resp.StatusCode() == http.StatusOK {
-	//	log.Info("machine already registered", "uuid", uuid)
-	//} else if resp.StatusCode == http.StatusCreated {
-	//	log.Info("machine registered", "uuid", uuid)
-	//}
 	return *resp.Payload.ID, nil
 }
 
@@ -163,11 +157,16 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 
 const defaultIpmiPort = "623"
 
+// defaultIpmiUser the name of the user created by metal in the ipmi config
 const defaultIpmiUser = "metal"
+
+// defaultIpmiUserID the id of the user created by metal in the ipmi config
+const defaultIpmiUserID = "10"
 
 // IPMI configuration and
 func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 	config := ipmi.LanConfig{}
+	var fru models.ModelsMetalFru
 	i := ipmi.New()
 	var pw string
 	var user string
@@ -176,16 +175,30 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		pw = password.Generate(10)
 		user = defaultIpmiUser
 		// FIXME userid should be verified if available
-		// FIXME ipmi usercreation does not work aktually
-		// err := i.CreateUser(user, pw, 2, ipmi.Administrator)
-		//if err != nil {
-		//	return nil, errors.Wrap(err, "ipmi create user failed")
-		//}
-		config, err := i.GetLanConfig()
+		err := i.CreateUser(user, pw, defaultIpmiUserID, ipmi.Administrator)
+		if err != nil {
+			return nil, errors.Wrap(err, "ipmi create user failed")
+		}
+		config, err = i.GetLanConfig()
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read ipmi lan configuration")
 		}
+		log.Debug("register", "ipmi lanconfig", config)
 		config.IP = config.IP + ":" + defaultIpmiPort
+		f, err := i.GetFru()
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to read ipmi fru configuration")
+		}
+		fru = models.ModelsMetalFru{
+			ChassisPartNumber:   f.ChassisPartNumber,
+			ChassisPartSerial:   f.ChassisPartSerial,
+			BoardMfg:            f.BoardMfg,
+			BoardMfgSerial:      f.BoardMfgSerial,
+			BoardPartNumber:     f.BoardPartNumber,
+			ProductManufacturer: f.ProductManufacturer,
+			ProductPartNumber:   f.ProductPartNumber,
+			ProductSerial:       f.ProductSerial,
+		}
 	} else {
 		log.Info("ipmi details faked")
 
@@ -206,6 +219,9 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		config.Mac = "00:00:00:00:00:00"
 		pw = "vagrant"
 		user = "vagrant"
+		fru = models.ModelsMetalFru{
+			ProductPartNumber: "vagrant",
+		}
 	}
 
 	intf := "lanplus"
@@ -215,6 +231,7 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		Password:  &pw,
 		User:      &user,
 		Interface: &intf,
+		Fru:       &fru,
 	}
 
 	return details, nil

@@ -1,6 +1,13 @@
 package cmd
 
 import (
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/uuid"
+	"strconv"
+	"strings"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
+	"os"
+
 	log "github.com/inconshreveable/log15"
 )
 
@@ -16,6 +23,10 @@ type Specification struct {
 	// can be something like ubuntu-18.04, alpine-3.9 or "default"
 	// only suitable in DevMode
 	ImageID string
+	// SizeID if given defines the size.ID which normally comes from a allocation
+	// can be something like v1-small-x86
+	// only suitable in DevMode
+	SizeID string
 	// DevMode turn on devmode which prevents failing in some situations
 	DevMode bool
 	// BGPEnabled if set to true real bgp configuration is configured, otherwise dhcp will be used
@@ -26,8 +37,60 @@ type Specification struct {
 	ConsolePassword string
 	// MachineUUID is the unique identifier of this machine
 	MachineUUID string
-	// Ip of this instance
-	Ip string
+	// IP of this instance
+	IP string
+}
+
+// NewSpec fills Specification with configuration made by kernel commandline
+func NewSpec(ip string) *Specification {
+	spec := &Specification{}
+	// Grab metal-hammer configuration from kernel commandline
+	envmap, err := kernel.ParseCmdline()
+	if err != nil {
+		log.Error("parse cmdline", "error", err)
+		os.Exit(1)
+	}
+
+	if d, ok := envmap["DEBUG"]; ok && (d == "1" || strings.ToLower(d) == "true") {
+		spec.Debug = true
+		os.Setenv("DEBUG", "1")
+	}
+
+	// METAL_CORE_URL must be in the form http://metal-core:4242
+	if url, ok := envmap["METAL_CORE_ADDRESS"]; ok {
+		spec.MetalCoreURL = url
+	}
+
+	if i, ok := envmap["IMAGE_URL"]; ok {
+		spec.ImageURL = i
+		spec.DevMode = true
+	}
+
+	if i, ok := envmap["IMAGE_ID"]; ok {
+		spec.ImageID = i
+		spec.DevMode = true
+	}
+
+	if s, ok := envmap["SIZE_ID"]; ok {
+		spec.SizeID = s
+		spec.DevMode = true
+	}
+
+	if c, ok := envmap["CIDR"]; ok {
+		spec.Cidr = c
+		spec.DevMode = true
+	}
+
+	if bgp, ok := envmap["BGP"]; ok {
+		enabled, err := strconv.ParseBool(bgp)
+		if err == nil {
+			spec.BGPEnabled = enabled
+		}
+	}
+
+	spec.MachineUUID = uuid.MachineUUID()
+	spec.IP = ip
+	return spec
 }
 
 // Log print configuration options
@@ -37,6 +100,7 @@ func (s *Specification) Log() {
 		"metalCoreURL", s.MetalCoreURL,
 		"imageURL", s.ImageURL,
 		"imageID", s.ImageID,
+		"sizeID", s.SizeID,
 		"devmode", s.DevMode,
 		"bgpenabled", s.BGPEnabled,
 		"cidr", s.Cidr,
