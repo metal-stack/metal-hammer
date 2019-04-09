@@ -1,5 +1,5 @@
-git.f-i-ts.de/cloud-native/metallib v0.0.0-20190325060705-6afecabf1671 h1:eUBswR/mwjxTLWm3y2hrdtJEdyTV6CtofEy2nOuxKtU=
-git.f-i-ts.de/cloud-native/metallib v0.0.0-20190325060705-6afecabf1671/go.mod h1:vn93/0R0djiIlwy5ltglxlHi/e7EdQ5MdwG+Ur27X6I=
+git.f-i-ts.de/cloud-native/metallib v0.0.0-20190403085516-bd25597bc645 h1:tHGg3RrF26j4QUCfcqhk3FqWjDJ6eE9IOb4Hd6oHZGw=
+git.f-i-ts.de/cloud-native/metallib v0.0.0-20190403085516-bd25597bc645/go.mod h1:vn93/0R0djiIlwy5ltglxlHi/e7EdQ5MdwG+Ur27X6I=
 github.com/PuerkitoBio/purell v1.1.0 h1:rmGxhojJlM0tuKtfdvliR84CFHljx9ag64t2xmVkjK4=
 github.com/PuerkitoBio/purell v1.1.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tNFfI=
@@ -126,6 +126,8 @@ github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329 h1:2gxZ0XQIU/5z3Z3
 github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
 github.com/mailru/easyjson v0.0.0-20190312143242-1de009706dbe h1:W/GaMY0y69G4cFlmsC6B9sbuo2fP8OFP1ABjt4kPz+w=
 github.com/mailru/easyjson v0.0.0-20190312143242-1de009706dbe/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
+github.com/mailru/easyjson v0.0.0-20190403194419-1ea4449da983 h1:wL11wNW7dhKIcRCHSm4sHKPWz0tt4mwBsVodG7+Xyqg=
+github.com/mailru/easyjson v0.0.0-20190403194419-1ea4449da983/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
 github.com/mattn/go-colorable v0.1.1 h1:G1f5SKeVxmagw/IyvzvtZE4Gybcc4Tr1tf7I8z0XgOg=
 github.com/mattn/go-colorable v0.1.1/go.mod h1:FuOcm+DKB9mbwrcAfNl7/TZVBZ6rcnceauSikq3lYCQ=
 github.com/mattn/go-isatty v0.0.5/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
@@ -138,8 +140,8 @@ github.com/mdlayher/ethernet v0.0.0-20190313224307-5b5fc417d966/go.mod h1:5s5p/s
 github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 h1:i4JJtLb5iDVsncU7splD9ZCQXvxN13tGDUWihfKOq18=
 github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/4B6NhGzofHK/+I+N31NTUz/hrEm4ssUwA=
 github.com/mdlayher/raw v0.0.0-20190313224157-43dbcdd7739d/go.mod h1:r1fbeITl2xL/zLbVnNHFyOzQJTgr/3fpf1lJX/cjzR8=
-github.com/mdlayher/raw v0.0.0-20190315120451-8be9e99c38b6 h1:kgINN+VxAELWBkaphRanfel8r9iiplOefPa6nuVu91c=
-github.com/mdlayher/raw v0.0.0-20190315120451-8be9e99c38b6/go.mod h1:r1fbeITl2xL/zLbVnNHFyOzQJTgr/3fpf1lJX/cjzR8=
+github.com/mdlayher/raw v0.0.0-20190329140802-b0647ab7d8b3 h1:RuWlSPko24MJpXCcZT6pmgYqLnhTjuMlIWsMTHL3Y9M=
+github.com/mdlayher/raw v0.0.0-20190329140802-b0647ab7d8b3/go.mod h1:r1fbeITl2xL/zLbVnNHFyOzQJTgr/3fpf1lJX/cjzR8=
 github.com/mholt/archiver v2.1.0+incompatible h1:1ivm7KAHPtPere1YDOdrY6xGdbMNGRWThZbYh5lWZT0=
 github.com/mholt/archiver v2.1.0+incompatible/go.mod h1:Dh2dOXnSdiLxRiPoVfIr/fI1TwETms9B8CTWfeh7ROU=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
@@ -191,13 +193,15 @@ golang.org/x/net v0.0.0-20190320064053-1272bf9dcd53 h1:kcXqo9vE6fsZY5X5Rd7R1l7fT
 golang.org/x/net v0.0.0-20190320064053-1272bf9dcd53/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/net v0.0.0-20190324223953-e3b2ff56ed87 h1:yh5/K199RObPR6zqVBYf+AyJuweAqx+fOe9s3cekn1Y=
 golang.org/x/net v0.0.0-20190324223953-e3b2ff56ed87/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
+golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3 h1:0GoQqolDA55aaLxZyTzK/Y2ePZzZTUrRacwib7cNsYQ=
+golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190228124157-a34e9553db1e/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190312061237-fead79001313/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190321052220-f7bb7a8bee54/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20190322080309-f49334f85ddc h1:4gbWbmmPFp4ySWICouJl6emP0MyS31yy9SrTlAGFT+g=
-golang.org/x/sys v0.0.0-20190322080309-f49334f85ddc/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20190405154228-4b34438f7a67 h1:1Fzlr8kkDLQwqMP8GxrhptBLqZG/EDpiATneiZHY998=
+golang.org/x/sys v0.0.0-20190405154228-4b34438f7a67/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=

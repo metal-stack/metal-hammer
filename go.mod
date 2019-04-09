@@ -1,7 +1,7 @@
 module git.f-i-ts.de/cloud-native/metal/metal-hammer
 
 require (
-	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190325060705-6afecabf1671
+	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190403085516-bd25597bc645
 	github.com/beevik/ntp v0.2.0
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.7.0 // indirect
@@ -23,12 +23,13 @@ require (
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/jaypipes/ghw v0.0.0-20190308192452-c318cd4d80c5
 	github.com/jaypipes/pcidb v0.0.0-20190216134740-adf5a9192458 // indirect
+	github.com/mailru/easyjson v0.0.0-20190403194419-1ea4449da983 // indirect
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20190313224307-5b5fc417d966
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
-	github.com/mdlayher/raw v0.0.0-20190315120451-8be9e99c38b6
+	github.com/mdlayher/raw v0.0.0-20190329140802-b0647ab7d8b3
 	// archiver must stay in version v2.1.0
 	github.com/mholt/archiver v2.1.0+incompatible
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -38,7 +39,8 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/u-root/u-root v4.0.0+incompatible
 	github.com/vishvananda/netlink v1.0.0
-	golang.org/x/sys v0.0.0-20190322080309-f49334f85ddc
+	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3 // indirect
+	golang.org/x/sys v0.0.0-20190405154228-4b34438f7a67
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.2.2
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
