@@ -1,13 +1,19 @@
 package event
 
 import (
-	"reflect"
 	"testing"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
+	"github.com/go-openapi/strfmt"
+
+	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewEventEmitter(t *testing.T) {
+	transport := httptransport.New("MetalCoreURL", "", nil)
+	client := machine.New(transport, strfmt.Default)
+
 	type args struct {
 		client    *machine.Client
 		machineID string
@@ -17,18 +23,29 @@ func TestNewEventEmitter(t *testing.T) {
 		args args
 		want *EventEmitter
 	}{
-		// TODO: Add test cases.
+		{
+			name: "TestNewEventEmitter Test 1",
+			args: args{
+				client:    client,
+				machineID: "machineID",
+			},
+			want: &EventEmitter{
+				client:    nil,
+				machineID: "machineID",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewEventEmitter(tt.args.client, tt.args.machineID); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewEventEmitter() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.args.machineID, tt.want.machineID, "check machine ID")
 		})
 	}
 }
 
 func TestEventEmitter_Emit(t *testing.T) {
+	transport := httptransport.New("metalcoreURL", "", nil)
+	client := machine.New(transport, strfmt.Default)
+
 	type args struct {
 		eventType ProvisioningEventType
 		message   string
@@ -38,7 +55,14 @@ func TestEventEmitter_Emit(t *testing.T) {
 		e    *EventEmitter
 		args args
 	}{
-		// TODO: Add test cases.
+		{
+			name: "TestEventEmitter_Emit Test 1",
+			e:    NewEventEmitter(client, "machineID"),
+			args: args{
+				eventType: "ProvisioningEventType",
+				message:   "message",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
