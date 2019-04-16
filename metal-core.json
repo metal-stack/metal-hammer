@@ -44,8 +44,17 @@
               "$ref": "#/definitions/models.MetalMachineWithPhoneHomeToken"
             }
           },
+          "304": {
+            "description": "No allocation"
+          },
           "404": {
             "description": "Not Found"
+          },
+          "417": {
+            "description": "Incomplete machine"
+          },
+          "500": {
+            "description": "Error"
           },
           "default": {
             "description": "OK",
@@ -97,7 +106,7 @@
             "description": "Bad request"
           },
           "500": {
-            "description": "Accepted"
+            "description": "Error"
           },
           "default": {
             "description": "OK",
@@ -149,13 +158,56 @@
             "description": "Not acceptable"
           },
           "500": {
-            "description": "Accepted"
+            "description": "Error"
           },
           "default": {
             "description": "OK",
             "schema": {
               "$ref": "#/definitions/models.MetalMachine"
             }
+          }
+        }
+      }
+    },
+    "/machine/{id}/event": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "machine"
+        ],
+        "summary": "adds a machine provisioning event",
+        "operationId": "AddProvisioningEvent",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "identifier of the machine",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.MetalProvisioningEvent"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "OK"
           }
         }
       }
@@ -325,33 +377,56 @@
     },
     "models.MetalConstraint": {
       "required": [
-        "maxcores",
-        "maxmemory",
-        "mincores",
-        "minmemory"
+        "max",
+        "min",
+        "type"
       ],
       "properties": {
-        "maxcores": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "maxmemory": {
+        "max": {
           "type": "integer",
           "format": "int64"
         },
-        "mincores": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "minmemory": {
+        "min": {
           "type": "integer",
           "format": "int64"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalFru": {
+      "properties": {
+        "board_mfg": {
+          "type": "string"
+        },
+        "board_mfg_serial": {
+          "type": "string"
+        },
+        "board_part_number": {
+          "type": "string"
+        },
+        "chassis_part_number": {
+          "type": "string"
+        },
+        "chassis_part_serial": {
+          "type": "string"
+        },
+        "product_manufacturer": {
+          "type": "string"
+        },
+        "product_part_number": {
+          "type": "string"
+        },
+        "product_serial": {
+          "type": "string"
         }
       }
     },
     "models.MetalIPMI": {
       "required": [
         "address",
+        "fru",
         "interface",
         "mac",
         "password",
@@ -360,6 +435,9 @@
       "properties": {
         "address": {
           "type": "string"
+        },
+        "fru": {
+          "$ref": "#/definitions/models.MetalFru"
         },
         "interface": {
           "type": "string"
@@ -404,11 +482,14 @@
     "models.MetalMachine": {
       "required": [
         "allocation",
+        "events",
         "hardware",
         "id",
+        "liveliness",
         "partition",
         "rackid",
         "size",
+        "state",
         "tags"
       ],
       "properties": {
@@ -424,10 +505,16 @@
         "description": {
           "type": "string"
         },
+        "events": {
+          "$ref": "#/definitions/models.MetalRecentProvisioningEvents"
+        },
         "hardware": {
           "$ref": "#/definitions/models.MetalMachineHardware"
         },
         "id": {
+          "type": "string"
+        },
+        "liveliness": {
           "type": "string"
         },
         "name": {
@@ -441,6 +528,9 @@
         },
         "size": {
           "$ref": "#/definitions/models.MetalSize"
+        },
+        "state": {
+          "$ref": "#/definitions/models.MetalMachineState"
         },
         "tags": {
           "type": "array",
@@ -537,6 +627,20 @@
         }
       }
     },
+    "models.MetalMachineState": {
+      "required": [
+        "description",
+        "value"
+      ],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "models.MetalMachineWithPhoneHomeToken": {
       "required": [
         "machine",
@@ -598,6 +702,43 @@
         },
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "models.MetalProvisioningEvent": {
+      "required": [
+        "event"
+      ],
+      "properties": {
+        "event": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "time": {
+          "type": "string"
+        }
+      }
+    },
+    "models.MetalRecentProvisioningEvents": {
+      "required": [
+        "incomplete_provisioning_cycles",
+        "last_event_time",
+        "log"
+      ],
+      "properties": {
+        "incomplete_provisioning_cycles": {
+          "type": "string"
+        },
+        "last_event_time": {
+          "type": "string"
+        },
+        "log": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.MetalProvisioningEvent"
+          }
         }
       }
     },

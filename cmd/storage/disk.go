@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	log "github.com/inconshreveable/log15"
 )
@@ -26,50 +27,54 @@ const (
 	EFISystemPartition = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 )
 
-// GPTType is the GUID Partition table type
-type GPTType string
+type (
+	// GPTType is the GUID Partition table type
+	GPTType string
 
-// GPTGuid is the UID of the GPT partition to create
-type GPTGuid string
+	// GPTGuid is the UID of the GPT partition to create
+	GPTGuid string
 
-// FSType defines the Filesystem of a Partition
-type FSType string
+	// FSType defines the Filesystem of a Partition
+	FSType string
 
-// MountOption a option given to a mountpoint
-type MountOption string
+	// MountOption a option given to a mountpoint
+	MountOption string
 
-// Partition defines a disk partition
-type Partition struct {
-	Label        string
-	Device       string
-	Number       uint
-	MountPoint   string
-	MountOptions []*MountOption
+	// Partition defines a disk partition
+	Partition struct {
+		Label        string
+		Device       string
+		Number       uint
+		MountPoint   string
+		MountOptions []*MountOption
 
-	// Size in mebiBytes. If negative all available space is used.
-	Size       int64
-	Filesystem FSType
-	GPTType    GPTType
-	GPTGuid    GPTGuid
+		// Size in mebiBytes. If negative all available space is used.
+		Size       int64
+		Filesystem FSType
+		GPTType    GPTType
+		GPTGuid    GPTGuid
 
-	// Properties from blkid
-	Properties map[string]string
-}
+		// Properties from blkid
+		Properties map[string]string
+	}
 
-func (p *Partition) String() string {
-	return fmt.Sprintf("%s", p.Device)
-}
+	// PrimaryDevice is the device where the installation happens.
+	PrimaryDevice struct {
+		DeviceName      string
+		PartitionPrefix string
+	}
 
-// Disk is a physical Disk
-type Disk struct {
-	Device string
-	// Partitions to create on this disk, order is preserved
-	Partitions []*Partition
-}
+	// Disk is a physical Disk
+	Disk struct {
+		// Device the name of the disk device visible from kernel side, e.g. sda
+		Device string
+		// Partitions to create on this disk, order is preserved
+		Partitions []*Partition
+	}
+)
 
 var (
 	defaultDisk = Disk{
-		Device: "/dev/sda",
 		Partitions: []*Partition{
 			{
 				Label:      "efi",
@@ -94,7 +99,6 @@ var (
 	}
 
 	clearlinuxDisk = Disk{
-		Device: "/dev/sda",
 		Partitions: []*Partition{
 			{
 				Label:      "efi",
@@ -126,10 +130,42 @@ var (
 		"alpine-3.9":   defaultDisk,
 		"clearlinux":   clearlinuxDisk,
 	}
+
+	primaryDeviceBySize = map[string]PrimaryDevice{
+		"v1-small-x86": {
+			DeviceName:      "/dev/sda",
+			PartitionPrefix: "",
+		},
+		"t1-small-x86": {
+			DeviceName:      "/dev/sda",
+			PartitionPrefix: "",
+		},
+		"s1-large-x86": {
+			DeviceName:      "/dev/nvme0n1",
+			PartitionPrefix: "p",
+		},
+		"c1-medium-x86": {
+			DeviceName:      "/dev/sda",
+			PartitionPrefix: "",
+		},
+		"c1-large-x86": {
+			DeviceName:      "/dev/nvme0n1",
+			PartitionPrefix: "p",
+		},
+		"c1-xlarge-x86": {
+			DeviceName:      "/dev/nvme0n1",
+			PartitionPrefix: "p",
+		},
+	}
 )
 
+// String for a Partition
+func (p *Partition) String() string {
+	return fmt.Sprintf("%s", p.Device)
+}
+
 // GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
-func GetDisk(image *models.ModelsMetalImage) Disk {
+func GetDisk(image *models.ModelsMetalImage, size *models.ModelsMetalSize) Disk {
 	log.Info("getdisk", "imageID", *image.ID)
 	disk, ok := diskByImage[*image.ID]
 	if !ok {
@@ -137,8 +173,18 @@ func GetDisk(image *models.ModelsMetalImage) Disk {
 		disk = defaultDisk
 	}
 
+	primaryDevice, ok := primaryDeviceBySize[*size.ID]
+	if !ok {
+		log.Warn("getdisk", "sizeID unknown, using default", *size.ID)
+		primaryDevice = PrimaryDevice{
+			DeviceName:      "/dev/sda",
+			PartitionPrefix: "",
+		}
+	}
+	disk.Device = primaryDevice.DeviceName
+
 	for _, p := range disk.Partitions {
-		p.Device = fmt.Sprintf("%s%d", defaultDisk.Device, p.Number)
+		p.Device = fmt.Sprintf("%s%s%d", disk.Device, primaryDevice.PartitionPrefix, p.Number)
 	}
 	return disk
 }

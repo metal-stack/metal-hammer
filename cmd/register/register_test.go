@@ -19,7 +19,7 @@ import (
 )
 
 func TestRegisterMachine(t *testing.T) {
-	// FIXME
+	// FIXME test is disabled
 	t.Skip()
 	os.Setenv("DEGUG", "1")
 	expected := "1234-1234"
@@ -64,7 +64,7 @@ func TestRegisterMachine(t *testing.T) {
 }
 
 func Test_readHardwareDetails(t *testing.T) {
-	// FIXME
+	// FIXME test is disabled
 	t.Skip()
 	type fields struct {
 		Client *machine.Client

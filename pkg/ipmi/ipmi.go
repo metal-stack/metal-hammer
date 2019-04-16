@@ -39,11 +39,12 @@ const (
 type Ipmi interface {
 	DevicePresent() bool
 	Run(arg ...string) (string, error)
-	CreateUser(username, password string, uid int, privilege Privilege) error
+	CreateUser(username, password, uid string, privilege Privilege) error
 	GetLanConfig() (LanConfig, error)
 	EnableUEFI(bootdev Bootdev, persistent bool) error
 	UEFIEnabled() bool
 	BootOptionsPersistent() bool
+	GetFru() (Fru, error)
 	GetSession() (Session, error)
 }
 
@@ -60,10 +61,41 @@ type LanConfig struct {
 	Mac string `ipmitool:"MAC Address"`
 }
 
+func (l *LanConfig) String() string {
+	return fmt.Sprintf("ip: %s mac:%s", l.IP, l.Mac)
+}
+
 // Session information of the current ipmi session
 type Session struct {
 	UserID    string `ipmitool:"user id"`
 	Privilege string `ipmitool:"privilege level"`
+}
+
+// Fru contains Field Replacable Unit information, retrieved with ipmitool fru
+type Fru struct {
+	// 	FRU Device Description : Builtin FRU Device (ID 0)
+	//  Chassis Type          : Other
+	//  Chassis Part Number   : CSE-217BHQ+-R2K22BP2
+	//  Chassis Serial        : C217BAH31AG0535
+	//  Board Mfg Date        : Mon Jan  1 01:00:00 1996
+	//  Board Mfg             : Supermicro
+	//  Board Product         : NONE
+	//  Board Serial          : HM187S003231
+	//  Board Part Number     : X11DPT-B
+	//  Product Manufacturer  : Supermicro
+	//  Product Name          : NONE
+	//  Product Part Number   : SYS-2029BT-HNTR
+	//  Product Version       : NONE
+	//  Product Serial        : A328789X9108135
+
+	ChassisPartNumber   string `ipmitool:"Chassis Part Number"`
+	ChassisPartSerial   string `ipmitool:"Chassis Serial"`
+	BoardMfg            string `ipmitool:"Board Mfg"`
+	BoardMfgSerial      string `ipmitool:"Board Mfg Serial"`
+	BoardPartNumber     string `ipmitool:"Board Part Number"`
+	ProductManufacturer string `ipmitool:"Product Manufacturer"`
+	ProductPartNumber   string `ipmitool:"Product Part Number"`
+	ProductSerial       string `ipmitool:"Product Serial"`
 }
 
 // Bootdev specifies from which device to boot
@@ -104,49 +136,66 @@ func (i *Ipmitool) Run(args ...string) (string, error) {
 	return string(output), err
 }
 
+// GetFru returns the LanConfig
+func (i *Ipmitool) GetFru() (Fru, error) {
+	config := &Fru{}
+	cmdOutput, err := i.Run("fru")
+	if err != nil {
+		return *config, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
+	}
+	fruMap := output2Map(cmdOutput)
+	from(config, fruMap)
+	return *config, nil
+}
+
 // GetLanConfig returns the LanConfig
 func (i *Ipmitool) GetLanConfig() (LanConfig, error) {
-	config := LanConfig{}
+	config := &LanConfig{}
 	cmdOutput, err := i.Run("lan", "print")
 	if err != nil {
-		return config, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
+		return *config, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
 	}
 	lanConfigMap := output2Map(cmdOutput)
 	from(config, lanConfigMap)
-	return config, nil
+	return *config, nil
 }
 
 // GetSession returns the Session info
 func (i *Ipmitool) GetSession() (Session, error) {
-	session := Session{}
+	session := &Session{}
 	cmdOutput, err := i.Run("session", "info", "all")
 	if err != nil {
-		return session, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
+		return *session, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
 	}
 	sessionMap := output2Map(cmdOutput)
 	from(session, sessionMap)
-	return session, nil
+	return *session, nil
 }
 
 // CreateUser create a ipmi user with password and privilege level
-func (i *Ipmitool) CreateUser(username, password string, uid int, privilege Privilege) error {
-	out, err := i.Run("user", "set", "name", string(uid), username)
+func (i *Ipmitool) CreateUser(username, password, uid string, privilege Privilege) error {
+	out, err := i.Run("user", "set", "name", uid, username)
 	if err != nil {
 		return errors.Errorf("unable to create user %s info: %v", username, out)
 	}
-	out, err = i.Run("user", "set", "password", string(uid), password)
+	out, err = i.Run("user", "set", "password", uid, password)
 	if err != nil {
 		return errors.Errorf("unable to set password for user %s info: %v", username, out)
 	}
 	channelnumber := "1"
-	out, err = i.Run("channel", "setaccess", channelnumber, string(uid), "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
+	out, err = i.Run("channel", "setaccess", channelnumber, uid, "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
 	if err != nil {
 		return errors.Errorf("unable to set privilege for user %s info: %v", username, out)
 	}
-	out, err = i.Run("user", "enable", string(uid))
+	out, err = i.Run("user", "enable", uid)
 	if err != nil {
 		return errors.Errorf("unable to enable user %s info: %v", username, out)
 	}
+	out, err = i.Run("sol", "payload", "enable", channelnumber, uid)
+	if err != nil {
+		return errors.Errorf("unable to enable user %s for sol access info: %v", username, out)
+	}
+
 	return nil
 }
 
@@ -154,12 +203,16 @@ func (i *Ipmitool) CreateUser(username, password string, uid int, privilege Priv
 // bootdev can be one of pxe|disk
 // if persistent is set to true this will last for every subsequent boot, not only the next.
 func (i *Ipmitool) EnableUEFI(bootdev Bootdev, persistent bool) error {
-	options := "options=efiboot"
 	if persistent {
-		options = options + ",persistent"
+		// for reference: https://bugs.launchpad.net/ironic/+bug/1611306
+		out, err := i.Run("raw", "0x00", "0x08", "0x05", "0xe0", "0x04", "0x00", "0x00", "0x00")
+		if err != nil {
+			return errors.Errorf("unable to enable uefi on:%s persistent:%t info:%v", bootdev, persistent, out)
+		}
+		return nil
 	}
 
-	out, err := i.Run("chassis", "bootdev", string(bootdev), options)
+	out, err := i.Run("chassis", "bootdev", string(bootdev), "options=efiboot")
 	if err != nil {
 		return errors.Errorf("unable to enable uefi on:%s persistent:%t info:%v", bootdev, persistent, out)
 	}
@@ -208,8 +261,14 @@ func output2Map(cmdOutput string) map[string]string {
 			continue
 		}
 		key := strings.TrimSpace(parts[0])
+		if key == "" {
+			continue
+		}
 		value := strings.TrimSpace(strings.Join(parts[1:], ""))
 		result[key] = value
+	}
+	for k, v := range result {
+		log.Debug("output", "key", k, "value", v)
 	}
 	return result
 }

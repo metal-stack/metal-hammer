@@ -1,16 +1,18 @@
 package cmd
 
 import (
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/firmware"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/register"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/report"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
@@ -25,43 +27,66 @@ type Hammer struct {
 	Disk       storage.Disk
 	LLDPClient *network.LLDPClient
 	// IPAddress is the ip of the eth0 interface during installation
-	IPAddress string
-	Started   time.Time
+	IPAddress    string
+	Started      time.Time
+	EventEmitter *event.EventEmitter
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
-func Run(spec *Specification) error {
-	log.Info("metal-hammer run", "firmware", pkg.Firmware())
+func Run(spec *Specification) (*event.EventEmitter, error) {
+	log.Info("metal-hammer run", "firmware", kernel.Firmware())
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := machine.New(transport, strfmt.Default)
+	eventEmitter := event.NewEventEmitter(client, spec.MachineUUID)
+
+	eventEmitter.Emit(event.ProvisioningEventPreparing, "starting metal-hammer")
 
 	hammer := &Hammer{
-		Client:    client,
-		Spec:      spec,
-		IPAddress: spec.Ip,
+		Client:       client,
+		Spec:         spec,
+		IPAddress:    spec.IP,
+		EventEmitter: eventEmitter,
 	}
+
+	// Reboot after 24Hours if no allocation was requested.
+	go kernel.AutoReboot(24*time.Hour, func() {
+		eventEmitter.Emit(event.ProvisioningEventPlannedReboot, "autoreboot after 24h")
+	})
+
 	hammer.Spec.ConsolePassword = password.Generate(16)
 
 	n := &network.Network{
 		MachineUUID: spec.MachineUUID,
-		IPAddress:   spec.Ip,
+		IPAddress:   spec.IP,
 		Started:     time.Now(),
 	}
 
-	err := n.UpAllInterfaces()
+	firmware := firmware.New()
+	firmware.Update()
+
+	lsi := storage.NewStorcli()
+	err := lsi.EnableJBOD()
 	if err != nil {
-		return errors.Wrap(err, "interfaces")
+		log.Warn("root", "unable to format raid controller", err)
 	}
+
+	err = n.UpAllInterfaces()
+	if err != nil {
+		return eventEmitter, errors.Wrap(err, "interfaces")
+	}
+
+	// Set Time from ntp
+	network.NtpDate()
 
 	err = hammer.EnsureUEFI()
 	if err != nil {
-		return errors.Wrap(err, "uefi")
+		return eventEmitter, errors.Wrap(err, "uefi")
 	}
 
 	err = storage.WipeDisks()
 	if err != nil {
-		return errors.Wrap(err, "wipe")
+		return eventEmitter, errors.Wrap(err, "wipe")
 	}
 
 	reg := &register.Register{
@@ -70,11 +95,13 @@ func Run(spec *Specification) error {
 		Network:     n,
 	}
 
+	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
 	// Remove uuid return use MachineUUID() above.
 	uuid, err := reg.RegisterMachine()
 	if !spec.DevMode && err != nil {
-		return errors.Wrap(err, "register")
+		return eventEmitter, errors.Wrap(err, "register")
 	}
+	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	var machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken
@@ -101,24 +128,28 @@ func Run(spec *Specification) error {
 					SSHPubKeys: sshkeys,
 					Cidr:       &cidr,
 				},
+				Size: &models.ModelsMetalSize{
+					ID: &spec.SizeID,
+				},
 			},
 			PhoneHomeToken: &fakeToken,
 		}
 	} else {
 		machineWithToken, err = hammer.Wait(uuid)
 		if err != nil {
-			return errors.Wrap(err, "wait for installation")
+			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(machineWithToken.Machine.Allocation.Image)
+	hammer.Disk = storage.GetDisk(machineWithToken.Machine.Allocation.Image, machineWithToken.Machine.Size)
 
+	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
 	info, err := hammer.Install(machineWithToken)
 
 	// FIXME, must not return here.
 	if err != nil {
-		return errors.Wrap(err, "install")
+		return eventEmitter, errors.Wrap(err, "install")
 	}
 
 	rep := &report.Report{
@@ -134,7 +165,7 @@ func Run(spec *Specification) error {
 		log.Error("report installation failed", "reboot in", wait, "error", err)
 		time.Sleep(wait)
 		if !spec.DevMode {
-			err = pkg.Reboot()
+			err = kernel.Reboot()
 			if err != nil {
 				log.Error("reboot", "error", err)
 			}
@@ -142,5 +173,6 @@ func Run(spec *Specification) error {
 	}
 
 	log.Info("installation", "took", time.Since(installationStart))
-	return pkg.RunKexec(info)
+	eventEmitter.Emit(event.ProvisioningEventBootingNewKernel, "booting into distro kernel")
+	return eventEmitter, kernel.RunKexec(info)
 }

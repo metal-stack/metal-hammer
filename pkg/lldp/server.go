@@ -56,11 +56,11 @@ func NewDaemon(systemName, systemDescription, interfaceName string, interval tim
 		Interval:          interval,
 		PacketConn:        c,
 	}
-	lldp, err := createLLDPMessage(l)
+	msg, err := createLLDPMessage(l)
 	if err != nil {
 		return nil, errors.Wrap(err, "lldpd failed to create lldp message")
 	}
-	l.LLDPMessage = lldp
+	l.LLDPMessage = msg
 	return l, nil
 }
 

@@ -31,8 +31,17 @@ ramdisk:
 	u-root \
 		-format=cpio -build=bb \
 		-files="bin/metal-hammer:bbin/uinit" \
+		-files="/etc/localtime:etc/localtime" \
 		-files="/bin/bash:bin/bash" \
 		-files="/sbin/blkid:sbin/blkid" \
+		-files="/sbin/ethtool:sbin/ethtool" \
+		-files="/usr/bin/mstflint:bin/mstflint" \
+		-files="/usr/bin/mstconfig:bin/mstconfig" \
+		-files="/usr/share/mstflint/mlxconfig_dbs/mlxconfig.db:usr/share/mstflint/mlxconfig_dbs/mlxconfig.db" \
+		-files="/usr/bin/lspci:bin/lspci" \
+		-files="/usr/share/misc/pci.ids:usr/share/misc/pci.ids" \
+		-files="bin/ethr:bin/ethr" \
+		-files="/bin/netstat:bin/netstat" \
 		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
 		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
@@ -42,7 +51,6 @@ ramdisk:
 		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="bin/storcli64:sbin/storcli" \
-		-files="bin/smc3108.rom:bin/smc3108.rom" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
@@ -56,8 +64,10 @@ clean-local-dirs:
 clean-client: clean-local-dirs
 	cp ../metal-core/spec/metal-core.json metal-core.json
 
-generate-client: clean-local-dirs
-	GO111MODULE=off swagger generate client -f metal-core.json --skip-validation --target metal-core
+# 'swaggergenerate' generates swagger client with SWAGGERSPEC="swagger.json" SWAGGERTARGET="./".
+generate-client: SWAGGERSPEC="metal-core.json"
+generate-client: SWAGGERTARGET="metal-core"
+generate-client: clean-local-dirs swaggergenerate
 
 vagrant-destroy:
 	vagrant destroy -f
