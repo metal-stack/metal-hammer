@@ -2,11 +2,7 @@
 
 in order to be able to register a new machine, or check whether a machine is already registered, we execute from the pxeboot image a binary which does the hardware discovery and send the output to the metal api.
 
-## Build
-
-```bash
-make initrd
-```
+# Build
 
 ## Local Testing
 

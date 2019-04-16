@@ -1,11 +1,14 @@
-package pkg
+package kernel
 
 import (
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
+	"unsafe"
 
+	log "github.com/inconshreveable/log15"
 	"github.com/u-root/u-root/pkg/kexec"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
@@ -24,6 +27,8 @@ type Bootinfo struct {
 	Kernel  string `yaml:"kernel"`
 }
 
+// ReadBootinfo read boot-info.yaml which was written by the OS install.sh
+// to get all information required to do kexec.
 func ReadBootinfo(file string) (*Bootinfo, error) {
 	bi, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -102,4 +107,41 @@ func Firmware() string {
 		return "bios"
 	}
 	return "efi"
+}
+
+// Watchdog periodically pings kernel software watchdog.
+// from https://github.com/gokrazy/gokrazy
+func Watchdog() {
+	f, err := os.OpenFile("/dev/watchdog", os.O_WRONLY, 0)
+	if err != nil {
+		log.Error("watchdog", "disabling hardware watchdog, as it could not be opened.", err)
+		return
+	}
+	defer f.Close()
+	// timeout in seconds after which a reboot will be triggered if no write to /dev/watchdog was made.
+	timeout := uint32(60)
+	if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_SETTIMEOUT, uintptr(unsafe.Pointer(&timeout))); errno != 0 {
+		log.Error("watchdog", "set timeout failed", errno)
+	}
+
+	for {
+		if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_KEEPALIVE, 0); errno != 0 {
+			log.Error("watchdog", "hardware watchdog ping failed", errno)
+		}
+		time.Sleep(10 * time.Second)
+	}
+}
+
+// AutoReboot will start a timer and reboot after given duration
+func AutoReboot(after time.Duration, callback func()) {
+	log.Info("autoreboot", "after", after)
+	rebootTimer := time.NewTimer(after)
+	<-rebootTimer.C
+	log.Info("autoreboot", "timeout reached", "rebooting in 10sec")
+	callback()
+	time.Sleep(10 * time.Second)
+	err := Reboot()
+	if err != nil {
+		log.Error("autoreboot", "unable to reboot, error", err)
+	}
 }

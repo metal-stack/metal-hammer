@@ -32,6 +32,7 @@ func (r *Report) ReportInstallation() error {
 	params.ID = r.MachineUUID
 	resp, err := r.Client.Report(params)
 	if err != nil {
+		log.Error("report", "error", err)
 		return errors.Wrap(err, "unable to report image installation")
 	}
 	log.Info("report image installation was successful", "response", resp.Payload)

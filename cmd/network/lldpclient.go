@@ -26,7 +26,7 @@ type Host struct {
 
 const (
 	// LLDPTxInterval is set to 10 seconds in /etc/lldpd.d/tx-interval.conf on each leaf.
-	LLDPTxInterval = 10 * time.Second
+	LLDPTxInterval = 15 * time.Second
 
 	// LLDPTxIntervalTimeout is set to double of tx-interval of lldpd on the switch side.
 	// This ensures we get all lldp pdu`s.
