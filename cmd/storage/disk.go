@@ -126,6 +126,8 @@ var (
 		"default":      defaultDisk,
 		"ubuntu-18.04": defaultDisk,
 		"ubuntu-18.10": defaultDisk,
+		"ubuntu-19.04": defaultDisk,
+		"ubuntu-19.10": defaultDisk,
 		"alpine-3.8":   defaultDisk,
 		"alpine-3.9":   defaultDisk,
 		"clearlinux":   clearlinuxDisk,
