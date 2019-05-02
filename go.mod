@@ -19,6 +19,7 @@ require (
 	github.com/go-openapi/validate v0.19.0
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/google/go-cmp v0.3.0 // indirect
 	github.com/google/gopacket v1.1.16
 	github.com/google/uuid v1.1.1
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
@@ -40,9 +41,8 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/u-root/u-root v4.0.0+incompatible
 	github.com/vishvananda/netlink v1.0.0
-	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	golang.org/x/net v0.0.0-20190424112056-4829fb13d2c6 // indirect
-	golang.org/x/sys v0.0.0-20190426135247-a129542de9ae
+	golang.org/x/sys v0.0.0-20190429094411-2cc0cad0ac78
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.2.2
