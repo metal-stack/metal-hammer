@@ -2,10 +2,17 @@ package network
 
 import (
 	"bufio"
-	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 	"os/exec"
 	"strings"
+
+	"os"
+	"path"
+	"path/filepath"
+
+	"io/ioutil"
+
+	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 )
 
 // Ethtool to query/set ethernet interfaces
@@ -34,6 +41,7 @@ func (e *Ethtool) Run(args ...string) (string, error) {
 // disableFirmwareLLDP Intel i40e based 10G+ network cards (e.g. XXV710)
 // have network card based firmware lldp sending enabled.
 // this prevents receiving lldp pdu`s from our switches, so turn it off.
+// Another approach which is not reboot safe an will only turn off lldp is:
 func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 
 	output, err := e.Run("--show-priv-flags", ifi)
@@ -62,9 +70,41 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 	if fwLLDP == "off" {
 		_, err := e.Run("--set-priv-flags", ifi, "disable-fw-lldp", "on")
 		if err != nil {
-			log.Error("ethtool", "interface", ifi, "error disabling fw-lldp", err)
+			log.Error("ethtool", "interface", ifi, "error disabling fw-lldp try to stop it", err)
+			e.stopFirmwareLLDP()
 			return
 		}
 		log.Info("ethtool", "interface", ifi, "fw-lldp", "disabled")
+	}
+}
+
+var buggyIntelNicDriverNames = []string{"i40e"}
+
+// stopFirmwareLLDP stop Firmeware LLDP not persistent over reboots, only during runtime.
+// mount -t debugfs none /sys/kernel/debug
+// echo lldp stop > /sys/kernel/debug/i40e/0000:01:00.2/command
+// where <0000:01:00.2> is the pci address of the ethernet nic, this can be inspected by lspci,
+// or a loop over all directories in /sys/kernel/debug/i40e/*/command
+func (e *Ethtool) stopFirmwareLLDP() {
+	for _, driver := range buggyIntelNicDriverNames {
+		debugFSPath := path.Join("/sys/kernel/debug", driver)
+		err := filepath.Walk(debugFSPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				log.Warn("ethtool", "stopFirmwareLLDP in path", path, "error", err)
+				return err
+			}
+			if !info.IsDir() && info.Name() == "command" {
+				log.Info("ethtool", "stopFirmwareLLDP found command", path)
+				stopCommand := []byte("lldp stop")
+				err := ioutil.WriteFile(path, stopCommand, os.ModePerm)
+				if err != nil {
+					log.Error("ethtool", "stopFirmwareLLDP stop lldp > command", path, "error", err)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			log.Error("ethtool", "stopFirmwareLLDP unable to walk through debugfs", debugFSPath, "error", err)
+		}
 	}
 }
