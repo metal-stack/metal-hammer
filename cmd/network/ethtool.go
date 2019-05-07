@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"os"
 	"path"
@@ -86,6 +87,11 @@ var buggyIntelNicDriverNames = []string{"i40e"}
 // where <0000:01:00.2> is the pci address of the ethernet nic, this can be inspected by lspci,
 // or a loop over all directories in /sys/kernel/debug/i40e/*/command
 func (e *Ethtool) stopFirmwareLLDP() {
+	err := syscall.Mount("debugfs", "/sys/kernel/debug", "debugfs", 0, "")
+	if err != nil {
+		log.Error("ethtool", "mounting debugfs failed", err)
+		return
+	}
 	for _, driver := range buggyIntelNicDriverNames {
 		debugFSPath := path.Join("/sys/kernel/debug", driver)
 		err := filepath.Walk(debugFSPath, func(path string, info os.FileInfo, err error) error {
