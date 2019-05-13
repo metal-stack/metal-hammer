@@ -80,11 +80,6 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	// Set Time from ntp
 	network.NtpDate()
 
-	err = hammer.EnsureUEFI()
-	if err != nil {
-		return eventEmitter, errors.Wrap(err, "uefi")
-	}
-
 	err = storage.WipeDisks()
 	if err != nil {
 		return eventEmitter, errors.Wrap(err, "wipe")
@@ -102,6 +97,12 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	if !spec.DevMode && err != nil {
 		return eventEmitter, errors.Wrap(err, "register")
 	}
+
+	err = hammer.EnsureUEFI()
+	if err != nil {
+		return eventEmitter, errors.Wrap(err, "uefi")
+	}
+
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
