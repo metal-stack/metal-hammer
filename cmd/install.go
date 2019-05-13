@@ -4,15 +4,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
-	"net"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	"github.com/pkg/errors"
 
 	img "git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/image"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
@@ -34,10 +34,12 @@ type InstallerConfig struct {
 	Hostname string `yaml:"hostname"`
 	// IPAddress is expected to be in the form without mask
 	IPAddress string `yaml:"ipaddress"`
-	// MachineUUID is the unique UUID for this machine, usually the board serial.
-	MachineUUID string `yaml:"machineuuid"`
 	// must be calculated from the last 4 byte of the IPAddress
 	ASN string `yaml:"asn"`
+	// Networks all networks connected to this machine
+	Networks []Network `yaml:"networks"`
+	// MachineUUID is the unique UUID for this machine, usually the board serial.
+	MachineUUID string `yaml:"machineuuid"`
 	// SSHPublicKey of the user
 	SSHPublicKey string `yaml:"sshpublickey"`
 	// Password is the password for the metal user.
@@ -48,11 +50,19 @@ type InstallerConfig struct {
 	Console string `yaml:"console"`
 }
 
+type Network struct {
+	Ips       []string `yaml:"ips"`
+	Networkid *string  `yaml:"networkid"`
+	Primary   *bool    `yaml:"primary"`
+	Vrf       *int64   `yaml:"vrf"`
+	ASN       *int64   `yaml:"asn"`
+	Nat       *bool    `yaml:"nat"`
+}
+
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken) (*kernel.Bootinfo, error) {
-	machine := machineWithToken.Machine
-	phtoken := machineWithToken.PhoneHomeToken
-	image := *machine.Allocation.Image.URL
+func (h *Hammer) Install(machine *models.ModelsV1MachineWaitResponse) (*kernel.Bootinfo, error) {
+	phtoken := machine.PhoneHomeToken
+	image := machine.Allocation.Image.URL
 
 	err := h.Disk.Partition()
 	if err != nil {
@@ -91,8 +101,8 @@ func (h *Hammer) Install(machineWithToken *models.ModelsMetalMachineWithPhoneHom
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.ModelsMetalMachine, phoneHomeToken string) (*kernel.Bootinfo, error) {
-	log.Info("install", "image", *machine.Allocation.Image.URL)
+func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineWaitResponse, phoneHomeToken string) (*kernel.Bootinfo, error) {
+	log.Info("install", "image", machine.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(machine)
 	if err != nil {
@@ -188,7 +198,7 @@ func (h *Hammer) writePhoneHomeToken(phoneHomeToken string) error {
 	return ioutil.WriteFile(destination, []byte(phoneHomeToken), 0600)
 }
 
-func (h *Hammer) writeUserData(machine *models.ModelsMetalMachine) error {
+func (h *Hammer) writeUserData(machine *models.ModelsV1MachineWaitResponse) error {
 	configdir := path.Join(prefix, "etc", "metal")
 	destination := path.Join(configdir, "userdata")
 
@@ -204,7 +214,7 @@ func (h *Hammer) writeUserData(machine *models.ModelsMetalMachine) error {
 	return nil
 }
 
-func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error {
+func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitResponse) error {
 	log.Info("write installation configuration")
 	configdir := path.Join(prefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -215,19 +225,27 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error 
 
 	var ipaddress string
 	var asn int64
-	if *machine.Allocation.Cidr == "dhcp" {
-		ipaddress = *machine.Allocation.Cidr
-	} else {
-		ip, _, err := net.ParseCIDR(*machine.Allocation.Cidr)
-		if err != nil {
-			return errors.Wrap(err, "unable to parse ip from machine.ip")
+	allocation := machine.Allocation
+	var networks []Network
+	for _, nw := range allocation.Networks {
+		if *nw.Primary && len(nw.Ips) > 0 {
+			// Keep IP and ASN for backward compatibility with os install.sh
+			// TODO can be removed from InstallConfig struct once install.sh
+			// can create all network configuration from the Networks struct.
+			ipaddress = nw.Ips[0]
+			asn = *nw.Asn
+		} else {
+			log.Warn("install no default network with ips found")
 		}
-
-		asn, err = ipToASN(*machine.Allocation.Cidr)
-		if err != nil {
-			return errors.Wrap(err, "unable to parse ip from machine.ip")
+		network := Network{
+			Ips:       nw.Ips,
+			Networkid: nw.Networkid,
+			Primary:   nw.Primary,
+			Vrf:       nw.Vrf,
+			ASN:       nw.Asn,
+			Nat:       nw.Nat,
 		}
-		ipaddress = ip.String()
+		networks = append(networks, network)
 	}
 
 	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
@@ -245,8 +263,9 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error 
 		Hostname:     *machine.Allocation.Hostname,
 		SSHPublicKey: sshPubkeys,
 		IPAddress:    ipaddress,
-		MachineUUID:  h.Spec.MachineUUID,
 		ASN:          fmt.Sprintf("%d", asn),
+		Networks:     networks,
+		MachineUUID:  h.Spec.MachineUUID,
 		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,
 		Console:      console,

@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 	"time"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
@@ -104,7 +105,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
-	var machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken
+	var machineWithToken *models.ModelsV1MachineWaitResponse
 	if spec.DevMode {
 		cidr := "10.0.1.2/24"
 		if spec.Cidr != "" {
@@ -114,23 +115,29 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		if !spec.BGPEnabled {
 			cidr = "dhcp"
 		}
+		asn := int64(4200000001)
+		primary := true
 		hostname := "devmode"
 		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
 		fakeToken := "JWT"
-		machineWithToken = &models.ModelsMetalMachineWithPhoneHomeToken{
-			Machine: &models.ModelsMetalMachine{
-				Allocation: &models.ModelsMetalMachineAllocation{
-					Image: &models.ModelsMetalImage{
-						URL: &spec.ImageURL,
-						ID:  &spec.ImageID,
+		machineWithToken = &models.ModelsV1MachineWaitResponse{
+			Allocation: &models.ModelsV1MachineAllocation{
+				Image: &models.ModelsV1ImageResponse{
+					URL: spec.ImageURL,
+					ID:  &spec.ImageID,
+				},
+				Hostname:   &hostname,
+				SSHPubKeys: sshkeys,
+				Networks: []*models.ModelsV1MachineNetwork{
+					&models.ModelsV1MachineNetwork{
+						Ips:     []string{cidr},
+						Asn:     &asn,
+						Primary: &primary,
 					},
-					Hostname:   &hostname,
-					SSHPubKeys: sshkeys,
-					Cidr:       &cidr,
 				},
-				Size: &models.ModelsMetalSize{
-					ID: &spec.SizeID,
-				},
+			},
+			Size: &models.ModelsV1SizeResponse{
+				ID: &spec.SizeID,
 			},
 			PhoneHomeToken: &fakeToken,
 		}
@@ -141,7 +148,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(machineWithToken.Machine.Allocation.Image, machineWithToken.Machine.Size)
+	hammer.Disk = storage.GetDisk(machineWithToken.Allocation.Image, machineWithToken.Size)
 
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()

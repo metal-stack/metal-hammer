@@ -3,16 +3,17 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
-	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 )
 
 // Wait until a machine create request was fired
-func (h *Hammer) Wait(uuid string) (*models.ModelsMetalMachineWithPhoneHomeToken, error) {
+func (h *Hammer) Wait(uuid string) (*models.ModelsV1MachineWaitResponse, error) {
 	// We do not use the swagger client because this has no ability to specify a timeout.
 	e := fmt.Sprintf("http://%v/machine/install/%v", h.Spec.MetalCoreURL, uuid)
 	log.Info("waiting for install, long polling", "url", e, "uuid", uuid)
@@ -49,7 +50,7 @@ func (h *Hammer) Wait(uuid string) (*models.ModelsMetalMachineWithPhoneHomeToken
 	}
 	log.Info("wait finished", "statuscode", resp.StatusCode, "response", string(machineJSON))
 
-	var machineWithToken models.ModelsMetalMachineWithPhoneHomeToken
+	var machineWithToken models.ModelsV1MachineWaitResponse
 	err = json.Unmarshal(machineJSON, &machineWithToken)
 	if err != nil {
 		return nil, errors.Wrap(err, "wait for install could not unmarshal response")
