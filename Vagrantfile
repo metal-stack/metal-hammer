@@ -37,7 +37,7 @@ Vagrant.configure("2") do |config|
           "METAL_CORE_ADDRESS=192.168.121.110:4242 " \
           "IMAGE_ID=default " \
           "SIZE_ID=v1-small-x86 " \
-          "IMAGE_URL=http://192.168.121.1:4711/images/os/ubuntu/18.10/img.tar.lz4 " \
+          "IMAGE_URL=http://192.168.121.1:4711/images/os/ubuntu/19.04/img.tar.lz4 " \
           "DEBUG=1 " \
           "BGP=1"
       domain.loader = "/usr/share/OVMF/OVMF_CODE.fd"

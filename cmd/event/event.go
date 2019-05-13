@@ -2,10 +2,11 @@ package event
 
 import (
 	"fmt"
+	"time"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	log "github.com/inconshreveable/log15"
-	"time"
 )
 
 // ProvisioningEventType indicates an event emitted by a machine during the provisioning sequence
@@ -16,12 +17,15 @@ type ProvisioningEventType string
 const (
 	ProvisioningEventAlive            ProvisioningEventType = "Alive"
 	ProvisioningEventCrashed          ProvisioningEventType = "Crashed"
+	ProvisioningEventResetFailCount   ProvisioningEventType = "Reset Fail Count"
+	ProvisioningEventPXEBooting       ProvisioningEventType = "PXE Booting"
 	ProvisioningEventPlannedReboot    ProvisioningEventType = "Planned Reboot"
 	ProvisioningEventPreparing        ProvisioningEventType = "Preparing"
 	ProvisioningEventRegistering      ProvisioningEventType = "Registering"
 	ProvisioningEventWaiting          ProvisioningEventType = "Waiting"
 	ProvisioningEventInstalling       ProvisioningEventType = "Installing"
 	ProvisioningEventBootingNewKernel ProvisioningEventType = "Booting New Kernel"
+	ProvisioningEventPhonedHome       ProvisioningEventType = "Phoned Home"
 )
 
 type EventEmitter struct {
@@ -47,7 +51,7 @@ func NewEventEmitter(client *machine.Client, machineID string) *EventEmitter {
 func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 
 	eventString := string(eventType)
-	event := &models.ModelsMetalProvisioningEvent{
+	event := &models.ModelsV1MachineProvisioningEvent{
 		Event:   &eventString,
 		Message: message,
 	}

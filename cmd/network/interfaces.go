@@ -2,15 +2,16 @@ package network
 
 import (
 	"fmt"
+	"net"
+	"strings"
+	"time"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/lldp"
 	"git.f-i-ts.de/cloud-native/metallib/version"
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
-	"net"
-	"strings"
-	"time"
 )
 
 // Network provides networking operations.
@@ -92,8 +93,8 @@ func linkSetUp(name string) error {
 }
 
 // Neighbors of a interface, detected via ip neighbor detection
-func (n *Network) Neighbors(name string) ([]*models.ModelsMetalNic, error) {
-	neighbors := make([]*models.ModelsMetalNic, 0)
+func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNic, error) {
+	neighbors := make([]*models.ModelsV1MachineNic, 0)
 
 	host := n.LLDPClient.Host
 
@@ -114,7 +115,7 @@ func (n *Network) Neighbors(name string) ([]*models.ModelsMetalNic, error) {
 			continue
 		}
 		macAddress := neigh.Port.Value
-		neighbors = append(neighbors, &models.ModelsMetalNic{Mac: &macAddress})
+		neighbors = append(neighbors, &models.ModelsV1MachineNic{Mac: &macAddress})
 	}
 	return neighbors, nil
 }

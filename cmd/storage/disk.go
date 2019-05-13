@@ -130,6 +130,7 @@ var (
 		"ubuntu-19.10": defaultDisk,
 		"alpine-3.8":   defaultDisk,
 		"alpine-3.9":   defaultDisk,
+		"firewall-1":   defaultDisk,
 		"clearlinux":   clearlinuxDisk,
 	}
 
@@ -167,7 +168,7 @@ func (p *Partition) String() string {
 }
 
 // GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
-func GetDisk(image *models.ModelsMetalImage, size *models.ModelsMetalSize) Disk {
+func GetDisk(image *models.ModelsV1ImageResponse, size *models.ModelsV1SizeResponse) Disk {
 	log.Info("getdisk", "imageID", *image.ID)
 	disk, ok := diskByImage[*image.ID]
 	if !ok {
