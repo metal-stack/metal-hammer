@@ -570,6 +570,7 @@
         "ips",
         "nat",
         "networkid",
+        "prefixes",
         "primary",
         "vrf"
       ],
@@ -589,6 +590,12 @@
         },
         "networkid": {
           "type": "string"
+        },
+        "prefixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "primary": {
           "type": "boolean"

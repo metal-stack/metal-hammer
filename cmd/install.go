@@ -54,6 +54,7 @@ type Network struct {
 	Ips       []string `yaml:"ips"`
 	Networkid *string  `yaml:"networkid"`
 	Primary   *bool    `yaml:"primary"`
+	Prefixes  []string `yaml:"prefixes"`
 	Vrf       *int64   `yaml:"vrf"`
 	ASN       *int64   `yaml:"asn"`
 	Nat       *bool    `yaml:"nat"`
@@ -241,6 +242,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitRespons
 			Ips:       nw.Ips,
 			Networkid: nw.Networkid,
 			Primary:   nw.Primary,
+			Prefixes:  nw.Prefixes,
 			Vrf:       nw.Vrf,
 			ASN:       nw.Asn,
 			Nat:       nw.Nat,
