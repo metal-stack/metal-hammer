@@ -567,17 +567,25 @@
     "models.V1MachineNetwork": {
       "required": [
         "asn",
+        "destinationprefixes",
         "ips",
         "nat",
         "networkid",
         "prefixes",
         "primary",
+        "underlay",
         "vrf"
       ],
       "properties": {
         "asn": {
           "type": "integer",
           "format": "int64"
+        },
+        "destinationprefixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "ips": {
           "type": "array",
@@ -598,6 +606,9 @@
           }
         },
         "primary": {
+          "type": "boolean"
+        },
+        "underlay": {
           "type": "boolean"
         },
         "vrf": {

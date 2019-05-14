@@ -37,7 +37,7 @@ type InstallerConfig struct {
 	// must be calculated from the last 4 byte of the IPAddress
 	ASN string `yaml:"asn"`
 	// Networks all networks connected to this machine
-	Networks []Network `yaml:"networks"`
+	Networks []*models.ModelsV1MachineNetwork `yaml:"networks"`
 	// MachineUUID is the unique UUID for this machine, usually the board serial.
 	MachineUUID string `yaml:"machineuuid"`
 	// SSHPublicKey of the user
@@ -227,7 +227,6 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitRespons
 	var ipaddress string
 	var asn int64
 	allocation := machine.Allocation
-	var networks []Network
 	for _, nw := range allocation.Networks {
 		if *nw.Primary && len(nw.Ips) > 0 {
 			// Keep IP and ASN for backward compatibility with os install.sh
@@ -238,16 +237,6 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitRespons
 		} else {
 			log.Warn("install no default network with ips found")
 		}
-		network := Network{
-			Ips:       nw.Ips,
-			Networkid: nw.Networkid,
-			Primary:   nw.Primary,
-			Prefixes:  nw.Prefixes,
-			Vrf:       nw.Vrf,
-			ASN:       nw.Asn,
-			Nat:       nw.Nat,
-		}
-		networks = append(networks, network)
 	}
 
 	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
@@ -266,7 +255,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitRespons
 		SSHPublicKey: sshPubkeys,
 		IPAddress:    ipaddress,
 		ASN:          fmt.Sprintf("%d", asn),
-		Networks:     networks,
+		Networks:     allocation.Networks,
 		MachineUUID:  h.Spec.MachineUUID,
 		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,
