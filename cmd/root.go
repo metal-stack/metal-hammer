@@ -4,15 +4,13 @@ import (
 	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
-
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
-
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/firmware"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/register"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/report"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	httptransport "github.com/go-openapi/runtime/client"
@@ -118,6 +116,9 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		}
 		asn := int64(4200000001)
 		primary := true
+		underlay := false
+		nat := false
+		vrf := int64(0)
 		hostname := "devmode"
 		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
 		fakeToken := "JWT"
@@ -131,9 +132,13 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 				SSHPubKeys: sshkeys,
 				Networks: []*models.ModelsV1MachineNetwork{
 					&models.ModelsV1MachineNetwork{
-						Ips:     []string{cidr},
-						Asn:     &asn,
-						Primary: &primary,
+						Ips:                 []string{cidr},
+						Asn:                 &asn,
+						Primary:             &primary,
+						Underlay:            &underlay,
+						Destinationprefixes: []string{"0.0.0.0/0"},
+						Vrf:                 &vrf,
+						Nat:                 &nat,
 					},
 				},
 			},
