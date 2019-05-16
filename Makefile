@@ -30,6 +30,7 @@ initrd: ${INITRD_COMPRESSED}
 ramdisk:
 	u-root \
 		-format=cpio -build=bb \
+		-defaultsh=/bin/bash \
 		-files="bin/metal-hammer:bbin/uinit" \
 		-files="/etc/localtime:etc/localtime" \
 		-files="/bin/bash:bin/bash" \
