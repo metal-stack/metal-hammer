@@ -36,7 +36,7 @@ type InstallerConfig struct {
 	// must be calculated from the last 4 byte of the IPAddress
 	ASN string `yaml:"asn"`
 	// Networks all networks connected to this machine
-	Networks []Network `yaml:"networks"`
+	Networks []*models.ModelsV1MachineNetwork `yaml:"networks"`
 	// MachineUUID is the unique UUID for this machine, usually the board serial.
 	MachineUUID string `yaml:"machineuuid"`
 	// SSHPublicKey of the user
@@ -47,18 +47,6 @@ type InstallerConfig struct {
 	Devmode bool `yaml:"devmode"`
 	// Console specifies where the kernel should connect its console to.
 	Console string `yaml:"console"`
-}
-
-type Network struct {
-	Asn                 *int64   `yaml:"asn"`
-	Destinationprefixes []string `yaml:"destinationprefixes"`
-	Ips                 []string `yaml:"ips"`
-	Nat                 *bool    `yaml:"nat"`
-	Networkid           *string  `yaml:"networkid"`
-	Prefixes            []string `yaml:"prefixes"`
-	Primary             *bool    `yaml:"primary"`
-	Underlay            *bool    `yaml:"underlay"`
-	Vrf                 *int64   `yaml:"vrf"`
 }
 
 // Install a given image to the disk by using genuinetools/img
@@ -228,9 +216,9 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitRespons
 	var ipaddress string
 	var asn int64
 	allocation := machine.Allocation
-	networks := []Network{}
-	for i := range allocation.Networks {
-		nw := allocation.Networks[i]
+
+	for _, nw := range allocation.Networks {
+		// nw := allocation.Networks[i]
 		if *nw.Primary && len(nw.Ips) > 0 {
 			// Keep IP and ASN for backward compatibility with os install.sh
 			// TODO can be removed from InstallConfig struct once install.sh
@@ -241,19 +229,6 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitRespons
 		if *nw.Primary && len(nw.Ips) == 0 {
 			log.Warn("install no default network with ips found")
 		}
-
-		network := Network{
-			Asn:                 nw.Asn,
-			Destinationprefixes: nw.Destinationprefixes,
-			Ips:                 nw.Ips,
-			Nat:                 nw.Nat,
-			Networkid:           nw.Networkid,
-			Prefixes:            nw.Prefixes,
-			Primary:             nw.Primary,
-			Underlay:            nw.Underlay,
-			Vrf:                 nw.Vrf,
-		}
-		networks = append(networks, network)
 	}
 
 	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
@@ -272,7 +247,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitRespons
 		SSHPublicKey: sshPubkeys,
 		IPAddress:    ipaddress,
 		ASN:          fmt.Sprintf("%d", asn),
-		Networks:     networks,
+		Networks:     allocation.Networks,
 		MachineUUID:  h.Spec.MachineUUID,
 		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,

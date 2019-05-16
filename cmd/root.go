@@ -116,9 +116,13 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		}
 		asn := int64(4200000001)
 		primary := true
+		primary2 := false
 		underlay := false
+		underlay2 := true
 		nat := false
+		nat2 := true
 		vrf := int64(0)
+		vrf2 := int64(4200000001)
 		hostname := "devmode"
 		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
 		fakeToken := "JWT"
@@ -139,6 +143,15 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 						Destinationprefixes: []string{"0.0.0.0/0"},
 						Vrf:                 &vrf,
 						Nat:                 &nat,
+					},
+					&models.ModelsV1MachineNetwork{
+						Ips:                 []string{"1.2.3.4"},
+						Asn:                 &asn,
+						Primary:             &primary2,
+						Underlay:            &underlay2,
+						Destinationprefixes: []string{"2.3.4.5/24"},
+						Vrf:                 &vrf2,
+						Nat:                 &nat2,
 					},
 				},
 			},
