@@ -1,7 +1,7 @@
 module git.f-i-ts.de/cloud-native/metal/metal-hammer
 
 require (
-	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190426111353-d9625af99ef7
+	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190516120446-7d313876bcb1
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/beevik/ntp v0.2.0
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -20,7 +20,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.3.0 // indirect
-	github.com/google/gopacket v1.1.16
+	github.com/google/gopacket v1.1.17
 	github.com/google/uuid v1.1.1
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/jaypipes/ghw v0.0.0-20190423090301-93d787280a75
@@ -41,8 +41,9 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/u-root/u-root v4.0.0+incompatible
 	github.com/vishvananda/netlink v1.0.0
-	golang.org/x/net v0.0.0-20190424112056-4829fb13d2c6 // indirect
-	golang.org/x/sys v0.0.0-20190429094411-2cc0cad0ac78
+	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
+	golang.org/x/net v0.0.0-20190514140710-3ec191127204 // indirect
+	golang.org/x/sys v0.0.0-20190516110030-61b9204099cb
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.2.2
