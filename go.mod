@@ -32,8 +32,8 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190313224307-5b5fc417d966
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/raw v0.0.0-20190419142535-64193704e472
-	// archiver must stay in version v2.1.0
-	github.com/mholt/archiver v2.1.0+incompatible
+	// archiver must stay in version v2.1.0, see replace below
+	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.0.5+incompatible
@@ -49,3 +49,5 @@ require (
 	gopkg.in/yaml.v2 v2.2.2
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 )
+
+replace github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
