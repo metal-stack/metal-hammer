@@ -50,8 +50,7 @@ type InstallerConfig struct {
 }
 
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(machine *models.ModelsV1MachineWaitResponse) (*kernel.Bootinfo, error) {
-	phtoken := machine.PhoneHomeToken
+func (h *Hammer) Install(machine *models.ModelsV1MachineResponse) (*kernel.Bootinfo, error) {
 	image := machine.Allocation.Image.URL
 
 	err := h.Disk.Partition()
@@ -79,7 +78,7 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineWaitResponse) (*kernel.B
 		return nil, err
 	}
 
-	info, err := h.install(prefix, machine, *phtoken)
+	info, err := h.install(prefix, machine)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +90,7 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineWaitResponse) (*kernel.B
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineWaitResponse, phoneHomeToken string) (*kernel.Bootinfo, error) {
+func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse) (*kernel.Bootinfo, error) {
 	log.Info("install", "image", machine.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(machine)
@@ -102,11 +101,6 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineWaitRespo
 	err = h.writeDiskConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "writing configuration disk.json failed")
-	}
-
-	err = h.writePhoneHomeToken(phoneHomeToken)
-	if err != nil {
-		return nil, errors.Wrap(err, "writing phoneHome.jwt failed")
 	}
 
 	err = h.writeUserData(machine)
@@ -188,7 +182,7 @@ func (h *Hammer) writePhoneHomeToken(phoneHomeToken string) error {
 	return ioutil.WriteFile(destination, []byte(phoneHomeToken), 0600)
 }
 
-func (h *Hammer) writeUserData(machine *models.ModelsV1MachineWaitResponse) error {
+func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 	configdir := path.Join(prefix, "etc", "metal")
 	destination := path.Join(configdir, "userdata")
 
@@ -204,7 +198,7 @@ func (h *Hammer) writeUserData(machine *models.ModelsV1MachineWaitResponse) erro
 	return nil
 }
 
-func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitResponse) error {
+func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse) error {
 	log.Info("write installation configuration")
 	configdir := path.Join(prefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)

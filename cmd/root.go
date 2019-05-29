@@ -104,7 +104,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
-	var machineWithToken *models.ModelsV1MachineWaitResponse
+	var machine *models.ModelsV1MachineResponse
 	if spec.DevMode {
 		cidr := "10.0.1.2/24"
 		if spec.Cidr != "" {
@@ -125,8 +125,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		vrf2 := int64(4200000001)
 		hostname := "devmode"
 		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
-		fakeToken := "JWT"
-		machineWithToken = &models.ModelsV1MachineWaitResponse{
+		machine = &models.ModelsV1MachineResponse{
 			Allocation: &models.ModelsV1MachineAllocation{
 				Image: &models.ModelsV1ImageResponse{
 					URL: spec.ImageURL,
@@ -158,20 +157,19 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 			Size: &models.ModelsV1SizeResponse{
 				ID: &spec.SizeID,
 			},
-			PhoneHomeToken: &fakeToken,
 		}
 	} else {
-		machineWithToken, err = hammer.Wait(uuid)
+		machine, err = hammer.Wait(uuid)
 		if err != nil {
 			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(machineWithToken.Allocation.Image, machineWithToken.Size)
+	hammer.Disk = storage.GetDisk(machine.Allocation.Image, machine.Size)
 
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
-	info, err := hammer.Install(machineWithToken)
+	info, err := hammer.Install(machine)
 
 	// FIXME, must not return here.
 	if err != nil {
