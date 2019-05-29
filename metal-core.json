@@ -339,7 +339,7 @@
         "nics": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/models.V1MachineNic"
+            "$ref": "#/definitions/models.V1MachineNicExtended"
           }
         },
         "uuid": {
@@ -428,9 +428,6 @@
         },
         "image": {
           "$ref": "#/definitions/models.V1ImageResponse"
-        },
-        "last_ping": {
-          "type": "string"
         },
         "name": {
           "type": "string"
@@ -620,6 +617,20 @@
     "models.V1MachineNic": {
       "required": [
         "mac",
+        "name"
+      ],
+      "properties": {
+        "mac": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "models.V1MachineNicExtended": {
+      "required": [
+        "mac",
         "name",
         "neighbors"
       ],
@@ -633,7 +644,7 @@
         "neighbors": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/models.V1MachineNic"
+            "$ref": "#/definitions/models.V1MachineNicExtended"
           }
         }
       }

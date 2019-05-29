@@ -93,8 +93,8 @@ func linkSetUp(name string) error {
 }
 
 // Neighbors of a interface, detected via ip neighbor detection
-func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNic, error) {
-	neighbors := make([]*models.ModelsV1MachineNic, 0)
+func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNicExtended, error) {
+	neighbors := make([]*models.ModelsV1MachineNicExtended, 0)
 
 	host := n.LLDPClient.Host
 
@@ -115,7 +115,7 @@ func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNic, error) {
 			continue
 		}
 		macAddress := neigh.Port.Value
-		neighbors = append(neighbors, &models.ModelsV1MachineNic{Mac: &macAddress})
+		neighbors = append(neighbors, &models.ModelsV1MachineNicExtended{Mac: &macAddress})
 	}
 	return neighbors, nil
 }
