@@ -19,7 +19,7 @@ clean::
 
 ${INITRD_COMPRESSED}:
 	rm -f ${INITRD_COMPRESSED}
-	docker-make --no-push --Lint
+	docker-make --no-push --no-pull --Lint
 
 .PHONY: initrd
 initrd: ${INITRD_COMPRESSED}

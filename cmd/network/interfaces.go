@@ -8,7 +8,8 @@ import (
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/lldp"
-	"git.f-i-ts.de/cloud-native/metallib/version"
+	"github.com/metal-pod/v"
+
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
@@ -31,7 +32,7 @@ const MTU = 9000
 // therefore neighbor discovery,
 // which is required to make all local mac's visible on the switch side.
 func (n *Network) UpAllInterfaces() error {
-	description := fmt.Sprintf("metal-hammer IP:%s version:%s waiting since %s for installation", n.IPAddress, version.V, n.Started)
+	description := fmt.Sprintf("metal-hammer IP:%s version:%s waiting since %s for installation", n.IPAddress, v.V, n.Started)
 	interfaces := make([]string, 0)
 	ethtool := NewEthtool()
 	for _, name := range Interfaces() {

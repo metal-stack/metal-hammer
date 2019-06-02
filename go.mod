@@ -1,7 +1,6 @@
 module git.f-i-ts.de/cloud-native/metal/metal-hammer
 
 require (
-	git.f-i-ts.de/cloud-native/metallib v0.0.0-20190516120446-7d313876bcb1
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/beevik/ntp v0.2.0
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -32,6 +31,7 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190313224307-5b5fc417d966
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/raw v0.0.0-20190419142535-64193704e472
+	github.com/metal-pod/v v0.0.1
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
