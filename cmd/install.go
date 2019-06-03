@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	img "git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/image"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
@@ -47,6 +48,8 @@ type InstallerConfig struct {
 	Devmode bool `yaml:"devmode"`
 	// Console specifies where the kernel should connect its console to.
 	Console string `yaml:"console"`
+	// Timestamp is the the timestamp of installer config creation.
+	Timestamp string `yaml:"timestamp"`
 }
 
 // Install a given image to the disk by using genuinetools/img
@@ -252,6 +255,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineWaitRespons
 		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,
 		Console:      console,
+		Timestamp:    time.Now().Format(time.RFC3339),
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
