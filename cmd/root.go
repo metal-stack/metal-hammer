@@ -91,7 +91,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
 	// Remove uuid return use MachineUUID() above.
-	uuid, err := reg.RegisterMachine()
+	hw, uuid, err := reg.RegisterMachine()
 	if !spec.DevMode && err != nil {
 		return eventEmitter, errors.Wrap(err, "register")
 	}
@@ -158,6 +158,28 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 				ID: &spec.SizeID,
 			},
 		}
+		mac1 := "00:00:00:00:01:01"
+		mac2 := "00:00:00:00:01:02"
+		mac3 := "00:00:00:00:01:03"
+		name1 := "eth0"
+		name2 := "eth1"
+		hw = &models.DomainMetalHammerRegisterMachineRequest{
+			Nics: []*models.ModelsV1MachineNicExtended{
+				{
+					Mac:  &mac1,
+					Name: &name1,
+					Neighbors: []*models.ModelsV1MachineNicExtended{
+						{
+							Mac: &mac3,
+						},
+					},
+				},
+				{
+					Mac:  &mac2,
+					Name: &name2,
+				},
+			},
+		}
 	} else {
 		machine, err = hammer.Wait(uuid)
 		if err != nil {
@@ -169,7 +191,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
-	info, err := hammer.Install(machine)
+	info, err := hammer.Install(machine, hw)
 
 	// FIXME, must not return here.
 	if err != nil {

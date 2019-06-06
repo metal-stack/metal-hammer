@@ -52,7 +52,7 @@ func TestRegisterMachine(t *testing.T) {
 	}
 
 	eth0Mac = "00:00:00:00:00:01"
-	uuid, err := r.RegisterMachine()
+	_, uuid, err := r.RegisterMachine()
 
 	if err != nil {
 		t.Error(err)

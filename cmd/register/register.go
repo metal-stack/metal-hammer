@@ -29,10 +29,10 @@ type Register struct {
 }
 
 // RegisterMachine register a machine at the metal-api via metal-core
-func (r *Register) RegisterMachine() (string, error) {
+func (r *Register) RegisterMachine() (*models.DomainMetalHammerRegisterMachineRequest,string, error) {
 	hw, err := r.readHardwareDetails()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to read all hardware details")
+		return hw,"", errors.Wrap(err, "unable to read all hardware details")
 	}
 	params := machine.NewRegisterParams()
 	params.SetBody(hw)
@@ -40,14 +40,14 @@ func (r *Register) RegisterMachine() (string, error) {
 	resp, err := r.Client.Register(params)
 
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to register machine:%#v", hw)
+		return hw, "", errors.Wrapf(err, "unable to register machine:%#v", hw)
 	}
 	if resp == nil {
-		return "", errors.Errorf("unable to register machine:%#v response payload is nil", hw)
+		return hw, "", errors.Errorf("unable to register machine:%#v response payload is nil", hw)
 	}
 
 	log.Info("register machine returned", "response", resp.Payload)
-	return *resp.Payload.ID, nil
+	return hw, *resp.Payload.ID, nil
 }
 
 // this mac is used to calculate the IPMI Port offset in the metal-lab environment.

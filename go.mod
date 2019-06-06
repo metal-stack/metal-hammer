@@ -42,7 +42,7 @@ require (
 	github.com/u-root/u-root v4.0.0+incompatible
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc // indirect
-	golang.org/x/net v0.0.0-20190514140710-3ec191127204 // indirect
+	golang.org/x/net v0.0.0-20190603091049-60506f45cf65 // indirect
 	golang.org/x/sys v0.0.0-20190516110030-61b9204099cb
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
