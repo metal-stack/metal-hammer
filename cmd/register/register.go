@@ -75,7 +75,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	cores := int32(cpu.TotalCores)
 	hw.CPUCores = &cores
 
-	nics := []*models.ModelsV1MachineNic{}
+	nics := []*models.ModelsV1MachineNicExtended{}
 	loFound := false
 	links, err := netlink.LinkList()
 	if err != nil {
@@ -99,7 +99,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 			eth0Mac = mac
 		}
 
-		nic := &models.ModelsV1MachineNic{
+		nic := &models.ModelsV1MachineNicExtended{
 			Mac:  &mac,
 			Name: &name,
 		}
@@ -112,7 +112,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	if !loFound {
 		mac := "00:00:00:00:00:00"
 		name := "lo"
-		lo := &models.ModelsV1MachineNic{
+		lo := &models.ModelsV1MachineNicExtended{
 			Mac:  &mac,
 			Name: &name,
 		}

@@ -41,7 +41,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/models.V1MachineWaitResponse"
+              "$ref": "#/definitions/models.V1MachineResponse"
             }
           },
           "304": {
@@ -59,7 +59,7 @@
           "default": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/models.V1MachineWaitResponse"
+              "$ref": "#/definitions/models.V1MachineResponse"
             }
           }
         }
@@ -339,7 +339,7 @@
         "nics": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/models.V1MachineNic"
+            "$ref": "#/definitions/models.V1MachineNicExtended"
           }
         },
         "uuid": {
@@ -428,9 +428,6 @@
         },
         "image": {
           "$ref": "#/definitions/models.V1ImageResponse"
-        },
-        "last_ping": {
-          "type": "string"
         },
         "name": {
           "type": "string"
@@ -620,6 +617,20 @@
     "models.V1MachineNic": {
       "required": [
         "mac",
+        "name"
+      ],
+      "properties": {
+        "mac": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "models.V1MachineNicExtended": {
+      "required": [
+        "mac",
         "name",
         "neighbors"
       ],
@@ -633,7 +644,7 @@
         "neighbors": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/models.V1MachineNic"
+            "$ref": "#/definitions/models.V1MachineNicExtended"
           }
         }
       }
@@ -749,73 +760,6 @@
         },
         "value": {
           "type": "string"
-        }
-      }
-    },
-    "models.V1MachineWaitResponse": {
-      "required": [
-        "allocation",
-        "changed",
-        "created",
-        "events",
-        "hardware",
-        "id",
-        "liveliness",
-        "partition",
-        "phone_home_token",
-        "rackid",
-        "size",
-        "state",
-        "tags"
-      ],
-      "properties": {
-        "allocation": {
-          "$ref": "#/definitions/models.V1MachineAllocation"
-        },
-        "changed": {
-          "type": "string"
-        },
-        "created": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "events": {
-          "$ref": "#/definitions/models.V1MachineRecentProvisioningEvents"
-        },
-        "hardware": {
-          "$ref": "#/definitions/models.V1MachineHardware"
-        },
-        "id": {
-          "type": "string"
-        },
-        "liveliness": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "partition": {
-          "$ref": "#/definitions/models.V1PartitionResponse"
-        },
-        "phone_home_token": {
-          "type": "string"
-        },
-        "rackid": {
-          "type": "string"
-        },
-        "size": {
-          "$ref": "#/definitions/models.V1SizeResponse"
-        },
-        "state": {
-          "$ref": "#/definitions/models.V1MachineState"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
         }
       }
     },
