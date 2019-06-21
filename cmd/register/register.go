@@ -29,10 +29,10 @@ type Register struct {
 }
 
 // RegisterMachine register a machine at the metal-api via metal-core
-func (r *Register) RegisterMachine() (*models.DomainMetalHammerRegisterMachineRequest,string, error) {
+func (r *Register) RegisterMachine() (*models.DomainMetalHammerRegisterMachineRequest, string, error) {
 	hw, err := r.readHardwareDetails()
 	if err != nil {
-		return hw,"", errors.Wrap(err, "unable to read all hardware details")
+		return hw, "", errors.Wrap(err, "unable to read all hardware details")
 	}
 	params := machine.NewRegisterParams()
 	params.SetBody(hw)
