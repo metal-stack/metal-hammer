@@ -100,7 +100,9 @@ func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNicExtended, 
 	host := n.LLDPClient.Host
 
 	for !host.done {
-		log.Info("not all lldp pdu's received, waiting...", "interface", name)
+		actualNeigh := len(host.neighbors)
+		minimumNeigh := host.minimumNeighbors
+		log.Info("waiting for lldp neighbors", "interface", name, "actual", actualNeigh, "minimum", minimumNeigh)
 		time.Sleep(1 * time.Second)
 
 		duration := time.Now().Sub(host.start)
