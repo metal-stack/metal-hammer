@@ -74,6 +74,7 @@ type (
 )
 
 var (
+	// FIXME this whole struct should be part of the size, comming with the allocate response.
 	defaultDisk = Disk{
 		Partitions: []*Partition{
 			{
@@ -90,6 +91,15 @@ var (
 				Label:      "root",
 				Number:     2,
 				MountPoint: "/",
+				Filesystem: EXT4,
+				GPTType:    GPTLinux,
+				Size:       5000,
+				Properties: make(map[string]string),
+			},
+			{
+				Label:      "varlib",
+				Number:     3,
+				MountPoint: "/var/lib",
 				Filesystem: EXT4,
 				GPTType:    GPTLinux,
 				Size:       -1,
