@@ -33,10 +33,6 @@ const (
 type InstallerConfig struct {
 	// Hostname of the machine
 	Hostname string `yaml:"hostname"`
-	// IPAddress is expected to be in the form without mask
-	IPAddress string `yaml:"ipaddress"`
-	// must be calculated from the last 4 byte of the IPAddress
-	ASN string `yaml:"asn"`
 	// Networks all networks connected to this machine
 	Networks []*models.ModelsV1MachineNetwork `yaml:"networks"`
 	// MachineUUID is the unique UUID for this machine, usually the board serial.
@@ -215,23 +211,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, h
 	}
 	destination := path.Join(configdir, "install.yaml")
 
-	var ipaddress string
-	var asn int64
 	allocation := machine.Allocation
-
-	for _, nw := range allocation.Networks {
-		// nw := allocation.Networks[i]
-		if *nw.Primary && len(nw.Ips) > 0 {
-			// Keep IP and ASN for backward compatibility with os install.sh
-			// TODO can be removed from InstallConfig struct once install.sh
-			// can create all network configuration from the Networks struct.
-			ipaddress = nw.Ips[0]
-			asn = *nw.Asn
-		}
-		if *nw.Primary && len(nw.Ips) == 0 {
-			log.Warn("install no default network with ips found")
-		}
-	}
 
 	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
 	cmdline, err := kernel.ParseCmdline()
@@ -249,8 +229,6 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, h
 	y := &InstallerConfig{
 		Hostname:     *machine.Allocation.Hostname,
 		SSHPublicKey: sshPubkeys,
-		IPAddress:    ipaddress,
-		ASN:          fmt.Sprintf("%d", asn),
 		Networks:     allocation.Networks,
 		MachineUUID:  h.Spec.MachineUUID,
 		Devmode:      h.Spec.DevMode,
