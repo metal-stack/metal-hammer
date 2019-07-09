@@ -26,7 +26,7 @@ Vagrant.configure("2") do |config|
     pxeclient.vm.provider :libvirt do |domain|
       domain.cpus = 1
       domain.memory = 2048
-      domain.storage :file, :size => '3000M', :bus => 'sata'
+      domain.storage :file, :size => '10000M', :bus => 'sata'
       domain.storage :file, :size => '10M', :bus => 'sata'
       # last octet of mac represents the ipmi vbmc port offset
       domain.management_network_mac = "00:03:00:00:00:01"
