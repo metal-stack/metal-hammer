@@ -1,10 +1,11 @@
 package cmd
 
 import (
+	"time"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
-	"time"
 
 	"github.com/pkg/errors"
 
@@ -43,7 +44,7 @@ func (h *Hammer) EnsureUEFI() error {
 		return nil
 	}
 
-	h.EventEmitter.Emit(event.ProvisioningEventPlannedReboot, "need to reboot to get uefi set")
+	h.EventEmitter.Emit(event.ProvisioningEventCrashed, "need to reboot to get uefi set")
 	time.Sleep(10 * time.Second)
 
 	err = kernel.Reboot()

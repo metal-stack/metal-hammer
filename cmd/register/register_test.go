@@ -25,7 +25,7 @@ func TestRegisterMachine(t *testing.T) {
 	expected := "1234-1234"
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		metalMachine := &models.ModelsMetalMachine{
+		metalMachine := &models.ModelsV1MachineResponse{
 			ID: &expected,
 		}
 		response, err := json.Marshal(metalMachine)
@@ -52,7 +52,7 @@ func TestRegisterMachine(t *testing.T) {
 	}
 
 	eth0Mac = "00:00:00:00:00:01"
-	uuid, err := r.RegisterMachine()
+	_, uuid, err := r.RegisterMachine()
 
 	if err != nil {
 		t.Error(err)
@@ -115,7 +115,7 @@ func TestHammer_readIPMIDetails(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
-		want    *models.ModelsMetalIPMI
+		want    *models.ModelsV1MachineIPMI
 		wantErr bool
 	}{
 		// TODO: Add test cases.

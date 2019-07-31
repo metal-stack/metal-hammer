@@ -1,17 +1,16 @@
 package cmd
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 	"time"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
-
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/firmware"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/register"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/report"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	httptransport "github.com/go-openapi/runtime/client"
@@ -79,11 +78,6 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	// Set Time from ntp
 	network.NtpDate()
 
-	err = hammer.EnsureUEFI()
-	if err != nil {
-		return eventEmitter, errors.Wrap(err, "uefi")
-	}
-
 	err = storage.WipeDisks()
 	if err != nil {
 		return eventEmitter, errors.Wrap(err, "wipe")
@@ -97,14 +91,20 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
 	// Remove uuid return use MachineUUID() above.
-	uuid, err := reg.RegisterMachine()
+	hw, uuid, err := reg.RegisterMachine()
 	if !spec.DevMode && err != nil {
 		return eventEmitter, errors.Wrap(err, "register")
 	}
+
+	err = hammer.EnsureUEFI()
+	if err != nil {
+		return eventEmitter, errors.Wrap(err, "uefi")
+	}
+
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
-	var machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken
+	var machine *models.ModelsV1MachineResponse
 	if spec.DevMode {
 		cidr := "10.0.1.2/24"
 		if spec.Cidr != "" {
@@ -114,38 +114,84 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		if !spec.BGPEnabled {
 			cidr = "dhcp"
 		}
+		asn := int64(4200000001)
+		primary := true
+		primary2 := false
+		underlay := false
+		underlay2 := true
+		nat := false
+		nat2 := true
+		vrf := int64(0)
+		vrf2 := int64(4200000001)
 		hostname := "devmode"
 		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
-		fakeToken := "JWT"
-		machineWithToken = &models.ModelsMetalMachineWithPhoneHomeToken{
-			Machine: &models.ModelsMetalMachine{
-				Allocation: &models.ModelsMetalMachineAllocation{
-					Image: &models.ModelsMetalImage{
-						URL: &spec.ImageURL,
-						ID:  &spec.ImageID,
-					},
-					Hostname:   &hostname,
-					SSHPubKeys: sshkeys,
-					Cidr:       &cidr,
+		machine = &models.ModelsV1MachineResponse{
+			Allocation: &models.ModelsV1MachineAllocation{
+				Image: &models.ModelsV1ImageResponse{
+					URL: spec.ImageURL,
+					ID:  &spec.ImageID,
 				},
-				Size: &models.ModelsMetalSize{
-					ID: &spec.SizeID,
+				Hostname:   &hostname,
+				SSHPubKeys: sshkeys,
+				Networks: []*models.ModelsV1MachineNetwork{
+					&models.ModelsV1MachineNetwork{
+						Ips:                 []string{cidr},
+						Asn:                 &asn,
+						Primary:             &primary,
+						Underlay:            &underlay,
+						Destinationprefixes: []string{"0.0.0.0/0"},
+						Vrf:                 &vrf,
+						Nat:                 &nat,
+					},
+					&models.ModelsV1MachineNetwork{
+						Ips:                 []string{"1.2.3.4"},
+						Asn:                 &asn,
+						Primary:             &primary2,
+						Underlay:            &underlay2,
+						Destinationprefixes: []string{"2.3.4.5/24"},
+						Vrf:                 &vrf2,
+						Nat:                 &nat2,
+					},
 				},
 			},
-			PhoneHomeToken: &fakeToken,
+			Size: &models.ModelsV1SizeResponse{
+				ID: &spec.SizeID,
+			},
+		}
+		mac1 := "00:00:00:00:01:01"
+		mac2 := "00:00:00:00:01:02"
+		mac3 := "00:00:00:00:01:03"
+		name1 := "eth0"
+		name2 := "eth1"
+		hw = &models.DomainMetalHammerRegisterMachineRequest{
+			Nics: []*models.ModelsV1MachineNicExtended{
+				{
+					Mac:  &mac1,
+					Name: &name1,
+					Neighbors: []*models.ModelsV1MachineNicExtended{
+						{
+							Mac: &mac3,
+						},
+					},
+				},
+				{
+					Mac:  &mac2,
+					Name: &name2,
+				},
+			},
 		}
 	} else {
-		machineWithToken, err = hammer.Wait(uuid)
+		machine, err = hammer.Wait(uuid)
 		if err != nil {
 			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(machineWithToken.Machine.Allocation.Image, machineWithToken.Machine.Size)
+	hammer.Disk = storage.GetDisk(machine.Allocation.Image, machine.Size)
 
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
-	info, err := hammer.Install(machineWithToken)
+	info, err := hammer.Install(machine, hw)
 
 	// FIXME, must not return here.
 	if err != nil {

@@ -2,17 +2,18 @@ package register
 
 import (
 	"fmt"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	"io/ioutil"
 	gonet "net"
 	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
@@ -28,10 +29,10 @@ type Register struct {
 }
 
 // RegisterMachine register a machine at the metal-api via metal-core
-func (r *Register) RegisterMachine() (string, error) {
+func (r *Register) RegisterMachine() (*models.DomainMetalHammerRegisterMachineRequest, string, error) {
 	hw, err := r.readHardwareDetails()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to read all hardware details")
+		return hw, "", errors.Wrap(err, "unable to read all hardware details")
 	}
 	params := machine.NewRegisterParams()
 	params.SetBody(hw)
@@ -39,14 +40,14 @@ func (r *Register) RegisterMachine() (string, error) {
 	resp, err := r.Client.Register(params)
 
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to register machine:%#v", hw)
+		return hw, "", errors.Wrapf(err, "unable to register machine:%#v", hw)
 	}
 	if resp == nil {
-		return "", errors.Errorf("unable to register machine:%#v response payload is nil", hw)
+		return hw, "", errors.Errorf("unable to register machine:%#v response payload is nil", hw)
 	}
 
 	log.Info("register machine returned", "response", resp.Payload)
-	return *resp.Payload.ID, nil
+	return hw, *resp.Payload.ID, nil
 }
 
 // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
@@ -74,7 +75,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	cores := int32(cpu.TotalCores)
 	hw.CPUCores = &cores
 
-	nics := []*models.ModelsMetalNic{}
+	nics := []*models.ModelsV1MachineNicExtended{}
 	loFound := false
 	links, err := netlink.LinkList()
 	if err != nil {
@@ -98,7 +99,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 			eth0Mac = mac
 		}
 
-		nic := &models.ModelsMetalNic{
+		nic := &models.ModelsV1MachineNicExtended{
 			Mac:  &mac,
 			Name: &name,
 		}
@@ -111,7 +112,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	if !loFound {
 		mac := "00:00:00:00:00:00"
 		name := "lo"
-		lo := &models.ModelsMetalNic{
+		lo := &models.ModelsV1MachineNicExtended{
 			Mac:  &mac,
 			Name: &name,
 		}
@@ -134,10 +135,10 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get system block devices")
 	}
-	disks := []*models.ModelsMetalBlockDevice{}
+	disks := []*models.ModelsV1MachineBlockDevice{}
 	for _, disk := range blockInfo.Disks {
 		size := int64(disk.SizeBytes)
-		blockDevice := &models.ModelsMetalBlockDevice{
+		blockDevice := &models.ModelsV1MachineBlockDevice{
 			Name: &disk.Name,
 			Size: &size,
 		}
@@ -164,9 +165,9 @@ const defaultIpmiUser = "metal"
 const defaultIpmiUserID = "10"
 
 // IPMI configuration and
-func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
+func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 	config := ipmi.LanConfig{}
-	var fru models.ModelsMetalFru
+	var fru models.ModelsV1MachineFru
 	i := ipmi.New()
 	var pw string
 	var user string
@@ -189,7 +190,7 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read ipmi fru configuration")
 		}
-		fru = models.ModelsMetalFru{
+		fru = models.ModelsV1MachineFru{
 			ChassisPartNumber:   f.ChassisPartNumber,
 			ChassisPartSerial:   f.ChassisPartSerial,
 			BoardMfg:            f.BoardMfg,
@@ -219,13 +220,13 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsMetalIPMI, error) {
 		config.Mac = "00:00:00:00:00:00"
 		pw = "vagrant"
 		user = "vagrant"
-		fru = models.ModelsMetalFru{
+		fru = models.ModelsV1MachineFru{
 			ProductPartNumber: "vagrant",
 		}
 	}
 
 	intf := "lanplus"
-	details := &models.ModelsMetalIPMI{
+	details := &models.ModelsV1MachineIPMI{
 		Address:   &config.IP,
 		Mac:       &config.Mac,
 		Password:  &pw,

@@ -25,8 +25,8 @@ Vagrant.configure("2") do |config|
 
     pxeclient.vm.provider :libvirt do |domain|
       domain.cpus = 1
-      domain.memory = 1024
-      domain.storage :file, :size => '2000M', :bus => 'sata'
+      domain.memory = 2048
+      domain.storage :file, :size => '10000M', :bus => 'sata'
       domain.storage :file, :size => '10M', :bus => 'sata'
       # last octet of mac represents the ipmi vbmc port offset
       domain.management_network_mac = "00:03:00:00:00:01"
@@ -34,10 +34,10 @@ Vagrant.configure("2") do |config|
       domain.kernel = kernel_path
       domain.initrd = initrd_path
       domain.cmd_line = "console=ttyS0,115200n8 ip=dhcp " \
-          "METAL_CORE_ADDRESS=192.168.121.110:4242 " \
+          "METAL_CORE_ADDRESS=192.168.121.1:4712 " \
           "IMAGE_ID=default " \
           "SIZE_ID=v1-small-x86 " \
-          "IMAGE_URL=http://192.168.121.1:4711/images/os/ubuntu/18.10/img.tar.lz4 " \
+          "IMAGE_URL=http://192.168.121.1:4711/images/os/ubuntu/19.04/img.tar.lz4 " \
           "DEBUG=1 " \
           "BGP=1"
       domain.loader = "/usr/share/OVMF/OVMF_CODE.fd"

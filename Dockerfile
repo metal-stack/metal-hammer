@@ -11,7 +11,7 @@ ENV STORCLI_VERSION=7.8-007.0813.0000.0000 \
     STORCLI_DOWNLOAD_URL=https://docs.broadcom.com/docs-and-downloads/raid-controllers/raid-controllers-common-files
 WORKDIR /work
 RUN set -ex \
- && wget -q https://github.com/Microsoft/ethr/releases/download/v0.2.1/ethr_linux.zip -O ethr.zip \
+ && wget -q https://github.com/microsoft/ethr/releases/download/v0.2.1/ethr_linux.zip -O ethr.zip \
  && wget -q ${STORCLI_DOWNLOAD_URL}/MR_SAS_Unified_StorCLI_${STORCLI_VERSION}.zip -O storcli.zip \
  && apt-get update \
  && apt-get install -y --no-install-recommends unzip \

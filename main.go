@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"git.f-i-ts.de/cloud-native/metallib/version"
+	"github.com/metal-pod/v"
+
 	"os"
 	"time"
 
@@ -30,7 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("metal-hammer", "version", version.V)
+	log.Info("metal-hammer", "version", v.V)
 
 	spec := cmd.NewSpec(ip)
 	spec.Log()

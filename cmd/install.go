@@ -4,21 +4,22 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
-	"net"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 	img "git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/image"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -32,12 +33,10 @@ const (
 type InstallerConfig struct {
 	// Hostname of the machine
 	Hostname string `yaml:"hostname"`
-	// IPAddress is expected to be in the form without mask
-	IPAddress string `yaml:"ipaddress"`
+	// Networks all networks connected to this machine
+	Networks []*models.ModelsV1MachineNetwork `yaml:"networks"`
 	// MachineUUID is the unique UUID for this machine, usually the board serial.
 	MachineUUID string `yaml:"machineuuid"`
-	// must be calculated from the last 4 byte of the IPAddress
-	ASN string `yaml:"asn"`
 	// SSHPublicKey of the user
 	SSHPublicKey string `yaml:"sshpublickey"`
 	// Password is the password for the metal user.
@@ -46,13 +45,15 @@ type InstallerConfig struct {
 	Devmode bool `yaml:"devmode"`
 	// Console specifies where the kernel should connect its console to.
 	Console string `yaml:"console"`
+	// Timestamp is the the timestamp of installer config creation.
+	Timestamp string `yaml:"timestamp"`
+	// Nics are the network interfaces of this machine including their neighbors.
+	Nics []*models.ModelsV1MachineNicExtended `yaml:"nics"`
 }
 
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(machineWithToken *models.ModelsMetalMachineWithPhoneHomeToken) (*kernel.Bootinfo, error) {
-	machine := machineWithToken.Machine
-	phtoken := machineWithToken.PhoneHomeToken
-	image := *machine.Allocation.Image.URL
+func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest) (*kernel.Bootinfo, error) {
+	image := machine.Allocation.Image.URL
 
 	err := h.Disk.Partition()
 	if err != nil {
@@ -79,7 +80,7 @@ func (h *Hammer) Install(machineWithToken *models.ModelsMetalMachineWithPhoneHom
 		return nil, err
 	}
 
-	info, err := h.install(prefix, machine, *phtoken)
+	info, err := h.install(prefix, machine, hw)
 	if err != nil {
 		return nil, err
 	}
@@ -91,10 +92,10 @@ func (h *Hammer) Install(machineWithToken *models.ModelsMetalMachineWithPhoneHom
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.ModelsMetalMachine, phoneHomeToken string) (*kernel.Bootinfo, error) {
-	log.Info("install", "image", *machine.Allocation.Image.URL)
+func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest) (*kernel.Bootinfo, error) {
+	log.Info("install", "image", machine.Allocation.Image.URL)
 
-	err := h.writeInstallerConfig(machine)
+	err := h.writeInstallerConfig(machine, hw)
 	if err != nil {
 		return nil, errors.Wrap(err, "writing configuration install.yaml failed")
 	}
@@ -102,11 +103,6 @@ func (h *Hammer) install(prefix string, machine *models.ModelsMetalMachine, phon
 	err = h.writeDiskConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "writing configuration disk.json failed")
-	}
-
-	err = h.writePhoneHomeToken(phoneHomeToken)
-	if err != nil {
-		return nil, errors.Wrap(err, "writing phoneHome.jwt failed")
 	}
 
 	err = h.writeUserData(machine)
@@ -188,7 +184,7 @@ func (h *Hammer) writePhoneHomeToken(phoneHomeToken string) error {
 	return ioutil.WriteFile(destination, []byte(phoneHomeToken), 0600)
 }
 
-func (h *Hammer) writeUserData(machine *models.ModelsMetalMachine) error {
+func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 	configdir := path.Join(prefix, "etc", "metal")
 	destination := path.Join(configdir, "userdata")
 
@@ -196,15 +192,17 @@ func (h *Hammer) writeUserData(machine *models.ModelsMetalMachine) error {
 	if base64UserData != "" {
 		userdata, err := base64.StdEncoding.DecodeString(base64UserData)
 		if err != nil {
-			log.Error("install", "writing userdata failed", err)
-			return nil
+			log.Error("install", "bas64 decode of userdata failed", err)
+			h.EventEmitter.Emit(event.ProvisioningEventInstalling,
+				fmt.Sprintf("base64 decode of userdata failed with:%s, using as plain string", err.Error()))
+			userdata = []byte(base64UserData)
 		}
 		return ioutil.WriteFile(destination, userdata, 0600)
 	}
 	return nil
 }
 
-func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error {
+func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest) error {
 	log.Info("write installation configuration")
 	configdir := path.Join(prefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -213,22 +211,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error 
 	}
 	destination := path.Join(configdir, "install.yaml")
 
-	var ipaddress string
-	var asn int64
-	if *machine.Allocation.Cidr == "dhcp" {
-		ipaddress = *machine.Allocation.Cidr
-	} else {
-		ip, _, err := net.ParseCIDR(*machine.Allocation.Cidr)
-		if err != nil {
-			return errors.Wrap(err, "unable to parse ip from machine.ip")
-		}
-
-		asn, err = ipToASN(*machine.Allocation.Cidr)
-		if err != nil {
-			return errors.Wrap(err, "unable to parse ip from machine.ip")
-		}
-		ipaddress = ip.String()
-	}
+	allocation := machine.Allocation
 
 	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
 	cmdline, err := kernel.ParseCmdline()
@@ -241,15 +224,18 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error 
 		console = "ttyS0"
 	}
 
+	nics := nicsWithNeighbors(hw.Nics)
+
 	y := &InstallerConfig{
 		Hostname:     *machine.Allocation.Hostname,
 		SSHPublicKey: sshPubkeys,
-		IPAddress:    ipaddress,
+		Networks:     allocation.Networks,
 		MachineUUID:  h.Spec.MachineUUID,
-		ASN:          fmt.Sprintf("%d", asn),
 		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,
 		Console:      console,
+		Timestamp:    time.Now().Format(time.RFC3339),
+		Nics:         nics,
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
@@ -257,4 +243,16 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsMetalMachine) error 
 	}
 
 	return ioutil.WriteFile(destination, yamlContent, 0600)
+}
+
+func nicsWithNeighbors(nics []*models.ModelsV1MachineNicExtended) []*models.ModelsV1MachineNicExtended {
+	result := []*models.ModelsV1MachineNicExtended{}
+	for _, nic := range nics {
+		for _, neigh := range nic.Neighbors {
+			if *neigh.Mac != "" {
+				result = append(result, nic)
+			}
+		}
+	}
+	return result
 }

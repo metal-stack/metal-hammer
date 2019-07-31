@@ -74,6 +74,7 @@ type (
 )
 
 var (
+	// FIXME this whole struct should be part of the size, comming with the allocate response.
 	defaultDisk = Disk{
 		Partitions: []*Partition{
 			{
@@ -90,6 +91,15 @@ var (
 				Label:      "root",
 				Number:     2,
 				MountPoint: "/",
+				Filesystem: EXT4,
+				GPTType:    GPTLinux,
+				Size:       5000,
+				Properties: make(map[string]string),
+			},
+			{
+				Label:      "varlib",
+				Number:     3,
+				MountPoint: "/var/lib",
 				Filesystem: EXT4,
 				GPTType:    GPTLinux,
 				Size:       -1,
@@ -126,8 +136,11 @@ var (
 		"default":      defaultDisk,
 		"ubuntu-18.04": defaultDisk,
 		"ubuntu-18.10": defaultDisk,
+		"ubuntu-19.04": defaultDisk,
+		"ubuntu-19.10": defaultDisk,
 		"alpine-3.8":   defaultDisk,
 		"alpine-3.9":   defaultDisk,
+		"firewall-1":   defaultDisk,
 		"clearlinux":   clearlinuxDisk,
 	}
 
@@ -165,7 +178,7 @@ func (p *Partition) String() string {
 }
 
 // GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
-func GetDisk(image *models.ModelsMetalImage, size *models.ModelsMetalSize) Disk {
+func GetDisk(image *models.ModelsV1ImageResponse, size *models.ModelsV1SizeResponse) Disk {
 	log.Info("getdisk", "imageID", *image.ID)
 	disk, ok := diskByImage[*image.ID]
 	if !ok {
