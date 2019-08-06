@@ -187,7 +187,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(machine.Allocation.Image, machine.Size)
+	hammer.Disk = storage.GetDisk(machine.Allocation.Image, machine.Size, hw.Disks)
 
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
