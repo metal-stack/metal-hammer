@@ -195,7 +195,7 @@ func guessDisk(disks []*models.ModelsV1MachineBlockDevice) string {
 			log.Warn("getdisk", "guess for OS is ambiguous: %s, %s", guess, *d.Name)
 			return ""
 		} else {
-			guess = *d.Name
+			guess = fmt.Sprintf("/dev/%s", *d.Name)
 		}
 	}
 	return guess
@@ -217,7 +217,7 @@ func GetDisk(image *models.ModelsV1ImageResponse, size *models.ModelsV1SizeRespo
 		if deviceName == "" {
 			deviceName = "/dev/sda"
 		}
-		log.Warn("getdisk", "using %s for OS", deviceName)
+		log.Warn("getdisk", "using for OS device", deviceName)
 		primaryDevice = PrimaryDevice{
 			DeviceName:      deviceName,
 			PartitionPrefix: "",

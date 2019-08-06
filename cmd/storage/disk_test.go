@@ -8,9 +8,9 @@ import (
 )
 
 func TestGuessDisk(t *testing.T) {
-	sde := "/dev/sde"
-	sda := "/dev/sda"
-	nvme := "/dev/nvme0n"
+	sde := "sde"
+	sda := "sda"
+	nvme := "nvme0n"
 	gib64 := 64 * GIB
 	tib10 := 10 * TIB
 	tests := []struct {
