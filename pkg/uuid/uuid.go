@@ -2,11 +2,12 @@ package uuid
 
 import (
 	"fmt"
-	guuid "github.com/google/uuid"
-	log "github.com/inconshreveable/log15"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	guuid "github.com/google/uuid"
+	log "github.com/inconshreveable/log15"
 )
 
 const dmiUUID = "/sys/class/dmi/id/product_uuid"
@@ -14,12 +15,12 @@ const dmiSerial = "/sys/class/dmi/id/product_serial"
 
 // MachineUUID calculates a unique uuid for this (hardware) machine
 func MachineUUID() string {
-	return _MachineUUID(ioutil.ReadFile)
+	return machineUUIDMockable(ioutil.ReadFile)
 }
 
-func _MachineUUID(readFile func(filename string) ([]byte, error)) string {
+func machineUUIDMockable(readFileMockable func(filename string) ([]byte, error)) string {
 	if _, err := os.Stat(dmiUUID); !os.IsNotExist(err) {
-		productUUID, err := readFile(dmiUUID)
+		productUUID, err := readFileMockable(dmiUUID)
 		if err != nil {
 			log.Error("error getting product_uuid", "error", err)
 		} else {
@@ -29,7 +30,7 @@ func _MachineUUID(readFile func(filename string) ([]byte, error)) string {
 	}
 
 	if _, err := os.Stat(dmiSerial); !os.IsNotExist(err) {
-		productSerial, err := readFile(dmiSerial)
+		productSerial, err := readFileMockable(dmiSerial)
 		if err != nil {
 			log.Error("error getting product_serial", "error", err)
 		} else {
