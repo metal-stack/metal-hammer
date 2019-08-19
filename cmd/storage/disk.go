@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	log "github.com/inconshreveable/log15"
@@ -25,6 +26,10 @@ const (
 	GPTLinux = GPTType("8300")
 	// EFISystemPartition see https://en.wikipedia.org/wiki/EFI_system_partition
 	EFISystemPartition = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+	// GIB bytes of a Gigabyte
+	GIB = int64(1024 * 1024 * 1024)
+	// TIB bytes of a Terabyte
+	TIB = int64(1024 * GIB)
 )
 
 type (
@@ -177,8 +182,27 @@ func (p *Partition) String() string {
 	return fmt.Sprintf("%s", p.Device)
 }
 
+// Guess the disk for OS installation
+func guessDisk(disks []*models.ModelsV1MachineBlockDevice) string {
+	guess := ""
+	// skip nvmes and large devices (> 1 TiB) and try to find a single best guess
+	for _, d := range disks {
+		if strings.Contains(*d.Name, "nvme") {
+			continue
+		} else if (*d.Size) > TIB {
+			continue
+		} else if guess != "" {
+			log.Warn("getdisk", "guess for OS is ambiguous: %s, %s", guess, *d.Name)
+			return ""
+		} else {
+			guess = fmt.Sprintf("/dev/%s", *d.Name)
+		}
+	}
+	return guess
+}
+
 // GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
-func GetDisk(image *models.ModelsV1ImageResponse, size *models.ModelsV1SizeResponse) Disk {
+func GetDisk(image *models.ModelsV1ImageResponse, size *models.ModelsV1SizeResponse, disks []*models.ModelsV1MachineBlockDevice) Disk {
 	log.Info("getdisk", "imageID", *image.ID)
 	disk, ok := diskByImage[*image.ID]
 	if !ok {
@@ -188,9 +212,14 @@ func GetDisk(image *models.ModelsV1ImageResponse, size *models.ModelsV1SizeRespo
 
 	primaryDevice, ok := primaryDeviceBySize[*size.ID]
 	if !ok {
-		log.Warn("getdisk", "sizeID unknown, using default", *size.ID)
+		log.Info("getdisk", "sizeID unknown, try to guess disk", *size.ID)
+		deviceName := guessDisk(disks)
+		if deviceName == "" {
+			deviceName = "/dev/sda"
+		}
+		log.Warn("getdisk", "using for OS device", deviceName)
 		primaryDevice = PrimaryDevice{
-			DeviceName:      "/dev/sda",
+			DeviceName:      deviceName,
 			PartitionPrefix: "",
 		}
 	}

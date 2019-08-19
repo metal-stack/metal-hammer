@@ -92,6 +92,14 @@ func discard(device string) error {
 		log.Error("wipe", "disk", device, "message", "discard of existing data failed", "error", err)
 		return err
 	}
+
+	// additionally wipe magic bytes in the first 1MiB
+	err = os.ExecuteCommand("/bbin/dd", "status=progress", "if=/dev/zero", "of="+device, "bs=1M", "count=1")
+	if err != nil {
+		log.Error("wipe", "disk", device, "message", "overwrite of the first bytes of data with dd failed", "error", err)
+		return err
+	}
+
 	log.Info("wipe", "disk", device, "message", "finish discard of existing data")
 	return nil
 }
