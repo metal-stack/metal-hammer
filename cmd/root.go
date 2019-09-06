@@ -115,8 +115,8 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 			cidr = "dhcp"
 		}
 		asn := int64(4200000001)
-		primary := true
-		primary2 := false
+		private := true
+		private2 := false
 		underlay := false
 		underlay2 := true
 		nat := false
@@ -137,7 +137,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 					&models.ModelsV1MachineNetwork{
 						Ips:                 []string{cidr},
 						Asn:                 &asn,
-						Primary:             &primary,
+						Private:             &private,
 						Underlay:            &underlay,
 						Destinationprefixes: []string{"0.0.0.0/0"},
 						Vrf:                 &vrf,
@@ -146,7 +146,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 					&models.ModelsV1MachineNetwork{
 						Ips:                 []string{"1.2.3.4"},
 						Asn:                 &asn,
-						Primary:             &primary2,
+						Private:             &private2,
 						Underlay:            &underlay2,
 						Destinationprefixes: []string{"2.3.4.5/24"},
 						Vrf:                 &vrf2,
