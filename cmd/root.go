@@ -106,7 +106,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	var machine *models.ModelsV1MachineResponse
 	if spec.DevMode {
-		cidr := "10.0.1.2/24"
+		cidr := "10.0.1.2"
 		if spec.Cidr != "" {
 			cidr = spec.Cidr
 		}
