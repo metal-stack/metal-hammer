@@ -368,6 +368,20 @@
         }
       }
     },
+    "models.V1ChassisIdentifyLEDState": {
+      "required": [
+        "description",
+        "value"
+      ],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "models.V1ImageResponse": {
       "required": [
         "changed",
@@ -410,8 +424,7 @@
         "networks",
         "project",
         "ssh_pub_keys",
-        "succeeded",
-        "tenant"
+        "succeeded"
       ],
       "properties": {
         "console_password": {
@@ -449,9 +462,6 @@
         },
         "succeeded": {
           "type": "boolean"
-        },
-        "tenant": {
-          "type": "string"
         },
         "user_data": {
           "type": "string"
@@ -569,7 +579,7 @@
         "nat",
         "networkid",
         "prefixes",
-        "primary",
+        "private",
         "underlay",
         "vrf"
       ],
@@ -602,7 +612,7 @@
             "type": "string"
           }
         },
-        "primary": {
+        "private": {
           "type": "boolean"
         },
         "underlay": {
@@ -694,6 +704,7 @@
         "events",
         "hardware",
         "id",
+        "ledstate",
         "liveliness",
         "partition",
         "rackid",
@@ -722,6 +733,9 @@
         },
         "id": {
           "type": "string"
+        },
+        "ledstate": {
+          "$ref": "#/definitions/models.V1ChassisIdentifyLEDState"
         },
         "liveliness": {
           "type": "string"
@@ -805,7 +819,7 @@
         "name": {
           "type": "string"
         },
-        "projectnetworkprefixlength": {
+        "privatenetworkprefixlength": {
           "type": "integer",
           "format": "int32"
         }
