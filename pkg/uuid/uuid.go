@@ -15,12 +15,12 @@ const dmiSerial = "/sys/class/dmi/id/product_serial"
 
 // MachineUUID calculates a unique uuid for this (hardware) machine
 func MachineUUID() string {
-	return machineUUIDMockable(ioutil.ReadFile)
+	return machineUUID(ioutil.ReadFile)
 }
 
-func machineUUIDMockable(readFileMockable func(filename string) ([]byte, error)) string {
+func machineUUID(readFileFunc func(filename string) ([]byte, error)) string {
 	if _, err := os.Stat(dmiUUID); !os.IsNotExist(err) {
-		productUUID, err := readFileMockable(dmiUUID)
+		productUUID, err := readFileFunc(dmiUUID)
 		if err != nil {
 			log.Error("error getting product_uuid", "error", err)
 		} else {
@@ -30,7 +30,7 @@ func machineUUIDMockable(readFileMockable func(filename string) ([]byte, error))
 	}
 
 	if _, err := os.Stat(dmiSerial); !os.IsNotExist(err) {
-		productSerial, err := readFileMockable(dmiSerial)
+		productSerial, err := readFileFunc(dmiSerial)
 		if err != nil {
 			log.Error("error getting product_serial", "error", err)
 		} else {
