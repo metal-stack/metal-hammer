@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -13,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
 	img "git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/image"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
@@ -192,9 +190,7 @@ func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 	if base64UserData != "" {
 		userdata, err := base64.StdEncoding.DecodeString(base64UserData)
 		if err != nil {
-			log.Error("install", "bas64 decode of userdata failed", err)
-			h.EventEmitter.Emit(event.ProvisioningEventInstalling,
-				fmt.Sprintf("base64 decode of userdata failed with:%s, using as plain string", err.Error()))
+			log.Info("install", "base64 decode of userdata failed, using plain text", err)
 			userdata = []byte(base64UserData)
 		}
 		return ioutil.WriteFile(destination, userdata, 0600)
