@@ -178,12 +178,6 @@ func (h *Hammer) writeDiskConfig() error {
 	return ioutil.WriteFile(destination, j, 0600)
 }
 
-func (h *Hammer) writePhoneHomeToken(phoneHomeToken string) error {
-	configdir := path.Join(prefix, "etc", "metal")
-	destination := path.Join(configdir, "phoneHome.jwt")
-	return ioutil.WriteFile(destination, []byte(phoneHomeToken), 0600)
-}
-
 func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 	configdir := path.Join(prefix, "etc", "metal")
 	destination := path.Join(configdir, "userdata")

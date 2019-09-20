@@ -45,7 +45,10 @@ func TestParseCmdLine(t *testing.T) {
 
 func TestFirmware(t *testing.T) {
 	sysfirmware = "/tmp/testefi"
-	os.OpenFile(sysfirmware, os.O_RDONLY|os.O_CREATE, 0666)
+	_, err := os.OpenFile(sysfirmware, os.O_RDONLY|os.O_CREATE, 0666)
+	if err != nil {
+		t.Error(err)
+	}
 	defer os.Remove(sysfirmware)
 
 	firmware := Firmware()

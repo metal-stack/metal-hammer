@@ -114,7 +114,6 @@ func TestHammer_readIPMIDetails(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		want    *models.ModelsV1MachineIPMI
 		wantErr bool
 	}{

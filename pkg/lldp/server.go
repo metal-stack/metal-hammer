@@ -1,10 +1,11 @@
 package lldp
 
 import (
-	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 	"net"
 	"time"
+
+	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 
 	"github.com/mdlayher/ethernet"
 	"github.com/mdlayher/lldp"
@@ -65,10 +66,9 @@ func NewDaemon(systemName, systemDescription, interfaceName string, interval tim
 }
 
 // Start spawn a goroutine which sends LLDP PDU's every interval given.
-func (l *Daemon) Start() error {
+func (l *Daemon) Start() {
 	go l.sendMessages()
 	log.Info("lldpd", "interface", l.Interface.Name, "interval", l.Interval)
-	return nil
 }
 
 func createLLDPMessage(lldpd *Daemon) ([]byte, error) {
