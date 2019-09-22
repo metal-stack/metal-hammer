@@ -28,7 +28,7 @@ initrd: ${INITRD_COMPRESSED}
 # place all binaries in the same directory (/sbin) which is in the PATH of root.
 .PHONY: ramdisk
 ramdisk:
-	u-root \
+	GO111MODULE=off u-root \
 		-format=cpio -build=bb \
 		-defaultsh=/bin/bash \
 		-files="bin/metal-hammer:bbin/uinit" \
@@ -36,12 +36,8 @@ ramdisk:
 		-files="/bin/bash:bin/bash" \
 		-files="/sbin/blkid:sbin/blkid" \
 		-files="/sbin/ethtool:sbin/ethtool" \
-		-files="/usr/bin/mstflint:bin/mstflint" \
-		-files="/usr/bin/mstconfig:bin/mstconfig" \
-		-files="/usr/share/mstflint/mlxconfig_dbs/mlxconfig.db:usr/share/mstflint/mlxconfig_dbs/mlxconfig.db" \
 		-files="/usr/bin/lspci:bin/lspci" \
 		-files="/usr/share/misc/pci.ids:usr/share/misc/pci.ids" \
-		-files="bin/ethr:bin/ethr" \
 		-files="/bin/netstat:bin/netstat" \
 		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
@@ -51,7 +47,6 @@ ramdisk:
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
-		-files="bin/storcli64:sbin/storcli" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
