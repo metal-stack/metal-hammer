@@ -5,12 +5,13 @@ import (
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 )
 
 var (
-	SgdiskCommand = "sgdisk"
+	SgdiskCommand = command.SGDisk
 )
 
 // Partition a Disk

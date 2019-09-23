@@ -8,10 +8,11 @@ import (
 
 	"github.com/pkg/errors"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	log "github.com/inconshreveable/log15"
 )
 
-const sshdCommand = "sshd"
+const sshdCommand = command.SSHD
 
 // StartSSHD will start sshd to be able to diagnose problems on the pxe bootet machine.
 func StartSSHD(ip string) error {

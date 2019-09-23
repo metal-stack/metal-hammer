@@ -12,6 +12,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
@@ -41,7 +42,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, "starting metal-hammer")
 
-	err := checkAllCommandsExist()
+	err := command.CommandsExist()
 	if err != nil {
 		return eventEmitter, err
 	}

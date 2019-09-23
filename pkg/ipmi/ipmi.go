@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"strings"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 )
@@ -22,7 +23,8 @@ import (
 type Privilege int
 
 const (
-	Command = "ipmitool"
+	// Command is the ipmi cli to execute
+	Command = command.IPMITool
 	// Callback ipmi privilege
 	Callback = Privilege(1)
 	// User ipmi privilege

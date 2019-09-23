@@ -4,15 +4,16 @@ import (
 	"strings"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 )
 
 var (
-	Ext4MkFsCommand  = "mkfs.ext4"
-	Ext3MkFsCommand  = "mkfs.ext3"
-	Fat32MkFsCommand = "mkfs.vfat"
-	MkswapCommand    = "mkswap"
+	Ext3MkFsCommand  = command.MKFSExt3
+	Ext4MkFsCommand  = command.MKFSExt4
+	Fat32MkFsCommand = command.MKFSVFat
+	MkswapCommand    = command.MKSwap
 )
 
 // MkFS create a filesystem on the Partition

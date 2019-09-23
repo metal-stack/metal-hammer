@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 
 	log "github.com/inconshreveable/log15"
@@ -17,9 +19,9 @@ import (
 )
 
 var (
-	HdparmCommand = "hdparm"
-	NvmeCommand   = "nvme"
-	DDCommand     = "/bbin/dd"
+	HdparmCommand = command.HDParm
+	NvmeCommand   = command.NVME
+	DDCommand     = command.DD
 )
 
 // WipeDisks will erase all content and partitions of all existing Disks
