@@ -2,9 +2,10 @@ package storage
 
 import (
 	"encoding/json"
+	"os/exec"
+
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
-	"os/exec"
 )
 
 type (
@@ -22,9 +23,11 @@ type (
 	}
 )
 
+const StorCLICommand = "storcli"
+
 // NewStorcli create a new Storcli with the default command
 func NewStorcli() *Storcli {
-	return &Storcli{command: "storcli"}
+	return &Storcli{command: StorCLICommand}
 }
 
 // Run execute ethtool

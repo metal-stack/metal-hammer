@@ -42,8 +42,10 @@ ramdisk:
 		-files="/sbin/hdparm:sbin/hdparm" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
 		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
+		-files="/sbin/mkfs.ext3:sbin/mkfs.ext3" \
 		-files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
 		-files="/sbin/mke2fs:sbin/mke2fs" \
+		-files="/sbin/mkswap:sbin/mkswap" \
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \

@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	hdparmCommand = "hdparm"
-	nvmeCommand   = "nvme"
+	HdparmCommand = "hdparm"
+	NvmeCommand   = "nvme"
+	DDCommand     = "/bbin/dd"
 )
 
 // WipeDisks will erase all content and partitions of all existing Disks
@@ -87,14 +88,14 @@ func insecureErase(device string, bytes uint64) error {
 
 func discard(device string) error {
 	log.Info("wipe", "disk", device, "message", "discard existing data")
-	err := os.ExecuteCommand("mkfs.ext4", "-F", "-E", "discard", device)
+	err := os.ExecuteCommand(Ext4MkFsCommand, "-F", "-E", "discard", device)
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "discard of existing data failed", "error", err)
 		return err
 	}
 
 	// additionally wipe magic bytes in the first 1MiB
-	err = os.ExecuteCommand("/bbin/dd", "status=progress", "if=/dev/zero", "of="+device, "bs=1M", "count=1")
+	err = os.ExecuteCommand(DDCommand, "status=progress", "if=/dev/zero", "of="+device, "bs=1M", "count=1")
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "overwrite of the first bytes of data with dd failed", "error", err)
 		return err
@@ -109,7 +110,7 @@ func wipeSlow(device string, bytes uint64) error {
 	count := bytes / bs
 	bsArg := fmt.Sprintf("bs=%d", bs)
 	countArg := fmt.Sprintf("count=%d", count)
-	err := os.ExecuteCommand("/bbin/dd", "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
+	err := os.ExecuteCommand(DDCommand, "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "overwrite of existing data with dd failed", "error", err)
 		return err
@@ -131,9 +132,9 @@ func wipeSlow(device string, bytes uint64) error {
 //         6min for SECURITY ERASE UNIT. 32min for ENHANCED SECURITY ERASE UNIT.
 // explanation is here: https://wiki.ubuntuusers.de/SSD/Secure-Erase/
 func isSEDAvailable(device string) bool {
-	path, err := exec.LookPath(hdparmCommand)
+	path, err := exec.LookPath(HdparmCommand)
 	if err != nil {
-		log.Error("unable to locate", "command", hdparmCommand, "error", err)
+		log.Error("unable to locate", "command", HdparmCommand, "error", err)
 		return false
 	}
 	cmd := exec.Command(path, "-I", device)
@@ -179,7 +180,7 @@ func isNVMeDisk(device string) bool {
 // https://github.com/arunar/nvmeqemu
 func secureEraseNVMe(device string) error {
 	log.Info("wipe", "disk", device, "message", "start very fast deleting of existing data")
-	err := os.ExecuteCommand(nvmeCommand, "--format", "--ses=1", device)
+	err := os.ExecuteCommand(NvmeCommand, "--format", "--ses=1", device)
 	if err != nil {
 		return errors.Wrapf(err, "unable to secure erase nvme disk %s", device)
 	}
@@ -191,12 +192,12 @@ func secureErase(device string) error {
 	// hdparm --user-master u --security-set-pass GEHEIM /dev/sda
 	pw := password.Generate(10)
 	// first we must set a secure erase password
-	err := os.ExecuteCommand(hdparmCommand, "--user-master", "u", "--security-set-pass", pw, device)
+	err := os.ExecuteCommand(HdparmCommand, "--user-master", "u", "--security-set-pass", pw, device)
 	if err != nil {
 		return errors.Wrapf(err, "unable to set secure erase password disk: %s", device)
 	}
 	// now we can start secure erase
-	err = os.ExecuteCommand(hdparmCommand, "--user-master", "u", "--security-erase", pw, device)
+	err = os.ExecuteCommand(HdparmCommand, "--user-master", "u", "--security-erase", pw, device)
 	if err != nil {
 		return errors.Wrapf(err, "unable to secure erase disk: %s", device)
 	}

@@ -41,6 +41,11 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, "starting metal-hammer")
 
+	err := checkAllCommandsExist()
+	if err != nil {
+		return eventEmitter, err
+	}
+
 	hammer := &Hammer{
 		Client:       client,
 		Spec:         spec,
@@ -65,7 +70,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	firmware.Update()
 
 	lsi := storage.NewStorcli()
-	err := lsi.EnableJBOD()
+	err = lsi.EnableJBOD()
 	if err != nil {
 		log.Warn("root", "unable to format raid controller", err)
 	}

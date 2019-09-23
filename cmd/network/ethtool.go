@@ -16,6 +16,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// EthtoolCommand to gather ethernet informations
+const EthtoolCommand = "ethtool"
+
 // Ethtool to query/set ethernet interfaces
 type Ethtool struct {
 	command string
@@ -23,7 +26,7 @@ type Ethtool struct {
 
 // NewEthtool create a new Ethtool with the default command
 func NewEthtool() *Ethtool {
-	return &Ethtool{command: "ethtool"}
+	return &Ethtool{command: EthtoolCommand}
 }
 
 // Run execute ethtool

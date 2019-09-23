@@ -2,17 +2,20 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"os"
 	"os/exec"
 	"syscall"
 
+	"github.com/pkg/errors"
+
 	log "github.com/inconshreveable/log15"
 )
 
+const sshdCommand = "sshd"
+
 // StartSSHD will start sshd to be able to diagnose problems on the pxe bootet machine.
 func StartSSHD(ip string) error {
-	sshd, err := exec.LookPath("sshd")
+	sshd, err := exec.LookPath(sshdCommand)
 	if err != nil {
 		return errors.Wrap(err, "unable to locate sshd")
 	}

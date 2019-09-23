@@ -9,18 +9,20 @@ package ipmi
 import (
 	"bufio"
 	"fmt"
-	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
+
+	log "github.com/inconshreveable/log15"
+	"github.com/pkg/errors"
 )
 
 // Privilege of a ipmitool user
 type Privilege int
 
 const (
+	Command = "ipmitool"
 	// Callback ipmi privilege
 	Callback = Privilege(1)
 	// User ipmi privilege
@@ -110,7 +112,7 @@ const (
 
 // New create a new Ipmitool with the default command
 func New() Ipmi {
-	return &Ipmitool{Command: "ipmitool"}
+	return &Ipmitool{Command: Command}
 }
 
 // DevicePresent returns true if the character device which is required to talk to the BMC is present.

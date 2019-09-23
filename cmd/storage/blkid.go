@@ -1,23 +1,24 @@
 package storage
 
 import (
-	"github.com/pkg/errors"
 	"os/exec"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
-const blkidCommand = "blkid"
+const BlkidCommand = "blkid"
 
 // FetchBlockIDProperties use blkid to determine more properties of the partition
 func (p *Partition) fetchBlockIDProperties() error {
 
-	path, err := exec.LookPath(blkidCommand)
+	path, err := exec.LookPath(BlkidCommand)
 	if err != nil {
-		return errors.Wrapf(err, "unable to locate program:%s in path", blkidCommand)
+		return errors.Wrapf(err, "unable to locate program:%s in path", BlkidCommand)
 	}
 	out, err := exec.Command(path, "-o", "export", p.Device).CombinedOutput()
 	if err != nil {
-		return errors.Wrapf(err, "unable to execute %s", blkidCommand)
+		return errors.Wrapf(err, "unable to execute %s", BlkidCommand)
 	}
 
 	// output of

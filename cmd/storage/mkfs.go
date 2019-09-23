@@ -1,17 +1,18 @@
 package storage
 
 import (
+	"strings"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 var (
-	ext4MkFsCommand  = "mkfs.ext4"
-	ext3MkFsCommand  = "mkfs.ext3"
-	fat32MkFsCommand = "mkfs.vfat"
-	mkswapCommand    = "mkswap"
+	Ext4MkFsCommand  = "mkfs.ext4"
+	Ext3MkFsCommand  = "mkfs.ext3"
+	Fat32MkFsCommand = "mkfs.vfat"
+	MkswapCommand    = "mkswap"
 )
 
 // MkFS create a filesystem on the Partition
@@ -35,25 +36,25 @@ func assembleMKFSCommand(p *Partition) (string, []string, error) {
 	var args []string
 	switch p.Filesystem {
 	case EXT4:
-		mkfs = ext4MkFsCommand
+		mkfs = Ext4MkFsCommand
 		args = append(args, "-v", "-F")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
 	case EXT3:
-		mkfs = ext3MkFsCommand
+		mkfs = Ext3MkFsCommand
 		args = append(args, "-v", "-F")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
 	case FAT32, VFAT:
-		mkfs = fat32MkFsCommand
+		mkfs = Fat32MkFsCommand
 		args = append(args, "-v", "-F", "32")
 		if p.Label != "" {
 			args = append(args, "-n", strings.ToUpper(p.Label))
 		}
 	case SWAP:
-		mkfs = mkswapCommand
+		mkfs = MkswapCommand
 		args = append(args, "-f")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
