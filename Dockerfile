@@ -24,10 +24,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && go install
 WORKDIR /work
-COPY metal.key /work/
-COPY metal.key.pub /work/
-COPY Makefile /work/
-COPY .git /work/
+COPY metal.key metal.key.pub Makefile .git /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/bin/metal-hammer /work/bin/
 RUN COMMONDIR=/common make ramdisk
