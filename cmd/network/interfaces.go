@@ -105,14 +105,14 @@ func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNicExtended, 
 		log.Info("waiting for lldp neighbors", "interface", name, "actual", actualNeigh, "minimum", minimumNeigh)
 		time.Sleep(1 * time.Second)
 
-		duration := time.Now().Sub(host.start)
+		duration := time.Since(host.start)
 		if duration > host.timeout {
 			return nil, errors.Errorf("not all neighbor requirements where met within: %s, exiting", host.timeout)
 		}
 	}
 	log.Info("all lldp pdu's received", "interface", name)
 
-	neighs, _ := host.neighbors[name]
+	neighs := host.neighbors[name]
 	for _, neigh := range neighs {
 		if neigh.Port.Type != lldp.Mac {
 			continue

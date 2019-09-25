@@ -109,9 +109,6 @@ func Test_readHardwareDetails(t *testing.T) {
 }
 
 func TestHammer_readIPMIDetails(t *testing.T) {
-	type fields struct {
-		Client *machine.Client
-	}
 	tests := []struct {
 		name    string
 		want    *models.ModelsV1MachineIPMI
