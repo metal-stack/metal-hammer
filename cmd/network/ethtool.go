@@ -19,7 +19,7 @@ import (
 )
 
 // EthtoolCommand to gather ethernet informations
-const EthtoolCommand = command.Ethtool
+const ethtoolCommand = command.Ethtool
 
 // Ethtool to query/set ethernet interfaces
 type Ethtool struct {
@@ -28,7 +28,7 @@ type Ethtool struct {
 
 // NewEthtool create a new Ethtool with the default command
 func NewEthtool() *Ethtool {
-	return &Ethtool{command: EthtoolCommand}
+	return &Ethtool{command: ethtoolCommand}
 }
 
 // Run execute ethtool
