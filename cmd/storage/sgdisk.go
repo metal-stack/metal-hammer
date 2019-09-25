@@ -11,21 +11,21 @@ import (
 )
 
 var (
-	SgdiskCommand = command.SGDisk
+	sgdiskCommand = command.SGDisk
 )
 
 // Partition a Disk
 func (disk Disk) Partition() error {
 	log.Info("partition disk", "disk", disk)
 
-	err := os.ExecuteCommand(SgdiskCommand, "-Z", disk.Device)
+	err := os.ExecuteCommand(sgdiskCommand, "-Z", disk.Device)
 	if err != nil {
 		log.Error("sgdisk zapping existing partitions failed, ignoring...", "error", err)
 	}
 
 	args := assembleSGDiskCommand(disk)
 	log.Info("sgdisk create partitions", "command", args)
-	err = os.ExecuteCommand(SgdiskCommand, args...)
+	err = os.ExecuteCommand(sgdiskCommand, args...)
 	if err != nil {
 		log.Error("sgdisk creating partitions failed", "error", err)
 		return errors.Wrapf(err, "unable to create partitions on %s", disk)

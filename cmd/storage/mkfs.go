@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	Ext3MkFsCommand  = command.MKFSExt3
-	Ext4MkFsCommand  = command.MKFSExt4
-	Fat32MkFsCommand = command.MKFSVFat
-	MkswapCommand    = command.MKSwap
+	ext3MkFsCommand  = command.MKFSExt3
+	ext4MkFsCommand  = command.MKFSExt4
+	fat32MkFsCommand = command.MKFSVFat
+	mkswapCommand    = command.MKSwap
 )
 
 // MkFS create a filesystem on the Partition
@@ -37,25 +37,25 @@ func assembleMKFSCommand(p *Partition) (string, []string, error) {
 	var args []string
 	switch p.Filesystem {
 	case EXT4:
-		mkfs = Ext4MkFsCommand
+		mkfs = ext4MkFsCommand
 		args = append(args, "-v", "-F")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
 	case EXT3:
-		mkfs = Ext3MkFsCommand
+		mkfs = ext3MkFsCommand
 		args = append(args, "-v", "-F")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
 	case FAT32, VFAT:
-		mkfs = Fat32MkFsCommand
+		mkfs = fat32MkFsCommand
 		args = append(args, "-v", "-F", "32")
 		if p.Label != "" {
 			args = append(args, "-n", strings.ToUpper(p.Label))
 		}
 	case SWAP:
-		mkfs = MkswapCommand
+		mkfs = mkswapCommand
 		args = append(args, "-f")
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
