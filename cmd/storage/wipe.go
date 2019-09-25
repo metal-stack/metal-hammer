@@ -167,10 +167,7 @@ func isSEDAvailable(device string) bool {
 }
 
 func isNVMeDisk(device string) bool {
-	if strings.HasPrefix(device, "/dev/nvm") {
-		return true
-	}
-	return false
+	return strings.HasPrefix(device, "/dev/nvm")
 }
 
 // Secure erase is done via:

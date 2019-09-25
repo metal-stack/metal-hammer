@@ -70,12 +70,6 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	firmware := firmware.New()
 	firmware.Update()
 
-	lsi := storage.NewStorcli()
-	err = lsi.EnableJBOD()
-	if err != nil {
-		log.Warn("root", "unable to format raid controller", err)
-	}
-
 	err = n.UpAllInterfaces()
 	if err != nil {
 		return eventEmitter, errors.Wrap(err, "interfaces")
