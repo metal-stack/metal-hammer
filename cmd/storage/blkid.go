@@ -1,12 +1,14 @@
 package storage
 
 import (
-	"github.com/pkg/errors"
 	"os/exec"
 	"strings"
+
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
+	"github.com/pkg/errors"
 )
 
-const blkidCommand = "blkid"
+const blkidCommand = command.BlkID
 
 // FetchBlockIDProperties use blkid to determine more properties of the partition
 func (p *Partition) fetchBlockIDProperties() error {

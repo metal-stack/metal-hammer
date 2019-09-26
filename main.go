@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/metal-pod/v"
 
 	"os"
@@ -55,6 +56,10 @@ func main() {
 		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
 		emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
 		time.Sleep(wait)
-		kernel.Reboot()
+		err := kernel.Reboot()
+		if err != nil {
+			log.Error("metal-hammer reboot failed", "error", err)
+			emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
+		}
 	}
 }

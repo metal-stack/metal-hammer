@@ -1,26 +1,7 @@
 FROM registry.fi-ts.io/cloud-native/go-builder:latest as builder
 
-FROM golang:1.12-stretch as storcli-builder
-# Raidcontroller configuration cli storcli
-# check here for latestes releases, there is no public debian repo unfortunately
-# given download directory can even not listed.
-# https://www.broadcom.com/support/download-search/?pg=&pf=&pn=&pa=&po=&dk=storcli
-# FIRMWARE:
-# https://www.supermicro.com/wftp/driver/SAS/LSI/3108/Firmware/
-ENV STORCLI_VERSION=7.8-007.0813.0000.0000 \
-    STORCLI_DOWNLOAD_URL=https://docs.broadcom.com/docs-and-downloads/raid-controllers/raid-controllers-common-files
-WORKDIR /work
-RUN set -ex \
- && wget -q https://github.com/microsoft/ethr/releases/download/v0.2.1/ethr_linux.zip -O ethr.zip \
- && wget -q ${STORCLI_DOWNLOAD_URL}/MR_SAS_Unified_StorCLI_${STORCLI_VERSION}.zip -O storcli.zip \
- && apt-get update \
- && apt-get install -y --no-install-recommends unzip \
- && unzip storcli.zip \
- && unzip ethr.zip \
- && dpkg -i Unified_storcli_all_os/Ubuntu/storcli*.deb
-
-FROM golang:1.12-stretch as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=v4.0.0
+FROM golang:1.13-buster as initrd-builder
+ENV UROOT_GIT_SHA_OR_TAG=v6.0.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
@@ -32,7 +13,6 @@ RUN apt-get update \
 	hdparm \
 	ipmitool \
 	liblz4-tool \
-	mstflint \
 	net-tools \
 	nvme-cli \
 	pciutils \
@@ -44,12 +24,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && go install
 WORKDIR /work
-COPY metal.key /work/
-COPY metal.key.pub /work/
-COPY Makefile /work/
-COPY .git /work/
-COPY --from=storcli-builder /opt/MegaRAID/storcli/storcli64 /work/bin/
-COPY --from=storcli-builder /work/ethr /work/bin/
+COPY metal.key metal.key.pub Makefile .git /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/bin/metal-hammer /work/bin/
 RUN COMMONDIR=/common make ramdisk

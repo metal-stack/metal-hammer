@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 
 	log "github.com/inconshreveable/log15"
@@ -17,8 +19,9 @@ import (
 )
 
 var (
-	hdparmCommand = "hdparm"
-	nvmeCommand   = "nvme"
+	hdparmCommand = command.HDParm
+	nvmeCommand   = command.NVME
+	ddCommand     = command.DD
 )
 
 // WipeDisks will erase all content and partitions of all existing Disks
@@ -87,14 +90,14 @@ func insecureErase(device string, bytes uint64) error {
 
 func discard(device string) error {
 	log.Info("wipe", "disk", device, "message", "discard existing data")
-	err := os.ExecuteCommand("mkfs.ext4", "-F", "-E", "discard", device)
+	err := os.ExecuteCommand(ext4MkFsCommand, "-F", "-E", "discard", device)
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "discard of existing data failed", "error", err)
 		return err
 	}
 
 	// additionally wipe magic bytes in the first 1MiB
-	err = os.ExecuteCommand("/bbin/dd", "status=progress", "if=/dev/zero", "of="+device, "bs=1M", "count=1")
+	err = os.ExecuteCommand(ddCommand, "status=progress", "if=/dev/zero", "of="+device, "bs=1M", "count=1")
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "overwrite of the first bytes of data with dd failed", "error", err)
 		return err
@@ -109,7 +112,7 @@ func wipeSlow(device string, bytes uint64) error {
 	count := bytes / bs
 	bsArg := fmt.Sprintf("bs=%d", bs)
 	countArg := fmt.Sprintf("count=%d", count)
-	err := os.ExecuteCommand("/bbin/dd", "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
+	err := os.ExecuteCommand(ddCommand, "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "overwrite of existing data with dd failed", "error", err)
 		return err
@@ -164,10 +167,7 @@ func isSEDAvailable(device string) bool {
 }
 
 func isNVMeDisk(device string) bool {
-	if strings.HasPrefix(device, "/dev/nvm") {
-		return true
-	}
-	return false
+	return strings.HasPrefix(device, "/dev/nvm")
 }
 
 // Secure erase is done via:

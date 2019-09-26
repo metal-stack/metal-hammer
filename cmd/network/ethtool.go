@@ -12,9 +12,14 @@ import (
 
 	"io/ioutil"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	log "github.com/inconshreveable/log15"
+
 	"github.com/pkg/errors"
 )
+
+// EthtoolCommand to gather ethernet informations
+const ethtoolCommand = command.Ethtool
 
 // Ethtool to query/set ethernet interfaces
 type Ethtool struct {
@@ -23,7 +28,7 @@ type Ethtool struct {
 
 // NewEthtool create a new Ethtool with the default command
 func NewEthtool() *Ethtool {
-	return &Ethtool{command: "ethtool"}
+	return &Ethtool{command: ethtoolCommand}
 }
 
 // Run execute ethtool

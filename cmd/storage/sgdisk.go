@@ -2,14 +2,16 @@ package storage
 
 import (
 	"fmt"
+
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
 
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 )
 
 var (
-	sgdiskCommand = "sgdisk"
+	sgdiskCommand = command.SGDisk
 )
 
 // Partition a Disk

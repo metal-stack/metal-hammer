@@ -12,6 +12,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
@@ -41,6 +42,11 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, "starting metal-hammer")
 
+	err := command.CommandsExist()
+	if err != nil {
+		return eventEmitter, err
+	}
+
 	hammer := &Hammer{
 		Client:       client,
 		Spec:         spec,
@@ -63,12 +69,6 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	firmware := firmware.New()
 	firmware.Update()
-
-	lsi := storage.NewStorcli()
-	err := lsi.EnableJBOD()
-	if err != nil {
-		log.Warn("root", "unable to format raid controller", err)
-	}
 
 	err = n.UpAllInterfaces()
 	if err != nil {

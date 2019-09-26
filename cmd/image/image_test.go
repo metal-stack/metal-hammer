@@ -25,7 +25,10 @@ func TestCheckMD5(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	md5.Write(md5Content)
+	_, err = md5.Write(md5Content)
+	if err != nil {
+		t.Error(err)
+	}
 	md5.Close()
 
 	defer os.Remove(testfile)
