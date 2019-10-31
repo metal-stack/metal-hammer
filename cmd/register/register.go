@@ -220,9 +220,6 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 		config.Mac = "00:00:00:00:00:00"
 		pw = "vagrant"
 		user = "vagrant"
-		fru = models.ModelsV1MachineFru{
-			ProductPartNumber: "vagrant",
-		}
 	}
 
 	intf := "lanplus"
