@@ -41,6 +41,9 @@ func WipeDisks() error {
 	for _, disk := range disks {
 		go func(disk *ghw.Disk) {
 			defer wg.Done()
+			if strings.HasPrefix(disk.Name, DiskPrefixToIgnore) {
+				return
+			}
 			device := fmt.Sprintf("/dev/%s", disk.Name)
 			bytes := disk.SizeBytes
 			rotational := isRotational(disk.Name)

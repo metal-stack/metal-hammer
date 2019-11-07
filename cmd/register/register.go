@@ -10,6 +10,7 @@ import (
 	"unsafe"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
@@ -137,6 +138,9 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	}
 	disks := []*models.ModelsV1MachineBlockDevice{}
 	for _, disk := range blockInfo.Disks {
+		if strings.HasPrefix(disk.Name, storage.DiskPrefixToIgnore) {
+			continue
+		}
 		size := int64(disk.SizeBytes)
 		blockDevice := &models.ModelsV1MachineBlockDevice{
 			Name: &disk.Name,
