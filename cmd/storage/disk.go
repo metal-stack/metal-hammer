@@ -30,6 +30,8 @@ const (
 	GIB = int64(1024 * 1024 * 1024)
 	// TIB bytes of a Terabyte
 	TIB = int64(1024 * GIB)
+	// DiskPrefixToIgnore disks with this prefix will not be reported and wiped.
+	DiskPrefixToIgnore = "ram"
 )
 
 type (
@@ -136,50 +138,51 @@ var (
 			},
 		},
 	}
-
-	diskByImage = map[string]Disk{
-		"default":      defaultDisk,
-		"ubuntu-18.04": defaultDisk,
-		"ubuntu-18.10": defaultDisk,
-		"ubuntu-19.04": defaultDisk,
-		"ubuntu-19.10": defaultDisk,
-		"alpine-3.8":   defaultDisk,
-		"alpine-3.9":   defaultDisk,
-		"firewall-1":   defaultDisk,
-		"clearlinux":   clearlinuxDisk,
-	}
-
-	primaryDeviceBySize = map[string]PrimaryDevice{
-		"v1-small-x86": {
-			DeviceName:      "/dev/sda",
-			PartitionPrefix: "",
-		},
-		"t1-small-x86": {
-			DeviceName:      "/dev/sda",
-			PartitionPrefix: "",
-		},
-		"s1-large-x86": {
-			DeviceName:      "/dev/nvme0n1",
-			PartitionPrefix: "p",
-		},
-		"c1-medium-x86": {
-			DeviceName:      "/dev/sda",
-			PartitionPrefix: "",
-		},
-		"c1-large-x86": {
-			DeviceName:      "/dev/nvme0n1",
-			PartitionPrefix: "p",
-		},
-		"c1-xlarge-x86": {
-			DeviceName:      "/dev/nvme0n1",
-			PartitionPrefix: "p",
-		},
-	}
 )
 
 // String for a Partition
 func (p *Partition) String() string {
 	return fmt.Sprintf("%s", p.Device)
+}
+
+// primaryDeviceBySize will configure the disk device where the OS gets installed.
+func primaryDeviceBySize(sizeID string, disks []*models.ModelsV1MachineBlockDevice) PrimaryDevice {
+	switch sizeID {
+	case "v1-small-x86", "t1-small-x86", "s1-large-x86", "c1-medium-x86", "c1-large-x86", "c1-xlarge-x86":
+		return PrimaryDevice{DeviceName: "/dev/sda", PartitionPrefix: ""}
+	case "nvm-size-x86":
+		// Example how to specify disk partitioning on NVME disks if they need be be used as root disk.
+		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}
+	default:
+		log.Info("getdisk", "sizeID unknown, try to guess disk", sizeID)
+		deviceName := guessDisk(disks)
+		if deviceName == "" {
+			deviceName = "/dev/sda"
+		}
+		log.Warn("getdisk", "using for OS device", deviceName)
+		primaryDevice := PrimaryDevice{
+			DeviceName:      deviceName,
+			PartitionPrefix: "",
+		}
+		return primaryDevice
+	}
+}
+
+// diskByImage based on the distribution choose a partition layout
+func diskByImage(imageID string) Disk {
+	if strings.HasPrefix(imageID, "ubuntu") {
+		return defaultDisk
+	}
+	if strings.HasPrefix(imageID, "firewall") {
+		return defaultDisk
+	}
+	if strings.HasPrefix(imageID, "alpine") {
+		return defaultDisk
+	}
+	if strings.HasPrefix(imageID, "clearlinux") {
+		return clearlinuxDisk
+	}
+	return defaultDisk
 }
 
 // Guess the disk for OS installation
@@ -204,25 +207,9 @@ func guessDisk(disks []*models.ModelsV1MachineBlockDevice) string {
 // GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
 func GetDisk(image *models.ModelsV1ImageResponse, size *models.ModelsV1SizeResponse, disks []*models.ModelsV1MachineBlockDevice) Disk {
 	log.Info("getdisk", "imageID", *image.ID)
-	disk, ok := diskByImage[*image.ID]
-	if !ok {
-		log.Warn("getdisk", "imageID unknown, using default", *image.ID)
-		disk = defaultDisk
-	}
+	disk := diskByImage(*image.ID)
 
-	primaryDevice, ok := primaryDeviceBySize[*size.ID]
-	if !ok {
-		log.Info("getdisk", "sizeID unknown, try to guess disk", *size.ID)
-		deviceName := guessDisk(disks)
-		if deviceName == "" {
-			deviceName = "/dev/sda"
-		}
-		log.Warn("getdisk", "using for OS device", deviceName)
-		primaryDevice = PrimaryDevice{
-			DeviceName:      deviceName,
-			PartitionPrefix: "",
-		}
-	}
+	primaryDevice := primaryDeviceBySize(*size.ID, disks)
 	disk.Device = primaryDevice.DeviceName
 
 	for _, p := range disk.Partitions {
