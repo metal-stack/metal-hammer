@@ -207,16 +207,20 @@ func (i *Ipmitool) CreateUser(username, password, uid string, privilege Privileg
 // bootdev can be one of pxe|disk
 // if persistent is set to true this will last for every subsequent boot, not only the next.
 func (i *Ipmitool) EnableUEFI(bootdev Bootdev, persistent bool) error {
+	// for reference: https://www.intel.com/content/dam/www/public/us/en/documents/product-briefs/ipmi-second-gen-interface-spec-v2-rev1-1.pdf (page 422)
+	var uefiQualifier, devQualifier string
 	if persistent {
-		// for reference: https://bugs.launchpad.net/ironic/+bug/1611306
-		out, err := i.Run("raw", "0x00", "0x08", "0x05", "0xe0", "0x04", "0x00", "0x00", "0x00")
-		if err != nil {
-			return errors.Errorf("unable to enable uefi on:%s persistent:%t info:%v", bootdev, persistent, out)
-		}
-		return nil
+		uefiQualifier = "0xe0"
+	} else {
+		uefiQualifier = "0xa0"
 	}
-
-	out, err := i.Run("chassis", "bootdev", string(bootdev), "options=efiboot")
+	switch bootdev {
+	case PXE:
+		devQualifier = "0x04"
+	default:
+		devQualifier = "0x08"
+	}
+	out, err := i.Run("raw", "0x00", "0x08", "0x05", uefiQualifier, devQualifier, "0x00", "0x00", "0x00")
 	if err != nil {
 		return errors.Errorf("unable to enable uefi on:%s persistent:%t info:%v", bootdev, persistent, out)
 	}
