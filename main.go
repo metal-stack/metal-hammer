@@ -20,8 +20,15 @@ func main() {
 	fmt.Print(cmd.HammerBanner)
 	// Reboot if metal-hammer crashes after 60sec.
 	go kernel.Watchdog()
+
+	err := updateResolvConf()
+	if err != nil {
+		log.Error("error updating resolv.conf", "error", err)
+		os.Exit(1)
+	}
+
 	ip := network.InternalIP()
-	err := cmd.StartSSHD(ip)
+	err = cmd.StartSSHD(ip)
 	if err != nil {
 		log.Error("sshd error", "error", err)
 		os.Exit(1)
@@ -62,4 +69,27 @@ func main() {
 			emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
 		}
 	}
+}
+
+func updateResolvConf() error {
+	// when starting the metal-hammer u-root sets a static resolv.conf file containing 8.8.8.8
+	// this can only be overriden by running dhclient
+	// however, we can use the dhcp information that the kernel used during startup
+	// this information is contained in /proc/net/pnp
+	//
+	// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
+	symlink := "/etc/resolv.conf"
+	target := "/proc/net/pnp"
+
+	err := os.Remove(symlink)
+	if err != nil {
+		return err
+	}
+
+	err = os.Symlink(target, symlink)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
