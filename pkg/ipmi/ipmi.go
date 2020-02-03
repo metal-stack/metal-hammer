@@ -13,8 +13,10 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
+	"github.com/avast/retry-go"
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 )
@@ -46,10 +48,9 @@ type Ipmi interface {
 	CreateUser(username, password, uid string, privilege Privilege) error
 	GetLanConfig() (LanConfig, error)
 	EnableUEFI(bootdev Bootdev, persistent bool) error
-	UEFIEnabled() bool
-	BootOptionsPersistent() bool
 	GetFru() (Fru, error)
 	GetSession() (Session, error)
+	GetBMCInfo() (BMCInfo, error)
 }
 
 // Ipmitool is used to query and modify the IPMI based BMC from the host os.
@@ -102,6 +103,23 @@ type Fru struct {
 	ProductSerial       string `ipmitool:"Product Serial"`
 }
 
+// BMCInfo contains the parsed output of ipmitool bmc info
+type BMCInfo struct {
+	// # ipmitool bmc info
+	// Device ID                 : 32
+	// Device Revision           : 1
+	// Firmware Revision         : 1.64
+	// IPMI Version              : 2.0
+	// Manufacturer ID           : 10876
+	// Manufacturer Name         : Supermicro
+	// Product ID                : 2402 (0x0962)
+	// Product Name              : Unknown (0x962)
+	// Device Available          : yes
+	// Provides Device SDRs      : no
+	// Additional Device Support :
+	FirmwareRevision string `ipmitool:"Firmware Revision"`
+}
+
 // Bootdev specifies from which device to boot
 type Bootdev string
 
@@ -117,7 +135,7 @@ func New() Ipmi {
 	return &Ipmitool{Command: Command}
 }
 
-// DevicePresent returns true if the character device which is required to talk to the BMC is present.
+// DevicePresent returns true if the ipmi device is present, which is required to talk to the BMC.
 func (i *Ipmitool) DevicePresent() bool {
 	const ipmiDevicePrefix = "/dev/ipmi*"
 	matches, err := filepath.Glob(ipmiDevicePrefix)
@@ -140,16 +158,28 @@ func (i *Ipmitool) Run(args ...string) (string, error) {
 	return string(output), err
 }
 
-// GetFru returns the LanConfig
+// GetFru returns the Field Replacable Unit information
 func (i *Ipmitool) GetFru() (Fru, error) {
 	config := &Fru{}
 	cmdOutput, err := i.Run("fru")
 	if err != nil {
-		return *config, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
+		return *config, errors.Wrapf(err, "unable to execute ipmitool 'fru':%v", cmdOutput)
 	}
 	fruMap := output2Map(cmdOutput)
 	from(config, fruMap)
 	return *config, nil
+}
+
+// GetBMCInfo returns the bmc info
+func (i *Ipmitool) GetBMCInfo() (BMCInfo, error) {
+	bmc := &BMCInfo{}
+	cmdOutput, err := i.Run("bmc", "info")
+	if err != nil {
+		return *bmc, errors.Wrapf(err, "unable to execute ipmitool 'bmc info':%v", cmdOutput)
+	}
+	bmcMap := output2Map(cmdOutput)
+	from(bmc, bmcMap)
+	return *bmc, nil
 }
 
 // GetLanConfig returns the LanConfig
@@ -157,7 +187,7 @@ func (i *Ipmitool) GetLanConfig() (LanConfig, error) {
 	config := &LanConfig{}
 	cmdOutput, err := i.Run("lan", "print")
 	if err != nil {
-		return *config, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
+		return *config, errors.Wrapf(err, "unable to execute ipmitool 'lan print':%v", cmdOutput)
 	}
 	lanConfigMap := output2Map(cmdOutput)
 	from(config, lanConfigMap)
@@ -169,7 +199,7 @@ func (i *Ipmitool) GetSession() (Session, error) {
 	session := &Session{}
 	cmdOutput, err := i.Run("session", "info", "all")
 	if err != nil {
-		return *session, errors.Errorf("unable to execute ipmitool info:%v", cmdOutput)
+		return *session, errors.Wrapf(err, "unable to execute ipmitool 'session info all':%v", cmdOutput)
 	}
 	sessionMap := output2Map(cmdOutput)
 	from(session, sessionMap)
@@ -180,24 +210,37 @@ func (i *Ipmitool) GetSession() (Session, error) {
 func (i *Ipmitool) CreateUser(username, password, uid string, privilege Privilege) error {
 	out, err := i.Run("user", "set", "name", uid, username)
 	if err != nil {
-		return errors.Errorf("unable to create user %s info: %v", username, out)
+		return errors.Wrapf(err, "unable to create user %s: %v", username, out)
 	}
-	out, err = i.Run("user", "set", "password", uid, password)
+	// This happens from time to time for unknown reason
+	// retry password creation max 10times with 3 second delay
+	err = retry.Do(
+		func() error {
+			_, err = i.Run("user", "set", "password", uid, password)
+			return err
+		},
+		retry.OnRetry(func(n uint, err error) {
+			log.Debug("retry ipmi password creation for user:%s retry:%d", username, n)
+		}),
+		retry.Delay(3*time.Second),
+		retry.Attempts(10),
+	)
 	if err != nil {
-		return errors.Errorf("unable to set password for user %s info: %v", username, out)
+		return errors.Wrapf(err, "unable to set password for user %s: %v", username, out)
 	}
+
 	channelnumber := "1"
 	out, err = i.Run("channel", "setaccess", channelnumber, uid, "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
 	if err != nil {
-		return errors.Errorf("unable to set privilege for user %s info: %v", username, out)
+		return errors.Wrapf(err, "unable to set privilege for user %s: %v", username, out)
 	}
 	out, err = i.Run("user", "enable", uid)
 	if err != nil {
-		return errors.Errorf("unable to enable user %s info: %v", username, out)
+		return errors.Wrapf(err, "unable to enable user %s: %v", username, out)
 	}
 	out, err = i.Run("sol", "payload", "enable", channelnumber, uid)
 	if err != nil {
-		return errors.Errorf("unable to enable user %s for sol access info: %v", username, out)
+		return errors.Wrapf(err, "unable to enable user %s for sol access: %v", username, out)
 	}
 
 	return nil
@@ -218,45 +261,13 @@ func (i *Ipmitool) EnableUEFI(bootdev Bootdev, persistent bool) error {
 	case PXE:
 		devQualifier = "0x04"
 	default:
-		devQualifier = "0x08"
+		devQualifier = "0x24" // conforms to open source SMCIPMITool, IPMI 2.0 conform byte would be 0x08
 	}
 	out, err := i.Run("raw", "0x00", "0x08", "0x05", uefiQualifier, devQualifier, "0x00", "0x00", "0x00")
 	if err != nil {
-		return errors.Errorf("unable to enable uefi on:%s persistent:%t info:%v", bootdev, persistent, out)
+		return errors.Wrapf(err, "unable to enable uefi on:%s persistent:%t out:%v", bootdev, persistent, out)
 	}
 	return nil
-}
-
-// UEFIEnabled returns true if the firmware is set to boot with uefi, otherwise false
-func (i *Ipmitool) UEFIEnabled() bool {
-	enabled := i.matchBootParam("BIOS EFI boot")
-	log.Info("ipmi", "uefi enabled", enabled)
-	return enabled
-}
-
-// BootOptionsPersistent returns true of the boot parameters are set persistent.
-func (i *Ipmitool) BootOptionsPersistent() bool {
-	persistent := i.matchBootParam("Options apply to all future boots")
-	log.Info("ipmi", "boot params persistent", persistent)
-	return persistent
-}
-
-func (i *Ipmitool) matchBootParam(parameter string) bool {
-	// Brainfuck magic dunno where this is documented.
-	// some light can be get from https://bugs.launchpad.net/ironic/+bug/1611306
-	output, err := i.Run("chassis", "bootparam", "get", "5")
-	if err != nil {
-		return false
-	}
-	log.Info("ipmi", "bootparams", output)
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, parameter) {
-			return true
-		}
-	}
-	return false
 }
 
 func output2Map(cmdOutput string) map[string]string {

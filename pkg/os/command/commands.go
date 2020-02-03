@@ -18,6 +18,7 @@ const (
 	NVME     = "nvme"
 	SGDisk   = "sgdisk"
 	SSHD     = "sshd"
+	SUM      = "sum"
 )
 
 var commands = []string{
@@ -33,6 +34,7 @@ var commands = []string{
 	NVME,
 	SGDisk,
 	SSHD,
+	SUM,
 }
 
 // CommandsExist check that all required binaries are installed in the initrd.

@@ -4,13 +4,13 @@ import (
 	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/firmware"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/register"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/report"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/bios"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
@@ -27,14 +27,16 @@ type Hammer struct {
 	Disk       storage.Disk
 	LLDPClient *network.LLDPClient
 	// IPAddress is the ip of the eth0 interface during installation
-	IPAddress    string
-	Started      time.Time
-	EventEmitter *event.EventEmitter
+	IPAddress          string
+	Started            time.Time
+	EventEmitter       *event.EventEmitter
+	ChrootPrefix       string
+	OsImageDestination string
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(spec *Specification) (*event.EventEmitter, error) {
-	log.Info("metal-hammer run", "firmware", kernel.Firmware())
+	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", bios.Bios().String())
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := machine.New(transport, strfmt.Default)
@@ -48,10 +50,12 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	}
 
 	hammer := &Hammer{
-		Client:       client,
-		Spec:         spec,
-		IPAddress:    spec.IP,
-		EventEmitter: eventEmitter,
+		Client:             client,
+		Spec:               spec,
+		IPAddress:          spec.IP,
+		EventEmitter:       eventEmitter,
+		ChrootPrefix:       "/rootfs",
+		OsImageDestination: "/tmp/os.tgz",
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
@@ -67,8 +71,9 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		Started:     time.Now(),
 	}
 
-	firmware := firmware.New()
-	firmware.Update()
+	// TODO: Does not work yet, needs to be done manually
+	// firmware := firmware.New()
+	// firmware.Update()
 
 	err = n.UpAllInterfaces()
 	if err != nil {
@@ -96,15 +101,19 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		return eventEmitter, errors.Wrap(err, "register")
 	}
 
-	err = hammer.EnsureUEFI()
-	if err != nil {
-		return eventEmitter, errors.Wrap(err, "uefi")
+	firmware := kernel.Firmware()
+	if firmware != "efi" && !spec.DevMode {
+		log.Info("firmware is not efi, enforce efi boot mode using preparation image")
+		err = hammer.EnsureUEFI()
+		if err != nil {
+			log.Warn("BIOS updates for this machine type are intentionally not supported, skipping EnsureUEFI", "error", err)
+		}
 	}
 
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
-	var machine *models.ModelsV1MachineResponse
+	var m *models.ModelsV1MachineResponse
 	if spec.DevMode {
 		cidr := "10.0.1.2"
 		if spec.Cidr != "" {
@@ -125,7 +134,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		vrf2 := int64(4200000001)
 		hostname := "devmode"
 		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
-		machine = &models.ModelsV1MachineResponse{
+		m = &models.ModelsV1MachineResponse{
 			Allocation: &models.ModelsV1MachineAllocation{
 				Image: &models.ModelsV1ImageResponse{
 					URL: spec.ImageURL,
@@ -181,17 +190,17 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 			},
 		}
 	} else {
-		machine, err = hammer.Wait(uuid)
+		m, err = hammer.Wait(uuid)
 		if err != nil {
 			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(machine.Allocation.Image, machine.Size, hw.Disks)
+	hammer.Disk = storage.GetDisk(m.Allocation.Image, m.Size, hw.Disks)
 
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
-	info, err := hammer.Install(machine, hw)
+	info, err := hammer.Install(m, hw)
 
 	// FIXME, must not return here.
 	if err != nil {

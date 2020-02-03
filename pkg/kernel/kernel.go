@@ -22,9 +22,10 @@ var (
 // Bootinfo is written by the installer in the target os to tell us
 // which kernel, initrd and cmdline must be used for kexec
 type Bootinfo struct {
-	Initrd  string `yaml:"initrd"`
-	Cmdline string `yaml:"cmdline"`
-	Kernel  string `yaml:"kernel"`
+	Initrd       string `yaml:"initrd"`
+	Cmdline      string `yaml:"cmdline"`
+	Kernel       string `yaml:"kernel"`
+	BootloaderID string `yaml:"bootloader_id"`
 }
 
 // ReadBootinfo read boot-info.yaml which was written by the OS install.sh
@@ -45,12 +46,12 @@ func ReadBootinfo(file string) (*Bootinfo, error) {
 
 // ParseCmdline will put each key=value pair from /proc/cmdline into a map.
 func ParseCmdline() (map[string]string, error) {
-	cmdline, err := ioutil.ReadFile(cmdline)
+	cmdLine, err := ioutil.ReadFile(cmdline)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to read %s", cmdline)
+		return nil, errors.Wrapf(err, "unable to read %s", cmdLine)
 	}
 
-	cmdLineValues := strings.Split(string(cmdline), " ")
+	cmdLineValues := strings.Split(string(cmdLine), " ")
 	envmap := make(map[string]string)
 	for _, v := range cmdLineValues {
 		keyValue := strings.Split(v, "=")

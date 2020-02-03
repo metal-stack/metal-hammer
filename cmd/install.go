@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/base64"
 	"encoding/json"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/utils"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -19,11 +20,6 @@ import (
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-)
-
-const (
-	prefix             = "/rootfs"
-	osImageDestination = "/tmp/os.tgz"
 )
 
 // InstallerConfig contains configuration items which are
@@ -58,32 +54,32 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, hw *models.Dom
 		return nil, err
 	}
 
-	err = h.Disk.MountPartitions(prefix)
+	err = h.Disk.MountPartitions(h.ChrootPrefix)
 	if err != nil {
 		return nil, err
 	}
 
-	err = img.Pull(image, osImageDestination)
+	err = img.Pull(image, h.OsImageDestination)
 	if err != nil {
 		return nil, err
 	}
 
-	err = img.Burn(prefix, image, osImageDestination)
+	err = img.Burn(h.ChrootPrefix, image, h.OsImageDestination)
 	if err != nil {
 		return nil, err
 	}
 
-	err = storage.MountSpecialFilesystems(prefix)
+	err = storage.MountSpecialFilesystems(h.ChrootPrefix)
 	if err != nil {
 		return nil, err
 	}
 
-	info, err := h.install(prefix, machine, hw)
+	info, err := h.install(h.ChrootPrefix, machine, hw)
 	if err != nil {
 		return nil, err
 	}
 
-	storage.UnMountAll(prefix)
+	storage.UnMountAll(h.ChrootPrefix)
 
 	return info, nil
 }
@@ -132,9 +128,9 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to chdir to: / error")
 	}
-	log.Info("finish running /install.sh")
+	log.Info("finish running install.sh")
 
-	err = os.Remove(path.Join(prefix, "/install.sh"))
+	err = os.Remove(path.Join(prefix, "install.sh"))
 	if err != nil {
 		log.Warn("unable to remove install.sh, ignoring...", "error")
 	}
@@ -144,8 +140,13 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 		return nil, errors.Wrap(err, "unable to read boot-info.yaml")
 	}
 
+	err = h.EnsureBootOrder(info.BootloaderID)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to ensure boot order")
+	}
+
 	tmp := "/tmp"
-	_, err = copy(path.Join(prefix, info.Kernel), path.Join(tmp, filepath.Base(info.Kernel)))
+	_, err = utils.Copy(path.Join(prefix, info.Kernel), path.Join(tmp, filepath.Base(info.Kernel)))
 	if err != nil {
 		log.Error("install", "could not copy kernel", "error", err)
 		return nil, err
@@ -156,7 +157,7 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 		return info, nil
 	}
 
-	_, err = copy(path.Join(prefix, info.Initrd), path.Join(tmp, filepath.Base(info.Initrd)))
+	_, err = utils.Copy(path.Join(prefix, info.Initrd), path.Join(tmp, filepath.Base(info.Initrd)))
 	if err != nil {
 		log.Error("install", "could not copy initrd", "error", err)
 		return nil, err
@@ -167,7 +168,7 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 }
 
 func (h *Hammer) writeDiskConfig() error {
-	configdir := path.Join(prefix, "etc", "metal")
+	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	destination := path.Join(configdir, "disk.json")
 	j, err := json.MarshalIndent(h.Disk, "", "  ")
 	if err != nil {
@@ -177,7 +178,7 @@ func (h *Hammer) writeDiskConfig() error {
 }
 
 func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
-	configdir := path.Join(prefix, "etc", "metal")
+	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	destination := path.Join(configdir, "userdata")
 
 	base64UserData := machine.Allocation.UserData
@@ -194,7 +195,7 @@ func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 
 func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest) error {
 	log.Info("write installation configuration")
-	configdir := path.Join(prefix, "etc", "metal")
+	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "mkdir of %s target os failed", configdir)
