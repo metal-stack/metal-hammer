@@ -13,6 +13,7 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/bios"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 
@@ -87,7 +88,6 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 		name := attrs.Name
 		mac := attrs.HardwareAddr.String()
 		_, err := gonet.ParseMAC(mac)
-
 		if err != nil {
 			log.Debug("skip interface with invalid mac", "interface", name, "mac", mac)
 			continue
@@ -110,6 +110,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	// add a lo interface if not present
 	// this is required to have this interface present
 	// in our DCIM management to add a ip later.
+	// FIXME this was required for netbox which is no longer used.
 	if !loFound {
 		mac := "00:00:00:00:00:00"
 		name := "lo"
@@ -157,6 +158,13 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	}
 	hw.IPMI = ipmiconfig
 
+	b := bios.Bios()
+	hw.Bios = &models.ModelsV1MachineBIOS{
+		Version: &b.Version,
+		Vendor:  &b.Vendor,
+		Date:    &b.Date,
+	}
+
 	return hw, nil
 }
 
@@ -175,6 +183,7 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 	i := ipmi.New()
 	var pw string
 	var user string
+	var bmcInfo ipmi.BMCInfo
 	if i.DevicePresent() {
 		log.Info("ipmi details from bmc")
 		pw = password.Generate(10)
@@ -194,6 +203,10 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read ipmi fru configuration")
 		}
+		bmcInfo, err = i.GetBMCInfo()
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to read ipmi bmc info configuration")
+		}
 		fru = models.ModelsV1MachineFru{
 			ChassisPartNumber:   f.ChassisPartNumber,
 			ChassisPartSerial:   f.ChassisPartSerial,
@@ -204,6 +217,7 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 			ProductPartNumber:   f.ProductPartNumber,
 			ProductSerial:       f.ProductSerial,
 		}
+
 	} else {
 		log.Info("ipmi details faked")
 
@@ -228,12 +242,13 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 
 	intf := "lanplus"
 	details := &models.ModelsV1MachineIPMI{
-		Address:   &config.IP,
-		Mac:       &config.Mac,
-		Password:  &pw,
-		User:      &user,
-		Interface: &intf,
-		Fru:       &fru,
+		Address:    &config.IP,
+		Mac:        &config.Mac,
+		Password:   &pw,
+		User:       &user,
+		Interface:  &intf,
+		Fru:        &fru,
+		Bmcversion: &bmcInfo.FirmwareRevision,
 	}
 
 	return details, nil

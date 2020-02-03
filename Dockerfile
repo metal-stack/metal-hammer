@@ -1,5 +1,7 @@
 FROM registry.fi-ts.io/cloud-native/go-builder:latest as builder
 
+FROM registry.fi-ts.io/metal/supermicro:latest as sum
+
 FROM golang:1.13-buster as initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v6.0.0
 RUN apt-get update \
@@ -16,6 +18,7 @@ RUN apt-get update \
 	net-tools \
 	nvme-cli \
 	pciutils \
+	strace \
 	util-linux
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
@@ -24,7 +27,8 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && go install
 WORKDIR /work
-COPY metal.key metal.key.pub Makefile .git /work/
+COPY metal.key metal.key.pub passwd varrun Makefile .git /work/
+COPY --from=sum /usr/bin/sum /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/bin/metal-hammer /work/bin/
 RUN COMMONDIR=/common make ramdisk

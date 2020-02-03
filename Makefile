@@ -7,7 +7,7 @@ MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../common)
 CGO_ENABLED := 1
 
-in-docker: clean-client generate-client test all;
+in-docker: clean-local-dirs generate-client test all;
 
 include $(COMMONDIR)/Makefile.inc
 
@@ -24,7 +24,6 @@ ${INITRD_COMPRESSED}:
 .PHONY: initrd
 initrd: ${INITRD_COMPRESSED}
 
-
 # place all binaries in the same directory (/sbin) which is in the PATH of root.
 .PHONY: ramdisk
 ramdisk:
@@ -37,6 +36,7 @@ ramdisk:
 		-files="/sbin/blkid:sbin/blkid" \
 		-files="/sbin/ethtool:sbin/ethtool" \
 		-files="/usr/bin/lspci:bin/lspci" \
+		-files="/usr/bin/strace:bin/strace" \
 		-files="/usr/share/misc/pci.ids:usr/share/misc/pci.ids" \
 		-files="/bin/netstat:bin/netstat" \
 		-files="/sbin/hdparm:sbin/hdparm" \
@@ -50,8 +50,12 @@ ramdisk:
 		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
+		-files="/usr/lib/x86_64-linux-gnu/libnss_files.so:lib/libnss_files.so.2" \
+		-files="passwd:etc/passwd" \
+		-files="varrun:var/run/keep" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
+		-files="sum:sbin/sum" \
 	-o ${INITRD} \
 	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}
@@ -59,8 +63,6 @@ ramdisk:
 clean-local-dirs:
 	rm -rf metal-core
 	mkdir metal-core
-clean-client: clean-local-dirs
-	cp ../metal-core/spec/metal-core.json metal-core.json
 
 # 'swaggergenerate' generates swagger client with SWAGGERSPEC="swagger.json" SWAGGERTARGET="./".
 generate-client: SWAGGERSPEC="metal-core.json"
@@ -72,3 +74,21 @@ vagrant-destroy:
 
 vagrant-up: vagrant-destroy
 	vagrant up && virsh console metal-hammer_pxeclient
+
+# http://nickdesaulniers.github.io/blog/2018/10/24/booting-a-custom-linux-kernel-in-qemu-and-debugging-it-with-gdb/
+qemu-up:
+	qemu-system-x86_64 \
+		--enable-kvm \
+		-m 512 \
+		-nographic \
+		-object rng-random,filename=/dev/urandom,id=rng0 \
+		-device virtio-rng-pci,rng=rng0 \
+		-append "console=ttyS0 ip=dhcp \
+          METAL_CORE_ADDRESS=192.168.121.1:4712 \
+          IMAGE_ID=default  \
+          SIZE_ID=v1-small-x86  \
+          IMAGE_URL=http://192.168.121.1:4711/images/ubuntu/19.04/img.tar.lz4  \
+          DEBUG=1  \
+          BGP=1" \
+		-kernel metal-hammer-kernel \
+		-initrd metal-hammer-initrd.img.lz4

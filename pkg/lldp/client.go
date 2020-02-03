@@ -88,7 +88,7 @@ func (l *Client) Close() {
 }
 
 // Neighbors search on a interface for neighbors announced via lldp
-func (l *Client) Neighbors(neighCan chan Neighbor) {
+func (l *Client) Neighbors(neighChan chan Neighbor) {
 	for {
 		for packet := range l.Source.Packets() {
 			switch packet.LinkLayer().LayerType() {
@@ -128,7 +128,7 @@ func (l *Client) Neighbors(neighCan chan Neighbor) {
 						neigh.Name = lldpi.SysName
 						neigh.Description = lldpi.SysDescription
 						neigh.Interface = l.Interface.Name
-						neighCan <- neigh
+						neighChan <- neigh
 					}
 				}
 			}

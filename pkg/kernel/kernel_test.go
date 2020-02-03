@@ -53,13 +53,13 @@ func TestFirmware(t *testing.T) {
 
 	firmware := Firmware()
 	if firmware != "efi" {
-		t.Error("expected efi firmware but didnt get")
+		t.Error("expected efi firmware but didn't get")
 	}
 
 	sysfirmware = "/tmp/testbios"
 	firmware = Firmware()
 	if firmware != "bios" {
-		t.Error("expected bios firmware but didnt get")
+		t.Error("expected bios firmware but didn't get")
 	}
 }
 
