@@ -7,7 +7,7 @@ Hammer is used to boot a bare metal server via PXE together with the Metal Stack
 - Wipes as existing disks by either:
   - run secure erase if possible by using the mechanism in modern disks, this is true for most SSD´s and NVME disks.
   - If not possible run mkfs.ext4 --discard on the disks.
-- Gather HW informations and report them back to metal-api:
+- Gather HW information and report them back to metal-api:
   - CPU Core count
   - Memory count
   - Disks with their size and device path
