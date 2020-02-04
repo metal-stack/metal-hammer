@@ -1,0 +1,25 @@
+name: master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+
+  build:
+ 
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Lint
+        uses: actions-contrib/golangci-lint@master
+        with:
+          args: run
+      - name: Build project
+        run: |
+          docker build -t metal-hammer .
+          docker export $(docker create metal-hammer /dev/null) > metal-hammer.tar
+          tar -xf metal-hammer.tar metal-hammer-initrd.img.lz4

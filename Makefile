@@ -75,6 +75,8 @@ vagrant-destroy:
 vagrant-up: vagrant-destroy
 	vagrant up && virsh console metal-hammer_pxeclient
 
+# TODO make this work as with vagrant as a lightweight alternative.
+# networking is not working atm.
 # http://nickdesaulniers.github.io/blog/2018/10/24/booting-a-custom-linux-kernel-in-qemu-and-debugging-it-with-gdb/
 qemu-up:
 	qemu-system-x86_64 \
