@@ -1,4 +1,4 @@
-FROM registry.fi-ts.io/cloud-native/go-builder:latest as builder
+FROM metalstack/builder:latest as builder
 
 FROM registry.fi-ts.io/metal/supermicro:latest as sum
 
