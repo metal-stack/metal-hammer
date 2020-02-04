@@ -14,10 +14,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@master
-      - name: Lint
-        uses: actions-contrib/golangci-lint@master
-        with:
-          args: run
       - name: Build project
         run: |
           docker build -t metal-hammer .
