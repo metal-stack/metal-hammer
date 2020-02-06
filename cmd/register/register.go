@@ -15,7 +15,6 @@ import (
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/bios"
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
@@ -181,15 +180,15 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 	config := ipmi.LanConfig{}
 	var fru models.ModelsV1MachineFru
 	i := ipmi.New()
+	var err error
 	var pw string
 	var user string
 	var bmcInfo ipmi.BMCInfo
 	if i.DevicePresent() {
 		log.Info("ipmi details from bmc")
-		pw = password.Generate(10)
 		user = defaultIpmiUser
 		// FIXME userid should be verified if available
-		err := i.CreateUser(user, pw, defaultIpmiUserID, ipmi.Administrator)
+		pw, err = i.CreateUser(user, defaultIpmiUserID, ipmi.Administrator)
 		if err != nil {
 			return nil, errors.Wrap(err, "ipmi create user failed")
 		}

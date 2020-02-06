@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
+	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	"github.com/avast/retry-go"
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
@@ -45,7 +46,7 @@ const (
 type Ipmi interface {
 	DevicePresent() bool
 	Run(arg ...string) (string, error)
-	CreateUser(username, password, uid string, privilege Privilege) error
+	CreateUser(username, uid string, privilege Privilege) (string, error)
 	GetLanConfig() (LanConfig, error)
 	EnableUEFI(bootdev Bootdev, persistent bool) error
 	GetFru() (Fru, error)
@@ -207,16 +208,18 @@ func (i *Ipmitool) GetSession() (Session, error) {
 }
 
 // CreateUser create a ipmi user with password and privilege level
-func (i *Ipmitool) CreateUser(username, password, uid string, privilege Privilege) error {
+func (i *Ipmitool) CreateUser(username, uid string, privilege Privilege) (string, error) {
 	out, err := i.Run("user", "set", "name", uid, username)
 	if err != nil {
-		return errors.Wrapf(err, "unable to create user %s: %v", username, out)
+		return "", errors.Wrapf(err, "unable to create user %s: %v", username, out)
 	}
 	// This happens from time to time for unknown reason
-	// retry password creation max 10 times with 3 second delay
+	// retry password creation max 30 times with 1 second delay
+	pw := ""
 	err = retry.Do(
 		func() error {
-			out, err = i.Run("user", "set", "password", uid, password)
+			pw = password.Generate(10)
+			out, err = i.Run("user", "set", "password", uid, pw)
 			if err != nil {
 				log.Error("ipmi password creation failed", "user", username, "output", out)
 			}
@@ -225,28 +228,28 @@ func (i *Ipmitool) CreateUser(username, password, uid string, privilege Privileg
 		retry.OnRetry(func(n uint, err error) {
 			log.Debug("retry ipmi password creation", "user", username, "id", uid, "retry", n)
 		}),
-		retry.Delay(3*time.Second),
-		retry.Attempts(10),
+		retry.Delay(1*time.Second),
+		retry.Attempts(30),
 	)
 	if err != nil {
-		return errors.Wrapf(err, "unable to set password for user %s: %v", username, out)
+		return pw, errors.Wrapf(err, "unable to set password for user %s: %v", username, out)
 	}
 
 	channelnumber := "1"
 	out, err = i.Run("channel", "setaccess", channelnumber, uid, "link=on", "ipmi=on", "callin=on", fmt.Sprintf("privilege=%d", int(privilege)))
 	if err != nil {
-		return errors.Wrapf(err, "unable to set privilege for user %s: %v", username, out)
+		return pw, errors.Wrapf(err, "unable to set privilege for user %s: %v", username, out)
 	}
 	out, err = i.Run("user", "enable", uid)
 	if err != nil {
-		return errors.Wrapf(err, "unable to enable user %s: %v", username, out)
+		return pw, errors.Wrapf(err, "unable to enable user %s: %v", username, out)
 	}
 	out, err = i.Run("sol", "payload", "enable", channelnumber, uid)
 	if err != nil {
-		return errors.Wrapf(err, "unable to enable user %s for sol access: %v", username, out)
+		return pw, errors.Wrapf(err, "unable to enable user %s for sol access: %v", username, out)
 	}
 
-	return nil
+	return pw, nil
 }
 
 // EnableUEFI set the firmware to boot with uefi for given bootdev,
