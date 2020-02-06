@@ -1,6 +1,6 @@
 FROM metalstack/builder:latest as builder
 
-FROM registry.fi-ts.io/metal/supermicro:latest as sum
+FROM registry.fi-ts.io/metal/supermicro:2.4.0 as sum
 
 FROM golang:1.13-buster as initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v6.0.0
