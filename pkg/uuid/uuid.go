@@ -36,7 +36,7 @@ func machineUUID(readFileFunc func(filename string) ([]byte, error)) string {
 		} else {
 			productSerialBytes, err := guuid.FromBytes([]byte(fmt.Sprintf("%16s", string(productSerial))))
 			if err != nil {
-				log.Error("error getting converting product_serial to uuid", "error", err)
+				log.Error("error converting product_serial to uuid", "error", err)
 			} else {
 				log.Info("create UUID from", "source", dmiSerial)
 				return strings.TrimSpace(productSerialBytes.String())
