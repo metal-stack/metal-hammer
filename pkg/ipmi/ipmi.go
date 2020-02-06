@@ -213,14 +213,17 @@ func (i *Ipmitool) CreateUser(username, password, uid string, privilege Privileg
 		return errors.Wrapf(err, "unable to create user %s: %v", username, out)
 	}
 	// This happens from time to time for unknown reason
-	// retry password creation max 10times with 3 second delay
+	// retry password creation max 10 times with 3 second delay
 	err = retry.Do(
 		func() error {
-			_, err = i.Run("user", "set", "password", uid, password)
+			out, err = i.Run("user", "set", "password", uid, password)
+			if err != nil {
+				log.Error("ipmi password creation failed", "user", username, "output", out)
+			}
 			return err
 		},
 		retry.OnRetry(func(n uint, err error) {
-			log.Debug("retry ipmi password creation for user:%s retry:%d", username, n)
+			log.Debug("retry ipmi password creation", "user", username, "id", uid, "retry", n)
 		}),
 		retry.Delay(3*time.Second),
 		retry.Attempts(10),
