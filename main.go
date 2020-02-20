@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/metal-stack/v"
 
 	"os"
@@ -73,7 +72,7 @@ func main() {
 
 func updateResolvConf() error {
 	// when starting the metal-hammer u-root sets a static resolv.conf file containing 8.8.8.8
-	// this can only be overriden by running dhclient
+	// this can only be overridden by running dhclient
 	// however, we can use the dhcp information that the kernel used during startup
 	// this information is contained in /proc/net/pnp
 	//

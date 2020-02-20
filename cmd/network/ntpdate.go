@@ -33,7 +33,7 @@ func getTime(servers []string) (t time.Time, err error) {
 	return
 }
 
-// NtpDate set the system time to the time comming from a ntp source
+// NtpDate set the system time to the time coming from an ntp source
 func NtpDate() {
 	t, err := getTime(ntpServers)
 	if err != nil {

@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/metal-stack/metal-hammer/cmd/utils"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -11,8 +12,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/metal-stack/metal-hammer/cmd/utils"
 
 	log "github.com/inconshreveable/log15"
 	img "github.com/metal-stack/metal-hammer/cmd/image"
@@ -47,9 +46,7 @@ type InstallerConfig struct {
 }
 
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest) (*kernel.Bootinfo, error) {
-	image := machine.Allocation.Image.URL
-
+func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
 	err := h.Disk.Partition()
 	if err != nil {
 		return nil, err
@@ -59,6 +56,8 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, hw *models.Dom
 	if err != nil {
 		return nil, err
 	}
+
+	image := machine.Allocation.Image.URL
 
 	err = img.Pull(image, h.OsImageDestination)
 	if err != nil {
@@ -75,7 +74,7 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, hw *models.Dom
 		return nil, err
 	}
 
-	info, err := h.install(h.ChrootPrefix, machine, hw)
+	info, err := h.install(h.ChrootPrefix, machine, nics)
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +86,10 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, hw *models.Dom
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest) (*kernel.Bootinfo, error) {
+func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
 	log.Info("install", "image", machine.Allocation.Image.URL)
 
-	err := h.writeInstallerConfig(machine, hw)
+	err := h.writeInstallerConfig(machine, nics)
 	if err != nil {
 		return nil, errors.Wrap(err, "writing configuration install.yaml failed")
 	}
@@ -194,7 +193,7 @@ func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 	return nil
 }
 
-func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest) error {
+func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) error {
 	log.Info("write installation configuration")
 	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -216,8 +215,6 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, h
 		console = "ttyS0"
 	}
 
-	nics := nicsWithNeighbors(hw.Nics)
-
 	y := &InstallerConfig{
 		Hostname:     *machine.Allocation.Hostname,
 		SSHPublicKey: sshPubkeys,
@@ -227,7 +224,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, h
 		Password:     h.Spec.ConsolePassword,
 		Console:      console,
 		Timestamp:    time.Now().Format(time.RFC3339),
-		Nics:         nics,
+		Nics:         nicsWithNeighbors(nics),
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {

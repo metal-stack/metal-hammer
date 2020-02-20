@@ -1,11 +1,10 @@
 package network
 
 import (
-	"sync"
-	"time"
-
 	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/pkg/lldp"
+	"sync"
+	"time"
 )
 
 // LLDPClient act as a small wrapper about low level lldp primitives.
@@ -54,7 +53,7 @@ func NewLLDPClient(interfaces []string, minimumInterfaces, minimumNeighbors int,
 	}
 }
 
-// Start starts lldpd for neighbor discovery.
+// Start will start lldpd for neighbor discovery.
 func (l *LLDPClient) Start() {
 	log.Info("lldp start discovery")
 	neighChan := make(chan lldp.Neighbor)
@@ -67,39 +66,35 @@ func (l *LLDPClient) Start() {
 		go lldpcli.Neighbors(neighChan)
 	}
 
-	for detectedNeighbor := range neighChan {
-		log.Debug("lldp", "detectedNeighbor", detectedNeighbor)
-		if l.neighborKnown(detectedNeighbor) {
-			continue
-		}
-
-		l.addNeighbor(detectedNeighbor)
-		log.Info("lldp", "neighbors", l.Host.neighbors)
-	}
-}
-
-// neighborKnown returns if the given neighbor is already known
-func (l *LLDPClient) neighborKnown(neighbor lldp.Neighbor) bool {
-	l.Host.mutex.RLock()
-	defer l.Host.mutex.RUnlock()
-
-	for _, knownNeighbors := range l.Host.neighbors {
-		for _, kn := range knownNeighbors {
-			if kn.Chassis.Value == neighbor.Chassis.Value && kn.Port.Value == neighbor.Port.Value {
-				return true
+	for {
+		select {
+		case neigh := <-neighChan:
+			log.Debug("lldp", "neigh", neigh)
+			neighExists := false
+			l.Host.mutex.RLock()
+			for _, existingNeigh := range l.Host.neighbors {
+				for _, en := range existingNeigh {
+					if en.Chassis.Value == neigh.Chassis.Value &&
+						en.Port.Value == neigh.Port.Value {
+						neighExists = true
+						break
+					}
+				}
+				if neighExists {
+					break
+				}
 			}
+			l.Host.mutex.RUnlock()
+			if neighExists {
+				break
+			}
+			l.Host.mutex.Lock()
+			l.Host.neighbors[neigh.Interface] = append(l.Host.neighbors[neigh.Interface], &neigh)
+			l.Host.done = l.requirementsMet()
+			l.Host.mutex.Unlock()
+			log.Info("lldp", "neighbors", l.Host.neighbors)
 		}
 	}
-	return false
-}
-
-// addNeighbor adds the neighbor to the known neighbors
-func (l *LLDPClient) addNeighbor(neighbor lldp.Neighbor) {
-	l.Host.mutex.Lock()
-	defer l.Host.mutex.Unlock()
-
-	l.Host.neighbors[neighbor.Interface] = append(l.Host.neighbors[neighbor.Interface], &neighbor)
-	l.Host.done = l.requirementsMet()
 }
 
 func (l *LLDPClient) requirementsMet() bool {
@@ -111,11 +106,10 @@ func (l *LLDPClient) requirementsMet() bool {
 		return false
 	}
 	// Then check if 2 distinct Chassis neighbors where found
-	// and every port type of a interface on the switch is set to mac
 	neighMap := make(map[string]string)
 	for iface, neighs := range l.Host.neighbors {
 		for _, neigh := range neighs {
-			if neigh.Chassis.Type == lldp.Mac && neigh.Port.Type == lldp.Mac {
+			if neigh.Chassis.Type == lldp.Mac {
 				neighMap[neigh.Chassis.Value] = iface
 			}
 		}

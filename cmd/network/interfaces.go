@@ -21,6 +21,7 @@ type Network struct {
 	Started     time.Time
 	MachineUUID string
 	LLDPClient  *LLDPClient
+	Eth0Mac     string // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
 }
 
 // We expect to have storage and MTU of 9000 supports efficient transmission.
@@ -43,7 +44,7 @@ func (n *Network) UpAllInterfaces() error {
 
 		err := linkSetMTU(name, MTU)
 		if err != nil {
-			return errors.Wrapf(err, "Error set link %s up", name)
+			return errors.Wrapf(err, "Error set link %s mtu", name)
 		}
 
 		err = linkSetUp(name)
@@ -114,6 +115,9 @@ func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNicExtended, 
 
 	neighs := host.neighbors[name]
 	for _, neigh := range neighs {
+		if neigh.Port.Type != lldp.Mac {
+			continue
+		}
 		macAddress := neigh.Port.Value
 		neighbors = append(neighbors, &models.ModelsV1MachineNicExtended{Mac: &macAddress})
 	}

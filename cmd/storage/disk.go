@@ -29,7 +29,7 @@ const (
 	// GIB bytes of a Gigabyte
 	GIB = int64(1024 * 1024 * 1024)
 	// TIB bytes of a Terabyte
-	TIB = int64(1024 * GIB)
+	TIB = 1024 * GIB
 	// DiskPrefixToIgnore disks with this prefix will not be reported and wiped.
 	DiskPrefixToIgnore = "ram"
 )
@@ -73,7 +73,7 @@ type (
 
 	// Disk is a physical Disk
 	Disk struct {
-		// Device the name of the disk device visible from kernel side, e.g. sda
+		// Device the name of the disk device visible from kernel side, e.g. /dev/sda
 		Device string
 		// Partitions to create on this disk, order is preserved
 		Partitions []*Partition
@@ -192,7 +192,7 @@ func guessDisk(disks []*models.ModelsV1MachineBlockDevice) string {
 	for _, d := range disks {
 		if strings.Contains(*d.Name, "nvme") {
 			continue
-		} else if (*d.Size) > TIB {
+		} else if *d.Size > TIB {
 			continue
 		} else if guess != "" {
 			log.Warn("getdisk", "guess for OS is ambiguous: %s, %s", guess, *d.Name)

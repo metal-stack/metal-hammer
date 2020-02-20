@@ -26,6 +26,7 @@ const (
 	ProvisioningEventInstalling       ProvisioningEventType = "Installing"
 	ProvisioningEventBootingNewKernel ProvisioningEventType = "Booting New Kernel"
 	ProvisioningEventPhonedHome       ProvisioningEventType = "Phoned Home"
+	ProvisioningEventReinstallAborted ProvisioningEventType = "Reinstall Aborted"
 )
 
 type EventEmitter struct {
@@ -49,7 +50,6 @@ func NewEventEmitter(client *machine.Client, machineID string) *EventEmitter {
 }
 
 func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
-
 	eventString := string(eventType)
 	event := &models.ModelsV1MachineProvisioningEvent{
 		Event:   &eventString,
