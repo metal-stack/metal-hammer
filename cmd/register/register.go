@@ -9,12 +9,12 @@ import (
 	"syscall"
 	"unsafe"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/bios"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/ipmi"
+	"github.com/metal-stack/metal-hammer/cmd/network"
+	"github.com/metal-stack/metal-hammer/cmd/storage"
+	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"github.com/metal-stack/metal-hammer/pkg/bios"
+	"github.com/metal-stack/metal-hammer/pkg/ipmi"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"

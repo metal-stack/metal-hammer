@@ -4,7 +4,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
+	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/pkg/errors"
 )
 

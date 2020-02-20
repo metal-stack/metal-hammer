@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"

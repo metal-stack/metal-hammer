@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/lldp"
-	"github.com/metal-pod/v"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"github.com/metal-stack/metal-hammer/pkg/lldp"
+	"github.com/metal-stack/v"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"

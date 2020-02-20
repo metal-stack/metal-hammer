@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
+	"github.com/metal-stack/metal-hammer/cmd/network"
+	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
 )
 
 func TestRegisterMachine(t *testing.T) {

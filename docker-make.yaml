@@ -1,8 +1,8 @@
 ---
 version: '1'
 name: hammer
-username: metal
-registry-host: registry.fi-ts.io
+username: metalstack
+registry-host: docker.io
 default-build-args:
   - http_proxy=${HTTP_PROXY}
   - https_proxy=${HTTP_PROXY}
@@ -16,6 +16,6 @@ builds:
     tags:
       - latest
     after:
-      - docker export $(docker create registry.fi-ts.io/metal/hammer /dev/null) > metal-hammer.tar
+      - docker export $(docker create metalstack/hammer /dev/null) > metal-hammer.tar
       - tar -xf metal-hammer.tar metal-hammer-initrd.img.lz4
       - rm -f metal-hammer.tar

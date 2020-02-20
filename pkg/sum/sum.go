@@ -3,15 +3,16 @@ package sum
 import (
 	"encoding/xml"
 	"fmt"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
-	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
-	"golang.org/x/net/html/charset"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 	"syscall"
+
+	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/metal-hammer/pkg/os/command"
+	"github.com/pkg/errors"
+	"golang.org/x/net/html/charset"
 )
 
 type machineType int
