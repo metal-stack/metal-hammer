@@ -4,7 +4,7 @@ COMPRESSOR := lz4
 COMPRESSOR_ARGS := -f -l
 INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
-COMMONDIR := $(or ${COMMONDIR},../common)
+COMMONDIR := $(or ${COMMONDIR},../builder)
 CGO_ENABLED := 1
 
 in-docker: clean-local-dirs generate-client test all;
