@@ -3,10 +3,10 @@ package cmd
 import (
 	"time"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/sum"
+	"github.com/metal-stack/metal-hammer/pkg/sum"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
+	"github.com/metal-stack/metal-hammer/cmd/event"
+	"github.com/metal-stack/metal-hammer/pkg/kernel"
 
 	log "github.com/inconshreveable/log15"
 )

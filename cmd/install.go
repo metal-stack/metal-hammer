@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/base64"
 	"encoding/json"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/utils"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -13,11 +12,13 @@ import (
 	"syscall"
 	"time"
 
-	img "git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/image"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/storage"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
+	"github.com/metal-stack/metal-hammer/cmd/utils"
+
 	log "github.com/inconshreveable/log15"
+	img "github.com/metal-stack/metal-hammer/cmd/image"
+	"github.com/metal-stack/metal-hammer/cmd/storage"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )

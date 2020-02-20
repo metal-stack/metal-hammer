@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
 )
 
 func TestGuessDisk(t *testing.T) {

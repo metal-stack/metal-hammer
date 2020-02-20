@@ -1,12 +1,14 @@
 package cmd
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/uuid"
 	"strconv"
 	"strings"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
+	"github.com/metal-stack/metal-hammer/pkg/uuid"
+
 	"os"
+
+	"github.com/metal-stack/metal-hammer/pkg/kernel"
 
 	log "github.com/inconshreveable/log15"
 )

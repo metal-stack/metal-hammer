@@ -1,10 +1,11 @@
 package network
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/lldp"
-	log "github.com/inconshreveable/log15"
 	"sync"
 	"time"
+
+	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/metal-hammer/pkg/lldp"
 )
 
 // LLDPClient act as a small wrapper about low level lldp primitives.

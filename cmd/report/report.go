@@ -1,8 +1,8 @@
 package report
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/client/machine"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
+	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"

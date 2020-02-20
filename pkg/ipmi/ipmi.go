@@ -15,10 +15,10 @@ import (
 	"strings"
 	"time"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/password"
 	"github.com/avast/retry-go"
 	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/metal-hammer/pkg/os/command"
+	"github.com/metal-stack/metal-hammer/pkg/password"
 	"github.com/pkg/errors"
 )
 

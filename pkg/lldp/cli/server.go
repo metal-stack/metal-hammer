@@ -1,9 +1,10 @@
 package main
 
 import (
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/lldp"
 	"os"
 	"time"
+
+	"github.com/metal-stack/metal-hammer/pkg/lldp"
 )
 
 func main() {

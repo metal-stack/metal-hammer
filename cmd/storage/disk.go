@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/metal-core/models"
 	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
 )
 
 const (

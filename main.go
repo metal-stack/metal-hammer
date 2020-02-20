@@ -3,16 +3,16 @@ package main
 import (
 	"fmt"
 
-	"github.com/metal-pod/v"
+	"github.com/metal-stack/v"
 
 	"os"
 	"time"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/event"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/cmd/network"
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/kernel"
 	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/metal-hammer/cmd"
+	"github.com/metal-stack/metal-hammer/cmd/event"
+	"github.com/metal-stack/metal-hammer/cmd/network"
+	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/pkg/errors"
 )
 

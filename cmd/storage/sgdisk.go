@@ -3,10 +3,10 @@ package storage
 import (
 	"fmt"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os"
+	"github.com/metal-stack/metal-hammer/pkg/os"
 
-	"git.f-i-ts.de/cloud-native/metal/metal-hammer/pkg/os/command"
 	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/pkg/errors"
 )
 
