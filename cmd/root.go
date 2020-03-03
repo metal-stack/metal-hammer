@@ -221,12 +221,11 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	}
 
 	hammer.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
-	_, err = hammer.installImage(eventEmitter, m, hw.Nics, false)
+	_, err = hammer.installImage(eventEmitter, m, hw.Nics)
 	return eventEmitter, err
 }
 
-func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended, reinstall bool) (*kernel.Bootinfo, error) {
-	log.Warn("Start install image")
+func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
 	info, err := h.Install(m, nics)

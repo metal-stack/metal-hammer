@@ -202,9 +202,9 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, n
 	}
 	destination := path.Join(configdir, "install.yaml")
 
-	allocation := machine.Allocation
+	alloc := machine.Allocation
 
-	sshPubkeys := strings.Join(machine.Allocation.SSHPubKeys, "\n")
+	sshPubkeys := strings.Join(alloc.SSHPubKeys, "\n")
 	cmdline, err := kernel.ParseCmdline()
 	if err != nil {
 		return errors.Wrap(err, "unable to get kernel cmdline map")
@@ -216,9 +216,9 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, n
 	}
 
 	y := &InstallerConfig{
-		Hostname:     *machine.Allocation.Hostname,
+		Hostname:     *alloc.Hostname,
 		SSHPublicKey: sshPubkeys,
-		Networks:     allocation.Networks,
+		Networks:     alloc.Networks,
 		MachineUUID:  h.Spec.MachineUUID,
 		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,

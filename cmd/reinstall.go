@@ -35,7 +35,6 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 		Kernel:       *m.Allocation.Reinstall.Kernel,
 		BootloaderID: *m.Allocation.Reinstall.Bootloaderid,
 	}
-	log.Warn("DEBUG", "primary disk", primaryDiskName, "osPartition", *m.Allocation.Reinstall.OsPartition, "initrd", info.Initrd, "cmdline", info.Cmdline, "kernel", info.Kernel, "bootloaderID", info.BootloaderID)
 
 	block, err := ghw.Block()
 	if err != nil {
@@ -62,13 +61,7 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 	}
 
 	h.Disk = storage.GetDisk(*m.Allocation.Reinstall.OldImageID, m.Size, hw.Disks)
-	info, err = h.installImage(eventEmitter, m, hw.Nics, true)
-	if err != nil {
-		log.Error("failed to install image", "error", err)
-	} else {
-		log.Warn("DEBUG -> 2", "primary disk", primaryDiskName, "osPartition", *m.Allocation.Reinstall.OsPartition, "initrd", info.Initrd, "cmdline", info.Cmdline, "kernel", info.Kernel, "bootloaderID", info.BootloaderID)
-	}
-	return info, err
+	return h.installImage(eventEmitter, m, hw.Nics)
 }
 
 func (h *Hammer) abortReinstall(reason error, bootInfo *kernel.Bootinfo) error {
