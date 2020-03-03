@@ -34,41 +34,58 @@ var (
 // MountPartitions mounts all partitions under prefix
 func (disk Disk) MountPartitions(prefix string) error {
 	log.Info("mount", "disk", disk)
+
 	// "/" must be mounted first
 	partitions := disk.SortByMountPoint()
 
 	for _, p := range partitions {
+		err := p.Mount(prefix, false)
+		if err != nil {
+			return err
+		}
+	}
 
+	return nil
+}
+
+// Mount mounts the partition under prefix
+func (p *Partition) Mount(prefix string, reinstall bool) error {
+	log.Info("mount", "partition", p.Device)
+
+	if !reinstall {
 		err := p.MkFS()
 		if err != nil {
 			log.Error("mount", "message", "create filesystem failed", "error", err)
 			return errors.Wrap(err, "create filesystem failed")
 		}
-
 		err = p.fetchBlockIDProperties()
 		if err != nil {
 			log.Error("mount", "message", "reading blkid properties failed", "error", err)
 			return errors.Wrap(err, "reading blkid properties failed")
 		}
 		log.Info("partition properties", "device", p.Device, "properties", p.Properties)
+	}
 
-		if p.MountPoint == "" {
-			continue
-		}
+	if p.MountPoint == "" {
+		return nil
+	}
 
-		mountPoint := filepath.Join(prefix, p.MountPoint)
-		err = os.MkdirAll(mountPoint, os.ModePerm)
-		if err != nil {
-			log.Error("mount", "message", "create directory failed", "error", err)
-			return errors.Wrap(err, "create directory failed")
-		}
-		log.Info("mount", "source", p.Device, "target", mountPoint, "fstype", p.Filesystem)
-		// see man 2 mount
-		err = syscall.Mount(p.Device, mountPoint, string(p.Filesystem), 0, "")
-		if err != nil {
-			log.Error("mount", "partition", p.Device, "mountPoint", mountPoint, "error", err)
-			return errors.Wrapf(err, "mount: %s to:%s failed", p.Device, mountPoint)
-		}
+	mountPoint := filepath.Join(prefix, p.MountPoint)
+	err := os.MkdirAll(mountPoint, os.ModePerm)
+	if err != nil {
+		log.Error("mount", "message", "create directory failed", "error", err)
+		return errors.Wrap(err, "create directory failed")
+	} else {
+		log.Info("created directory", "directory", mountPoint)
+	}
+	log.Info("mount", "source", p.Device, "target", mountPoint, "fstype", p.Filesystem)
+	// see man 2 mount
+	err = syscall.Mount(p.Device, mountPoint, string(p.Filesystem), 0, "")
+	if err != nil {
+		log.Error("mount", "partition", p.Device, "mountPoint", mountPoint, "error", err)
+		//return errors.Wrapf(err, "mount: %s to:%s failed", p.Device, mountPoint)
+	} else {
+		log.Info("new disk mount", "mountPoint", p.MountPoint)
 		diskMounts = append(diskMounts, mount{target: p.MountPoint})
 	}
 
@@ -115,6 +132,18 @@ func UnMountAll(prefix string) {
 			if err != nil {
 				log.Error("unable to unmount", "path", m, "error", err)
 			}
+		}
+	}
+}
+
+// UnMountDisks will unmount all disk mounts
+func UnMountDisks(prefix string) {
+	for index := len(diskMounts) - 1; index >= 0; index-- {
+		m := filepath.Join(prefix, diskMounts[index].target)
+		log.Info("unmounting", "mountpoint", m)
+		err := syscall.Unmount(m, syscall.MNT_FORCE)
+		if err != nil {
+			log.Error("unable to unmount", "path", m, "error", err)
 		}
 	}
 }

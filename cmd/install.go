@@ -137,19 +137,19 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 
 	info, err := kernel.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to read boot-info.yaml")
+		return info, errors.Wrap(err, "unable to read boot-info.yaml")
 	}
 
 	err = h.EnsureBootOrder(info.BootloaderID)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to ensure boot order")
+		return info, errors.Wrap(err, "unable to ensure boot order")
 	}
 
 	tmp := "/tmp"
 	_, err = utils.Copy(path.Join(prefix, info.Kernel), path.Join(tmp, filepath.Base(info.Kernel)))
 	if err != nil {
 		log.Error("install", "could not copy kernel", "error", err)
-		return nil, err
+		return info, err
 	}
 	info.Kernel = path.Join(tmp, filepath.Base(info.Kernel))
 
@@ -160,7 +160,7 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 	_, err = utils.Copy(path.Join(prefix, info.Initrd), path.Join(tmp, filepath.Base(info.Initrd)))
 	if err != nil {
 		log.Error("install", "could not copy initrd", "error", err)
-		return nil, err
+		return info, err
 	}
 	info.Initrd = path.Join(tmp, filepath.Base(info.Initrd))
 

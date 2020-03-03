@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
+	"strings"
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
@@ -90,9 +89,20 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	}
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
-	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstallation != nil {
-		hammer.Disk = storage.GetDisk(m.Allocation.Image, m.Size, hw.Disks)
-		return hammer.reinstall(m, hw.Nics, eventEmitter)
+	if err != nil {
+		return eventEmitter, nil
+	}
+
+	if m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil {
+		info, err := hammer.reinstall(m, hw, eventEmitter)
+		if err != nil {
+			log.Error("reinstall failed -> abort", "error", err)
+			err = hammer.abortReinstall(err, info)
+			if err != nil {
+				return eventEmitter, err
+			}
+		}
+		return eventEmitter, nil
 	}
 
 	err = storage.WipeDisks()
@@ -119,6 +129,10 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		if err != nil {
 			log.Warn("BIOS updates for this machine type are intentionally not supported, skipping EnsureUEFI", "error", err)
 		}
+	} else if firmware == "efi" {
+		log.Info("firmware is EFI")
+	} else {
+		log.Info("WHAT ELSE")
 	}
 
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
@@ -206,55 +220,60 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(m.Allocation.Image, m.Size, hw.Disks)
-
-	return hammer.installImage(eventEmitter, m, hw.Nics, true)
+	hammer.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
+	_, err = hammer.installImage(eventEmitter, m, hw.Nics, false)
+	return eventEmitter, err
 }
 
-func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended, emitReport bool) (*event.EventEmitter, error) {
+func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended, reinstall bool) (*kernel.Bootinfo, error) {
+	log.Warn("Start install image")
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
 	info, err := h.Install(m, nics)
 
 	// FIXME, must not return here.
 	if err != nil {
-		return eventEmitter, errors.Wrap(err, "install")
+		return info, errors.Wrap(err, "install")
 	}
 
-	if emitReport {
-		var osPartition string
-		for _, p := range h.Disk.Partitions {
-			_, etcMetal := os.Stat(fmt.Sprintf("%s/etc/metal", p.MountPoint))
-			if os.IsNotExist(etcMetal) {
-				continue
-			}
+	var osPartition string
+	for _, p := range h.Disk.Partitions {
+		if p.MountPoint == "/" { //FIXME is this always feasible?
 			osPartition = p.Device
 			break
 		}
-		rep := &report.Report{
-			MachineUUID:     h.Spec.MachineUUID,
-			Client:          h.Client,
-			ConsolePassword: h.Spec.ConsolePassword,
-			PrimaryDisk:     h.Disk.Device,
-			OSPartition:     osPartition,
-			InstallError:    err,
-		}
+	}
+	primaryDisk := h.Disk.Device
+	if strings.HasPrefix(primaryDisk, "/dev/") {
+		primaryDisk = primaryDisk[5:]
+	}
+	rep := &report.Report{
+		MachineUUID:     h.Spec.MachineUUID,
+		Client:          h.Client,
+		ConsolePassword: h.Spec.ConsolePassword,
+		PrimaryDisk:     primaryDisk,
+		OSPartition:     osPartition,
+		Initrd:          info.Initrd,
+		Cmdline:         info.Cmdline,
+		Kernel:          info.Kernel,
+		BootloaderID:    info.BootloaderID,
+		InstallError:    err,
+	}
 
-		err = rep.ReportInstallation()
-		if err != nil {
-			wait := 10 * time.Second
-			log.Error("report installation failed", "reboot in", wait, "error", err)
-			time.Sleep(wait)
-			if !h.Spec.DevMode {
-				err = kernel.Reboot()
-				if err != nil {
-					log.Error("reboot", "error", err)
-				}
+	err = rep.ReportInstallation()
+	if err != nil {
+		wait := 10 * time.Second
+		log.Error("report installation failed", "reboot in", wait, "error", err)
+		time.Sleep(wait)
+		if !h.Spec.DevMode {
+			err = kernel.Reboot()
+			if err != nil {
+				log.Error("reboot", "error", err)
 			}
 		}
 	}
 
 	log.Info("installation", "took", time.Since(installationStart))
 	eventEmitter.Emit(event.ProvisioningEventBootingNewKernel, "booting into distro kernel")
-	return eventEmitter, kernel.RunKexec(info)
+	return info, kernel.RunKexec(info)
 }

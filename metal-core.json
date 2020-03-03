@@ -19,21 +19,55 @@
         "initrd"
       ]
     },
-    "domain.ChangeBootOrder": {
+    "domain.Disk": {
       "properties": {
-        "bios": {
-          "description": "whether to boot into BIOS",
-          "type": "boolean"
+        "bootloaderid": {
+          "description": "the bootloader ID",
+          "type": "string"
         },
-        "hd": {
-          "description": "whether to boot from Disk",
-          "type": "boolean"
+        "cmdline": {
+          "description": "the cmdline",
+          "type": "string"
         },
-        "pxe": {
-          "description": "whether to boot from PXE",
+        "console_password": {
+          "description": "the console password which was generated while provisioning",
+          "type": "string"
+        },
+        "initrd": {
+          "description": "the initrd",
+          "type": "string"
+        },
+        "kernel": {
+          "description": "the kernel",
+          "type": "string"
+        },
+        "message": {
+          "description": "if installation failed, the error message",
+          "type": "string"
+        },
+        "os_partition": {
+          "description": "the partition on which the OS is installed",
+          "type": "string"
+        },
+        "primary_disk": {
+          "description": "the disk having a partition on which the OS is installed",
+          "type": "string"
+        },
+        "success": {
+          "description": "true if installation succeeded",
           "type": "boolean"
         }
-      }
+      },
+      "required": [
+        "bootloaderid",
+        "cmdline",
+        "console_password",
+        "initrd",
+        "kernel",
+        "message",
+        "os_partition",
+        "primary_disk"
+      ]
     },
     "domain.MetalHammerRegisterMachineRequest": {
       "properties": {
@@ -81,8 +115,31 @@
     },
     "domain.Report": {
       "properties": {
+        "bootloaderid": {
+          "description": "the bootloader ID",
+          "type": "string"
+        },
+        "cmdline": {
+          "description": "the cmdline",
+          "type": "string"
+        },
         "console_password": {
           "description": "the console password which was generated while provisioning",
+          "type": "string"
+        },
+        "disks": {
+          "description": "the disks of the machine",
+          "items": {
+            "$ref": "#/definitions/domain.Disk"
+          },
+          "type": "array"
+        },
+        "initrd": {
+          "description": "the initrd",
+          "type": "string"
+        },
+        "kernel": {
+          "description": "the kernel",
           "type": "string"
         },
         "message": {
@@ -103,7 +160,12 @@
         }
       },
       "required": [
+        "bootloaderid",
+        "cmdline",
         "console_password",
+        "disks",
+        "initrd",
+        "kernel",
         "message",
         "os_partition",
         "primary_disk"
@@ -186,8 +248,8 @@
         "project": {
           "type": "string"
         },
-        "reinstallation": {
-          "$ref": "#/definitions/models.V1MachineReinstallation"
+        "reinstall": {
+          "$ref": "#/definitions/models.V1MachineReinstall"
         },
         "ssh_pub_keys": {
           "items": {
@@ -208,7 +270,7 @@
         "name",
         "networks",
         "project",
-        "reinstallation",
+        "reinstall",
         "ssh_pub_keys",
         "succeeded"
       ]
@@ -532,8 +594,23 @@
         "log"
       ]
     },
-    "models.V1MachineReinstallation": {
+    "models.V1MachineReinstall": {
       "properties": {
+        "bootloaderid": {
+          "type": "string"
+        },
+        "cmdline": {
+          "type": "string"
+        },
+        "initrd": {
+          "type": "string"
+        },
+        "kernel": {
+          "type": "string"
+        },
+        "old_image_id": {
+          "type": "string"
+        },
         "os_partition": {
           "type": "string"
         },
@@ -542,6 +619,11 @@
         }
       },
       "required": [
+        "bootloaderid",
+        "cmdline",
+        "initrd",
+        "kernel",
+        "old_image_id",
         "os_partition",
         "primary_disk"
       ]
@@ -746,46 +828,6 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/machine/abort-reinstall/{id}": {
-      "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "operationId": "AbortReinstall",
-        "parameters": [
-          {
-            "description": "identifier of the machine",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/domain.ChangeBootOrder"
-            }
-          }
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "500": {
-            "description": "Error"
-          }
-        },
-        "summary": "abort reinstall",
-        "tags": [
-          "machine"
-        ]
-      }
-    },
     "/machine/install/{id}": {
       "get": {
         "consumes": [

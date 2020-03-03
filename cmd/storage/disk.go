@@ -205,9 +205,9 @@ func guessDisk(disks []*models.ModelsV1MachineBlockDevice) string {
 }
 
 // GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
-func GetDisk(image *models.ModelsV1ImageResponse, size *models.ModelsV1SizeResponse, disks []*models.ModelsV1MachineBlockDevice) Disk {
-	log.Info("getdisk", "imageID", *image.ID)
-	disk := diskByImage(*image.ID)
+func GetDisk(imageID string, size *models.ModelsV1SizeResponse, disks []*models.ModelsV1MachineBlockDevice) Disk {
+	log.Info("getdisk", "imageID", imageID)
+	disk := diskByImage(imageID)
 
 	primaryDevice := primaryDeviceBySize(*size.ID, disks)
 	disk.Device = primaryDevice.DeviceName

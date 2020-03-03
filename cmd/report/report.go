@@ -1,10 +1,9 @@
 package report
 
 import (
+	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
-
-	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 )
 
@@ -15,6 +14,10 @@ type Report struct {
 	InstallError    error
 	PrimaryDisk     string
 	OSPartition     string
+	Initrd          string
+	Cmdline         string
+	Kernel          string
+	BootloaderID    string
 }
 
 // ReportInstallation will tell metal-core the result of the installation
@@ -24,6 +27,10 @@ func (r *Report) ReportInstallation() error {
 		ConsolePassword: &r.ConsolePassword,
 		PrimaryDisk:     &r.PrimaryDisk,
 		OsPartition:     &r.OSPartition,
+		Initrd:          &r.Initrd,
+		Cmdline:         &r.Cmdline,
+		Kernel:          &r.Kernel,
+		Bootloaderid:    &r.BootloaderID,
 	}
 	if r.InstallError != nil {
 		message := r.InstallError.Error()
