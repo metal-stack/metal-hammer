@@ -1,10 +1,11 @@
 package network
 
 import (
-	log "github.com/inconshreveable/log15"
-	"github.com/metal-stack/metal-hammer/pkg/lldp"
 	"sync"
 	"time"
+
+	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/metal-hammer/pkg/lldp"
 )
 
 // LLDPClient act as a small wrapper about low level lldp primitives.
@@ -110,10 +111,11 @@ func (l *LLDPClient) requirementsMet() bool {
 		return false
 	}
 	// Then check if 2 distinct Chassis neighbors where found
+	// and every port type of a interface on the switch is set to mac
 	neighMap := make(map[string]string)
 	for iface, neighs := range l.Host.neighbors {
 		for _, neigh := range neighs {
-			if neigh.Chassis.Type == lldp.Mac {
+			if neigh.Chassis.Type == lldp.Mac && neigh.Port.Type == lldp.Mac {
 				neighMap[neigh.Chassis.Value] = iface
 			}
 		}
