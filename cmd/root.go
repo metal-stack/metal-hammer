@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"strings"
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
@@ -83,20 +84,41 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	// Set Time from ntp
 	network.NtpDate()
 
-	err = storage.WipeDisks()
-	if err != nil {
-		return eventEmitter, errors.Wrap(err, "wipe")
-	}
-
 	reg := &register.Register{
 		MachineUUID: spec.MachineUUID,
 		Client:      client,
 		Network:     n,
 	}
 
+	hw, err := reg.ReadHardwareDetails()
+	if err != nil {
+		return eventEmitter, errors.Wrap(err, "unable to read all hardware details")
+	}
+
+	m, err := hammer.fetchMachine(spec.MachineUUID)
+	if err != nil {
+		return eventEmitter, nil
+	}
+
+	if m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil {
+		info, err := hammer.reinstall(m, hw, eventEmitter)
+		if err != nil {
+			log.Error("reinstall failed -> abort", "error", err)
+			err = hammer.abortReinstall(err, info)
+			if err != nil {
+				return eventEmitter, err
+			}
+		}
+		return eventEmitter, nil
+	}
+
+	err = storage.WipeDisks()
+	if err != nil {
+		return eventEmitter, errors.Wrap(err, "wipe")
+	}
+
 	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
-	// Remove uuid return use MachineUUID() above.
-	hw, uuid, err := reg.RegisterMachine()
+	err = reg.RegisterMachine(hw)
 	if !spec.DevMode && err != nil {
 		return eventEmitter, errors.Wrap(err, "register")
 	}
@@ -108,12 +130,15 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		if err != nil {
 			log.Warn("BIOS updates for this machine type are intentionally not supported, skipping EnsureUEFI", "error", err)
 		}
+	} else if firmware == "efi" {
+		log.Info("firmware is EFI")
+	} else {
+		log.Info("WHAT ELSE")
 	}
 
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
-	var m *models.ModelsV1MachineResponse
 	if spec.DevMode {
 		cidr := "10.0.1.2"
 		if spec.Cidr != "" {
@@ -190,27 +215,48 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 			},
 		}
 	} else {
-		m, err = hammer.Wait(uuid)
+		m, err = hammer.Wait(spec.MachineUUID)
 		if err != nil {
 			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}
 	}
 
-	hammer.Disk = storage.GetDisk(m.Allocation.Image, m.Size, hw.Disks)
+	hammer.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
+	_, err = hammer.installImage(eventEmitter, m, hw.Nics)
+	return eventEmitter, err
+}
 
+func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
-	info, err := hammer.Install(m, hw)
+	info, err := h.Install(m, nics)
 
 	// FIXME, must not return here.
 	if err != nil {
-		return eventEmitter, errors.Wrap(err, "install")
+		return info, errors.Wrap(err, "install")
 	}
 
+	var osPartition string
+	for _, p := range h.Disk.Partitions {
+		if p.MountPoint == "/" {
+			osPartition = p.Device
+			break
+		}
+	}
+	primaryDisk := h.Disk.Device
+	if strings.HasPrefix(primaryDisk, "/dev/") {
+		primaryDisk = primaryDisk[5:]
+	}
 	rep := &report.Report{
-		MachineUUID:     spec.MachineUUID,
-		Client:          client,
-		ConsolePassword: spec.ConsolePassword,
+		MachineUUID:     h.Spec.MachineUUID,
+		Client:          h.Client,
+		ConsolePassword: h.Spec.ConsolePassword,
+		PrimaryDisk:     primaryDisk,
+		OSPartition:     osPartition,
+		Initrd:          info.Initrd,
+		Cmdline:         info.Cmdline,
+		Kernel:          info.Kernel,
+		BootloaderID:    info.BootloaderID,
 		InstallError:    err,
 	}
 
@@ -219,7 +265,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		wait := 10 * time.Second
 		log.Error("report installation failed", "reboot in", wait, "error", err)
 		time.Sleep(wait)
-		if !spec.DevMode {
+		if !h.Spec.DevMode {
 			err = kernel.Reboot()
 			if err != nil {
 				log.Error("reboot", "error", err)
@@ -229,5 +275,5 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	log.Info("installation", "took", time.Since(installationStart))
 	eventEmitter.Emit(event.ProvisioningEventBootingNewKernel, "booting into distro kernel")
-	return eventEmitter, kernel.RunKexec(info)
+	return info, kernel.RunKexec(info)
 }

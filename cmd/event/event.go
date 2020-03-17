@@ -26,6 +26,7 @@ const (
 	ProvisioningEventInstalling       ProvisioningEventType = "Installing"
 	ProvisioningEventBootingNewKernel ProvisioningEventType = "Booting New Kernel"
 	ProvisioningEventPhonedHome       ProvisioningEventType = "Phoned Home"
+	ProvisioningEventReinstallAborted ProvisioningEventType = "Reinstall Aborted"
 )
 
 type EventEmitter struct {

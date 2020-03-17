@@ -44,6 +44,7 @@ func TestRegisterMachine(t *testing.T) {
 	go lldpc.Start()
 	n := &network.Network{
 		LLDPClient: lldpc,
+		Eth0Mac:    "00:00:00:00:00:01",
 	}
 	r := &Register{
 		Client:      client,
@@ -51,15 +52,19 @@ func TestRegisterMachine(t *testing.T) {
 		MachineUUID: expected,
 	}
 
-	eth0Mac = "00:00:00:00:00:01"
-	_, uuid, err := r.RegisterMachine()
+	hw, err := r.ReadHardwareDetails()
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = r.RegisterMachine(hw)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	if uuid != expected {
-		t.Errorf("did not get %s, got %#v ", expected, uuid)
+	if hw.UUID != expected {
+		t.Errorf("did not get %s, got %#v ", expected, hw.UUID)
 	}
 }
 
@@ -89,8 +94,7 @@ func Test_readHardwareDetails(t *testing.T) {
 				Client:      tt.fields.Client,
 				MachineUUID: "00000000-0000-0000-0000-000000000000",
 			}
-			eth0Mac = "00:00:00:00:00:01"
-			got, err := r.readHardwareDetails()
+			got, err := r.ReadHardwareDetails()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("readHardwareDetails() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -129,6 +133,7 @@ func TestHammer_readIPMIDetails(t *testing.T) {
 		})
 	}
 }
+
 func TestUUIDCreation(t *testing.T) {
 	uuidAsString, err := uuid.FromBytes([]byte("S167357X6205283" + " "))
 	if err != nil {

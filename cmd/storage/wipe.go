@@ -44,11 +44,7 @@ func WipeDisks() error {
 			if strings.HasPrefix(disk.Name, DiskPrefixToIgnore) {
 				return
 			}
-			device := fmt.Sprintf("/dev/%s", disk.Name)
-			bytes := disk.SizeBytes
-			rotational := isRotational(disk.Name)
-
-			err := wipe(device, bytes, rotational)
+			err := WipeDisk(disk)
 			if err != nil {
 				wipeErrors <- err
 			}
@@ -63,6 +59,15 @@ func WipeDisks() error {
 	wg.Wait()
 
 	return nil
+}
+
+// WipeDisk will erase all content and partitions of given existing disk.
+func WipeDisk(disk *ghw.Disk) error {
+	device := fmt.Sprintf("/dev/%s", disk.Name)
+	bytes := disk.SizeBytes
+	rotational := isRotational(disk.Name)
+
+	return wipe(device, bytes, rotational)
 }
 
 // bs is the blocksize in bytes to be used by dd
