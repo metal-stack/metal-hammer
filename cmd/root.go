@@ -124,16 +124,14 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	}
 
 	firmware := kernel.Firmware()
+	log.Info("firmware", "is", firmware)
+
 	if firmware != "efi" && !spec.DevMode {
 		log.Info("firmware is not efi, enforce efi boot mode using preparation image")
 		err = hammer.EnsureUEFI()
 		if err != nil {
 			log.Warn("BIOS updates for this machine type are intentionally not supported, skipping EnsureUEFI", "error", err)
 		}
-	} else if firmware == "efi" {
-		log.Info("firmware is EFI")
-	} else {
-		log.Info("WHAT ELSE")
 	}
 
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
