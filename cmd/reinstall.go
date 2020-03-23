@@ -61,7 +61,11 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 	}
 
 	h.Disk = storage.GetDisk(*m.Allocation.Reinstall.OldImageID, m.Size, hw.Disks)
-	return h.installImage(eventEmitter, m, hw.Nics)
+	newInfo, err := h.installImage(eventEmitter, m, hw.Nics)
+	if err != nil {
+		return info, err
+	}
+	return newInfo, nil
 }
 
 func (h *Hammer) abortReinstall(reason error, bootInfo *kernel.Bootinfo) error {
