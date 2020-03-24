@@ -1,4 +1,4 @@
-name: master
+name: Build image from pull request
 
 on:
   pull_request:
@@ -24,10 +24,11 @@ jobs:
         with:
           args: >
             --no-cache
+            --no-lint
             --summary
       - name: Prepare image upload
         run: |
-          mkdir -p images/metal-hammer/${GITHUB_HEAD_REF##*/}
+          mkdir -p images/metal-hammer/pull_requests/${GITHUB_HEAD_REF##*/}
           mv metal-hammer-initrd.img.lz4* images/metal-hammer/pull_requests/${GITHUB_HEAD_REF##*/}/
       - name: Upload image tarballs to GCS
         run: cd images && gsutil -m cp -r . gs://$GCS_BUCKET/metal-hammer/pull_requests/
