@@ -29,7 +29,8 @@ jobs:
             --summary
       - name: Prepare image upload
         run: |
-          mkdir -p images/metal-hammer/pull_requests/${GITHUB_HEAD_REF##*/}
-          mv metal-hammer-initrd.img.lz4* images/metal-hammer/pull_requests/${GITHUB_HEAD_REF##*/}/
+          export PULL_REQUEST_NUMBER=$(echo "$GITHUB_REF" | awk -F / '{print $3}')
+          mkdir -p images/metal-hammer/pull-requests/${PULL_REQUEST_NUMBER}-${GITHUB_HEAD_REF##*/}
+          mv metal-hammer-initrd.img.lz4* images/metal-hammer/pull-requests/${PULL_REQUEST_NUMBER}-${GITHUB_HEAD_REF##*/}/
       - name: Upload image tarballs to GCS
         run: gsutil -m cp -r -p images/metal-hammer gs://$GCS_BUCKET
