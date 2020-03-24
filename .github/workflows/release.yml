@@ -14,11 +14,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@master
-      - name: Build project
+      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+            version: '278.0.0'
+            service_account_email: ${{ secrets.GCP_SA_EMAIL }}
+            service_account_key: ${{ secrets.GCP_SA_KEY }}
+      - name: Build image
+        uses: metal-stack/action-docker-make@master
+        with:
+          args: >
+            --no-cache
+            --no-lint
+            --no-push
+            --summary
+      - name: Prepare image upload
         run: |
-          docker build -t metal-hammer .
-          docker export $(docker create metal-hammer /dev/null) > metal-hammer.tar
-          tar -xf metal-hammer.tar metal-hammer-initrd.img.lz4
+          mkdir -p images/metal-hammer/${GITHUB_REF##*/}
+          mv metal-hammer-initrd.img.lz4* images/metal-hammer/${GITHUB_REF##*/}
+      - name: Upload image tarballs to GCS
+        run: gsutil -m cp -r -p images/metal-hammer gs://$GCS_BUCKET
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1.0.0
@@ -36,6 +50,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./metal-hammer-initrd.img.lz4
+          asset_path: ./images/metal-hammer/${GITHUB_REF##*/}/metal-hammer-initrd.img.lz4
           asset_name: metal-hammer-initrd.img.lz4
           asset_content_type: application/gzip
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./images/metal-hammer/${GITHUB_REF##*/}/metal-hammer-initrd.img.lz4.md5
+          asset_name: metal-hammer-initrd.img.lz4.md5
+          asset_content_type: text/html
