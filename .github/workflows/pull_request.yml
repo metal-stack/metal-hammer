@@ -25,6 +25,7 @@ jobs:
           args: >
             --no-cache
             --no-lint
+            --no-push
             --summary
       - name: Prepare image upload
         run: |
