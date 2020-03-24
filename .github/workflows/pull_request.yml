@@ -1,0 +1,34 @@
+name: master
+
+on:
+  pull_request:
+    branches:
+      - master
+
+env:
+  GCS_BUCKET: images.metal-pod.io
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+            version: '278.0.0'
+            service_account_email: ${{ secrets.GCP_SA_EMAIL }}
+            service_account_key: ${{ secrets.GCP_SA_KEY }}
+      - name: Build image
+        uses: metal-stack/action-docker-make@master
+        with:
+          args: >
+            --no-cache
+            --summary
+      - name: Prepare image upload
+        run: |
+          mkdir -p images/metal-hammer/${GITHUB_HEAD_REF##*/}
+          mv metal-hammer-initrd.img.lz4* images/metal-hammer/pull_requests/${GITHUB_HEAD_REF##*/}/
+      - name: Upload image tarballs to GCS
+        run: cd images && gsutil -m cp -r . gs://$GCS_BUCKET/metal-hammer/pull_requests/
+    
