@@ -5,12 +5,12 @@ on:
     tags:
       - 'v*'
 
+env:
+  GCS_BUCKET: images.metal-pod.io
+      
 jobs:
-
   build:
- 
     runs-on: ubuntu-latest
- 
     steps:
       - name: Checkout code
         uses: actions/checkout@master
