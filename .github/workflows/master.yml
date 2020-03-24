@@ -29,4 +29,4 @@ jobs:
           mkdir -p images/metal-hammer/
           mv metal-hammer-initrd.img.lz4* images/metal-hammer/
       - name: Upload image tarballs to GCS
-        run: gsutil -m cp -r -p images/metal-hammer gs://$GCS_BUCKET
+        run: gsutil -m cp images/metal-hammer/* gs://$GCS_BUCKET
