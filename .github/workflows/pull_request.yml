@@ -1,10 +1,13 @@
-name: master
+name: Build image from pull request
 
 on:
-  push:
+  pull_request:
     branches:
       - master
 
+env:
+  GCS_BUCKET: images.metal-pod.io
+      
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,7 +29,7 @@ jobs:
             --summary
       - name: Prepare image upload
         run: |
-          mkdir -p images/metal-hammer/
-          mv metal-hammer-initrd.img.lz4* images/metal-hammer/
+          mkdir -p images/metal-hammer/pull_requests/${GITHUB_HEAD_REF##*/}
+          mv metal-hammer-initrd.img.lz4* images/metal-hammer/pull_requests/${GITHUB_HEAD_REF##*/}/
       - name: Upload image tarballs to GCS
         run: gsutil -m cp -r -p images/metal-hammer gs://$GCS_BUCKET
