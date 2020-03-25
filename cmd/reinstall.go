@@ -27,7 +27,8 @@ func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse
 
 // wipe only the disk that has the OS installed on one of its partitions, keep all other disks untouched
 func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest, eventEmitter *event.EventEmitter) (*kernel.Bootinfo, error) {
-	primaryDiskName := *m.Allocation.Reinstall.PrimaryDisk
+	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
+	primaryDiskName := h.Disk.Device
 
 	info := &kernel.Bootinfo{
 		Initrd:       *m.Allocation.Reinstall.Initrd,
@@ -60,7 +61,6 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 		return info, errors.Wrap(err, "wipe")
 	}
 
-	h.Disk = storage.GetDisk(*m.Allocation.Reinstall.OldImageID, m.Size, hw.Disks)
 	newInfo, err := h.installImage(eventEmitter, m, hw.Nics)
 	if err != nil {
 		return info, err
