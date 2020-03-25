@@ -102,7 +102,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	}
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
-	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil {
+	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
 		info, err := hammer.reinstall(m, hw, eventEmitter)
 		if err != nil {
 			log.Error("reinstall failed -> abort", "error", err)

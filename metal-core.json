@@ -113,6 +113,28 @@
         "primary_disk"
       ]
     },
+    "models.V1BootInfo": {
+      "properties": {
+        "bootloaderid": {
+          "type": "string"
+        },
+        "cmdline": {
+          "type": "string"
+        },
+        "initrd": {
+          "type": "string"
+        },
+        "kernel": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "bootloaderid",
+        "cmdline",
+        "initrd",
+        "kernel"
+      ]
+    },
     "models.V1ChassisIdentifyLEDState": {
       "properties": {
         "description": {
@@ -163,6 +185,9 @@
     },
     "models.V1MachineAllocation": {
       "properties": {
+        "boot_info": {
+          "$ref": "#/definitions/models.V1BootInfo"
+        },
         "console_password": {
           "type": "string"
         },
@@ -191,7 +216,7 @@
           "type": "string"
         },
         "reinstall": {
-          "$ref": "#/definitions/models.V1MachineSetup"
+          "type": "boolean"
         },
         "ssh_pub_keys": {
           "items": {
@@ -207,6 +232,7 @@
         }
       },
       "required": [
+        "boot_info",
         "created",
         "hostname",
         "name",
@@ -605,40 +631,6 @@
         "size",
         "state",
         "tags"
-      ]
-    },
-    "models.V1MachineSetup": {
-      "properties": {
-        "bootloaderid": {
-          "type": "string"
-        },
-        "cmdline": {
-          "type": "string"
-        },
-        "initrd": {
-          "type": "string"
-        },
-        "kernel": {
-          "type": "string"
-        },
-        "old_image_id": {
-          "type": "string"
-        },
-        "os_partition": {
-          "type": "string"
-        },
-        "primary_disk": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "bootloaderid",
-        "cmdline",
-        "initrd",
-        "kernel",
-        "old_image_id",
-        "os_partition",
-        "primary_disk"
       ]
     },
     "models.V1MachineState": {

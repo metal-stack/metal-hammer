@@ -34,11 +34,14 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 		primaryDiskName = primaryDiskName[5:]
 	}
 
-	info := &kernel.Bootinfo{
-		Initrd:       *m.Allocation.Reinstall.Initrd,
-		Cmdline:      *m.Allocation.Reinstall.Cmdline,
-		Kernel:       *m.Allocation.Reinstall.Kernel,
-		BootloaderID: *m.Allocation.Reinstall.Bootloaderid,
+	var info *kernel.Bootinfo
+	if m.Allocation.BootInfo != nil {
+		info = &kernel.Bootinfo{
+			Initrd:       *m.Allocation.BootInfo.Initrd,
+			Cmdline:      *m.Allocation.BootInfo.Cmdline,
+			Kernel:       *m.Allocation.BootInfo.Kernel,
+			BootloaderID: *m.Allocation.BootInfo.Bootloaderid,
+		}
 	}
 
 	block, err := ghw.Block()
