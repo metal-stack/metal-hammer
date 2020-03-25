@@ -42,6 +42,7 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 			Kernel:       *m.Allocation.BootInfo.Kernel,
 			BootloaderID: *m.Allocation.BootInfo.Bootloaderid,
 		}
+		h.Disk = storage.GetDisk(*m.Allocation.BootInfo.Currentimageid, m.Size, hw.Disks)
 	}
 
 	block, err := ghw.Block()
