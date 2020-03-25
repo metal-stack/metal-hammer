@@ -28,21 +28,24 @@ func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse
 
 // wipe only the disk that has the OS installed on one of its partitions, keep all other disks untouched
 func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest, eventEmitter *event.EventEmitter) (*kernel.Bootinfo, error) {
+	if m.Allocation.BootInfo == nil {
+		return nil, errors.New("machine is not yet ready for reinstallations")
+	}
+	bootInfo := &kernel.Bootinfo{
+		Initrd:       *m.Allocation.BootInfo.Initrd,
+		Cmdline:      *m.Allocation.BootInfo.Cmdline,
+		Kernel:       *m.Allocation.BootInfo.Kernel,
+		BootloaderID: *m.Allocation.BootInfo.Bootloaderid,
+	}
+	h.Disk = storage.GetDisk(*m.Allocation.BootInfo.Currentimageid, m.Size, hw.Disks)
+	currentPrimaryDiskName := h.Disk.Device
 	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
 	primaryDiskName := h.Disk.Device
+	if currentPrimaryDiskName != primaryDiskName {
+		return bootInfo, fmt.Errorf("current primary disk %s differs from the one that  %s", currentPrimaryDiskName, primaryDiskName)
+	}
 	if strings.HasPrefix(primaryDiskName, "/dev/") {
 		primaryDiskName = primaryDiskName[5:]
-	}
-
-	var info *kernel.Bootinfo
-	if m.Allocation.BootInfo != nil {
-		info = &kernel.Bootinfo{
-			Initrd:       *m.Allocation.BootInfo.Initrd,
-			Cmdline:      *m.Allocation.BootInfo.Cmdline,
-			Kernel:       *m.Allocation.BootInfo.Kernel,
-			BootloaderID: *m.Allocation.BootInfo.Bootloaderid,
-		}
-		h.Disk = storage.GetDisk(*m.Allocation.BootInfo.Currentimageid, m.Size, hw.Disks)
 	}
 
 	block, err := ghw.Block()
@@ -59,19 +62,19 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 	}
 	if primaryDisk == nil {
 		log.Warn("Unable to find primary disk", "primary disk", primaryDiskName)
-		return info, errors.Wrapf(err, "unable to find primary disk %s", primaryDiskName)
+		return bootInfo, errors.Wrapf(err, "unable to find primary disk %s", primaryDiskName)
 	}
 
 	log.Info("Wipe primary disk", "primary disk", primaryDisk.Name)
 	err = storage.WipeDisk(primaryDisk)
 	if err != nil {
 		log.Error("failed to wipe primary disk", "error", err)
-		return info, errors.Wrap(err, "wipe")
+		return bootInfo, errors.Wrap(err, "wipe")
 	}
 
 	newInfo, err := h.installImage(eventEmitter, m, hw.Nics)
 	if err != nil {
-		return info, err
+		return bootInfo, err
 	}
 	return newInfo, nil
 }
