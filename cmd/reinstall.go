@@ -10,6 +10,7 @@ import (
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/pkg/errors"
+	"strings"
 	"time"
 )
 
@@ -29,6 +30,9 @@ func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse
 func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest, eventEmitter *event.EventEmitter) (*kernel.Bootinfo, error) {
 	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
 	primaryDiskName := h.Disk.Device
+	if strings.HasPrefix(primaryDiskName, "/dev/") {
+		primaryDiskName = primaryDiskName[5:]
+	}
 
 	info := &kernel.Bootinfo{
 		Initrd:       *m.Allocation.Reinstall.Initrd,
