@@ -19,56 +19,6 @@
         "initrd"
       ]
     },
-    "domain.Disk": {
-      "properties": {
-        "bootloaderid": {
-          "description": "the bootloader ID",
-          "type": "string"
-        },
-        "cmdline": {
-          "description": "the cmdline",
-          "type": "string"
-        },
-        "console_password": {
-          "description": "the console password which was generated while provisioning",
-          "type": "string"
-        },
-        "initrd": {
-          "description": "the initrd",
-          "type": "string"
-        },
-        "kernel": {
-          "description": "the kernel",
-          "type": "string"
-        },
-        "message": {
-          "description": "if installation failed, the error message",
-          "type": "string"
-        },
-        "os_partition": {
-          "description": "the partition on which the OS is installed",
-          "type": "string"
-        },
-        "primary_disk": {
-          "description": "the disk having a partition on which the OS is installed",
-          "type": "string"
-        },
-        "success": {
-          "description": "true if installation succeeded",
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "bootloaderid",
-        "cmdline",
-        "console_password",
-        "initrd",
-        "kernel",
-        "message",
-        "os_partition",
-        "primary_disk"
-      ]
-    },
     "domain.MetalHammerRegisterMachineRequest": {
       "properties": {
         "bios": {
@@ -127,13 +77,6 @@
           "description": "the console password which was generated while provisioning",
           "type": "string"
         },
-        "disks": {
-          "description": "the disks of the machine",
-          "items": {
-            "$ref": "#/definitions/domain.Disk"
-          },
-          "type": "array"
-        },
         "initrd": {
           "description": "the initrd",
           "type": "string"
@@ -163,7 +106,6 @@
         "bootloaderid",
         "cmdline",
         "console_password",
-        "disks",
         "initrd",
         "kernel",
         "message",
