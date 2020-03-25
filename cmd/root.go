@@ -95,6 +95,12 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		return eventEmitter, errors.Wrap(err, "unable to read all hardware details")
 	}
 
+	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
+	err = reg.RegisterMachine(hw)
+	if !spec.DevMode && err != nil {
+		return eventEmitter, errors.Wrap(err, "register")
+	}
+
 	m, err := hammer.fetchMachine(spec.MachineUUID)
 	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil {
 		info, err := hammer.reinstall(m, hw, eventEmitter)
@@ -111,12 +117,6 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	err = storage.WipeDisks()
 	if err != nil {
 		return eventEmitter, errors.Wrap(err, "wipe")
-	}
-
-	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
-	err = reg.RegisterMachine(hw)
-	if !spec.DevMode && err != nil {
-		return eventEmitter, errors.Wrap(err, "register")
 	}
 
 	firmware := kernel.Firmware()
