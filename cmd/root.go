@@ -103,14 +103,16 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
 	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
+		log.Info("perform reinstall", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 		info, err := hammer.reinstall(m, hw, eventEmitter)
 		if err != nil {
-			log.Error("reinstall failed -> abort", "error", err)
+			log.Error("reinstall failed", "error", err)
 			err = hammer.abortReinstall(err, info)
 			if err != nil {
 				return eventEmitter, err
 			}
 		}
+
 		return eventEmitter, nil
 	}
 
@@ -214,6 +216,8 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}
 	}
+
+	log.Info("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 
 	hammer.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
 	_, err = hammer.installImage(eventEmitter, m, hw.Nics)
