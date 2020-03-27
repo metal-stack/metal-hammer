@@ -41,7 +41,7 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
 	primaryDiskName := h.Disk.Device
 	if currentPrimaryDiskName != primaryDiskName {
-		return false, fmt.Errorf("current primary disk %s differs from the one that  %s", currentPrimaryDiskName, primaryDiskName)
+		return false, fmt.Errorf("current primary disk %s differs from the one that would be taken for the new OS installation %s", currentPrimaryDiskName, primaryDiskName)
 	}
 	if strings.HasPrefix(primaryDiskName, "/dev/") {
 		primaryDiskName = primaryDiskName[5:]
