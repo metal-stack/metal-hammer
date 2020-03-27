@@ -28,11 +28,16 @@ func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse
 
 // wipe only the disk that has the OS installed on one of its partitions, keep all other disks untouched
 func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest, eventEmitter *event.EventEmitter) (bool, error) {
-	if m.Allocation.BootInfo == nil {
-		return false, errors.New("machine is not yet ready for reinstallations")
+	if m.Allocation.BootInfo == nil || (m.Allocation.BootInfo.ImageID == nil && m.Allocation.BootInfo.PrimaryDisk == nil) {
+		return false, errors.New("machine is not yet ready for reinstallations, too risky to wipe disks")
 	}
-	h.Disk = storage.GetDisk(*m.Allocation.BootInfo.ImageID, m.Size, hw.Disks)
-	currentPrimaryDiskName := h.Disk.Device
+	var currentPrimaryDiskName string
+	if m.Allocation.BootInfo.PrimaryDisk != nil {
+		currentPrimaryDiskName = *m.Allocation.BootInfo.PrimaryDisk
+	} else {
+		h.Disk = storage.GetDisk(*m.Allocation.BootInfo.ImageID, m.Size, hw.Disks)
+		currentPrimaryDiskName = h.Disk.Device
+	}
 	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
 	primaryDiskName := h.Disk.Device
 	if currentPrimaryDiskName != primaryDiskName {
