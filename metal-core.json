@@ -19,6 +19,17 @@
         "initrd"
       ]
     },
+    "domain.MetalHammerAbortReinstallRequest": {
+      "properties": {
+        "primary_disk_wiped": {
+          "description": "whether the primary disk is already wiped",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "primary_disk_wiped"
+      ]
+    },
     "domain.MetalHammerRegisterMachineRequest": {
       "properties": {
         "bios": {
@@ -121,7 +132,7 @@
         "cmdline": {
           "type": "string"
         },
-        "currentimageid": {
+        "image_id": {
           "type": "string"
         },
         "initrd": {
@@ -129,14 +140,22 @@
         },
         "kernel": {
           "type": "string"
+        },
+        "os_partition": {
+          "type": "string"
+        },
+        "primary_disk": {
+          "type": "string"
         }
       },
       "required": [
         "bootloaderid",
         "cmdline",
-        "currentimageid",
+        "image_id",
         "initrd",
-        "kernel"
+        "kernel",
+        "os_partition",
+        "primary_disk"
       ]
     },
     "models.V1ChassisIdentifyLEDState": {
@@ -236,7 +255,6 @@
         }
       },
       "required": [
-        "boot_info",
         "created",
         "hostname",
         "name",
@@ -766,6 +784,52 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/machine/abort-reinstall/{id}": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "AbortReinstall",
+        "parameters": [
+          {
+            "description": "identifier of the machine",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/domain.MetalHammerAbortReinstallRequest"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.V1BootInfo"
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Error"
+          }
+        },
+        "summary": "abort reinstall machine",
+        "tags": [
+          "machine"
+        ]
+      }
+    },
     "/machine/install/{id}": {
       "get": {
         "consumes": [

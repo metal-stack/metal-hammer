@@ -27,22 +27,13 @@ func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse
 }
 
 // wipe only the disk that has the OS installed on one of its partitions, keep all other disks untouched
-func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest, eventEmitter *event.EventEmitter) (*kernel.Bootinfo, error) {
-	if m.Allocation.BootInfo == nil {
-		return nil, errors.New("machine is not yet ready for reinstallations")
-	}
-	bootInfo := &kernel.Bootinfo{
-		Initrd:       *m.Allocation.BootInfo.Initrd,
-		Cmdline:      *m.Allocation.BootInfo.Cmdline,
-		Kernel:       *m.Allocation.BootInfo.Kernel,
-		BootloaderID: *m.Allocation.BootInfo.Bootloaderid,
-	}
-	h.Disk = storage.GetDisk(*m.Allocation.BootInfo.Currentimageid, m.Size, hw.Disks)
+func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest, eventEmitter *event.EventEmitter) (bool, error) {
+	h.Disk = storage.GetDisk(*m.Allocation.BootInfo.ImageID, m.Size, hw.Disks)
 	currentPrimaryDiskName := h.Disk.Device
 	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
 	primaryDiskName := h.Disk.Device
 	if currentPrimaryDiskName != primaryDiskName {
-		return bootInfo, fmt.Errorf("current primary disk %s differs from the one that  %s", currentPrimaryDiskName, primaryDiskName)
+		return false, fmt.Errorf("current primary disk %s differs from the one that  %s", currentPrimaryDiskName, primaryDiskName)
 	}
 	if strings.HasPrefix(primaryDiskName, "/dev/") {
 		primaryDiskName = primaryDiskName[5:]
@@ -51,7 +42,7 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 	block, err := ghw.Block()
 	if err != nil {
 		log.Error("ghw.Block() failed", "error", err)
-		return nil, errors.Wrap(err, "unable to gather disks")
+		return false, errors.Wrap(err, "unable to gather disks")
 	}
 	var primaryDisk *ghw.Disk
 	for _, d := range block.Disks {
@@ -62,29 +53,44 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 	}
 	if primaryDisk == nil {
 		log.Warn("Unable to find primary disk", "primary disk", primaryDiskName)
-		return bootInfo, errors.Wrapf(err, "unable to find primary disk %s", primaryDiskName)
+		return false, errors.Wrapf(err, "unable to find primary disk %s", primaryDiskName)
 	}
 
 	log.Info("Wipe primary disk", "primary disk", primaryDisk.Name)
 	err = storage.WipeDisk(primaryDisk)
 	if err != nil {
 		log.Error("failed to wipe primary disk", "error", err)
-		return bootInfo, errors.Wrap(err, "wipe")
+		return false, errors.Wrap(err, "wipe")
 	}
 
-	newInfo, err := h.installImage(eventEmitter, m, hw.Nics)
-	if err != nil {
-		return bootInfo, err
-	}
-	return newInfo, nil
+	return true, h.installImage(eventEmitter, m, hw.Nics)
 }
 
-func (h *Hammer) abortReinstall(reason error, bootInfo *kernel.Bootinfo) error {
+func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped bool) error {
 	log.Error("reinstall cancelled => boot into existing OS...", "reason", reason)
 
-	h.EventEmitter.Emit(event.ProvisioningEventReinstallAborted, fmt.Sprintf("Reinstall aborted: %s", reason.Error()))
+	params := machine.NewAbortReinstallParams()
+	params.ID = machineID
+	params.Body = &models.DomainMetalHammerAbortReinstallRequest{
+		PrimaryDiskWiped: &primaryDiskWiped,
+	}
 
-	time.Sleep(5 * time.Second)
+	var bootInfo *kernel.Bootinfo
+
+	resp, err := h.Client.AbortReinstall(params)
+	if err != nil {
+		log.Error("failed to abort reinstall", "error", err)
+		time.Sleep(5 * time.Second)
+	}
+
+	if resp != nil && resp.Payload != nil {
+		bootInfo = &kernel.Bootinfo{
+			Initrd:       *resp.Payload.Initrd,
+			Cmdline:      *resp.Payload.Cmdline,
+			Kernel:       *resp.Payload.Kernel,
+			BootloaderID: *resp.Payload.Bootloaderid,
+		}
+	}
 
 	return kernel.RunKexec(bootInfo)
 }

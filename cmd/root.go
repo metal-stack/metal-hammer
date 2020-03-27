@@ -103,17 +103,18 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
 	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
-		log.Info("perform reinstall", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
-		info, err := hammer.reinstall(m, hw, eventEmitter)
+		primaryDiskWiped := false
+		if m.Allocation.Image == nil || m.Allocation.Image.ID == nil {
+			err = errors.New("no image specified")
+		} else {
+			log.Info("perform reinstall", "machineID", *m.ID, "imageID", *m.Allocation.Image.ID)
+			primaryDiskWiped, err = hammer.reinstall(m, hw, eventEmitter)
+		}
 		if err != nil {
 			log.Error("reinstall failed", "error", err)
-			err = hammer.abortReinstall(err, info)
-			if err != nil {
-				return eventEmitter, err
-			}
+			err = hammer.abortReinstall(err, *m.ID, primaryDiskWiped)
 		}
-
-		return eventEmitter, nil
+		return eventEmitter, err
 	}
 
 	err = storage.WipeDisks()
@@ -220,18 +221,18 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	log.Info("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 
 	hammer.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
-	_, err = hammer.installImage(eventEmitter, m, hw.Nics)
+	err = hammer.installImage(eventEmitter, m, hw.Nics)
 	return eventEmitter, err
 }
 
-func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
+func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) error {
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
 	info, err := h.Install(m, nics)
 
 	// FIXME, must not return here.
 	if err != nil {
-		return info, errors.Wrap(err, "install")
+		return errors.Wrap(err, "install")
 	}
 
 	var osPartition string
@@ -273,5 +274,5 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 
 	log.Info("installation", "took", time.Since(installationStart))
 	eventEmitter.Emit(event.ProvisioningEventBootingNewKernel, "booting into distro kernel")
-	return info, kernel.RunKexec(info)
+	return kernel.RunKexec(info)
 }
