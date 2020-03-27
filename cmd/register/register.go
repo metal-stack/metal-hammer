@@ -135,7 +135,6 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 			continue
 		}
 		var parts []*models.ModelsV1MachineDiskPartition
-		containsOS := false // not yet allocated
 		for _, p := range blockInfo.Partitions {
 			size := int64(p.SizeBytes)
 			parts = append(parts, &models.ModelsV1MachineDiskPartition{
@@ -143,7 +142,6 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 				Device:     &p.Name,
 				Label:      &p.Label,
 				Mountpoint: &p.MountPoint,
-				Containsos: &containsOS,
 				Size:       &size,
 			})
 		}
