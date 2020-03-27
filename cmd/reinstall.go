@@ -26,16 +26,9 @@ func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse
 	return resp.Payload, nil
 }
 
-func sanitizeDisk(disk string) string {
-	if strings.HasPrefix(disk, "/dev/") {
-		return disk[5:]
-	}
-	return disk
-}
-
 // wipe only the disk that has the OS installed on one of its partitions, keep all other disks untouched
 func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest, eventEmitter *event.EventEmitter) (bool, error) {
-	if m.Allocation.BootInfo == nil || (m.Allocation.BootInfo.ImageID == nil && m.Allocation.BootInfo.PrimaryDisk == nil) {
+	if !isValidBootInfo(m) {
 		return false, errors.New("machine is not yet ready for reinstallations, too risky to wipe disks")
 	}
 	var currentPrimaryDiskName string
@@ -105,4 +98,27 @@ func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped
 	}
 
 	return kernel.RunKexec(bootInfo)
+}
+
+func isValidBootInfo(m *models.ModelsV1MachineResponse) bool {
+	if m.Allocation == nil || m.Allocation.BootInfo == nil {
+		return false
+	}
+	id := m.Allocation.BootInfo.ImageID
+	if id == nil || *id == "" {
+		return false
+	}
+	pd := m.Allocation.BootInfo.PrimaryDisk
+	if pd == nil || *pd == "" {
+		return false
+	}
+
+	return true
+}
+
+func sanitizeDisk(disk string) string {
+	if strings.HasPrefix(disk, "/dev/") {
+		return disk[5:]
+	}
+	return disk
 }
