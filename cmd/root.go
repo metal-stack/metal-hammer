@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"strings"
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
@@ -242,10 +241,7 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 			break
 		}
 	}
-	primaryDisk := h.Disk.Device
-	if strings.HasPrefix(primaryDisk, "/dev/") {
-		primaryDisk = primaryDisk[5:]
-	}
+	primaryDisk := sanitizeDisk(h.Disk.Device)
 	rep := &report.Report{
 		MachineUUID:     h.Spec.MachineUUID,
 		Client:          h.Client,

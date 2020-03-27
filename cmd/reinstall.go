@@ -26,6 +26,13 @@ func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse
 	return resp.Payload, nil
 }
 
+func sanitizeDisk(disk string) string {
+	if strings.HasPrefix(disk, "/dev/") {
+		return disk[5:]
+	}
+	return disk
+}
+
 // wipe only the disk that has the OS installed on one of its partitions, keep all other disks untouched
 func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest, eventEmitter *event.EventEmitter) (bool, error) {
 	if m.Allocation.BootInfo == nil || (m.Allocation.BootInfo.ImageID == nil && m.Allocation.BootInfo.PrimaryDisk == nil) {
@@ -33,18 +40,15 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 	}
 	var currentPrimaryDiskName string
 	if m.Allocation.BootInfo.PrimaryDisk != nil {
-		currentPrimaryDiskName = *m.Allocation.BootInfo.PrimaryDisk
+		currentPrimaryDiskName = sanitizeDisk(*m.Allocation.BootInfo.PrimaryDisk)
 	} else {
 		h.Disk = storage.GetDisk(*m.Allocation.BootInfo.ImageID, m.Size, hw.Disks)
-		currentPrimaryDiskName = h.Disk.Device
+		currentPrimaryDiskName = sanitizeDisk(h.Disk.Device)
 	}
 	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
-	primaryDiskName := h.Disk.Device
+	primaryDiskName := sanitizeDisk(h.Disk.Device)
 	if currentPrimaryDiskName != primaryDiskName {
 		return false, fmt.Errorf("current primary disk %s differs from the one that would be taken for the new OS installation %s", currentPrimaryDiskName, primaryDiskName)
-	}
-	if strings.HasPrefix(primaryDiskName, "/dev/") {
-		primaryDiskName = primaryDiskName[5:]
 	}
 
 	block, err := ghw.Block()
