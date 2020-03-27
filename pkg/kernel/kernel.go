@@ -66,27 +66,29 @@ func ParseCmdline() (map[string]string, error) {
 
 // RunKexec boot into the new kernel given in Bootinfo
 func RunKexec(info *Bootinfo) error {
-	kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
-	if err != nil {
-		return errors.Wrapf(err, "could not open kernel: %s", info.Kernel)
-	}
-	defer kernel.Close()
-
-	// Initrd can be empty, then we pass an empty pointer to kexec.FileLoad
-	var ramfs *os.File
-	if info.Initrd != "" {
-		ramfs, err = os.OpenFile(info.Initrd, os.O_RDONLY, 0)
+	if info != nil {
+		kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
 		if err != nil {
-			return errors.Wrapf(err, "could not open initrd: %s", info.Initrd)
+			return errors.Wrapf(err, "could not open kernel: %s", info.Kernel)
 		}
-		defer ramfs.Close()
+		defer kernel.Close()
+
+		// Initrd can be empty, then we pass an empty pointer to kexec.FileLoad
+		var ramfs *os.File
+		if info.Initrd != "" {
+			ramfs, err = os.OpenFile(info.Initrd, os.O_RDONLY, 0)
+			if err != nil {
+				return errors.Wrapf(err, "could not open initrd: %s", info.Initrd)
+			}
+			defer ramfs.Close()
+		}
+
+		if err := kexec.FileLoad(kernel, ramfs, info.Cmdline); err != nil {
+			return errors.Wrapf(err, "could not execute kexec load: %v", info)
+		}
 	}
 
-	if err := kexec.FileLoad(kernel, ramfs, info.Cmdline); err != nil {
-		return errors.Wrapf(err, "could not execute kexec load: %v", info)
-	}
-
-	err = kexec.Reboot()
+	err := kexec.Reboot()
 	if err != nil {
 		return errors.Wrapf(err, "could not fire kexec reboot info: %v", info)
 	}

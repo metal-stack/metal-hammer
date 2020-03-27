@@ -10,16 +10,15 @@ import (
 
 const blkidCommand = command.BlkID
 
-// FetchBlockIDProperties use blkid to determine more properties of the partition
-func (p *Partition) fetchBlockIDProperties() error {
-
+// FetchBlockIDProperties use blkid to return more properties of the given partition device
+func FetchBlockIDProperties(partitionDevice string) (map[string]string, error) {
 	path, err := exec.LookPath(blkidCommand)
 	if err != nil {
-		return errors.Wrapf(err, "unable to locate program:%s in path", blkidCommand)
+		return nil, errors.Wrapf(err, "unable to locate program:%s in path", blkidCommand)
 	}
-	out, err := exec.Command(path, "-o", "export", p.Device).CombinedOutput()
+	out, err := exec.Command(path, "-o", "export", partitionDevice).CombinedOutput()
 	if err != nil {
-		return errors.Wrapf(err, "unable to execute %s", blkidCommand)
+		return nil, errors.Wrapf(err, "unable to execute %s", blkidCommand)
 	}
 
 	// output of
@@ -33,12 +32,24 @@ func (p *Partition) fetchBlockIDProperties() error {
 	//
 	// we just put every key=value entry into a map
 
+	props := make(map[string]string)
 	for _, line := range strings.Split(string(out), "\n") {
 		keyValue := strings.Split(line, "=")
 		if len(keyValue) != 2 {
 			continue
 		}
-		p.Properties[keyValue[0]] = keyValue[1]
+		props[keyValue[0]] = keyValue[1]
 	}
+	return props, nil
+}
+
+// FetchBlockIDProperties use blkid to determine more properties of the partition
+func (p *Partition) fetchBlockIDProperties() error {
+	props, err := FetchBlockIDProperties(p.Device)
+	if err != nil {
+		return err
+	}
+
+	p.Properties = props
 	return nil
 }

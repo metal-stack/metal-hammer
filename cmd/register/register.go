@@ -2,6 +2,14 @@ package register
 
 import (
 	"fmt"
+	"github.com/jaypipes/ghw"
+	"github.com/metal-stack/metal-hammer/cmd/network"
+	"github.com/metal-stack/metal-hammer/cmd/storage"
+	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"github.com/metal-stack/metal-hammer/pkg/bios"
+	"github.com/metal-stack/metal-hammer/pkg/ipmi"
+	"github.com/vishvananda/netlink"
 	"io/ioutil"
 	gonet "net"
 	"strconv"
@@ -9,17 +17,8 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/metal-stack/metal-hammer/cmd/network"
-	"github.com/metal-stack/metal-hammer/cmd/storage"
-	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
-	"github.com/metal-stack/metal-hammer/metal-core/models"
-	"github.com/metal-stack/metal-hammer/pkg/bios"
-	"github.com/metal-stack/metal-hammer/pkg/ipmi"
-
 	log "github.com/inconshreveable/log15"
-	"github.com/jaypipes/ghw"
 	"github.com/pkg/errors"
-	"github.com/vishvananda/netlink"
 )
 
 // Register the Machine
@@ -30,31 +29,25 @@ type Register struct {
 }
 
 // RegisterMachine register a machine at the metal-api via metal-core
-func (r *Register) RegisterMachine() (*models.DomainMetalHammerRegisterMachineRequest, string, error) {
-	hw, err := r.readHardwareDetails()
-	if err != nil {
-		return hw, "", errors.Wrap(err, "unable to read all hardware details")
-	}
+func (r *Register) RegisterMachine(hw *models.DomainMetalHammerRegisterMachineRequest) error {
 	params := machine.NewRegisterParams()
 	params.SetBody(hw)
 	params.ID = hw.UUID
 	resp, err := r.Client.Register(params)
 
 	if err != nil {
-		return hw, "", errors.Wrapf(err, "unable to register machine:%#v", hw)
+		return errors.Wrapf(err, "unable to register machine:%#v", hw)
 	}
 	if resp == nil {
-		return hw, "", errors.Errorf("unable to register machine:%#v response payload is nil", hw)
+		return errors.Errorf("unable to register machine:%#v response payload is nil", hw)
 	}
 
 	log.Info("register machine returned", "response", resp.Payload)
-	return hw, *resp.Payload.ID, nil
+	return nil
 }
 
-// this mac is used to calculate the IPMI Port offset in the metal-lab environment.
-var eth0Mac = ""
-
-func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachineRequest, error) {
+// ReadHardwareDetails returns the hardware details of the machine
+func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachineRequest, error) {
 	err := createSyslog()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to write kernel boot message to /var/log/syslog")
@@ -87,6 +80,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 		name := attrs.Name
 		mac := attrs.HardwareAddr.String()
 		_, err := gonet.ParseMAC(mac)
+
 		if err != nil {
 			log.Debug("skip interface with invalid mac", "interface", name, "mac", mac)
 			continue
@@ -96,7 +90,7 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 			loFound = true
 		}
 		if name == "eth0" {
-			eth0Mac = mac
+			r.Network.Eth0Mac = mac
 		}
 
 		nic := &models.ModelsV1MachineNicExtended{
@@ -109,7 +103,6 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	// add a lo interface if not present
 	// this is required to have this interface present
 	// in our DCIM management to add a ip later.
-	// FIXME this was required for netbox which is no longer used.
 	if !loFound {
 		mac := "00:00:00:00:00:00"
 		name := "lo"
@@ -122,36 +115,48 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 
 	// now attach neighbors, this will wait up to 2*tx-intervall
 	// if during this timeout not all required neighbors where found abort and reboot.
-	for _, n := range nics {
-		neighbors, err := r.Network.Neighbors(*n.Name)
+	for _, nic := range nics {
+		neighbors, err := r.Network.Neighbors(*nic.Name)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to determine neighbors of interface:%s", *n.Name)
+			return nil, errors.Wrapf(err, "unable to determine neighbors of interface:%s", *nic.Name)
 		}
-		n.Neighbors = neighbors
+		nic.Neighbors = neighbors
 	}
 
 	hw.Nics = nics
+	hw.UUID = r.MachineUUID
 
 	blockInfo, err := ghw.Block()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get system block devices")
 	}
-	disks := []*models.ModelsV1MachineBlockDevice{}
 	for _, disk := range blockInfo.Disks {
 		if strings.HasPrefix(disk.Name, storage.DiskPrefixToIgnore) {
 			continue
 		}
+		var parts []*models.ModelsV1MachineDiskPartition
+		for _, p := range blockInfo.Partitions {
+			size := int64(p.SizeBytes)
+			parts = append(parts, &models.ModelsV1MachineDiskPartition{
+				Filesystem: &p.Type,
+				Device:     &p.Name,
+				Label:      &p.Label,
+				Mountpoint: &p.MountPoint,
+				Size:       &size,
+			})
+		}
+		primary := false // not allocated yet
 		size := int64(disk.SizeBytes)
 		blockDevice := &models.ModelsV1MachineBlockDevice{
-			Name: &disk.Name,
-			Size: &size,
+			Name:       &disk.Name,
+			Size:       &size,
+			Primary:    &primary,
+			Partitions: parts,
 		}
-		disks = append(disks, blockDevice)
+		hw.Disks = append(hw.Disks, blockDevice)
 	}
-	hw.Disks = disks
-	hw.UUID = r.MachineUUID
 
-	ipmiconfig, err := readIPMIDetails(eth0Mac)
+	ipmiconfig, err := readIPMIDetails(r.Network.Eth0Mac)
 	if err != nil {
 		return nil, err
 	}
@@ -167,6 +172,23 @@ func (r *Register) readHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	return hw, nil
 }
 
+// save the content of kernel ringbuffer to /var/log/syslog
+// by calling the appropriate syscall.
+// Only required if Memory is gathered by ghw.Memory()
+// FIXME consider different implementation
+func createSyslog() error {
+	const SyslogActionReadAll = 3
+	level := uintptr(SyslogActionReadAll)
+
+	b := make([]byte, 256*1024)
+	amt, _, err := syscall.Syscall(syscall.SYS_SYSLOG, level, uintptr(unsafe.Pointer(&b[0])), uintptr(len(b)))
+	if err != 0 {
+		return err
+	}
+
+	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0666)
+}
+
 const defaultIpmiPort = "623"
 
 // defaultIpmiUser the name of the user created by metal in the ipmi config
@@ -180,7 +202,6 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 	config := ipmi.LanConfig{}
 	var fru models.ModelsV1MachineFru
 	i := ipmi.New()
-	var err error
 	var pw string
 	var user string
 	var bmcInfo ipmi.BMCInfo
@@ -188,6 +209,7 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 		log.Info("ipmi details from bmc")
 		user = defaultIpmiUser
 		// FIXME userid should be verified if available
+		var err error
 		pw, err = i.CreateUser(user, defaultIpmiUserID, ipmi.Administrator)
 		if err != nil {
 			return nil, errors.Wrap(err, "ipmi create user failed")
@@ -251,21 +273,4 @@ func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
 	}
 
 	return details, nil
-}
-
-// save the content of kernel ringbuffer to /var/log/syslog
-// by calling the appropriate syscall.
-// Only required if Memory is gathered by ghw.Memory()
-// FIXME consider different implementation
-func createSyslog() error {
-	const SyslogActionReadAll = 3
-	level := uintptr(SyslogActionReadAll)
-
-	b := make([]byte, 256*1024)
-	amt, _, err := syscall.Syscall(syscall.SYS_SYSLOG, level, uintptr(unsafe.Pointer(&b[0])), uintptr(len(b)))
-	if err != 0 {
-		return err
-	}
-
-	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0666)
 }
