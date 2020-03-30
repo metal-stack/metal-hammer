@@ -104,16 +104,17 @@ func isValidBootInfo(m *models.ModelsV1MachineResponse) bool {
 	if m.Allocation == nil || m.Allocation.BootInfo == nil {
 		return false
 	}
-	id := m.Allocation.BootInfo.ImageID
-	if id == nil || *id == "" {
-		return false
-	}
+
 	pd := m.Allocation.BootInfo.PrimaryDisk
-	if pd == nil || *pd == "" {
-		return false
+	if pd != nil && *pd != "" {
+		return true
+	}
+	id := m.Allocation.BootInfo.ImageID
+	if id != nil && *id != "" {
+		return true
 	}
 
-	return true
+	return false
 }
 
 func sanitizeDisk(disk string) string {
