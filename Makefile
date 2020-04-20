@@ -7,7 +7,7 @@ MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../builder)
 CGO_ENABLED := 1
 
-in-docker: clean-local-dirs generate-client protoc gofmt test all;
+in-docker: clean-local-dirs generate-client gofmt test all;
 
 include $(COMMONDIR)/Makefile.inc
 
