@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
@@ -22,10 +23,11 @@ import (
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
-	Client     *machine.Client
-	Spec       *Specification
-	Disk       storage.Disk
-	LLDPClient *network.LLDPClient
+	Client      *machine.Client
+	CertsClient *certs.Client
+	Spec        *Specification
+	Disk        storage.Disk
+	LLDPClient  *network.LLDPClient
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress          string
 	Started            time.Time
@@ -40,6 +42,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := machine.New(transport, strfmt.Default)
+	certsClient := certs.New(transport, strfmt.Default)
 	eventEmitter := event.NewEventEmitter(client, spec.MachineUUID)
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, "starting metal-hammer")
@@ -51,6 +54,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 
 	hammer := &Hammer{
 		Client:             client,
+		CertsClient:        certsClient,
 		Spec:               spec,
 		IPAddress:          spec.IP,
 		EventEmitter:       eventEmitter,
@@ -211,7 +215,11 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 			},
 		}
 	} else {
-		m, err = hammer.Wait(spec.MachineUUID)
+		err := hammer.WaitForInstallation(spec.MachineUUID)
+		if err != nil {
+			return eventEmitter, errors.Wrap(err, "wait for installation")
+		}
+		m, err = hammer.fetchMachine(spec.MachineUUID)
 		if err != nil {
 			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}

@@ -7,11 +7,11 @@ MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../builder)
 CGO_ENABLED := 1
 
-in-docker: clean-local-dirs generate-client test all;
+in-docker: clean-local-dirs generate-client protoc gofmt test all;
 
 include $(COMMONDIR)/Makefile.inc
 
-release:: generate-client test all ;
+release:: generate-client gofmt test all ;
 
 .PHONY: clean
 clean::
@@ -94,3 +94,7 @@ qemu-up:
           BGP=1" \
 		-kernel metal-hammer-kernel \
 		-initrd metal-hammer-initrd.img.lz4
+
+.PHONY: protoc
+protoc:
+	docker run -it --rm -v $(PWD)/../../..:/work metalstack/builder bash -c "cd github.com/metal-stack/metal-hammer && protoc -I cmd -I../../.. --go_out plugins=grpc:cmd cmd/api/v1/*.proto"
