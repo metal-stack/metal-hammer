@@ -74,9 +74,9 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *Client) WaitForInstallation(uuid string) {
+func (c *Client) WaitForInstallation(machineID string) {
 	req := &v1.WaitRequest{
-		Uuid: uuid,
+		MachineID: machineID,
 	}
 
 	for {
@@ -88,8 +88,9 @@ func (c *Client) WaitForInstallation(uuid string) {
 		}
 
 		for {
-			resp, err := stream.Recv()
+			_, err := stream.Recv()
 			if err == io.EOF {
+				log.Info("machine has been requested for installation", "machineID", machineID)
 				return
 			}
 
@@ -99,11 +100,7 @@ func (c *Client) WaitForInstallation(uuid string) {
 				break
 			}
 
-			if resp.Allocated {
-				log.Info("machine has been requested for installation", "uuid", uuid)
-			} else {
-				log.Info("wait for installation...", "machineID", uuid)
-			}
+			log.Info("wait for installation...", "machineID", machineID)
 		}
 	}
 }
