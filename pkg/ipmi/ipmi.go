@@ -17,6 +17,7 @@ import (
 
 	"github.com/avast/retry-go"
 	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/go-hal/detect"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
 	"github.com/pkg/errors"
@@ -57,6 +58,7 @@ type Ipmi interface {
 // Ipmitool is used to query and modify the IPMI based BMC from the host os.
 type Ipmitool struct {
 	Command string
+	Vendor  detect.Vendor
 }
 
 // LanConfig contains the config of ipmi.
@@ -131,9 +133,16 @@ const (
 	Disk = Bootdev("disk")
 )
 
+// FIXME remove this
+const lenovoDefaultBMCPassword = "MeTaL-HaMm3r"
+
 // New create a new Ipmitool with the default command
 func New() Ipmi {
-	return &Ipmitool{Command: Command}
+	board, err := detect.InBand()
+	if err != nil {
+		log.Error("unable to detect board:%v", err)
+	}
+	return &Ipmitool{Command: Command, Vendor: board.Vendor}
 }
 
 // DevicePresent returns true if the ipmi device is present, which is required to talk to the BMC.
@@ -211,6 +220,9 @@ func (i *Ipmitool) GetSession() (Session, error) {
 func (i *Ipmitool) CreateUser(username, uid string, privilege Privilege) (string, error) {
 	out, err := i.Run("user", "set", "name", uid, username)
 	if err != nil {
+		if i.Vendor == detect.VendorLenovo {
+			return lenovoDefaultBMCPassword, nil
+		}
 		return "", errors.Wrapf(err, "unable to create user %s: %v", username, out)
 	}
 	// This happens from time to time for unknown reason
