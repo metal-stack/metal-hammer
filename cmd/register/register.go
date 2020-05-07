@@ -2,20 +2,21 @@ package register
 
 import (
 	"fmt"
-	"github.com/jaypipes/ghw"
-	"github.com/metal-stack/metal-hammer/cmd/network"
-	"github.com/metal-stack/metal-hammer/cmd/storage"
-	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
-	"github.com/metal-stack/metal-hammer/metal-core/models"
-	"github.com/metal-stack/metal-hammer/pkg/bios"
-	"github.com/metal-stack/metal-hammer/pkg/ipmi"
-	"github.com/vishvananda/netlink"
 	"io/ioutil"
 	gonet "net"
 	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
+
+	"github.com/jaypipes/ghw"
+	"github.com/metal-stack/go-hal"
+	"github.com/metal-stack/go-hal/pkg/api"
+	"github.com/metal-stack/metal-hammer/cmd/network"
+	"github.com/metal-stack/metal-hammer/cmd/storage"
+	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
+	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"github.com/vishvananda/netlink"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
@@ -26,6 +27,7 @@ type Register struct {
 	MachineUUID string
 	Client      *machine.Client
 	Network     *network.Network
+	Hal         hal.InBand
 }
 
 // RegisterMachine register a machine at the metal-api via metal-core
@@ -156,13 +158,17 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 		hw.Disks = append(hw.Disks, blockDevice)
 	}
 
-	ipmiconfig, err := readIPMIDetails(r.Network.Eth0Mac)
+	ipmiconfig, err := readIPMIDetails(r.Network.Eth0Mac, r.Hal)
 	if err != nil {
 		return nil, err
 	}
 	hw.IPMI = ipmiconfig
 
-	b := bios.Bios()
+	board := r.Hal.Board()
+	b := board.BIOS
+	if b == nil {
+		return nil, errors.New("unable to read bios informations from bmc")
+	}
 	hw.Bios = &models.ModelsV1MachineBIOS{
 		Version: &b.Version,
 		Vendor:  &b.Vendor,
@@ -197,80 +203,79 @@ const defaultIpmiUser = "metal"
 // defaultIpmiUserID the id of the user created by metal in the ipmi config
 const defaultIpmiUserID = "10"
 
+// FIXME remove this
+const lenovoDefaultBMCPassword = "MeTaL-HaMm3r"
+
 // IPMI configuration and
-func readIPMIDetails(eth0Mac string) (*models.ModelsV1MachineIPMI, error) {
-	config := ipmi.LanConfig{}
-	var fru models.ModelsV1MachineFru
-	i := ipmi.New()
+func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPMI, error) {
 	var pw string
-	var user string
-	var bmcInfo ipmi.BMCInfo
-	if i.DevicePresent() {
-		log.Info("ipmi details from bmc")
-		user = defaultIpmiUser
-		// FIXME userid should be verified if available
-		var err error
-		pw, err = i.CreateUser(user, defaultIpmiUserID, ipmi.Administrator)
-		if err != nil {
-			return nil, errors.Wrap(err, "ipmi create user failed")
-		}
-		config, err = i.GetLanConfig()
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to read ipmi lan configuration")
-		}
-		log.Debug("register", "ipmi lanconfig", config)
-		config.IP = config.IP + ":" + defaultIpmiPort
-		f, err := i.GetFru()
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to read ipmi fru configuration")
-		}
-		bmcInfo, err = i.GetBMCInfo()
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to read ipmi bmc info configuration")
-		}
-		fru = models.ModelsV1MachineFru{
-			ChassisPartNumber:   f.ChassisPartNumber,
-			ChassisPartSerial:   f.ChassisPartSerial,
-			BoardMfg:            f.BoardMfg,
-			BoardMfgSerial:      f.BoardMfgSerial,
-			BoardPartNumber:     f.BoardPartNumber,
-			ProductManufacturer: f.ProductManufacturer,
-			ProductPartNumber:   f.ProductPartNumber,
-			ProductSerial:       f.ProductSerial,
-		}
-
-	} else {
-		log.Info("ipmi details faked")
-
-		if len(eth0Mac) == 0 {
-			eth0Mac = "00:00:00:00:00:00"
-		}
-
-		macParts := strings.Split(eth0Mac, ":")
-		lastOctet := macParts[len(macParts)-1]
-		port, err := strconv.ParseUint(lastOctet, 16, 32)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse last octet of eth0 mac to a integer")
-		}
-
-		const baseIPMIPort = 6230
-		// Fixed IP of vagrant environment gateway
-		config.IP = fmt.Sprintf("192.168.121.1:%d", baseIPMIPort+port)
-		config.Mac = "00:00:00:00:00:00"
-		pw = "vagrant"
-		user = "vagrant"
-	}
-
 	intf := "lanplus"
 	details := &models.ModelsV1MachineIPMI{
-		Address:    &config.IP,
-		Mac:        &config.Mac,
-		Password:   &pw,
-		User:       &user,
-		Interface:  &intf,
-		Fru:        &fru,
-		Bmcversion: &bmcInfo.FirmwareRevision,
+		Interface: &intf,
+	}
+	bmcversion := "unknown"
+	if hal.BMCPresent() {
+		log.Info("ipmi details from bmc")
+		board := hal.Board()
+		bmc := board.BMC
+		if bmc == nil {
+			return nil, errors.New("unable to read ipmi bmc info configuration")
+		}
+		// FIXME userid should be verified if available
+		var err error
+		user := defaultIpmiUser
+		// FIXME bad workaround as long as it is not possible to create a BMC user from inband on Lenovo
+		if board.Vendor == api.VendorLenovo {
+			pw = lenovoDefaultBMCPassword
+		} else {
+			pw, err = hal.BMCCreateUser(user, defaultIpmiUserID)
+			if err != nil {
+				return nil, errors.Wrap(err, "ipmi create user failed")
+			}
+		}
+
+		bmcversion = bmc.FirmwareRevision
+		fru := models.ModelsV1MachineFru{
+			ChassisPartNumber:   bmc.ChassisPartNumber,
+			ChassisPartSerial:   bmc.ChassisPartSerial,
+			BoardMfg:            bmc.BoardMfg,
+			BoardMfgSerial:      bmc.BoardMfgSerial,
+			BoardPartNumber:     bmc.BoardPartNumber,
+			ProductManufacturer: bmc.ProductManufacturer,
+			ProductPartNumber:   bmc.ProductPartNumber,
+			ProductSerial:       bmc.ProductSerial,
+		}
+		details.Address = &bmc.IP
+		details.Mac = &bmc.MAC
+		details.User = &user
+		details.Password = &pw
+		details.Bmcversion = &bmcversion
+		details.Fru = &fru
+		return details, nil
 	}
 
+	log.Info("ipmi details faked")
+	if len(eth0Mac) == 0 {
+		eth0Mac = "00:00:00:00:00:00"
+	}
+
+	macParts := strings.Split(eth0Mac, ":")
+	lastOctet := macParts[len(macParts)-1]
+	port, err := strconv.ParseUint(lastOctet, 16, 32)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse last octet of eth0 mac to a integer")
+	}
+
+	const baseIPMIPort = 6230
+	// Fixed IP of vagrant environment gateway
+	bmcIP := fmt.Sprintf("192.168.121.1:%d", baseIPMIPort+port)
+	bmcMAC := "00:00:00:00:00:00"
+	pw = "vagrant"
+	user := "vagrant"
+	details.Address = &bmcIP
+	details.Mac = &bmcMAC
+	details.User = &user
+	details.Password = &pw
+	details.Bmcversion = &bmcversion
 	return details, nil
 }

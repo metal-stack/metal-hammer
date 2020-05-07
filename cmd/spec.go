@@ -4,8 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/metal-stack/metal-hammer/pkg/uuid"
-
 	"os"
 
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
@@ -90,7 +88,6 @@ func NewSpec(ip string) *Specification {
 		}
 	}
 
-	spec.MachineUUID = uuid.MachineUUID()
 	spec.IP = ip
 	return spec
 }

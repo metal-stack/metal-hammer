@@ -6,6 +6,7 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/go-hal"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/register"
@@ -13,7 +14,6 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
-	"github.com/metal-stack/metal-hammer/pkg/bios"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
@@ -35,8 +35,8 @@ type Hammer struct {
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
-func Run(spec *Specification) (*event.EventEmitter, error) {
-	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", bios.Bios().String())
+func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
+	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := machine.New(transport, strfmt.Default)
@@ -87,6 +87,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		MachineUUID: spec.MachineUUID,
 		Client:      client,
 		Network:     n,
+		Hal:         hal,
 	}
 
 	hw, err := reg.ReadHardwareDetails()
@@ -164,7 +165,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 				Hostname:   &hostname,
 				SSHPubKeys: sshkeys,
 				Networks: []*models.ModelsV1MachineNetwork{
-					&models.ModelsV1MachineNetwork{
+					{
 						Ips:                 []string{cidr},
 						Asn:                 &asn,
 						Private:             &private,
@@ -173,7 +174,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 						Vrf:                 &vrf,
 						Nat:                 &nat,
 					},
-					&models.ModelsV1MachineNetwork{
+					{
 						Ips:                 []string{"1.2.3.4"},
 						Asn:                 &asn,
 						Private:             &private2,

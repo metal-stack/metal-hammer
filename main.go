@@ -9,6 +9,7 @@ import (
 	"time"
 
 	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/go-hal/detect"
 	"github.com/metal-stack/metal-hammer/cmd"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
@@ -27,6 +28,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	hal, err := detect.ConnectInBand()
+	if err != nil {
+		log.Error("unable to detect hardware", "error", err)
+		os.Exit(1)
+	}
+	log.Info("metal-hammer", "hal", hal.Describe())
+	uuid, err := hal.UUID()
+	if err != nil {
+		log.Error("unable to get uuid hardware", "error", err)
+		os.Exit(1)
+	}
+
 	ip := network.InternalIP()
 	err = cmd.StartSSHD(ip)
 	if err != nil {
@@ -42,6 +55,7 @@ func main() {
 	log.Info("metal-hammer", "version", v.V)
 
 	spec := cmd.NewSpec(ip)
+	spec.MachineUUID = uuid.String()
 	spec.Log()
 
 	var level log.Lvl
@@ -55,7 +69,7 @@ func main() {
 	h = log.LvlFilterHandler(level, h)
 	log.Root().SetHandler(h)
 
-	emitter, err := cmd.Run(spec)
+	emitter, err := cmd.Run(spec, hal)
 	if err != nil {
 		wait := 5 * time.Second
 		st := errors.WithStack(err)
