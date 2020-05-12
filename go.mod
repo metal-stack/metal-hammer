@@ -19,11 +19,10 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
-	github.com/metal-stack/go-hal v0.0.0-20200507120602-b98f4c642b63 // indirect
+	github.com/metal-stack/go-hal v0.0.0-20200507120602-b98f4c642b63
 	github.com/metal-stack/v v1.0.2
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible
@@ -38,7 +37,9 @@ require (
 	gopkg.in/yaml.v2 v2.2.8
 )
 
-//	github.com/metal-stack/go-hal => ../go-hal
-replace github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+replace (
+	github.com/metal-stack/go-hal => ../go-hal
+	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+)
 
 go 1.13
