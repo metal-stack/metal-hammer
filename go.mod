@@ -19,7 +19,7 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
-	github.com/metal-stack/go-hal v0.0.0-20200513064608-d952a140839b
+	github.com/metal-stack/go-hal v0.0.0-20200520061342-12283ec14eff
 	github.com/metal-stack/v v1.0.2
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
