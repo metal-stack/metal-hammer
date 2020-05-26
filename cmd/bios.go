@@ -9,17 +9,17 @@ import (
 	log "github.com/inconshreveable/log15"
 )
 
-// UpdateBIOS ensures that UEFI boot is enabled and CSM-support is disabled.
+// ConfigureBIOS ensures that UEFI boot is enabled and CSM-support is disabled.
 // It then reboots the machine.
-func (h *Hammer) UpdateBIOS() error {
+func (h *Hammer) ConfigureBIOS() error {
 	s, err := sum.New()
 	if err != nil {
 		return err
 	}
 
-	reboot, err := s.UpdateBIOS()
+	reboot, err := s.ConfigureBIOS()
 	if err != nil {
-		log.Warn("BIOS updates for this machine type are intentionally not supported, skipping UpdateBIOS", "error", err)
+		log.Warn("BIOS updates for this machine type are intentionally not supported, skipping ConfigureBIOS", "error", err)
 		return nil
 	}
 	if reboot {

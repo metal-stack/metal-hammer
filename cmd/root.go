@@ -122,7 +122,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	}
 
 	if !spec.DevMode {
-		err = hammer.UpdateBIOS()
+		err = hammer.ConfigureBIOS()
 		if err != nil {
 			log.Error("failed to update BIOS", "error", err)
 			return eventEmitter, err

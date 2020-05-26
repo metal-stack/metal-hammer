@@ -126,7 +126,7 @@ type BiosCfg struct {
 
 // Sum defines methods to interact with Supermicro Update Manager (SUM)
 type Sum interface {
-	UpdateBIOS() (bool, error)
+	ConfigureBIOS() (bool, error)
 	EnsureBootOrder(bootloaderID string) error
 }
 
@@ -144,9 +144,9 @@ func New() (Sum, error) {
 	return &sum{}, nil
 }
 
-// UpdateBIOS updates BIOS to UEFI boot and disables CSM-module if required.
+// ConfigureBIOS updates BIOS to UEFI boot and disables CSM-module if required.
 // If returns whether machine needs to be rebooted or not.
-func (s *sum) UpdateBIOS() (bool, error) {
+func (s *sum) ConfigureBIOS() (bool, error) {
 	firmware := kernel.Firmware()
 	log.Info("firmware", "is", firmware)
 
