@@ -121,14 +121,11 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		return eventEmitter, errors.Wrap(err, "wipe")
 	}
 
-	firmware := kernel.Firmware()
-	log.Info("firmware", "is", firmware)
-
-	if firmware != "efi" && !spec.DevMode {
-		log.Info("firmware is not efi, enforce efi boot mode using preparation image")
-		err = hammer.EnsureUEFI()
+	if !spec.DevMode {
+		err = hammer.ConfigureBIOS()
 		if err != nil {
-			log.Warn("BIOS updates for this machine type are intentionally not supported, skipping EnsureUEFI", "error", err)
+			log.Error("failed to update BIOS", "error", err)
+			return eventEmitter, err
 		}
 	}
 

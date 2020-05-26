@@ -44,6 +44,12 @@ func TestUnmarshalBigTwinBiosCfg(t *testing.T) {
 	// then
 	require.Equal(t, bigTwin, s.machineType)
 
+	// when
+	s.determineSecureBoot()
+
+	// then
+	require.True(t, s.secureBootEnabled)
+
 	// then
 	require.Nil(t, err)
 
@@ -7322,6 +7328,93 @@ Disabled - PCI Bus Driver Disables the Bus Master Attribute for Pre-Boot DMA Pro
         <Help><![CDATA[Setup: Check password while invoking setup. Always: Check password while invoking setup as well as on each boot.]]></Help>
       </Information>
     </Setting>
+    <Subtitle></Subtitle>
+    <Menu name="SMC Security Erase Configuration">
+      <Information>
+        <Help><![CDATA[]]></Help>
+      </Information>
+      <Text>HDD Name(SuperMicro SSD)</Text>
+      <Text>HDD Serial Number(SMC0515D93017CHJ5126)</Text>
+      <Text>Security Erase Mode(SAT3 Supported)</Text>
+      <Text>Estimated Time(4 Minutes)</Text>
+      <Text>HDD User Pwd Status:(NOT INSTALLED)</Text>
+      <Setting name="Security Function" selectedOption="Disable" type="Option">
+        <Information>
+          <AvailableOptions>
+            <Option value="0">Disable</Option>
+            <Option value="1">Security Erase</Option>
+            <Option value="2">Set Password</Option>
+          </AvailableOptions>
+          <DefaultOption>Disable</DefaultOption>
+          <Help><![CDATA[Security Erase:
+SATA Devices (ATA/Non TCG) please input User Password.
+SATA/Nvme Devices (TCG-Enterprise) please input EraseMaster Password.
+
+Nvme Devices (TCG-Opal or Pyrite) please input Admin Password.
+If Devices don't be set any password before, please input a Random Password.
+]]></Help>
+        </Information>
+      </Setting>
+      <Setting name="Password" type="String">
+        <Information>
+          <MinSize>0</MinSize>
+          <MaxSize>32</MaxSize>
+          <DefaultString></DefaultString>
+          <Help><![CDATA[SMC HDD Security function]]></Help>
+          <AllowingMultipleLine>False</AllowingMultipleLine>
+        </Information>
+        <StringValue><![CDATA[]]></StringValue>
+      </Setting>
+      <Subtitle></Subtitle>
+    </Menu>
+    <Subtitle></Subtitle>
+    <Menu name="SMC Secure Boot Configuration">
+      <Information>
+        <Help><![CDATA[SecureBoot Option]]></Help>
+      </Information>
+      <Setting name="Secure Boot" selectedOption="Enabled" type="Option">
+        <Information>
+          <AvailableOptions>
+            <Option value="0">Disabled</Option>
+            <Option value="1">Enabled</Option>
+          </AvailableOptions>
+          <DefaultOption>Disabled</DefaultOption>
+          <Help><![CDATA[Secure Boot feature is Active if Secure Boot is Enabled,
+Platform Key(PK) is enrolled and the System is in User mode.
+The mode change requires platform reset]]></Help>
+        </Information>
+      </Setting>
+      <Setting name="Reset Keys Type" selectedOption="Disabled" type="Option">
+        <Information>
+          <AvailableOptions>
+            <Option value="0">Disabled</Option>
+            <Option value="1">Reset all keys to default</Option>
+            <Option value="2">Delete all keys</Option>
+            <Option value="3">Delete PK key</Option>
+          </AvailableOptions>
+          <DefaultOption>Disabled</DefaultOption>
+          <Help><![CDATA[Reset Keys Type]]></Help>
+        </Information>
+      </Setting>
+      <Text>System Mode(Setup)</Text>
+      <Text>Secure Boot(Not Active)</Text>
+      <Setting name="Secure Boot Mode" selectedOption="Setup" type="Option">
+        <Information>
+          <AvailableOptions>
+            <!--Option ValidIf:  (  (  ( 1 == 0 )  ||  ( 1 == 0 )  )  ||  ( 0 == 1 )  ) -->
+            <Option value="0">Setup</Option>
+            <!--Option ValidIf:  (  ( 1 == 0 )  ||  ( 1 == 1 )  ) -->
+            <Option value="1">User</Option>
+            <!--Option ValidIf:  ( 1 == 0 ) -->
+            <Option value="2">Audit</Option>
+            <!--Option ValidIf:  (  ( 1 == 0 )  ||  ( 1 == 1 )  ) -->
+            <Option value="3">Deployed</Option>
+          </AvailableOptions>
+          <DefaultOption>Setup</DefaultOption>
+          <Help><![CDATA[Secure Boot Mode]]></Help>
+        </Information>
+      </Setting>
+    </Menu>
     <Subtitle>HDD Security Configuration:</Subtitle>
     <Menu name="P6:SuperMicro SSD">
       <Information>
