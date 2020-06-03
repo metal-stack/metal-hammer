@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/metal-stack/go-hal/pkg/api"
 	"github.com/metal-stack/v"
 	"os"
 	"time"
@@ -30,7 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	hal, err := detect.ConnectInBand(api.IPMI2Compliance)
+	hal, err := detect.ConnectInBand()
 	if err != nil {
 		log.Error("unable to detect hardware", "error", err)
 		os.Exit(1)
