@@ -190,8 +190,8 @@ github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/
 github.com/mdlayher/raw v0.0.0-20190606142536-fef19f00fc18/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
 github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 h1:aFkJ6lx4FPip+S+Uw4aTegFMct9shDvP+79PsSxpm3w=
 github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
-github.com/metal-stack/go-hal v0.0.0-20200615230422-1cb8f1337397 h1:EHosKvqtoYGdtA1H1u8WZET35YJoYso8XplCrpH7O2s=
-github.com/metal-stack/go-hal v0.0.0-20200615230422-1cb8f1337397/go.mod h1:UdT4VGEizBfbWVbuUeY4wBaOWeUdK7zNvAbwNlCqGdE=
+github.com/metal-stack/go-hal v0.0.0-20200616201018-20969e75c070 h1:0+ImKpGODys7sEmPstKGE+ve/olS8mXEoawmXFur/4c=
+github.com/metal-stack/go-hal v0.0.0-20200616201018-20969e75c070/go.mod h1:UdT4VGEizBfbWVbuUeY4wBaOWeUdK7zNvAbwNlCqGdE=
 github.com/metal-stack/v v1.0.2 h1:IGtLAGtazQd8r0i/5+YNjBJUEIZYrbVxynY9EXrlTV4=
 github.com/metal-stack/v v1.0.2/go.mod h1:YTahEu7/ishwpYKnp/VaW/7nf8+PInogkfGwLcGPdXg=
 github.com/mholt/archiver v2.1.0+incompatible h1:1ivm7KAHPtPere1YDOdrY6xGdbMNGRWThZbYh5lWZT0=
