@@ -190,8 +190,8 @@ github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/
 github.com/mdlayher/raw v0.0.0-20190606142536-fef19f00fc18/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
 github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 h1:aFkJ6lx4FPip+S+Uw4aTegFMct9shDvP+79PsSxpm3w=
 github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
-github.com/metal-stack/go-hal v0.0.0-20200616201018-20969e75c070 h1:0+ImKpGODys7sEmPstKGE+ve/olS8mXEoawmXFur/4c=
-github.com/metal-stack/go-hal v0.0.0-20200616201018-20969e75c070/go.mod h1:UdT4VGEizBfbWVbuUeY4wBaOWeUdK7zNvAbwNlCqGdE=
+github.com/metal-stack/go-hal v0.0.0-20200617110046-9c0f23ed7d78 h1:IE4DQLGooy7p434jr+g0o5jmBzdMLN+sX0wcLNLgXM8=
+github.com/metal-stack/go-hal v0.0.0-20200617110046-9c0f23ed7d78/go.mod h1:NNb/CROhkNCB1PWLU4VJtk4nXptAUngbqu9+kf5xd7I=
 github.com/metal-stack/v v1.0.2 h1:IGtLAGtazQd8r0i/5+YNjBJUEIZYrbVxynY9EXrlTV4=
 github.com/metal-stack/v v1.0.2/go.mod h1:YTahEu7/ishwpYKnp/VaW/7nf8+PInogkfGwLcGPdXg=
 github.com/mholt/archiver v2.1.0+incompatible h1:1ivm7KAHPtPere1YDOdrY6xGdbMNGRWThZbYh5lWZT0=
@@ -247,8 +247,6 @@ github.com/vishvananda/netlink v1.1.0 h1:1iyaYNBLmP6L0220aDnYQpo1QEV4t4hJ+xEEhhJ
 github.com/vishvananda/netlink v1.1.0/go.mod h1:cTgwzPIzzgDAYoQrMm0EdrjRUBkTqKYppBueQtXaqoE=
 github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df h1:OviZH7qLw/7ZovXvuNyL3XQl8UFofeikI1NW1Gypu7k=
 github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17pCcGlemwknint6hfoeCVQrEMVwxRLRjXpq+BU=
-github.com/vmware/goipmi v0.0.0-20181114221114-2333cd82d702 h1:yx587LNBbOpIxzCBHBiI94Wx8ryIAFlu1w0lDwm64cA=
-github.com/vmware/goipmi v0.0.0-20181114221114-2333cd82d702/go.mod h1:YiWonbS/PuCtti3wt9jl+FvNEJ7c0nvmjGoEYxdjyk0=
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c/go.mod h1:lB8K/P019DLNhemzwFU4jHLhdvlE6uDZjXFejJXr49I=
 github.com/xdg/stringprep v0.0.0-20180714160509-73f8eece6fdc/go.mod h1:Jhud4/sHMO4oL310DaZAKk9ZaJ08SJfe+sJh0HrGL1Y=
 go.mongodb.org/mongo-driver v1.0.3/go.mod h1:u7ryQJ+DOzQmeO7zB6MHyr8jkEQvC8vH7qLUO4lqsUM=
