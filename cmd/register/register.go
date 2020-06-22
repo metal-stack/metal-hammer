@@ -11,7 +11,6 @@ import (
 
 	"github.com/jaypipes/ghw"
 	"github.com/metal-stack/go-hal"
-	"github.com/metal-stack/go-hal/pkg/api"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
@@ -195,16 +194,13 @@ func createSyslog() error {
 	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0666)
 }
 
-const defaultIpmiPort = "623"
+const (
+	// defaultIpmiUser the name of the user created by metal in the ipmi config
+	defaultIpmiUser = "metal"
 
-// defaultIpmiUser the name of the user created by metal in the ipmi config
-const defaultIpmiUser = "metal"
-
-// defaultIpmiUserID the id of the user created by metal in the ipmi config
-const defaultIpmiUserID = "10"
-
-// FIXME remove this
-const lenovoDefaultBMCPassword = "MeTaL-HaMm3r"
+	// defaultIpmiUserID the id of the user created by metal in the ipmi config
+	defaultIpmiUserID = "10"
+)
 
 // IPMI configuration and
 func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPMI, error) {
@@ -221,17 +217,11 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		if bmc == nil {
 			return nil, errors.New("unable to read ipmi bmc info configuration")
 		}
-		// FIXME userid should be verified if available
-		var err error
 		user := defaultIpmiUser
-		// FIXME bad workaround as long as it is not possible to create a BMC user from inband on Lenovo
-		if board.Vendor == api.VendorLenovo {
-			pw = lenovoDefaultBMCPassword
-		} else {
-			pw, err = hal.BMCCreateUser(user, defaultIpmiUserID)
-			if err != nil {
-				return nil, errors.Wrap(err, "ipmi create user failed")
-			}
+		// FIXME userid should be verified if available
+		pw, err := hal.BMCCreateUser(user, defaultIpmiUserID)
+		if err != nil {
+			return nil, errors.Wrap(err, "ipmi create user failed")
 		}
 
 		bmcversion = bmc.FirmwareRevision
