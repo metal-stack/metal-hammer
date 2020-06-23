@@ -22,11 +22,6 @@ const (
 	s2
 )
 
-const (
-	biosCfgXML       = "biosCfg.xml"
-	biosCfgUpdateXML = "biosCfgUpdate.xml"
-)
-
 var (
 	// SUM does not complain or fail if more boot options are given than actually available
 	uefiBootXMLFragmentTemplates = map[machineType]string{
@@ -182,6 +177,9 @@ func (s *sum) prepare() error {
 }
 
 func (s *sum) getCurrentBiosCfg() error {
+	biosCfgXML := "biosCfg.xml"
+	_ = os.Remove(biosCfgXML)
+
 	err := s.execute("-c", "GetCurrentBiosCfg", "--file", biosCfgXML)
 	if err != nil {
 		return errors.Wrapf(err, "unable to get BIOS configuration via:%s -c GetCurrentBiosCfg --file %s", command.SUM, biosCfgXML)
@@ -278,6 +276,7 @@ func (s *sum) checkBootOptionAt(index int, bootOption string) bool {
 }
 
 func (s *sum) changeBiosCfg(fragment string, reboot bool) error {
+	biosCfgUpdateXML := "biosCfgUpdate.xml"
 	err := ioutil.WriteFile(biosCfgUpdateXML, []byte(fragment), 0644)
 	if err != nil {
 		return err
