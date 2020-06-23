@@ -22,6 +22,7 @@ import (
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
+	Hal hal.InBand
 	Client     *machine.Client
 	Spec       *Specification
 	Disk       storage.Disk
@@ -50,6 +51,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	}
 
 	hammer := &Hammer{
+		Hal: hal,
 		Client:             client,
 		Spec:               spec,
 		IPAddress:          spec.IP,

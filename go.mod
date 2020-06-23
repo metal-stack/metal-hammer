@@ -19,7 +19,7 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
-	github.com/metal-stack/go-hal v0.0.0-20200622064754-0c61f5c81a1f
+	github.com/metal-stack/go-hal v0.0.0-20200623071412-10f1082efbf1
 	github.com/metal-stack/v v1.0.2
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -30,7 +30,6 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/u-root/u-root v6.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.0
-	golang.org/x/net v0.0.0-20200506145744-7e3656a0809f
 	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28

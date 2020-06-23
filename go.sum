@@ -192,6 +192,8 @@ github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 h1:aFkJ6lx4FPip+S+Uw4
 github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
 github.com/metal-stack/go-hal v0.0.0-20200622064754-0c61f5c81a1f h1:h08pVxBwdrfV+bJQJQayDKREboSF+Dj2M+/M08LPCLs=
 github.com/metal-stack/go-hal v0.0.0-20200622064754-0c61f5c81a1f/go.mod h1:UdT4VGEizBfbWVbuUeY4wBaOWeUdK7zNvAbwNlCqGdE=
+github.com/metal-stack/go-hal v0.0.0-20200623071412-10f1082efbf1 h1:dSiI3zP/H1Ky+qyl6CyhZNRAEkMgUyeaEPEL7f7zebs=
+github.com/metal-stack/go-hal v0.0.0-20200623071412-10f1082efbf1/go.mod h1:jR9kYS0IZz23bnBospEBD+5m4t/nGThsBjQujuSPuSI=
 github.com/metal-stack/v v1.0.2 h1:IGtLAGtazQd8r0i/5+YNjBJUEIZYrbVxynY9EXrlTV4=
 github.com/metal-stack/v v1.0.2/go.mod h1:YTahEu7/ishwpYKnp/VaW/7nf8+PInogkfGwLcGPdXg=
 github.com/mholt/archiver v2.1.0+incompatible h1:1ivm7KAHPtPere1YDOdrY6xGdbMNGRWThZbYh5lWZT0=
