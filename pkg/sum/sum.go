@@ -3,6 +3,7 @@ package sum
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -40,6 +41,11 @@ var (
     <Setting name="Boot Option #8" order="1" selectedOption="Disabled" type="Option"/>
     <Setting name="Boot Option #9" order="1" selectedOption="Disabled" type="Option"/>
   </Menu>
+  <Menu name="Security">
+    <Menu name="SMC Secure Boot Configuration">
+      <Setting name="Secure Boot" selectedOption="Enabled" type="Option"/>
+    </Menu>
+  </Menu>
 </BiosCfg>`,
 		s2: `<?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
 <BiosCfg>
@@ -55,6 +61,11 @@ var (
     <Setting name="UEFI Boot Option #7" selectedOption="Disabled" type="Option"/>
     <Setting name="UEFI Boot Option #8" selectedOption="Disabled" type="Option"/>
     <Setting name="UEFI Boot Option #9" selectedOption="Disabled" type="Option"/>
+  </Menu>
+  <Menu name="Security">
+    <Menu name="SMC Secure Boot Configuration">
+      <Setting name="Secure Boot" selectedOption="Enabled" type="Option"/>
+    </Menu>
   </Menu>
 </BiosCfg>`,
 	}
@@ -91,24 +102,27 @@ var (
 	}
 )
 
+type Menu struct {
+	XMLName  xml.Name `xml:"Menu"`
+	Name     string   `xml:"name,attr"`
+	Settings []struct {
+		XMLName        xml.Name `xml:"Setting"`
+		Name           string   `xml:"name,attr"`
+		Order          string   `xml:"order,attr,omitempty"`
+		SelectedOption string   `xml:"selectedOption,attr"`
+	} `xml:"Setting"`
+	Menus []Menu `xml:"Menu"`
+}
+
 type BiosCfg struct {
 	XMLName xml.Name `xml:"BiosCfg"`
-	Menu    []struct {
-		XMLName xml.Name `xml:"Menu"`
-		Name    string   `xml:"name,attr"`
-		Setting []struct {
-			XMLName        xml.Name `xml:"Setting"`
-			Name           string   `xml:"name,attr"`
-			Order          string   `xml:"order,attr,omitempty"`
-			SelectedOption string   `xml:"selectedOption,attr"`
-		}
-	}
+	Menus   []Menu   `xml:"Menu"`
 }
 
 // Sum defines methods to interact with Supermicro Update Manager (SUM)
 type Sum interface {
-	EnsureUEFIBoot(reboot bool) error
-	EnsureBootOrder(bootloaderID string, reboot bool) error
+	ConfigureBIOS() (bool, error)
+	EnsureBootOrder(bootloaderID string) error
 }
 
 // sum is used to modify the BIOS config from the host OS.
@@ -118,27 +132,36 @@ type sum struct {
 	biosCfg               BiosCfg
 	machineType           machineType
 	uefiNetworkBootOption string
+	secureBootEnabled     bool
 }
 
 func New() (Sum, error) {
 	return &sum{}, nil
 }
 
-// EnsureUEFIBoot updates BIOS to UEFI boot.
-func (s *sum) EnsureUEFIBoot(reboot bool) error {
+// ConfigureBIOS updates BIOS to UEFI boot and disables CSM-module if required.
+// If returns whether machine needs to be rebooted or not.
+func (s *sum) ConfigureBIOS() (bool, error) {
+	firmware := kernel.Firmware()
+	log.Info("firmware", "is", firmware)
+
 	err := s.prepare()
 	if err != nil {
-		return err
+		return false, err
+	}
+
+	if firmware == "efi" && (s.machineType == s2 || s.secureBootEnabled) { // we cannot disable csm-support for S2 servers yet
+		return false, nil
 	}
 
 	fragment := uefiBootXMLFragmentTemplates[s.machineType]
 	fragment = strings.ReplaceAll(fragment, "UEFI_NETWORK_BOOT_OPTION", s.uefiNetworkBootOption)
 
-	return s.changeBiosCfg(fragment, reboot)
+	return true, s.changeBiosCfg(fragment)
 }
 
 // EnsureBootOrder ensures BIOS boot order so that boot from the given allocated OS image is attempted before PXE boot.
-func (s *sum) EnsureBootOrder(bootloaderID string, reboot bool) error {
+func (s *sum) EnsureBootOrder(bootloaderID string) error {
 	s.bootloaderID = bootloaderID
 
 	err := s.prepare()
@@ -157,7 +180,7 @@ func (s *sum) EnsureBootOrder(bootloaderID string, reboot bool) error {
 	fragment = strings.ReplaceAll(fragment, "BOOTLOADER_ID", s.bootloaderID)
 	fragment = strings.ReplaceAll(fragment, "UEFI_NETWORK_BOOT_OPTION", s.uefiNetworkBootOption)
 
-	return s.changeBiosCfg(fragment, reboot)
+	return s.changeBiosCfg(fragment)
 }
 
 func (s *sum) prepare() error {
@@ -172,6 +195,7 @@ func (s *sum) prepare() error {
 	}
 
 	s.determineMachineType()
+	s.determineSecureBoot()
 
 	return s.findUEFINetworkBootOption()
 }
@@ -195,11 +219,11 @@ func (s *sum) getCurrentBiosCfg() error {
 }
 
 func (s *sum) determineMachineType() {
-	for _, menu := range s.biosCfg.Menu {
+	for _, menu := range s.biosCfg.Menus {
 		if menu.Name != "Boot" {
 			continue
 		}
-		for _, setting := range menu.Setting {
+		for _, setting := range menu.Settings {
 			if setting.Name == "UEFI Boot Option #1" { // not available in BigTwin BIOS
 				s.machineType = s2
 				return
@@ -210,6 +234,28 @@ func (s *sum) determineMachineType() {
 	s.machineType = bigTwin
 }
 
+func (s *sum) determineSecureBoot() {
+	if s.machineType == s2 { // secure boot option is not available in S2 BIOS
+		return
+	}
+	for _, menu := range s.biosCfg.Menus {
+		if menu.Name != "Security" {
+			continue
+		}
+		for _, m := range menu.Menus {
+			if m.Name != "SMC Secure Boot Configuration" {
+				continue
+			}
+			for _, setting := range m.Settings {
+				if setting.Name == "Secure Boot" {
+					s.secureBootEnabled = setting.SelectedOption == "Enabled"
+					return
+				}
+			}
+		}
+	}
+}
+
 func (s *sum) unmarshalBiosCfg() error {
 	s.biosCfg = BiosCfg{}
 	decoder := xml.NewDecoder(strings.NewReader(s.biosCfgXML))
@@ -218,11 +264,11 @@ func (s *sum) unmarshalBiosCfg() error {
 }
 
 func (s *sum) findUEFINetworkBootOption() error {
-	for _, menu := range s.biosCfg.Menu {
+	for _, menu := range s.biosCfg.Menus {
 		if menu.Name != "Boot" {
 			continue
 		}
-		for _, setting := range menu.Setting {
+		for _, setting := range menu.Settings {
 			if strings.Contains(setting.SelectedOption, "UEFI Network") {
 				s.uefiNetworkBootOption = setting.SelectedOption
 				return nil
@@ -249,11 +295,11 @@ func (s *sum) bootOrderProperlySet() bool {
 }
 
 func (s *sum) checkBootOptionAt(index int, bootOption string) bool {
-	for _, menu := range s.biosCfg.Menu {
+	for _, menu := range s.biosCfg.Menus {
 		if menu.Name != "Boot" {
 			continue
 		}
-		for _, setting := range menu.Setting {
+		for _, setting := range menu.Settings {
 			switch s.machineType {
 			case bigTwin:
 				if setting.Order != "1" {
@@ -275,19 +321,14 @@ func (s *sum) checkBootOptionAt(index int, bootOption string) bool {
 	return false
 }
 
-func (s *sum) changeBiosCfg(fragment string, reboot bool) error {
+func (s *sum) changeBiosCfg(fragment string) error {
 	biosCfgUpdateXML := "biosCfgUpdate.xml"
 	err := ioutil.WriteFile(biosCfgUpdateXML, []byte(fragment), 0644)
 	if err != nil {
 		return err
 	}
 
-	args := []string{"-c", "ChangeBiosCfg", "--file", biosCfgUpdateXML}
-	if reboot {
-		args = append(args, "--reboot")
-	}
-
-	return s.execute(args...)
+	return s.execute("-c", "ChangeBiosCfg", "--file", biosCfgUpdateXML)
 }
 
 func (s *sum) execute(args ...string) error {
