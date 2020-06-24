@@ -142,7 +142,7 @@ var (
 
 // String for a Partition
 func (p *Partition) String() string {
-	return fmt.Sprintf("%s", p.Device)
+	return p.Device
 }
 
 // primaryDeviceBySize will configure the disk device where the OS gets installed.

@@ -120,11 +120,6 @@ func (l *LLDPClient) requirementsMet() bool {
 			}
 		}
 	}
-	// OK we found 2 distinct chassis mac's
-	if len(neighMap) >= l.Host.minimumNeighbors {
-		return true
-	}
-
-	// Requirements are not met
-	return false
+	// Requirements are met if we found at least 2 distinct chassis mac's
+	return len(neighMap) >= l.Host.minimumNeighbors
 }
