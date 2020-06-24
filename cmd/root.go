@@ -124,12 +124,10 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		return eventEmitter, errors.Wrap(err, "wipe")
 	}
 
-	if !spec.DevMode {
-		err = hammer.ConfigureBIOS()
-		if err != nil {
-			log.Error("failed to update BIOS", "error", err)
-			return eventEmitter, err
-		}
+	err = hammer.ConfigureBIOS()
+	if err != nil {
+		log.Error("failed to update BIOS", "error", err)
+		return eventEmitter, err
 	}
 
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")

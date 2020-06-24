@@ -11,6 +11,10 @@ import (
 // ConfigureBIOS ensures that UEFI boot is enabled and CSM-support is disabled.
 // It then reboots the machine.
 func (h *Hammer) ConfigureBIOS() error {
+	if h.Spec.DevMode || h.Hal.Board().VM {
+		return nil
+	}
+
 	reboot, err := h.Hal.ConfigureBIOS()
 	if err != nil {
 		log.Warn("BIOS updates for this machine type are intentionally not supported, skipping ConfigureBIOS", "error", err)
@@ -33,7 +37,7 @@ func (h *Hammer) ConfigureBIOS() error {
 // EnsureBootOrder ensures that the BIOS boot order is properly set,
 // i.e. first boot from OS image and then PXE boot
 func (h *Hammer) EnsureBootOrder(bootloaderID string) error {
-	if h.Spec.DevMode {
+	if h.Spec.DevMode || h.Hal.Board().VM {
 		return nil
 	}
 
