@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/metal-stack/go-hal/pkg/api"
 	"github.com/metal-stack/v"
 	"os"
 	"time"
@@ -53,7 +54,8 @@ func main() {
 
 	log.Info("metal-hammer", "version", v.V, "hal", hal.Describe())
 
-	spec := cmd.NewSpec()
+	devMode := hal.Board().Vendor == api.VendorVagrant
+	spec := cmd.NewSpec(devMode)
 	spec.MachineUUID = uuid.String()
 	spec.IP = ip
 

@@ -42,8 +42,10 @@ type Specification struct {
 }
 
 // NewSpec fills Specification with configuration made by kernel commandline
-func NewSpec() *Specification {
-	spec := &Specification{}
+func NewSpec(devMode bool) *Specification {
+	spec := &Specification{
+		DevMode: devMode,
+	}
 	// Grab metal-hammer configuration from kernel commandline
 	envmap, err := kernel.ParseCmdline()
 	if err != nil {
