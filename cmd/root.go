@@ -136,10 +136,10 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		}
 	}
 
-	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
-
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	if spec.DevMode {
+		eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
+
 		cidr := "10.0.1.2"
 		if spec.Cidr != "" {
 			cidr = spec.Cidr

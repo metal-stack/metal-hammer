@@ -7,6 +7,7 @@ import (
 	"errors"
 	log "github.com/inconshreveable/log15"
 	v1 "github.com/metal-stack/metal-hammer/cmd/api/v1"
+	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -36,7 +37,7 @@ func (h *Hammer) WaitForInstallation(uuid string) error {
 		RootCAs:      caCertPool,
 		Certificates: []tls.Certificate{clientCert},
 	}
-	c := NewClient(resp.Payload.Address, tlsConfig)
+	c := NewClient(resp.Payload.Address, tlsConfig, h.EventEmitter)
 	defer c.Close()
 	c.WaitForInstallation(uuid)
 	return nil
@@ -44,10 +45,11 @@ func (h *Hammer) WaitForInstallation(uuid string) error {
 
 type Client struct {
 	v1.WaitClient
-	conn *grpc.ClientConn
+	conn    *grpc.ClientConn
+	emitter *event.EventEmitter
 }
 
-func NewClient(addr string, tlsConfig *tls.Config) *Client {
+func NewClient(addr string, tlsConfig *tls.Config, emitter *event.EventEmitter) *Client {
 	kacp := keepalive.ClientParameters{
 		Time:                10 * time.Second, // send pings every 10 seconds if there is no activity
 		Timeout:             time.Second,      // wait 1 second for ping ack before considering the connection dead
@@ -59,7 +61,7 @@ func NewClient(addr string, tlsConfig *tls.Config) *Client {
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithBlock(),
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 15 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
@@ -69,6 +71,7 @@ func NewClient(addr string, tlsConfig *tls.Config) *Client {
 	c := &Client{
 		WaitClient: v1.NewWaitClient(conn),
 		conn:       conn,
+		emitter:    emitter,
 	}
 
 	return c
@@ -82,6 +85,8 @@ func (c *Client) WaitForInstallation(machineID string) {
 	req := &v1.WaitRequest{
 		MachineID: machineID,
 	}
+
+	c.emitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	for {
 		stream, err := c.Wait(context.Background(), req)
