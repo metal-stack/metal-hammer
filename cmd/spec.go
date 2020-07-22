@@ -41,8 +41,6 @@ type Specification struct {
 	MachineUUID string
 	// IP of this instance
 	IP string
-	// GrpcAddress is the address of the gRPC server
-	GrpcAddress string
 }
 
 // NewSpec fills Specification with configuration made by kernel commandline
@@ -63,11 +61,6 @@ func NewSpec(ip string) *Specification {
 	// METAL_CORE_URL must be in the form http://metal-core:4242
 	if url, ok := envmap["METAL_CORE_ADDRESS"]; ok {
 		spec.MetalCoreURL = url
-	}
-
-	// METAL_GRPC_ADDRESS must be in the form metal-api:50051
-	if addr, ok := envmap["METAL_GRPC_ADDRESS"]; ok {
-		spec.GrpcAddress = addr
 	}
 
 	if i, ok := envmap["IMAGE_URL"]; ok {

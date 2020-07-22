@@ -32,7 +32,7 @@ func (h *Hammer) WaitForInstallation(uuid string) error {
 	if !ok {
 		return errors.New("bad certificate")
 	}
-	c := NewClient(h.Spec.GrpcAddress, clientCert, caCertPool)
+	c := NewClient(resp.Payload.Address, clientCert, caCertPool)
 	defer c.Close()
 	c.WaitForInstallation(uuid)
 	return nil

@@ -19,8 +19,11 @@
         "initrd"
       ]
     },
-    "domain.CertResponse": {
+    "domain.GrpcResponse": {
       "properties": {
+        "address": {
+          "type": "string"
+        },
         "ca_cert": {
           "type": "string"
         },
@@ -820,7 +823,7 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/domain.CertResponse"
+              "$ref": "#/definitions/domain.GrpcResponse"
             }
           },
           "500": {
