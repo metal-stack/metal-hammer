@@ -32,7 +32,11 @@ func (h *Hammer) WaitForInstallation(uuid string) error {
 	if !ok {
 		return errors.New("bad certificate")
 	}
-	c := NewClient(resp.Payload.Address, clientCert, caCertPool)
+	tlsConfig := &tls.Config{
+		RootCAs:      caCertPool,
+		Certificates: []tls.Certificate{clientCert},
+	}
+	c := NewClient(resp.Payload.Address, tlsConfig)
 	defer c.Close()
 	c.WaitForInstallation(uuid)
 	return nil
@@ -43,21 +47,21 @@ type Client struct {
 	conn *grpc.ClientConn
 }
 
-func NewClient(addr string, clientCert tls.Certificate, caCertPool *x509.CertPool) *Client {
+func NewClient(addr string, tlsConfig *tls.Config) *Client {
 	kacp := keepalive.ClientParameters{
 		Time:                10 * time.Second, // send pings every 10 seconds if there is no activity
 		Timeout:             time.Second,      // wait 1 second for ping ack before considering the connection dead
 		PermitWithoutStream: true,             // send pings even without active streams
 	}
-	tlsConfig := &tls.Config{
-		RootCAs:      caCertPool,
-		Certificates: []tls.Certificate{clientCert},
-	}
+
 	opts := []grpc.DialOption{
 		grpc.WithKeepaliveParams(kacp),
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+		grpc.WithBlock(),
 	}
-	conn, err := grpc.Dial(addr, opts...)
+	ctx, cancel := context.WithTimeout(context.Background(), 15 * time.Second)
+	defer cancel()
+	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		log.Error("can not connect with server", "error", err)
 	}
