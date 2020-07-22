@@ -216,6 +216,12 @@
         },
         "url": {
           "type": "string"
+        },
+        "usedby": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -223,7 +229,8 @@
         "created",
         "expirationDate",
         "features",
-        "id"
+        "id",
+        "usedby"
       ]
     },
     "models.V1MachineAllocation": {
