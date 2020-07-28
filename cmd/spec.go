@@ -4,8 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/metal-stack/metal-hammer/pkg/uuid"
-
 	"os"
 
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
@@ -44,7 +42,7 @@ type Specification struct {
 }
 
 // NewSpec fills Specification with configuration made by kernel commandline
-func NewSpec(ip string) *Specification {
+func NewSpec() *Specification {
 	spec := &Specification{}
 	// Grab metal-hammer configuration from kernel commandline
 	envmap, err := kernel.ParseCmdline()
@@ -90,8 +88,6 @@ func NewSpec(ip string) *Specification {
 		}
 	}
 
-	spec.MachineUUID = uuid.MachineUUID()
-	spec.IP = ip
 	return spec
 }
 
@@ -106,5 +102,7 @@ func (s *Specification) Log() {
 		"devmode", s.DevMode,
 		"bgpenabled", s.BGPEnabled,
 		"cidr", s.Cidr,
+		"machineUUID", s.MachineUUID,
+		"ip", s.IP,
 	)
 }
