@@ -11,6 +11,7 @@ import (
 
 	"github.com/jaypipes/ghw"
 	"github.com/metal-stack/go-hal"
+	"github.com/metal-stack/go-hal/pkg/api"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
@@ -219,7 +220,7 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		}
 		user := defaultIpmiUser
 		// FIXME userid should be verified if available
-		pw, err := hal.BMCCreateUser(user, defaultIpmiUserID)
+		pw, err := hal.BMCCreateUser(user, defaultIpmiUserID, api.AdministratorPrivilege)
 		if err != nil {
 			return nil, errors.Wrap(err, "ipmi create user failed")
 		}
