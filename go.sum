@@ -214,6 +214,8 @@ github.com/metal-stack/go-hal v0.1.4 h1:dbWWLMT1ACTIfGIvviwCIQ87K7H64NZJ3K/8cAXM
 github.com/metal-stack/go-hal v0.1.4/go.mod h1:jR9kYS0IZz23bnBospEBD+5m4t/nGThsBjQujuSPuSI=
 github.com/metal-stack/go-hal v0.1.5 h1:2Wl7lH3XZNVeuHS8/xR2+ATdt2vUdVSwTL0O20E5SyQ=
 github.com/metal-stack/go-hal v0.1.5/go.mod h1:jR9kYS0IZz23bnBospEBD+5m4t/nGThsBjQujuSPuSI=
+github.com/metal-stack/go-hal v0.1.6 h1:57Tr4D6+Vho5ktLhKlqB7IOYr8bFqTBGkrTCNARPQSY=
+github.com/metal-stack/go-hal v0.1.6/go.mod h1:jR9kYS0IZz23bnBospEBD+5m4t/nGThsBjQujuSPuSI=
 github.com/metal-stack/v v1.0.2 h1:IGtLAGtazQd8r0i/5+YNjBJUEIZYrbVxynY9EXrlTV4=
 github.com/metal-stack/v v1.0.2/go.mod h1:YTahEu7/ishwpYKnp/VaW/7nf8+PInogkfGwLcGPdXg=
 github.com/mholt/archiver v2.1.0+incompatible h1:1ivm7KAHPtPere1YDOdrY6xGdbMNGRWThZbYh5lWZT0=
