@@ -37,7 +37,10 @@ func (h *Hammer) WaitForInstallation(uuid string) error {
 		RootCAs:      caCertPool,
 		Certificates: []tls.Certificate{clientCert},
 	}
-	c := NewClient(resp.Payload.Address, tlsConfig, h.EventEmitter)
+	c, err := NewClient(resp.Payload.Address, tlsConfig, h.EventEmitter)
+	if err != nil {
+		return err
+	}
 	defer c.Close()
 	c.WaitForInstallation(uuid)
 	return nil
@@ -49,7 +52,7 @@ type Client struct {
 	emitter *event.EventEmitter
 }
 
-func NewClient(addr string, tlsConfig *tls.Config, emitter *event.EventEmitter) *Client {
+func NewClient(addr string, tlsConfig *tls.Config, emitter *event.EventEmitter) (*Client, error) {
 	kacp := keepalive.ClientParameters{
 		Time:                10 * time.Second, // send pings every 10 seconds if there is no activity
 		Timeout:             time.Second,      // wait 1 second for ping ack before considering the connection dead
@@ -65,7 +68,7 @@ func NewClient(addr string, tlsConfig *tls.Config, emitter *event.EventEmitter) 
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
-		log.Error("can not connect with server", "error", err)
+		return nil, err
 	}
 
 	c := &Client{
@@ -74,7 +77,7 @@ func NewClient(addr string, tlsConfig *tls.Config, emitter *event.EventEmitter) 
 		emitter:    emitter,
 	}
 
-	return c
+	return c, nil
 }
 
 func (c *Client) Close() error {
