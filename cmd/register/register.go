@@ -196,10 +196,13 @@ func createSyslog() error {
 }
 
 const (
-	// defaultIpmiUser the name of the user created by metal in the ipmi config
+	// defaultIpmiChannelNumber the default number of channel for which the ipmi user will be created
+	defaultIpmiChannelNumber = 1
+
+	// defaultIpmiUser the default name of the created ipmi user
 	defaultIpmiUser = "metal"
 
-	// defaultIpmiUserID the id of the user created by metal in the ipmi config
+	// defaultIpmiUserID the default id of the created ipmi user
 	defaultIpmiUserID = "10"
 )
 
@@ -218,9 +221,16 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		if bmc == nil {
 			return nil, errors.New("unable to read ipmi bmc info configuration")
 		}
+		channelNumber := defaultIpmiChannelNumber
 		user := defaultIpmiUser
 		// FIXME userid should be verified if available
-		pw, err := hal.BMCCreateUser(user, defaultIpmiUserID, api.AdministratorPrivilege)
+		pw, err := hal.BMCCreateUser(channelNumber, user, defaultIpmiUserID, api.AdministratorPrivilege, api.PasswordConstraints{
+			Length:      10,
+			NumDigits:   2,
+			NumSymbols:  2,
+			NoUpper:     false,
+			AllowRepeat: false,
+		})
 		if err != nil {
 			return nil, errors.Wrap(err, "ipmi create user failed")
 		}
