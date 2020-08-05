@@ -226,8 +226,8 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		// FIXME userid should be verified if available
 		pw, err := hal.BMCCreateUser(channelNumber, user, defaultIpmiUserID, api.AdministratorPrivilege, api.PasswordConstraints{
 			Length:      10,
-			NumDigits:   2,
-			NumSymbols:  2,
+			NumDigits:   3,
+			NumSymbols:  0,
 			NoUpper:     false,
 			AllowRepeat: false,
 		})
