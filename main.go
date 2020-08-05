@@ -17,6 +17,8 @@ import (
 
 func main() {
 	fmt.Print(cmd.HammerBanner)
+	// Reboot if metal-hammer crashes after 60sec.
+	go kernel.Watchdog()
 
 	if len(os.Args) > 1 {
 		log.Error("cmd args are not supported")
@@ -47,9 +49,6 @@ func main() {
 		log.Error("sshd error", "error", err)
 		os.Exit(1)
 	}
-
-	// Reboot if metal-hammer crashes after 60sec.
-	go kernel.Watchdog()
 
 	log.Info("metal-hammer", "version", v.V, "hal", hal.Describe())
 
