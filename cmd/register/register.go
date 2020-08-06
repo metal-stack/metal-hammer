@@ -203,7 +203,7 @@ const (
 	defaultIpmiUser = "metal"
 
 	// defaultIpmiUserID the default id of the created ipmi user
-	defaultIpmiUserID = "10"
+	defaultIpmiUserID = "2"
 )
 
 // IPMI configuration and
