@@ -208,8 +208,8 @@ github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/
 github.com/mdlayher/raw v0.0.0-20190606142536-fef19f00fc18/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
 github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 h1:aFkJ6lx4FPip+S+Uw4aTegFMct9shDvP+79PsSxpm3w=
 github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
-github.com/metal-stack/go-hal v0.1.8 h1:yPKA9Ym5RDrNbeumXQ/VJhrFT/AT5vP32k2QADCTKRA=
-github.com/metal-stack/go-hal v0.1.8/go.mod h1:WF7Gwkrx/VjwDyhFWis29jE3o9K8k5wxIMI7cSdzERY=
+github.com/metal-stack/go-hal v0.1.9 h1:Cq9uGQWc8LWRw2BwuXf9i+mrZwSuTqEG3zl44xp3uqc=
+github.com/metal-stack/go-hal v0.1.9/go.mod h1:WF7Gwkrx/VjwDyhFWis29jE3o9K8k5wxIMI7cSdzERY=
 github.com/metal-stack/v v1.0.2 h1:IGtLAGtazQd8r0i/5+YNjBJUEIZYrbVxynY9EXrlTV4=
 github.com/metal-stack/v v1.0.2/go.mod h1:YTahEu7/ishwpYKnp/VaW/7nf8+PInogkfGwLcGPdXg=
 github.com/mholt/archiver v2.1.0+incompatible h1:1ivm7KAHPtPere1YDOdrY6xGdbMNGRWThZbYh5lWZT0=

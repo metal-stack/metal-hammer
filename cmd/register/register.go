@@ -195,17 +195,6 @@ func createSyslog() error {
 	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0666)
 }
 
-const (
-	// defaultIpmiChannelNumber the default number of channel for which the ipmi user will be created
-	defaultIpmiChannelNumber = 1
-
-	// defaultIpmiUser the default name of the created ipmi user
-	defaultIpmiUser = "metal"
-
-	// defaultIpmiUserID the default id of the created ipmi user
-	defaultIpmiUserID = "2"
-)
-
 // IPMI configuration and
 func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPMI, error) {
 	var pw string
@@ -221,10 +210,9 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		if bmc == nil {
 			return nil, errors.New("unable to read ipmi bmc info configuration")
 		}
-		channelNumber := defaultIpmiChannelNumber
-		user := defaultIpmiUser
+		bmcUser := hal.BMCUser().Name
 		// FIXME userid should be verified if available
-		pw, err := hal.BMCCreateUser(channelNumber, user, defaultIpmiUserID, api.AdministratorPrivilege, api.PasswordConstraints{
+		pw, err := hal.BMCCreateUser(hal.BMCUser().ChannelNumber, bmcUser, hal.BMCUser().Uid, api.AdministratorPrivilege, api.PasswordConstraints{
 			Length:      10,
 			NumDigits:   3,
 			NumSymbols:  0,
@@ -248,7 +236,7 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		}
 		details.Address = &bmc.IP
 		details.Mac = &bmc.MAC
-		details.User = &user
+		details.User = &bmcUser
 		details.Password = &pw
 		details.Bmcversion = &bmcversion
 		details.Fru = &fru
