@@ -19,6 +19,22 @@
         "initrd"
       ]
     },
+    "domain.GrpcResponse": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "ca_cert": {
+          "type": "string"
+        },
+        "cert": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        }
+      }
+    },
     "domain.MetalHammerAbortReinstallRequest": {
       "properties": {
         "primary_disk_wiped": {
@@ -177,10 +193,16 @@
         "changed": {
           "type": "string"
         },
+        "classification": {
+          "type": "string"
+        },
         "created": {
           "type": "string"
         },
         "description": {
+          "type": "string"
+        },
+        "expirationDate": {
           "type": "string"
         },
         "features": {
@@ -197,13 +219,21 @@
         },
         "url": {
           "type": "string"
+        },
+        "usedby": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
         "changed",
         "created",
+        "expirationDate",
         "features",
-        "id"
+        "id",
+        "usedby"
       ]
     },
     "models.V1MachineAllocation": {
@@ -780,6 +810,35 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/certs/grpc-client-cert": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "operationId": "GrpcClientCert",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/domain.GrpcResponse"
+            }
+          },
+          "500": {
+            "description": "Error"
+          },
+          "default": {
+            "description": "Error"
+          }
+        },
+        "summary": "retrieves the client certificate of the gRPC server",
+        "tags": [
+          "certs"
+        ]
+      }
+    },
     "/machine/abort-reinstall/{id}": {
       "post": {
         "consumes": [
@@ -821,50 +880,6 @@
           }
         },
         "summary": "abort reinstall machine",
-        "tags": [
-          "machine"
-        ]
-      }
-    },
-    "/machine/install/{id}": {
-      "get": {
-        "consumes": [
-          "application/json"
-        ],
-        "operationId": "Install",
-        "parameters": [
-          {
-            "description": "identifier of the machine",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/models.V1MachineResponse"
-            }
-          },
-          "304": {
-            "description": "No allocation"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "417": {
-            "description": "Incomplete machine"
-          },
-          "500": {
-            "description": "Error"
-          }
-        },
-        "summary": "install machine",
         "tags": [
           "machine"
         ]

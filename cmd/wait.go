@@ -1,61 +1,118 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"time"
-
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	log "github.com/inconshreveable/log15"
-	"github.com/metal-stack/metal-hammer/metal-core/models"
-	"github.com/pkg/errors"
+	v1 "github.com/metal-stack/metal-hammer/cmd/api/v1"
+	"github.com/metal-stack/metal-hammer/cmd/event"
+	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
+	"io"
+	"time"
 )
 
 // Wait until a machine create request was fired
-func (h *Hammer) Wait(uuid string) (*models.ModelsV1MachineResponse, error) {
-	// We do not use the swagger client because this has no ability to specify a timeout.
-	e := fmt.Sprintf("http://%v/machine/install/%v", h.Spec.MetalCoreURL, uuid)
-	log.Info("waiting for install, long polling", "url", e, "uuid", uuid)
-
-	var resp *http.Response
-	var err error
-	// Create a http client with a specific timeout to prevent a infinite wait
-	// which could lead to a situation where e.g network outages would never be
-	// detected and we will never recover from this situation.
-	client := http.Client{
-		Timeout: time.Duration(5 * time.Minute),
+func (h *Hammer) WaitForInstallation(uuid string) error {
+	params := certs.NewGrpcClientCertParams()
+	resp, err := h.CertsClient.GrpcClientCert(params)
+	if err != nil {
+		return err
 	}
+
+	clientCert, err := tls.X509KeyPair([]byte(resp.Payload.Cert), []byte(resp.Payload.Key))
+	if err != nil {
+		return err
+	}
+	caCertPool := x509.NewCertPool()
+	ok := caCertPool.AppendCertsFromPEM([]byte(resp.Payload.CaCert))
+	if !ok {
+		return errors.New("bad certificate")
+	}
+	tlsConfig := &tls.Config{
+		RootCAs:      caCertPool,
+		Certificates: []tls.Certificate{clientCert},
+	}
+	c, err := NewClient(resp.Payload.Address, tlsConfig, h.EventEmitter)
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+	c.WaitForInstallation(uuid)
+	return nil
+}
+
+type Client struct {
+	v1.WaitClient
+	conn    *grpc.ClientConn
+	emitter *event.EventEmitter
+}
+
+func NewClient(addr string, tlsConfig *tls.Config, emitter *event.EventEmitter) (*Client, error) {
+	kacp := keepalive.ClientParameters{
+		Time:                10 * time.Second, // send pings every 10 seconds if there is no activity
+		Timeout:             time.Second,      // wait 1 second for ping ack before considering the connection dead
+		PermitWithoutStream: true,             // send pings even without active streams
+	}
+
+	opts := []grpc.DialOption{
+		grpc.WithKeepaliveParams(kacp),
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+		grpc.WithBlock(),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	conn, err := grpc.DialContext(ctx, addr, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &Client{
+		WaitClient: v1.NewWaitClient(conn),
+		conn:       conn,
+		emitter:    emitter,
+	}
+
+	return c, nil
+}
+
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
+func (c *Client) WaitForInstallation(machineID string) {
+	req := &v1.WaitRequest{
+		MachineID: machineID,
+	}
+
+	c.emitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
+
 	for {
-		resp, err = client.Get(e)
+		stream, err := c.Wait(context.Background(), req)
 		if err != nil {
-			log.Error("wait for install failed, retrying in 30sec...", "error", err)
-			time.Sleep(30 * time.Second)
+			log.Error("failed waiting for installation, retry in 2sec", "error", err)
+			time.Sleep(2 * time.Second)
 			continue
 		}
-		if resp.StatusCode == http.StatusOK {
-			break
+
+		for {
+			_, err := stream.Recv()
+			if err == io.EOF {
+				log.Info("machine has been requested for installation", "machineID", machineID)
+				return
+			}
+
+			if err != nil {
+				log.Error("failed waiting for installation, retry in 2sec", "error", err)
+				time.Sleep(2 * time.Second)
+				break
+			}
+
+			log.Info("wait for installation...", "machineID", machineID)
 		}
-		if resp.StatusCode == http.StatusGatewayTimeout || resp.StatusCode == http.StatusNotModified {
-			log.Info("wait for install timeout retrying...", "statuscode", resp.StatusCode)
-			continue
-		}
-		log.Warn("wait for install timeout with unexpected returncode retrying in 5sec", "statuscode", resp.StatusCode)
-		time.Sleep(5 * time.Second)
 	}
-
-	machineJSON, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "wait for install reading response failed")
-	}
-	log.Info("wait finished", "statuscode", resp.StatusCode, "response", string(machineJSON))
-
-	var machine models.ModelsV1MachineResponse
-	err = json.Unmarshal(machineJSON, &machine)
-	if err != nil {
-		return nil, errors.Wrap(err, "wait for install could not unmarshal response")
-	}
-	log.Info("stopped waiting got", "machine", machine)
-
-	return &machine, nil
 }

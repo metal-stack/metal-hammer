@@ -142,7 +142,7 @@ var (
 
 // String for a Partition
 func (p *Partition) String() string {
-	return fmt.Sprintf("%s", p.Device)
+	return p.Device
 }
 
 // primaryDeviceBySize will configure the disk device where the OS gets installed.
@@ -152,6 +152,8 @@ func primaryDeviceBySize(sizeID string, disks []*models.ModelsV1MachineBlockDevi
 		return PrimaryDevice{DeviceName: "/dev/sda", PartitionPrefix: ""}
 	case "nvm-size-x86":
 		// Example how to specify disk partitioning on NVME disks if they need be be used as root disk.
+		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}
+	case "y1-medium-x86":
 		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}
 	default:
 		log.Info("getdisk", "sizeID unknown, try to guess disk", sizeID)

@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/metal-stack/v"
-
 	"os"
 	"time"
 
 	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/go-hal/detect"
 	"github.com/metal-stack/metal-hammer/cmd"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
@@ -21,9 +20,26 @@ func main() {
 	// Reboot if metal-hammer crashes after 60sec.
 	go kernel.Watchdog()
 
+	if len(os.Args) > 1 {
+		log.Error("cmd args are not supported")
+		os.Exit(1)
+	}
+
 	err := updateResolvConf()
 	if err != nil {
 		log.Error("error updating resolv.conf", "error", err)
+		os.Exit(1)
+	}
+
+	hal, err := detect.ConnectInBand()
+	if err != nil {
+		log.Error("unable to detect hardware", "error", err)
+		os.Exit(1)
+	}
+
+	uuid, err := hal.UUID()
+	if err != nil {
+		log.Error("unable to get uuid hardware", "error", err)
 		os.Exit(1)
 	}
 
@@ -34,14 +50,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if len(os.Args) > 1 {
-		log.Error("cmd args are not supported")
-		os.Exit(1)
-	}
+	log.Info("metal-hammer", "version", v.V, "hal", hal.Describe())
 
-	log.Info("metal-hammer", "version", v.V)
+	spec := cmd.NewSpec()
+	spec.MachineUUID = uuid.String()
+	spec.IP = ip
 
-	spec := cmd.NewSpec(ip)
 	spec.Log()
 
 	var level log.Lvl
@@ -55,7 +69,7 @@ func main() {
 	h = log.LvlFilterHandler(level, h)
 	log.Root().SetHandler(h)
 
-	emitter, err := cmd.Run(spec)
+	emitter, err := cmd.Run(spec, hal)
 	if err != nil {
 		wait := 5 * time.Second
 		st := errors.WithStack(err)
@@ -86,10 +100,5 @@ func updateResolvConf() error {
 		return err
 	}
 
-	err = os.Symlink(target, symlink)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return os.Symlink(target, symlink)
 }

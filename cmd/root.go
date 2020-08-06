@@ -6,14 +6,15 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	log "github.com/inconshreveable/log15"
+	"github.com/metal-stack/go-hal"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/register"
 	"github.com/metal-stack/metal-hammer/cmd/report"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
+	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
-	"github.com/metal-stack/metal-hammer/pkg/bios"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
@@ -22,10 +23,12 @@ import (
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
-	Client     *machine.Client
-	Spec       *Specification
-	Disk       storage.Disk
-	LLDPClient *network.LLDPClient
+	Hal         hal.InBand
+	Client      *machine.Client
+	CertsClient *certs.Client
+	Spec        *Specification
+	Disk        storage.Disk
+	LLDPClient  *network.LLDPClient
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress          string
 	Started            time.Time
@@ -35,11 +38,12 @@ type Hammer struct {
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
-func Run(spec *Specification) (*event.EventEmitter, error) {
-	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", bios.Bios().String())
+func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
+	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := machine.New(transport, strfmt.Default)
+	certsClient := certs.New(transport, strfmt.Default)
 	eventEmitter := event.NewEventEmitter(client, spec.MachineUUID)
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, "starting metal-hammer")
@@ -50,7 +54,9 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 	}
 
 	hammer := &Hammer{
+		Hal:                hal,
 		Client:             client,
+		CertsClient:        certsClient,
 		Spec:               spec,
 		IPAddress:          spec.IP,
 		EventEmitter:       eventEmitter,
@@ -87,6 +93,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		MachineUUID: spec.MachineUUID,
 		Client:      client,
 		Network:     n,
+		Hal:         hal,
 	}
 
 	hw, err := reg.ReadHardwareDetails()
@@ -121,18 +128,16 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 		return eventEmitter, errors.Wrap(err, "wipe")
 	}
 
-	if !spec.DevMode {
-		err = hammer.ConfigureBIOS()
-		if err != nil {
-			log.Error("failed to update BIOS", "error", err)
-			return eventEmitter, err
-		}
+	err = hammer.ConfigureBIOS()
+	if err != nil {
+		log.Error("failed to update BIOS", "error", err)
+		return eventEmitter, err
 	}
-
-	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	if spec.DevMode {
+		eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
+
 		cidr := "10.0.1.2"
 		if spec.Cidr != "" {
 			cidr = spec.Cidr
@@ -161,7 +166,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 				Hostname:   &hostname,
 				SSHPubKeys: sshkeys,
 				Networks: []*models.ModelsV1MachineNetwork{
-					&models.ModelsV1MachineNetwork{
+					{
 						Ips:                 []string{cidr},
 						Asn:                 &asn,
 						Private:             &private,
@@ -170,7 +175,7 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 						Vrf:                 &vrf,
 						Nat:                 &nat,
 					},
-					&models.ModelsV1MachineNetwork{
+					{
 						Ips:                 []string{"1.2.3.4"},
 						Asn:                 &asn,
 						Private:             &private2,
@@ -208,7 +213,11 @@ func Run(spec *Specification) (*event.EventEmitter, error) {
 			},
 		}
 	} else {
-		m, err = hammer.Wait(spec.MachineUUID)
+		err := hammer.WaitForInstallation(spec.MachineUUID)
+		if err != nil {
+			return eventEmitter, errors.Wrap(err, "wait for installation")
+		}
+		m, err = hammer.fetchMachine(spec.MachineUUID)
 		if err != nil {
 			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}

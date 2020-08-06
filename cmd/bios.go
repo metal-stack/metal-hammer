@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
-	"github.com/metal-stack/metal-hammer/pkg/sum"
 	"time"
 
 	log "github.com/inconshreveable/log15"
@@ -12,12 +11,11 @@ import (
 // ConfigureBIOS ensures that UEFI boot is enabled and CSM-support is disabled.
 // It then reboots the machine.
 func (h *Hammer) ConfigureBIOS() error {
-	s, err := sum.New()
-	if err != nil {
-		return err
+	if h.Spec.DevMode || h.Hal.Board().VM {
+		return nil
 	}
 
-	reboot, err := s.ConfigureBIOS()
+	reboot, err := h.Hal.ConfigureBIOS()
 	if err != nil {
 		log.Warn("BIOS updates for this machine type are intentionally not supported, skipping ConfigureBIOS", "error", err)
 		return nil
@@ -39,16 +37,11 @@ func (h *Hammer) ConfigureBIOS() error {
 // EnsureBootOrder ensures that the BIOS boot order is properly set,
 // i.e. first boot from OS image and then PXE boot
 func (h *Hammer) EnsureBootOrder(bootloaderID string) error {
-	if h.Spec.DevMode {
+	if h.Spec.DevMode || h.Hal.Board().VM {
 		return nil
 	}
 
-	s, err := sum.New()
-	if err != nil {
-		return err
-	}
-
-	err = s.EnsureBootOrder(bootloaderID)
+	err := h.Hal.EnsureBootOrder(bootloaderID)
 	if err != nil {
 		return err
 	}
