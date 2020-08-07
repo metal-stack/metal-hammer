@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	log "github.com/inconshreveable/log15"
-	v1 "github.com/metal-stack/metal-hammer/cmd/api/v1"
+	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
 	"google.golang.org/grpc"
