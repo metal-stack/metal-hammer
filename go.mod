@@ -34,7 +34,7 @@ require (
 	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c // indirect
 	google.golang.org/grpc v1.28.1
-	google.golang.org/protobuf v1.20.1 // indirect
+	google.golang.org/protobuf v1.20.1
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.2.8
