@@ -94,7 +94,3 @@ qemu-up:
           BGP=1" \
 		-kernel metal-hammer-kernel \
 		-initrd metal-hammer-initrd.img.lz4
-
-.PHONY: protoc
-protoc:
-	docker run -it --rm -v $(PWD)/../../..:/work metalstack/builder bash -c "cd github.com/metal-stack/metal-hammer && protoc -I cmd -I../../.. --go_out plugins=grpc:cmd cmd/api/v1/*.proto"
