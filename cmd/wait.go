@@ -42,7 +42,7 @@ func (h *Hammer) WaitForInstallation(uuid string) error {
 		return err
 	}
 	defer c.Close()
-	c.WaitForInstallation(uuid)
+	c.WaitForAllocation(uuid)
 	return nil
 }
 
@@ -84,17 +84,17 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *Client) WaitForInstallation(machineID string) {
+func (c *Client) WaitForAllocation(machineID string) {
 	req := &v1.WaitRequest{
 		MachineID: machineID,
 	}
 
-	c.emitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
+	c.emitter.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
 
 	for {
 		stream, err := c.Wait(context.Background(), req)
 		if err != nil {
-			log.Error("failed waiting for installation, retry in 2sec", "error", err)
+			log.Error("failed waiting for allocation, retry in 2sec", "error", err)
 			time.Sleep(2 * time.Second)
 			continue
 		}
@@ -102,17 +102,17 @@ func (c *Client) WaitForInstallation(machineID string) {
 		for {
 			_, err := stream.Recv()
 			if err == io.EOF {
-				log.Info("machine has been requested for installation", "machineID", machineID)
+				log.Info("machine has been requested for allocation", "machineID", machineID)
 				return
 			}
 
 			if err != nil {
-				log.Error("failed waiting for installation, retry in 2sec", "error", err)
+				log.Error("failed waiting for allocation, retry in 2sec", "error", err)
 				time.Sleep(2 * time.Second)
 				break
 			}
 
-			log.Info("wait for installation...", "machineID", machineID)
+			log.Info("wait for allocation...", "machineID", machineID)
 		}
 	}
 }
