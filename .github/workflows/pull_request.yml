@@ -27,7 +27,6 @@ jobs:
             --no-lint
             --no-push
             --summary
-            --log-level DEBUG
       - name: Prepare image upload
         run: |
           export PULL_REQUEST_NUMBER=$(echo "$GITHUB_REF" | awk -F / '{print $3}')
