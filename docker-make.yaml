@@ -10,6 +10,7 @@ default-build-args:
   - HTTPS_PROXY=${HTTP_PROXY}
   - NO_PROXY=${NO_PROXY}
   - no_proxy=${NO_PROXY}
+  - CI=${CI}
 builds:
   -
     name: initrd
