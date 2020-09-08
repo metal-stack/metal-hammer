@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
-	"time"
 
 	log "github.com/inconshreveable/log15"
 )

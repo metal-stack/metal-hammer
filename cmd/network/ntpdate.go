@@ -2,9 +2,10 @@ package network
 
 import (
 	"fmt"
-	log "github.com/inconshreveable/log15"
 	"syscall"
 	"time"
+
+	log "github.com/inconshreveable/log15"
 
 	"github.com/beevik/ntp"
 )

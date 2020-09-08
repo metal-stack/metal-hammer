@@ -2,13 +2,14 @@ package lldp
 
 import (
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
-	"net"
-	"time"
 )
 
 // LinkType can be Interface or Mac

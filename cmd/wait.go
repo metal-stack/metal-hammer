@@ -5,6 +5,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"io"
+	"time"
+
 	log "github.com/inconshreveable/log15"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/metal-stack/metal-hammer/cmd/event"
@@ -12,8 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
-	"io"
-	"time"
 )
 
 // Wait until a machine create request was fired

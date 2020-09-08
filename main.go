@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/metal-stack/v"
 	"os"
 	"time"
+
+	"github.com/metal-stack/v"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/go-hal/detect"

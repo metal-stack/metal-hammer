@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/inconshreveable/log15 v0.0.0-20200109203555-b30bc20e4fd1
 	github.com/jaypipes/ghw v0.6.1
+	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5

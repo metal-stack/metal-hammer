@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
 	"github.com/metal-stack/metal-hammer/cmd/event"
@@ -10,8 +13,6 @@ import (
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/pkg/errors"
-	"strings"
-	"time"
 )
 
 // fetchMachine requests the machine data of given machine ID
