@@ -210,9 +210,15 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		if bmc == nil {
 			return nil, errors.New("unable to read ipmi bmc info configuration")
 		}
+
+		err := hal.BMCChangePassword(hal.BMCSuperUser(), "pw") //TODO pw should be provided via cmdline, for example
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to change superuser password")
+		}
+
 		bmcUser := hal.BMCUser().Name
 		// FIXME userid should be verified if available
-		pw, err := hal.BMCCreateUser(hal.BMCUser().ChannelNumber, bmcUser, hal.BMCUser().Uid, api.AdministratorPrivilege, api.PasswordConstraints{
+		pw, err := hal.BMCCreateUserAndPassword(hal.BMCUser(), api.AdministratorPrivilege, api.PasswordConstraints{
 			Length:      10,
 			NumDigits:   3,
 			NumSymbols:  0,
