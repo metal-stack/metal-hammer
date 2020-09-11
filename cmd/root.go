@@ -106,6 +106,26 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		return eventEmitter, errors.Wrap(err, "register")
 	}
 
+	grpcClient, err := NewGrpcClient(certsClient, eventEmitter)
+	if err != nil {
+		log.Error("failed to fetch GRPC certificates", "error", err)
+		return eventEmitter, err
+	}
+	hammer.GrpcClient = grpcClient
+
+	skip, err := hammer.CreateBmcSuperuser()
+	if err != nil {
+		log.Error("failed to update bmc superuser password", "error", err)
+		return eventEmitter, err
+	}
+	if !skip {
+		err = hal.BMCSetUserEnabled(hal.BMCPresentSuperUser(), false)
+		if err != nil {
+			log.Error("failed to disable present bmc admin user", "error", err)
+			return eventEmitter, err
+		}
+	}
+
 	m, err := hammer.fetchMachine(spec.MachineUUID)
 	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
 		primaryDiskWiped := false
@@ -120,20 +140,6 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 			err = hammer.abortReinstall(err, *m.ID, primaryDiskWiped)
 		}
 		return eventEmitter, err
-	}
-
-	grpcClient, err := NewGrpcClient(certsClient, eventEmitter)
-	if err != nil {
-		log.Error("failed to fetch GRPC certificates", "error", err)
-		return eventEmitter, err
-	}
-	hammer.GrpcClient = grpcClient
-
-	if m != nil && m.Partition != nil && m.Partition.ID != nil {
-		err = hammer.UpdateBmcSuperuserPassword(*m.Partition.ID)
-		if err != nil {
-			log.Error("failed to update bmc superuser password", "error", err)
-		}
 	}
 
 	err = storage.WipeDisks()

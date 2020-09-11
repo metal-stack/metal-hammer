@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/metal-stack/go-hal/pkg/api"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/pkg/errors"
 	"io"
@@ -15,34 +16,44 @@ func (c *GrpcClient) newSupermetalPasswordClient() (v1.SupermetalPasswordClient,
 	return v1.NewSupermetalPasswordClient(conn), conn, nil
 }
 
-func (c *GrpcClient) FetchSupermetalPassword(partitionID string) (string, error) {
+// FetchSupermetalPassword tries to fetch the bmc superuser password from metla-api.
+// If no superuser password has been set in metal-api it returns an empty string and true as
+// the second return value, which indicates to skip further processing regarding the superuser password.
+// Otherwise that second return value is always false.
+func (c *GrpcClient) FetchSupermetalPassword() (string, bool, error) {
 	client, closer, err := c.newSupermetalPasswordClient()
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	defer closer.Close()
 
-	req := &v1.SupermetalPasswordRequest{
-		PartitionID: partitionID,
-	}
+	req := &v1.SupermetalPasswordRequest{}
 	resp, err := client.FetchSupermetalPassword(context.Background(), req)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
-	return resp.GetSupermetalPassword(), nil
+	if resp.GetFeatureDisabled() {
+		return "", true, nil
+	}
+
+	return resp.GetSupermetalPassword(), false, nil
 }
 
-func (h *Hammer) UpdateBmcSuperuserPassword(partitionID string) error {
-	supwd, err := h.GrpcClient.FetchSupermetalPassword(partitionID)
+func (h *Hammer) CreateBmcSuperuser() (bool, error) {
+	pwd, skip, err := h.GrpcClient.FetchSupermetalPassword()
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch supermetal password")
+		return false, errors.Wrap(err, "failed to fetch supermetal password")
 	}
 
-	err = h.Hal.BMCChangePassword(h.Hal.BMCSuperUser(), supwd)
-	if err != nil {
-		return errors.Wrap(err, "failed to change bmc superuser password")
+	if skip {
+		return false, nil
 	}
 
-	return nil
+	err = h.Hal.BMCCreateUser(h.Hal.BMCSuperUser(), api.AdministratorPrivilege, pwd)
+	if err != nil {
+		return false, errors.Wrapf(err, "failed to create bmc superuser: %s", h.Hal.BMCSuperUser().Name)
+	}
+
+	return true, nil
 }
