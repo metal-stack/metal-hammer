@@ -202,7 +202,7 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 	details := &models.ModelsV1MachineIPMI{
 		Interface: &intf,
 	}
-	bmcversion := "unknown"
+	bmcVersion := "unknown"
 	if hal.BMCPresent() {
 		log.Info("ipmi details from bmc")
 		board := hal.Board()
@@ -211,12 +211,6 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 			return nil, errors.New("unable to read ipmi bmc info configuration")
 		}
 
-		err := hal.BMCChangePassword(hal.BMCSuperUser(), "pw") //TODO pw should be provided via cmdline, for example
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to change superuser password")
-		}
-
-		bmcUser := hal.BMCUser().Name
 		// FIXME userid should be verified if available
 		pw, err := hal.BMCCreateUserAndPassword(hal.BMCUser(), api.AdministratorPrivilege, api.PasswordConstraints{
 			Length:      10,
@@ -229,7 +223,8 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 			return nil, errors.Wrap(err, "ipmi create user failed")
 		}
 
-		bmcversion = bmc.FirmwareRevision
+		bmcUser := hal.BMCUser().Name
+		bmcVersion = bmc.FirmwareRevision
 		fru := models.ModelsV1MachineFru{
 			ChassisPartNumber:   bmc.ChassisPartNumber,
 			ChassisPartSerial:   bmc.ChassisPartSerial,
@@ -244,7 +239,7 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		details.Mac = &bmc.MAC
 		details.User = &bmcUser
 		details.Password = &pw
-		details.Bmcversion = &bmcversion
+		details.Bmcversion = &bmcVersion
 		details.Fru = &fru
 		return details, nil
 	}
@@ -271,6 +266,6 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 	details.Mac = &bmcMAC
 	details.User = &user
 	details.Password = &pw
-	details.Bmcversion = &bmcversion
+	details.Bmcversion = &bmcVersion
 	return details, nil
 }
