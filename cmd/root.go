@@ -122,6 +122,13 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		return eventEmitter, err
 	}
 
+	grpcClient, err := NewGrpcClient(certsClient, eventEmitter)
+	if err != nil {
+		log.Error("failed to fetch GRPC certificates", "error", err)
+		return eventEmitter, err
+	}
+	hammer.GrpcClient = grpcClient
+
 	if m != nil && m.Partition != nil && m.Partition.ID != nil {
 		err = hammer.UpdateBmcSuperuserPassword(*m.Partition.ID)
 		if err != nil {
@@ -139,13 +146,6 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		log.Error("failed to update BIOS", "error", err)
 		return eventEmitter, err
 	}
-
-	grpcClient, err := NewGrpcClient(certsClient, eventEmitter)
-	if err != nil {
-		log.Error("failed to fetch GRPC certificates", "error", err)
-		return eventEmitter, err
-	}
-	hammer.GrpcClient = grpcClient
 
 	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
 	if spec.DevMode {
