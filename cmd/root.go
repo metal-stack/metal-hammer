@@ -278,6 +278,7 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 		Kernel:          info.Kernel,
 		BootloaderID:    info.BootloaderID,
 		InstallError:    err,
+		Hal:             h.Hal,
 	}
 
 	err = rep.ReportInstallation()
