@@ -516,6 +516,9 @@
         "private": {
           "type": "boolean"
         },
+        "privateprimary": {
+          "type": "boolean"
+        },
         "shared": {
           "type": "boolean"
         },
@@ -535,6 +538,7 @@
         "networkid",
         "prefixes",
         "private",
+        "privateprimary",
         "shared",
         "underlay",
         "vrf"
