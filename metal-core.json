@@ -140,6 +140,32 @@
         "primary_disk"
       ]
     },
+    "models.MetalNetworkType": {
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Private": {
+          "type": "boolean"
+        },
+        "PrivatePrimary": {
+          "type": "boolean"
+        },
+        "Shared": {
+          "type": "boolean"
+        },
+        "Underlay": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "Name",
+        "Private",
+        "PrivatePrimary",
+        "Shared",
+        "Underlay"
+      ]
+    },
     "models.V1BootInfo": {
       "properties": {
         "bootloaderid": {
@@ -507,6 +533,9 @@
         "networkid": {
           "type": "string"
         },
+        "networktype": {
+          "$ref": "#/definitions/models.MetalNetworkType"
+        },
         "prefixes": {
           "items": {
             "type": "string"
@@ -514,12 +543,6 @@
           "type": "array"
         },
         "private": {
-          "type": "boolean"
-        },
-        "privateprimary": {
-          "type": "boolean"
-        },
-        "shared": {
           "type": "boolean"
         },
         "underlay": {
@@ -536,10 +559,9 @@
         "ips",
         "nat",
         "networkid",
+        "networktype",
         "prefixes",
         "private",
-        "privateprimary",
-        "shared",
         "underlay",
         "vrf"
       ]
