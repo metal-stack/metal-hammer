@@ -169,7 +169,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 					{
 						Ips:                 []string{cidr},
 						Asn:                 &asn,
-						Networktype:         &models.ModelsMetalNetworkType{Private: &private, Underlay: &underlay},
+						Networktype:         &models.ModelsMetalNetworkType{Private: private, Underlay: underlay},
 						Destinationprefixes: []string{"0.0.0.0/0"},
 						Vrf:                 &vrf,
 						Nat:                 &nat,
@@ -177,7 +177,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 					{
 						Ips:                 []string{"1.2.3.4"},
 						Asn:                 &asn,
-						Networktype:         &models.ModelsMetalNetworkType{Private: &private2, Underlay: &underlay2},
+						Networktype:         &models.ModelsMetalNetworkType{Private: private2, Underlay: underlay2},
 						Destinationprefixes: []string{"2.3.4.5/24"},
 						Vrf:                 &vrf2,
 						Nat:                 &nat2,
