@@ -5,7 +5,6 @@ require (
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/frankban/quicktest v1.10.0 // indirect
-	github.com/go-openapi/analysis v0.19.10 // indirect
 	github.com/go-openapi/errors v0.19.6
 	github.com/go-openapi/runtime v0.19.21
 	github.com/go-openapi/strfmt v0.19.5
@@ -30,7 +29,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
 	github.com/u-root/u-root v6.0.0+incompatible
-	github.com/vektah/gqlparser v1.1.2 // indirect
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df // indirect
 	golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
