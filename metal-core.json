@@ -140,25 +140,6 @@
         "primary_disk"
       ]
     },
-    "models.MetalNetworkType": {
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "private": {
-          "type": "boolean"
-        },
-        "private_primary": {
-          "type": "boolean"
-        },
-        "shared": {
-          "type": "boolean"
-        },
-        "underlay": {
-          "type": "boolean"
-        }
-      }
-    },
     "models.V1BootInfo": {
       "properties": {
         "bootloaderid": {
@@ -527,7 +508,7 @@
           "type": "string"
         },
         "networktype": {
-          "$ref": "#/definitions/models.MetalNetworkType"
+          "type": "string"
         },
         "prefixes": {
           "items": {

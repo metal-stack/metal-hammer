@@ -18,6 +18,7 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/pkg/errors"
 )
 
@@ -147,10 +148,8 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 			cidr = "dhcp"
 		}
 		asn := int64(4200000001)
-		private := true
-		private2 := false
-		underlay := false
-		underlay2 := true
+		underlay := mn.Underlay
+		privatePrimaryUnshared := mn.PrivatePrimaryUnshared
 		nat := false
 		nat2 := true
 		vrf := int64(0)
@@ -169,7 +168,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 					{
 						Ips:                 []string{cidr},
 						Asn:                 &asn,
-						Networktype:         &models.ModelsMetalNetworkType{Private: private, Underlay: underlay},
+						Networktype:         &privatePrimaryUnshared,
 						Destinationprefixes: []string{"0.0.0.0/0"},
 						Vrf:                 &vrf,
 						Nat:                 &nat,
@@ -177,7 +176,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 					{
 						Ips:                 []string{"1.2.3.4"},
 						Asn:                 &asn,
-						Networktype:         &models.ModelsMetalNetworkType{Private: private2, Underlay: underlay2},
+						Networktype:         &underlay,
 						Destinationprefixes: []string{"2.3.4.5/24"},
 						Vrf:                 &vrf2,
 						Nat:                 &nat2,
