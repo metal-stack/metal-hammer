@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/metal-stack/metal-hammer/cmd/utils"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/metal-stack/metal-hammer/cmd/utils"
 
 	log "github.com/inconshreveable/log15"
 	img "github.com/metal-stack/metal-hammer/cmd/image"
