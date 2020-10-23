@@ -1,13 +1,13 @@
 name: release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types:
+      - published
 
 env:
   GCS_BUCKET: images.metal-pod.io
-      
+
 jobs:
   build:
     runs-on: ubuntu-latest
