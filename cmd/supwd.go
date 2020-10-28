@@ -8,27 +8,27 @@ import (
 	"io"
 )
 
-func (c *GrpcClient) newSupermetalPasswordClient() (v1.SupermetalPasswordClient, io.Closer, error) {
+func (c *GrpcClient) newSuperUserPasswordClient() (v1.SuperUserPasswordClient, io.Closer, error) {
 	conn, err := c.newConnection()
 	if err != nil {
 		return nil, nil, err
 	}
-	return v1.NewSupermetalPasswordClient(conn), conn, nil
+	return v1.NewSuperUserPasswordClient(conn), conn, nil
 }
 
-// FetchSupermetalPassword tries to fetch the bmc superuser password from metla-api.
+// FetchSuperUserPassword tries to fetch the bmc superuser password from metla-api.
 // If no superuser password has been set in metal-api it returns an empty string and true as
 // the second return value, which indicates to skip further processing regarding the superuser password.
 // Otherwise that second return value is always false.
-func (c *GrpcClient) FetchSupermetalPassword() (string, bool, error) {
-	client, closer, err := c.newSupermetalPasswordClient()
+func (c *GrpcClient) FetchSuperUserPassword() (string, bool, error) {
+	client, closer, err := c.newSuperUserPasswordClient()
 	if err != nil {
 		return "", false, err
 	}
 	defer closer.Close()
 
-	req := &v1.SupermetalPasswordRequest{}
-	resp, err := client.FetchSupermetalPassword(context.Background(), req)
+	req := &v1.SuperUserPasswordRequest{}
+	resp, err := client.FetchSuperUserPassword(context.Background(), req)
 	if err != nil {
 		return "", false, err
 	}
@@ -37,22 +37,23 @@ func (c *GrpcClient) FetchSupermetalPassword() (string, bool, error) {
 		return "", true, nil
 	}
 
-	return resp.GetSupermetalPassword(), false, nil
+	return resp.GetSuperUserPassword(), false, nil
 }
 
 func (h *Hammer) CreateBmcSuperuser() (bool, error) {
-	pwd, skip, err := h.GrpcClient.FetchSupermetalPassword()
+	pwd, skip, err := h.GrpcClient.FetchSuperUserPassword()
 	if err != nil {
-		return false, errors.Wrap(err, "failed to fetch supermetal password")
+		return false, errors.Wrap(err, "failed to fetch SuperUser password")
 	}
 
 	if skip {
 		return false, nil
 	}
 
-	err = h.Hal.BMCCreateUser(h.Hal.BMCSuperUser(), api.AdministratorPrivilege, pwd)
+	bmcConn := h.Hal.BMCConnection()
+	err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, pwd)
 	if err != nil {
-		return false, errors.Wrapf(err, "failed to create bmc superuser: %s", h.Hal.BMCSuperUser().Name)
+		return false, errors.Wrapf(err, "failed to create bmc superuser: %s", bmcConn.SuperUser().Name)
 	}
 
 	return true, nil

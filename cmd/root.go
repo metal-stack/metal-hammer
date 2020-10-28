@@ -120,7 +120,8 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		return eventEmitter, err
 	}
 	if !skip {
-		err = hal.BMCSetUserEnabled(hal.BMCPresentSuperUser(), false)
+		bmcConn := hal.BMCConnection()
+		err = bmcConn.SetUserEnabled(bmcConn.PresentSuperUser(), false)
 		if err != nil {
 			log.Error("failed to disable present bmc admin user", "error", err)
 			return eventEmitter, err

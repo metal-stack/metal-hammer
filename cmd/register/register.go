@@ -203,7 +203,8 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		Interface: &intf,
 	}
 	bmcVersion := "unknown"
-	if hal.BMCPresent() {
+	bmcConn := hal.BMCConnection()
+	if bmcConn.Present() {
 		log.Info("ipmi details from bmc")
 		board := hal.Board()
 		bmc := board.BMC
@@ -212,12 +213,12 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		}
 
 		// FIXME userid should be verified if available
-		pw, err := hal.BMCCreateUserAndPassword(hal.BMCUser(), api.AdministratorPrivilege)
+		pw, err := bmcConn.CreateUserAndPassword(bmcConn.User(), api.AdministratorPrivilege)
 		if err != nil {
 			return nil, errors.Wrap(err, "ipmi create user failed")
 		}
 
-		bmcUser := hal.BMCUser().Name
+		bmcUser := bmcConn.User().Name
 		bmcVersion = bmc.FirmwareRevision
 		fru := models.ModelsV1MachineFru{
 			ChassisPartNumber:   bmc.ChassisPartNumber,
