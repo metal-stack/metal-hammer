@@ -18,6 +18,7 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/pkg/errors"
 )
 
@@ -166,14 +167,12 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 			cidr = "dhcp"
 		}
 		asn := int64(4200000001)
-		private := true
-		private2 := false
-		underlay := false
-		underlay2 := true
-		nat := false
-		nat2 := true
-		vrf := int64(0)
-		vrf2 := int64(4200000001)
+		underlay := mn.Underlay
+		privatePrimaryUnshared := mn.PrivatePrimaryUnshared
+		boolTrue := true
+		boolFalse := false
+		vrf0 := int64(0)
+		vrf1 := int64(4200000001)
 		hostname := "devmode"
 		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
 		m = &models.ModelsV1MachineResponse{
@@ -188,20 +187,22 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 					{
 						Ips:                 []string{cidr},
 						Asn:                 &asn,
-						Private:             &private,
-						Underlay:            &underlay,
+						Private:             &boolTrue,
+						Underlay:            &boolFalse,
+						Networktype:         &privatePrimaryUnshared,
 						Destinationprefixes: []string{"0.0.0.0/0"},
-						Vrf:                 &vrf,
-						Nat:                 &nat,
+						Vrf:                 &vrf1,
+						Nat:                 &boolFalse,
 					},
 					{
 						Ips:                 []string{"1.2.3.4"},
 						Asn:                 &asn,
-						Private:             &private2,
-						Underlay:            &underlay2,
+						Private:             &boolFalse,
+						Underlay:            &boolTrue,
+						Networktype:         &underlay,
 						Destinationprefixes: []string{"2.3.4.5/24"},
-						Vrf:                 &vrf2,
-						Nat:                 &nat2,
+						Vrf:                 &vrf0,
+						Nat:                 &boolTrue,
 					},
 				},
 			},

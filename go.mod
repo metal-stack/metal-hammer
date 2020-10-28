@@ -18,8 +18,9 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
-	github.com/metal-stack/go-hal v0.1.12-0.20201015050525-def07593bb6d
-	github.com/metal-stack/metal-api v0.8.6-0.20200911091154-dcf5ae3166fc
+	github.com/metal-stack/go-hal v0.2.0
+	github.com/metal-stack/metal-api v0.8.2
+	github.com/metal-stack/metal-lib v0.6.3
 	github.com/metal-stack/v v1.0.2
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
