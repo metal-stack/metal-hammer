@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/go-hal/pkg/api"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/pkg/errors"
@@ -52,12 +51,6 @@ func (h *Hammer) createBmcSuperuser() error {
 	}
 
 	bmcConn := h.Hal.BMCConnection()
-	err = bmcConn.SetUserEnabled(bmcConn.PresentSuperUser(), false)
-	if err != nil {
-		log.Error("failed to disable present bmc admin user", "error", err)
-		return err
-	}
-
 	err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, pwd)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create bmc superuser: %s", bmcConn.SuperUser().Name)
