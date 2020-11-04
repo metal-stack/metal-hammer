@@ -114,18 +114,10 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	}
 	hammer.GrpcClient = grpcClient
 
-	skip, err := hammer.CreateBmcSuperuser()
+	err = hammer.CreateBmcSuperuser()
 	if err != nil {
 		log.Error("failed to update bmc superuser password", "error", err)
 		return eventEmitter, err
-	}
-	if !skip {
-		bmcConn := hal.BMCConnection()
-		err = bmcConn.SetUserEnabled(bmcConn.PresentSuperUser(), false)
-		if err != nil {
-			log.Error("failed to disable present bmc admin user", "error", err)
-			return eventEmitter, err
-		}
 	}
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)

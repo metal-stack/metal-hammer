@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/go-hal/pkg/api"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/pkg/errors"
@@ -40,21 +41,27 @@ func (c *GrpcClient) FetchSuperUserPassword() (string, bool, error) {
 	return resp.GetSuperUserPassword(), false, nil
 }
 
-func (h *Hammer) CreateBmcSuperuser() (bool, error) {
-	pwd, skip, err := h.GrpcClient.FetchSuperUserPassword()
+func (h *Hammer) CreateBmcSuperuser() error {
+	pwd, featureDisabled, err := h.GrpcClient.FetchSuperUserPassword()
 	if err != nil {
-		return false, errors.Wrap(err, "failed to fetch SuperUser password")
+		return errors.Wrap(err, "failed to fetch SuperUser password")
 	}
 
-	if skip {
-		return false, nil
+	if featureDisabled {
+		return nil
 	}
 
 	bmcConn := h.Hal.BMCConnection()
-	err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, pwd)
+	err = bmcConn.SetUserEnabled(bmcConn.PresentSuperUser(), false)
 	if err != nil {
-		return false, errors.Wrapf(err, "failed to create bmc superuser: %s", bmcConn.SuperUser().Name)
+		log.Error("failed to disable present bmc admin user", "error", err)
+		return err
 	}
 
-	return true, nil
+	err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, pwd)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create bmc superuser: %s", bmcConn.SuperUser().Name)
+	}
+
+	return nil
 }
