@@ -24,16 +24,16 @@ import (
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
-	Hal         hal.InBand
-	Client      *machine.Client
-	CertsClient *certs.Client
-	Spec        *Specification
-	Disk        storage.Disk
-	LLDPClient  *network.LLDPClient
+	Spec         *Specification
+	Hal          hal.InBand
+	Client       *machine.Client
+	GrpcClient   *GrpcClient
+	EventEmitter *event.EventEmitter
+	Disk         storage.Disk
+	LLDPClient   *network.LLDPClient
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress          string
 	Started            time.Time
-	EventEmitter       *event.EventEmitter
 	ChrootPrefix       string
 	OsImageDestination string
 }
@@ -57,7 +57,6 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	hammer := &Hammer{
 		Hal:                hal,
 		Client:             client,
-		CertsClient:        certsClient,
 		Spec:               spec,
 		IPAddress:          spec.IP,
 		EventEmitter:       eventEmitter,
@@ -106,6 +105,19 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	err = reg.RegisterMachine(hw)
 	if !spec.DevMode && err != nil {
 		return eventEmitter, errors.Wrap(err, "register")
+	}
+
+	grpcClient, err := NewGrpcClient(certsClient, eventEmitter)
+	if err != nil {
+		log.Error("failed to fetch GRPC certificates", "error", err)
+		return eventEmitter, err
+	}
+	hammer.GrpcClient = grpcClient
+
+	err = hammer.createBmcSuperuser()
+	if err != nil {
+		log.Error("failed to update bmc superuser password", "error", err)
+		return eventEmitter, err
 	}
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
@@ -214,7 +226,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 			},
 		}
 	} else {
-		err := hammer.WaitForInstallation(spec.MachineUUID)
+		err := hammer.GrpcClient.WaitForAllocation(spec.MachineUUID)
 		if err != nil {
 			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}
