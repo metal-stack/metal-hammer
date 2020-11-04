@@ -17,11 +17,11 @@ func (c *GrpcClient) newSuperUserPasswordClient() (v1.SuperUserPasswordClient, i
 	return v1.NewSuperUserPasswordClient(conn), conn, nil
 }
 
-// FetchSuperUserPassword tries to fetch the bmc superuser password from metla-api.
+// fetchSuperUserPassword tries to fetch the bmc superuser password from metla-api.
 // If no superuser password has been set in metal-api it returns an empty string and true as
 // the second return value, which indicates to skip further processing regarding the superuser password.
 // Otherwise that second return value is always false.
-func (c *GrpcClient) FetchSuperUserPassword() (string, bool, error) {
+func (c *GrpcClient) fetchSuperUserPassword() (string, bool, error) {
 	client, closer, err := c.newSuperUserPasswordClient()
 	if err != nil {
 		return "", false, err
@@ -41,8 +41,8 @@ func (c *GrpcClient) FetchSuperUserPassword() (string, bool, error) {
 	return resp.GetSuperUserPassword(), false, nil
 }
 
-func (h *Hammer) CreateBmcSuperuser() error {
-	pwd, featureDisabled, err := h.GrpcClient.FetchSuperUserPassword()
+func (h *Hammer) createBmcSuperuser() error {
+	pwd, featureDisabled, err := h.GrpcClient.fetchSuperUserPassword()
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch SuperUser password")
 	}

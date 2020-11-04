@@ -114,7 +114,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	}
 	hammer.GrpcClient = grpcClient
 
-	err = hammer.CreateBmcSuperuser()
+	err = hammer.createBmcSuperuser()
 	if err != nil {
 		log.Error("failed to update bmc superuser password", "error", err)
 		return eventEmitter, err
