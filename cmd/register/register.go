@@ -202,6 +202,7 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 	details := &models.ModelsV1MachineIPMI{
 		Interface: &intf,
 	}
+	defaultIPMIPort := "623"
 	bmcVersion := "unknown"
 	bmcConn := hal.BMCConnection()
 	if bmcConn.Present() {
@@ -230,6 +231,7 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 			ProductPartNumber:   bmc.ProductPartNumber,
 			ProductSerial:       bmc.ProductSerial,
 		}
+		bmc.IP = bmc.IP + ":" + defaultIPMIPort
 		details.Address = &bmc.IP
 		details.Mac = &bmc.MAC
 		details.User = &bmcUser
