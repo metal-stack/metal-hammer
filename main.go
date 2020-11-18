@@ -9,7 +9,7 @@ import (
 
 	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/go-hal/connect"
-	"github.com/metal-stack/go-hal/pkg/logger/hallog15"
+	hallog15 "github.com/metal-stack/go-hal/pkg/logger/log15"
 	"github.com/metal-stack/metal-hammer/cmd"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
