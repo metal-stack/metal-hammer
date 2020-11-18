@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
@@ -19,6 +20,7 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
+	"github.com/metal-stack/v"
 	"github.com/pkg/errors"
 )
 
@@ -47,7 +49,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	certsClient := certs.New(transport, strfmt.Default)
 	eventEmitter := event.NewEventEmitter(client, spec.MachineUUID)
 
-	eventEmitter.Emit(event.ProvisioningEventPreparing, "starting metal-hammer")
+	eventEmitter.Emit(event.ProvisioningEventPreparing, fmt.Sprintf("starting metal-hammer version:%q", v.V))
 
 	err := command.CommandsExist()
 	if err != nil {
