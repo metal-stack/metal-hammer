@@ -25,7 +25,7 @@ import (
 // Register the Machine
 type Register struct {
 	MachineUUID string
-	Client      *machine.Client
+	Client      machine.ClientService
 	Network     *network.Network
 	Hal         hal.InBand
 }
@@ -162,7 +162,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	if err != nil {
 		return nil, err
 	}
-	hw.IPMI = ipmiconfig
+	hw.Ipmi = ipmiconfig
 
 	board := r.Hal.Board()
 	b := board.BIOS
@@ -202,28 +202,25 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 	details := &models.ModelsV1MachineIPMI{
 		Interface: &intf,
 	}
-	bmcversion := "unknown"
-	if hal.BMCPresent() {
+	defaultIPMIPort := "623"
+	bmcVersion := "unknown"
+	bmcConn := hal.BMCConnection()
+	if bmcConn.Present() {
 		log.Info("ipmi details from bmc")
 		board := hal.Board()
 		bmc := board.BMC
 		if bmc == nil {
 			return nil, errors.New("unable to read ipmi bmc info configuration")
 		}
-		bmcUser := hal.BMCUser().Name
+
 		// FIXME userid should be verified if available
-		pw, err := hal.BMCCreateUser(hal.BMCUser().ChannelNumber, bmcUser, hal.BMCUser().Uid, api.AdministratorPrivilege, api.PasswordConstraints{
-			Length:      10,
-			NumDigits:   3,
-			NumSymbols:  0,
-			NoUpper:     false,
-			AllowRepeat: false,
-		})
+		pw, err := bmcConn.CreateUserAndPassword(bmcConn.User(), api.AdministratorPrivilege)
 		if err != nil {
 			return nil, errors.Wrap(err, "ipmi create user failed")
 		}
 
-		bmcversion = bmc.FirmwareRevision
+		bmcUser := bmcConn.User().Name
+		bmcVersion = bmc.FirmwareRevision
 		fru := models.ModelsV1MachineFru{
 			ChassisPartNumber:   bmc.ChassisPartNumber,
 			ChassisPartSerial:   bmc.ChassisPartSerial,
@@ -234,11 +231,12 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 			ProductPartNumber:   bmc.ProductPartNumber,
 			ProductSerial:       bmc.ProductSerial,
 		}
+		bmc.IP = bmc.IP + ":" + defaultIPMIPort
 		details.Address = &bmc.IP
 		details.Mac = &bmc.MAC
 		details.User = &bmcUser
 		details.Password = &pw
-		details.Bmcversion = &bmcversion
+		details.Bmcversion = &bmcVersion
 		details.Fru = &fru
 		return details, nil
 	}
@@ -265,6 +263,6 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 	details.Mac = &bmcMAC
 	details.User = &user
 	details.Password = &pw
-	details.Bmcversion = &bmcversion
+	details.Bmcversion = &bmcVersion
 	return details, nil
 }

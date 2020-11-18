@@ -29,11 +29,11 @@ const (
 )
 
 type EventEmitter struct {
-	client    *machine.Client
+	client    machine.ClientService
 	machineID string
 }
 
-func NewEventEmitter(client *machine.Client, machineID string) *EventEmitter {
+func NewEventEmitter(client machine.ClientService, machineID string) *EventEmitter {
 	emitter := &EventEmitter{
 		client:    client,
 		machineID: machineID,

@@ -228,8 +228,6 @@
         }
       },
       "required": [
-        "changed",
-        "created",
         "expirationDate",
         "features",
         "id",
@@ -509,6 +507,9 @@
         "networkid": {
           "type": "string"
         },
+        "networktype": {
+          "type": "string"
+        },
         "prefixes": {
           "items": {
             "type": "string"
@@ -532,6 +533,7 @@
         "ips",
         "nat",
         "networkid",
+        "networktype",
         "prefixes",
         "private",
         "underlay",
@@ -665,18 +667,12 @@
         }
       },
       "required": [
-        "allocation",
         "bios",
-        "changed",
-        "created",
         "events",
         "hardware",
         "id",
         "ledstate",
         "liveliness",
-        "partition",
-        "rackid",
-        "size",
         "state",
         "tags"
       ]
@@ -738,8 +734,6 @@
       },
       "required": [
         "bootconfig",
-        "changed",
-        "created",
         "id"
       ]
     },
@@ -788,9 +782,7 @@
         }
       },
       "required": [
-        "changed",
         "constraints",
-        "created",
         "id"
       ]
     }

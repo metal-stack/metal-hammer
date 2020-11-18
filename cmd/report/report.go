@@ -8,7 +8,7 @@ import (
 )
 
 type Report struct {
-	Client          *machine.Client
+	Client          machine.ClientService
 	ConsolePassword string
 	MachineUUID     string
 	InstallError    error

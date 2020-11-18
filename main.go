@@ -8,7 +8,8 @@ import (
 	"github.com/metal-stack/v"
 
 	log "github.com/inconshreveable/log15"
-	"github.com/metal-stack/go-hal/detect"
+	"github.com/metal-stack/go-hal/connect"
+	hallog15 "github.com/metal-stack/go-hal/pkg/logger/log15"
 	"github.com/metal-stack/metal-hammer/cmd"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
@@ -32,7 +33,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	hal, err := detect.ConnectInBand()
+	hal, err := connect.InBand(hallog15.New(log.New()))
 	if err != nil {
 		log.Error("unable to detect hardware", "error", err)
 		os.Exit(1)

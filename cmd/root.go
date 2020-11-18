@@ -18,21 +18,22 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
+	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/pkg/errors"
 )
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
-	Hal         hal.InBand
-	Client      *machine.Client
-	CertsClient *certs.Client
-	Spec        *Specification
-	Disk        storage.Disk
-	LLDPClient  *network.LLDPClient
+	Spec         *Specification
+	Hal          hal.InBand
+	Client       machine.ClientService
+	GrpcClient   *GrpcClient
+	EventEmitter *event.EventEmitter
+	Disk         storage.Disk
+	LLDPClient   *network.LLDPClient
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress          string
 	Started            time.Time
-	EventEmitter       *event.EventEmitter
 	ChrootPrefix       string
 	OsImageDestination string
 }
@@ -56,7 +57,6 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	hammer := &Hammer{
 		Hal:                hal,
 		Client:             client,
-		CertsClient:        certsClient,
 		Spec:               spec,
 		IPAddress:          spec.IP,
 		EventEmitter:       eventEmitter,
@@ -107,6 +107,19 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		return eventEmitter, errors.Wrap(err, "register")
 	}
 
+	grpcClient, err := NewGrpcClient(certsClient, eventEmitter)
+	if err != nil {
+		log.Error("failed to fetch GRPC certificates", "error", err)
+		return eventEmitter, err
+	}
+	hammer.GrpcClient = grpcClient
+
+	err = hammer.createBmcSuperuser()
+	if err != nil {
+		log.Error("failed to update bmc superuser password", "error", err)
+		return eventEmitter, err
+	}
+
 	m, err := hammer.fetchMachine(spec.MachineUUID)
 	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
 		primaryDiskWiped := false
@@ -147,14 +160,12 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 			cidr = "dhcp"
 		}
 		asn := int64(4200000001)
-		private := true
-		private2 := false
-		underlay := false
-		underlay2 := true
-		nat := false
-		nat2 := true
-		vrf := int64(0)
-		vrf2 := int64(4200000001)
+		underlay := mn.Underlay
+		privatePrimaryUnshared := mn.PrivatePrimaryUnshared
+		boolTrue := true
+		boolFalse := false
+		vrf0 := int64(0)
+		vrf1 := int64(4200000001)
 		hostname := "devmode"
 		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
 		m = &models.ModelsV1MachineResponse{
@@ -169,20 +180,22 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 					{
 						Ips:                 []string{cidr},
 						Asn:                 &asn,
-						Private:             &private,
-						Underlay:            &underlay,
+						Private:             &boolTrue,
+						Underlay:            &boolFalse,
+						Networktype:         &privatePrimaryUnshared,
 						Destinationprefixes: []string{"0.0.0.0/0"},
-						Vrf:                 &vrf,
-						Nat:                 &nat,
+						Vrf:                 &vrf1,
+						Nat:                 &boolFalse,
 					},
 					{
 						Ips:                 []string{"1.2.3.4"},
 						Asn:                 &asn,
-						Private:             &private2,
-						Underlay:            &underlay2,
+						Private:             &boolFalse,
+						Underlay:            &boolTrue,
+						Networktype:         &underlay,
 						Destinationprefixes: []string{"2.3.4.5/24"},
-						Vrf:                 &vrf2,
-						Nat:                 &nat2,
+						Vrf:                 &vrf0,
+						Nat:                 &boolTrue,
 					},
 				},
 			},
@@ -213,7 +226,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 			},
 		}
 	} else {
-		err := hammer.WaitForInstallation(spec.MachineUUID)
+		err := hammer.GrpcClient.WaitForAllocation(spec.MachineUUID)
 		if err != nil {
 			return eventEmitter, errors.Wrap(err, "wait for installation")
 		}
