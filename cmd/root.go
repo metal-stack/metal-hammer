@@ -26,7 +26,7 @@ import (
 type Hammer struct {
 	Spec         *Specification
 	Hal          hal.InBand
-	Client       *machine.Client
+	Client       machine.ClientService
 	GrpcClient   *GrpcClient
 	EventEmitter *event.EventEmitter
 	Disk         storage.Disk
