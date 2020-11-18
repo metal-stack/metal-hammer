@@ -18,7 +18,7 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
-	github.com/metal-stack/go-hal v0.2.1
+	github.com/metal-stack/go-hal v0.3.0
 	github.com/metal-stack/metal-api v0.10.2
 	github.com/metal-stack/metal-lib v0.6.3
 	github.com/metal-stack/v v1.0.2
@@ -31,7 +31,7 @@ require (
 	github.com/u-root/u-root v6.0.0+incompatible
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df // indirect
-	golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
+	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
 	google.golang.org/grpc v1.31.0
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.3.0
