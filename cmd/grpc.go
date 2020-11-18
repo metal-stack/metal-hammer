@@ -5,12 +5,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"time"
+
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
-	"time"
 )
 
 type GrpcClient struct {
@@ -21,7 +22,7 @@ type GrpcClient struct {
 
 // NewGrpcClient fetches the address and certificates from metal-core needed to communicate with metal-api via grpc,
 // and returns a new grpc client that can be used to invoke all provided grpc endpoints.
-func NewGrpcClient(certsClient *certs.Client, emitter *event.EventEmitter) (*GrpcClient, error) {
+func NewGrpcClient(certsClient certs.ClientService, emitter *event.EventEmitter) (*GrpcClient, error) {
 	params := certs.NewGrpcClientCertParams()
 	resp, err := certsClient.GrpcClientCert(params)
 	if err != nil {

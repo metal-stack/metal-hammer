@@ -15,7 +15,7 @@ func TestNewEventEmitter(t *testing.T) {
 	client := machine.New(transport, strfmt.Default)
 
 	type args struct {
-		client    *machine.Client
+		client    machine.ClientService
 		machineID string
 	}
 	tests := []struct {

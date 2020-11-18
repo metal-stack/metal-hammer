@@ -25,7 +25,7 @@ import (
 // Register the Machine
 type Register struct {
 	MachineUUID string
-	Client      *machine.Client
+	Client      machine.ClientService
 	Network     *network.Network
 	Hal         hal.InBand
 }
@@ -162,7 +162,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	if err != nil {
 		return nil, err
 	}
-	hw.IPMI = ipmiconfig
+	hw.Ipmi = ipmiconfig
 
 	board := r.Hal.Board()
 	b := board.BIOS
