@@ -145,7 +145,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 
 	err = hammer.ConfigureBIOS()
 	if err != nil {
-		log.Error("failed to update BIOS", "error", err)
+		log.Error("failed to configure BIOS", "error", err)
 		return eventEmitter, err
 	}
 
@@ -278,15 +278,7 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 
 	err = rep.ReportInstallation()
 	if err != nil {
-		wait := 10 * time.Second
-		log.Error("report installation failed", "reboot in", wait, "error", err)
-		time.Sleep(wait)
-		if !h.Spec.DevMode {
-			err = kernel.Reboot()
-			if err != nil {
-				log.Error("reboot", "error", err)
-			}
-		}
+		return err
 	}
 
 	log.Info("installation", "took", time.Since(installationStart))

@@ -17,17 +17,18 @@ func (h *Hammer) ConfigureBIOS() error {
 
 	reboot, err := h.Hal.ConfigureBIOS()
 	if err != nil {
-		log.Warn("BIOS updates for this machine type are intentionally not supported, skipping ConfigureBIOS", "error", err)
-		return nil
+		return err
 	}
-	if reboot {
-		h.EventEmitter.Emit(event.ProvisioningEventPlannedReboot, "update BIOS configuration, need to reboot")
+	log.Info("bios", "message", "successfully configured BIOS")
 
-		log.Info("bios", "message", "updated BIOS configuration, reboot in 1 sec")
+	if reboot {
+		msg := "BIOS configuration requires a reboot"
+		h.EventEmitter.Emit(event.ProvisioningEventPlannedReboot, msg)
+		log.Info("bios", msg, "reboot in 1 sec")
 		time.Sleep(1 * time.Second)
 		err = kernel.Reboot()
 		if err != nil {
-			log.Error("reboot", "error", err)
+			return err
 		}
 	}
 
@@ -45,7 +46,7 @@ func (h *Hammer) EnsureBootOrder(bootloaderID string) error {
 	if err != nil {
 		return err
 	}
-	log.Info("bios", "message", "boot order ensured")
+	log.Info("bios", "message", "successfully ensured boot order")
 
 	return nil
 }
