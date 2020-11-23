@@ -1,15 +1,16 @@
 package kernel
 
 import (
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"strings"
 	"time"
 	"unsafe"
 
+	"github.com/pkg/errors"
+
 	log "github.com/inconshreveable/log15"
-	"github.com/u-root/u-root/pkg/kexec"
+	"github.com/u-root/u-root/pkg/boot/kexec"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 )

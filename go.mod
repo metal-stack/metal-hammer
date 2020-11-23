@@ -1,5 +1,7 @@
 module github.com/metal-stack/metal-hammer
 
+go 1.15
+
 require (
 	github.com/beevik/ntp v0.3.0
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -28,7 +30,7 @@ require (
 	github.com/pierrec/lz4 v2.5.2+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
-	github.com/u-root/u-root v6.0.0+incompatible
+	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect
 	golang.org/x/sys v0.0.0-20201117222635-ba5294a509c7
@@ -38,5 +40,3 @@ require (
 )
 
 replace github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
-
-go 1.15

@@ -1,9 +1,10 @@
 package firmware
 
 import (
+	"os/exec"
+
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
-	"os/exec"
 )
 
 // updater check if a firmware update is required and updates

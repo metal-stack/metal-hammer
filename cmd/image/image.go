@@ -2,19 +2,21 @@ package image
 
 import (
 	"fmt"
+
 	log "github.com/inconshreveable/log15"
 	"github.com/mholt/archiver"
 	lz4 "github.com/pierrec/lz4"
 	pb "gopkg.in/cheggaaa/pb.v1"
 
 	"crypto/md5"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Pull a image from s3

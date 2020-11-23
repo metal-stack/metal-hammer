@@ -1,10 +1,11 @@
 package storage
 
 import (
-	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"syscall"
+
+	"github.com/pkg/errors"
 
 	log "github.com/inconshreveable/log15"
 )
