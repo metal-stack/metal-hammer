@@ -18,6 +18,6 @@ builds:
       - latest
     after:
       - docker export $(docker create metalstack/hammer /dev/null) > metal-hammer.tar
-      - tar -xf metal-hammer.tar metal-hammer-initrd.img.lz4
+      - tar -xf metal-hammer.tar metal-hammer-initrd.img.zstd
       - rm -f metal-hammer.tar
-      - md5sum metal-hammer-initrd.img.lz4 > metal-hammer-initrd.img.lz4.md5
+      - md5sum metal-hammer-initrd.img.zstd > metal-hammer-initrd.img.zstd.md5

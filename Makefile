@@ -1,7 +1,7 @@
 BINARY := metal-hammer
 INITRD := ${BINARY}-initrd.img
-COMPRESSOR := lz4
-COMPRESSOR_ARGS := -f -l
+COMPRESSOR := zstd
+COMPRESSOR_ARGS := -f
 INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../builder)
@@ -57,7 +57,7 @@ ramdisk:
 		-files="metal.key.pub:authorized_keys" \
 		-files="sum:sbin/sum" \
 	-o ${INITRD} \
-	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \
+	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} -o ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}
 
 clean-local-dirs:
