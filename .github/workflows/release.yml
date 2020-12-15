@@ -35,7 +35,7 @@ jobs:
       - name: Prepare image upload
         run: |
           mkdir -p images/metal-hammer/${GITHUB_REF##*/}
-          cp metal-hammer-initrd.img.lz4* images/metal-hammer/${GITHUB_REF##*/}
+          cp metal-hammer-initrd.img.* images/metal-hammer/${GITHUB_REF##*/}
       - name: Upload image tarballs to GCS
         run: gsutil -m cp -r -p images/metal-hammer gs://$GCS_BUCKET
       - name: Upload Release Asset
@@ -44,8 +44,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: metal-hammer-initrd.img.lz4
-          asset_name: metal-hammer-initrd.img.lz4
+          asset_path: metal-hammer-initrd.img.zstd
+          asset_name: metal-hammer-initrd.img.zstd
           asset_content_type: application/gzip
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1.0.1
@@ -53,6 +53,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: metal-hammer-initrd.img.lz4.md5
-          asset_name: metal-hammer-initrd.img.lz4.md5
+          asset_path: metal-hammer-initrd.img.zstd.md5
+          asset_name: metal-hammer-initrd.img.zstd.md5
           asset_content_type: text/html
