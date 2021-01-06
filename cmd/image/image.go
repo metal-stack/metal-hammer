@@ -2,10 +2,13 @@ package image
 
 import (
 	"fmt"
+	"path/filepath"
 
 	log "github.com/inconshreveable/log15"
+	"github.com/klauspost/compress/zstd"
 	"github.com/mholt/archiver"
 	lz4 "github.com/pierrec/lz4"
+
 	pb "gopkg.in/cheggaaa/pb.v1"
 
 	"crypto/md5"
@@ -60,25 +63,36 @@ func Burn(prefix, image, source string) error {
 		return errors.Wrapf(err, "unable to stat %s", source)
 	}
 
-	if !strings.HasSuffix(image, "lz4") {
+	suffix := filepath.Ext(image)
+	var decompressor io.ReadCloser
+	switch suffix {
+	case ".lz4":
+		lz4Reader := lz4.NewReader(file)
+		log.Info("lz4", "size", lz4Reader.Header.Size)
+		decompressor = ioutil.NopCloser(lz4Reader)
+	case ".zstd":
+		zstdReader, err := zstd.NewReader(file)
+		if err != nil {
+			return errors.Errorf("unable to create a zstd reader of image:%s", image)
+		}
+		defer zstdReader.Close()
+		decompressor = ioutil.NopCloser(zstdReader)
+	default:
 		return errors.Errorf("unsupported image compression format of image:%s", image)
 	}
 
-	lz4Reader := lz4.NewReader(file)
-	log.Info("lz4", "size", lz4Reader.Header.Size)
-	creader := ioutil.NopCloser(lz4Reader)
 	// wild guess for lz4 compression ratio
-	// lz4 is a stream format and therefore the
+	// lz4/zstd is a stream format and therefore the
 	// final size cannot be calculated upfront
 	csize := stat.Size() * 2
-	defer creader.Close()
+	defer decompressor.Close()
 
 	bar := pb.New64(csize).SetUnits(pb.U_BYTES)
 	bar.Start()
 	bar.SetWidth(80)
 	bar.ShowSpeed = true
 
-	reader := bar.NewProxyReader(creader)
+	reader := bar.NewProxyReader(decompressor)
 
 	err = archiver.Tar.Read(reader, prefix)
 	if err != nil {
