@@ -73,6 +73,12 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 
 	hammer.Spec.ConsolePassword = password.Generate(16)
 
+	err = hammer.createBmcSuperuser()
+	if err != nil {
+		log.Error("failed to update bmc superuser password", "error", err)
+		return eventEmitter, err
+	}
+
 	n := &network.Network{
 		MachineUUID: spec.MachineUUID,
 		IPAddress:   spec.IP,
@@ -115,12 +121,6 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		return eventEmitter, err
 	}
 	hammer.GrpcClient = grpcClient
-
-	err = hammer.createBmcSuperuser()
-	if err != nil {
-		log.Error("failed to update bmc superuser password", "error", err)
-		return eventEmitter, err
-	}
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
 	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
