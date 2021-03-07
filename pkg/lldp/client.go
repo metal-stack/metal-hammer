@@ -92,11 +92,13 @@ func (l *Client) Close() {
 func (l *Client) Neighbors(neighChan chan Neighbor) {
 	for {
 		for packet := range l.Source.Packets() {
+			//nolint
 			switch packet.LinkLayer().LayerType() {
 			case layers.LayerTypeEthernet:
 				neigh := Neighbor{}
 				for _, layer := range packet.Layers() {
 					layerType := layer.LayerType()
+					//nolint
 					switch layerType {
 					case layers.LayerTypeLinkLayerDiscovery:
 						lldp := layer.(*layers.LinkLayerDiscovery)

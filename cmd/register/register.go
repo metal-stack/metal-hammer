@@ -192,7 +192,7 @@ func createSyslog() error {
 		return err
 	}
 
-	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0666)
+	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0600)
 }
 
 // IPMI configuration and

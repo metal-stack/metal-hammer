@@ -21,9 +21,9 @@ require (
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
 	github.com/metal-stack/go-hal v0.3.0
-	github.com/metal-stack/metal-api v0.12.3
+	github.com/metal-stack/metal-api v0.13.0
 	github.com/metal-stack/metal-lib v0.6.9
-	github.com/metal-stack/v v1.0.2
+	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
@@ -33,8 +33,8 @@ require (
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
-	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
-	google.golang.org/grpc v1.35.0
+	golang.org/x/sys v0.0.0-20210305230114-8fe3ee5dd75b
+	google.golang.org/grpc v1.36.0
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.4.0
 )

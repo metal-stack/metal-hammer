@@ -36,6 +36,7 @@ func TestNewEventEmitter(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.args.machineID, tt.want.machineID, "check machine ID")
 		})
@@ -65,6 +66,7 @@ func TestEventEmitter_Emit(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			tt.e.Emit(tt.args.eventType, tt.args.message)
 		})

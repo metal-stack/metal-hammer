@@ -24,6 +24,13 @@ jobs:
         uses: bruceadams/get-release@v1.2.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.38.0
+          args: -p bugs --timeout=5m
+
       - name: Build image
         uses: metal-stack/action-docker-make@master
         with:
