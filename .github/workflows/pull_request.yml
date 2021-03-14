@@ -21,7 +21,7 @@ jobs:
             service_account_key: ${{ secrets.GCP_SA_KEY }}
 
       - name: install build requirements
-        run: sudo apt-get install -y gcc
+        run: sudo apt-get install -y gcc libpcap-dev
 
       - name: Lint
         uses: golangci/golangci-lint-action@v2
