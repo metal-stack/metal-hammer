@@ -27,7 +27,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && go install
 WORKDIR /work
-COPY metal.key metal.key.pub passwd varrun Makefile .git /work/
+COPY ice.pkg metal.key metal.key.pub passwd varrun Makefile .git /work/
 COPY --from=sum /usr/bin/sum /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/bin/metal-hammer /work/bin/
