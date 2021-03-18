@@ -52,6 +52,9 @@ func (n *Network) UpAllInterfaces() error {
 			return errors.Wrapf(err, "Error set link %s up", name)
 		}
 
+		if !linkIsUp(name) {
+			continue
+		}
 		ethtool.disableFirmwareLLDP(name)
 
 		lldpd, err := lldp.NewDaemon(n.MachineUUID, description, name, 5*time.Second)
@@ -79,6 +82,15 @@ func linkSetMTU(name string, mtu int) error {
 		return err
 	}
 	return err
+}
+
+func linkIsUp(name string) bool {
+	iface, err := netlink.LinkByName(name)
+	if err != nil {
+		return false
+	}
+
+	return iface.Attrs().OperState == netlink.OperUp
 }
 
 func linkSetUp(name string) error {
