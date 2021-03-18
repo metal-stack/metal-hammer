@@ -56,7 +56,8 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 
 	output, err := e.Run("--show-priv-flags", ifi)
 	if err != nil {
-		log.Info("ethtool", "interface", ifi, "msg", "no priv-flags or disable-fw-lldp not present")
+		log.Info("ethtool", "interface", ifi, "msg", "no priv-flags or disable-fw-lldp not present, try disable via debugfs")
+		e.stopFirmwareLLDP()
 		return
 	}
 
@@ -88,7 +89,7 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 	}
 }
 
-var buggyIntelNicDriverNames = []string{"i40e"}
+var buggyIntelNicDriverNames = []string{"i40e", "ice"}
 
 // stopFirmwareLLDP stop Firmeware LLDP not persistent over reboots, only during runtime.
 // mount -t debugfs none /sys/kernel/debug
@@ -97,6 +98,7 @@ var buggyIntelNicDriverNames = []string{"i40e"}
 // or a loop over all directories in /sys/kernel/debug/i40e/*/command
 func (e *Ethtool) stopFirmwareLLDP() {
 	for _, driver := range buggyIntelNicDriverNames {
+		log.Info("ethtool", "stopFirmwareLLDP", "driver", driver)
 		debugFSPath := path.Join("/sys/kernel/debug", driver)
 		err := filepath.Walk(debugFSPath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
