@@ -15,6 +15,7 @@ RUN apt-get update \
 	hdparm \
 	ipmitool \
 	liblz4-tool \
+	lldpad \
 	net-tools \
 	nvme-cli \
 	pciutils \

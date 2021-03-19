@@ -47,6 +47,7 @@ ramdisk:
 		-files="/sbin/mke2fs:sbin/mke2fs" \
 		-files="/sbin/mkswap:sbin/mkswap" \
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
+		-files="/usr/sbin/lldptool:sbin/lldptool" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
