@@ -148,7 +148,7 @@ func (p *Partition) String() string {
 // primaryDeviceBySize will configure the disk device where the OS gets installed.
 func primaryDeviceBySize(sizeID string, disks []*models.ModelsV1MachineBlockDevice) PrimaryDevice {
 	switch sizeID {
-	case "v1-small-x86", "t1-small-x86", "s1-large-x86", "c1-medium-x86", "c1-large-x86", "c1-xlarge-x86":
+	case "v1-small-x86", "t1-small-x86", "s1-large-x86", "s3-large-x86", "c1-medium-x86", "c1-large-x86", "c1-xlarge-x86":
 		return PrimaryDevice{DeviceName: "/dev/sda", PartitionPrefix: ""}
 	case "nvm-size-x86":
 		// Example how to specify disk partitioning on NVME disks if they need be be used as root disk.

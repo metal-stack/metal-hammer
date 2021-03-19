@@ -117,7 +117,8 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 
 	// now attach neighbors, this will wait up to 2*tx-intervall
 	// if during this timeout not all required neighbors where found abort and reboot.
-	for _, nic := range nics {
+	for i := range nics {
+		nic := nics[i]
 		neighbors, err := r.Network.Neighbors(*nic.Name)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to determine neighbors of interface:%s", *nic.Name)
