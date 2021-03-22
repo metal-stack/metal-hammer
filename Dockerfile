@@ -7,6 +7,7 @@ ENV UROOT_GIT_SHA_OR_TAG=v7.0.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
+	dmraid \
 	dosfstools \
 	e2fsprogs \
 	ethtool \
@@ -15,6 +16,7 @@ RUN apt-get update \
 	hdparm \
 	ipmitool \
 	liblz4-tool \
+	mdadm \
 	net-tools \
 	nvme-cli \
 	pciutils \

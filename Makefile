@@ -48,6 +48,8 @@ ramdisk:
 		-files="/sbin/mkswap:sbin/mkswap" \
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
+		-files="/sbin/dmraid:sbin/dmraid" \
+		-files="/sbin/mdadm:sbin/mdadm" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/usr/lib/x86_64-linux-gnu/libnss_files.so:lib/libnss_files.so.2" \
