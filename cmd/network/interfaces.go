@@ -84,6 +84,7 @@ func linkSetMTU(name string, mtu int) error {
 	return err
 }
 
+// Kept for documentary purpose
 // func linkIsUp(name string) bool {
 // 	iface, err := netlink.LinkByName(name)
 // 	if err != nil {
