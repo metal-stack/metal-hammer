@@ -104,6 +104,11 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	// Set Time from ntp
 	network.NtpDate()
 
+	err = storage.ActivateRaid()
+	if err != nil {
+		log.Warn("failed to activate dmraid", "error", err)
+	}
+
 	reg := &register.Register{
 		MachineUUID: spec.MachineUUID,
 		Client:      client,

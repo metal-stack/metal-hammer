@@ -33,8 +33,6 @@ func WipeDisks() error {
 	}
 	disks := block.Disks
 
-	activateRaid()
-
 	log.Info("wipe existing disks", "disks", disks)
 
 	wipeErrors := make(chan error)
@@ -97,15 +95,7 @@ func insecureErase(device string, bytes uint64) error {
 	}
 	return nil
 }
-func activateRaid() error {
-	log.Info("activate dmraid devices if any")
-	err := os.ExecuteCommand(command.DMRaid, "-a", "y")
-	if err != nil {
-		log.Error("wipe", "unable to activate dmraid devices", err)
-		return err
-	}
-	return nil
-}
+
 func discard(device string) error {
 	log.Info("wipe", "disk", device, "message", "discard existing data")
 	err := os.ExecuteCommand(ext4MkFsCommand, "-F", "-E", "discard", device)
