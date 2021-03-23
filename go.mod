@@ -21,7 +21,7 @@ require (
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
 	github.com/metal-stack/go-hal v0.3.0
-	github.com/metal-stack/metal-api v0.13.0
+	github.com/metal-stack/metal-api v0.13.1
 	github.com/metal-stack/metal-lib v0.7.1
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
@@ -30,10 +30,11 @@ require (
 	github.com/pierrec/lz4 v2.6.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
+	github.com/tidwall/pretty v1.0.2 // indirect
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
-	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
+	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4
 	google.golang.org/grpc v1.36.0
