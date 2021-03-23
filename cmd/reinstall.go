@@ -37,16 +37,10 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 	if m.Allocation.BootInfo.PrimaryDisk != nil && *m.Allocation.BootInfo.PrimaryDisk != "" {
 		currentPrimaryDiskName = sanitizeDisk(*m.Allocation.BootInfo.PrimaryDisk)
 	} else {
-		h.Disk, err = storage.GetDisk(*m.Allocation.BootInfo.ImageID, m.Size, hw.Disks)
-		if err != nil {
-			return false, err
-		}
+		h.Disk = storage.GetDisk(*m.Allocation.BootInfo.ImageID, m.Size, hw.Disks)
 		currentPrimaryDiskName = sanitizeDisk(h.Disk.Device)
 	}
-	h.Disk, err = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
-	if err != nil {
-		return false, err
-	}
+	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
 	primaryDiskName := sanitizeDisk(h.Disk.Device)
 	if currentPrimaryDiskName != primaryDiskName {
 		return false, fmt.Errorf("current primary disk %s differs from the one that would be taken for the new OS installation %s", currentPrimaryDiskName, primaryDiskName)

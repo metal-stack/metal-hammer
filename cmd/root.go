@@ -245,10 +245,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 
 	log.Info("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 
-	hammer.Disk, err = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
-	if err != nil {
-		return eventEmitter, err
-	}
+	hammer.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
 	err = hammer.installImage(eventEmitter, m, hw.Nics)
 	return eventEmitter, err
 }

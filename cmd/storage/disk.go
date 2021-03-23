@@ -146,21 +146,17 @@ func (p *Partition) String() string {
 }
 
 // primaryDeviceBySize will configure the disk device where the OS gets installed.
-func primaryDeviceBySize(sizeID string, disks []*models.ModelsV1MachineBlockDevice) (PrimaryDevice, error) {
+func primaryDeviceBySize(sizeID string, disks []*models.ModelsV1MachineBlockDevice) PrimaryDevice {
 	switch sizeID {
 	case "v1-small-x86", "t1-small-x86", "s1-large-x86", "c1-medium-x86", "c1-large-x86", "c1-xlarge-x86":
-		return PrimaryDevice{DeviceName: "/dev/sda", PartitionPrefix: ""}, nil
+		return PrimaryDevice{DeviceName: "/dev/sda", PartitionPrefix: ""}
 	case "nvm-size-x86":
 		// Example how to specify disk partitioning on NVME disks if they need be be used as root disk.
-		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}, nil
+		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}
 	case "y1-medium-x86":
-		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}, nil
+		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}
 	case "s3-large-x86":
-		deviceName, err := detectISWRaid(disks)
-		if err != nil {
-			return PrimaryDevice{}, err
-		}
-		return PrimaryDevice{DeviceName: deviceName, PartitionPrefix: ""}, nil
+		return PrimaryDevice{DeviceName: "/dev/dm-0", PartitionPrefix: ""}
 	default:
 		log.Info("getdisk", "sizeID unknown, try to guess disk", sizeID)
 		deviceName := guessDisk(disks)
@@ -172,18 +168,8 @@ func primaryDeviceBySize(sizeID string, disks []*models.ModelsV1MachineBlockDevi
 			DeviceName:      deviceName,
 			PartitionPrefix: "",
 		}
-		return primaryDevice, nil
+		return primaryDevice
 	}
-}
-
-func detectISWRaid(disks []*models.ModelsV1MachineBlockDevice) (string, error) {
-	for i := range disks {
-		disk := disks[i]
-		if strings.Contains(*disk.Name, "isw") {
-			return fmt.Sprintf("/dev/mapper/%s", *disk.Name), nil
-		}
-	}
-	return "", fmt.Errorf("unable to detect a isw raid")
 }
 
 // diskByImage based on the distribution choose a partition layout
@@ -223,18 +209,15 @@ func guessDisk(disks []*models.ModelsV1MachineBlockDevice) string {
 }
 
 // GetDisk returns a partitioning scheme for the given image, if image.ID is unknown default is used.
-func GetDisk(imageID string, size *models.ModelsV1SizeResponse, disks []*models.ModelsV1MachineBlockDevice) (Disk, error) {
+func GetDisk(imageID string, size *models.ModelsV1SizeResponse, disks []*models.ModelsV1MachineBlockDevice) Disk {
 	log.Info("getdisk", "imageID", imageID)
 	disk := diskByImage(imageID)
 
-	primaryDevice, err := primaryDeviceBySize(*size.ID, disks)
-	if err != nil {
-		return Disk{}, err
-	}
+	primaryDevice := primaryDeviceBySize(*size.ID, disks)
 	disk.Device = primaryDevice.DeviceName
 
 	for _, p := range disk.Partitions {
 		p.Device = fmt.Sprintf("%s%s%d", disk.Device, primaryDevice.PartitionPrefix, p.Number)
 	}
-	return disk, nil
+	return disk
 }
