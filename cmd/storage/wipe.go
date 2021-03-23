@@ -15,9 +15,8 @@ import (
 )
 
 var (
-	hdparmCommand = command.HDParm
-	nvmeCommand   = command.NVME
-	ddCommand     = command.DD
+	nvmeCommand = command.NVME
+	ddCommand   = command.DD
 )
 
 // WipeDisks will erase all content and partitions of all existing Disks
@@ -36,7 +35,7 @@ func WipeDisks() error {
 	wg.Add(len(disks))
 	for _, disk := range disks {
 		disk := disk
-		properties, err := FetchBlockIDProperties(disk.Name)
+		properties, err := FetchBlockIDProperties(fmt.Sprintf("/dev/%s", disk.Name))
 		if err != nil {
 			log.Error("failed to detect disk properties", "error", err)
 		}

@@ -1,6 +1,7 @@
 package register
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	gonet "net"
@@ -18,7 +19,6 @@ import (
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/vishvananda/netlink"
-	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 
 	log "github.com/inconshreveable/log15"
