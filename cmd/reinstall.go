@@ -33,13 +33,20 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 		return false, errors.New("machine is not yet ready for reinstallations, too risky to wipe disks")
 	}
 	var currentPrimaryDiskName string
+	var err error
 	if m.Allocation.BootInfo.PrimaryDisk != nil && *m.Allocation.BootInfo.PrimaryDisk != "" {
 		currentPrimaryDiskName = sanitizeDisk(*m.Allocation.BootInfo.PrimaryDisk)
 	} else {
-		h.Disk = storage.GetDisk(*m.Allocation.BootInfo.ImageID, m.Size, hw.Disks)
+		h.Disk, err = storage.GetDisk(*m.Allocation.BootInfo.ImageID, m.Size, hw.Disks)
+		if err != nil {
+			return false, err
+		}
 		currentPrimaryDiskName = sanitizeDisk(h.Disk.Device)
 	}
-	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
+	h.Disk, err = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
+	if err != nil {
+		return false, err
+	}
 	primaryDiskName := sanitizeDisk(h.Disk.Device)
 	if currentPrimaryDiskName != primaryDiskName {
 		return false, fmt.Errorf("current primary disk %s differs from the one that would be taken for the new OS installation %s", currentPrimaryDiskName, primaryDiskName)

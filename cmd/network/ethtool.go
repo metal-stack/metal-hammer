@@ -89,7 +89,7 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 	}
 }
 
-var buggyIntelNicDriverNames = []string{"i40e", "ice"}
+var buggyIntelNicDriverNames = []string{"i40e"}
 
 // stopFirmwareLLDP stop Firmeware LLDP not persistent over reboots, only during runtime.
 // mount -t debugfs none /sys/kernel/debug
