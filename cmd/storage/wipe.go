@@ -39,6 +39,17 @@ func WipeDisks() error {
 	var wg sync.WaitGroup
 	wg.Add(len(disks))
 	for _, disk := range disks {
+		disk := disk
+		properties, err := FetchBlockIDProperties(disk.Name)
+		if err != nil {
+			log.Error("failed to detect disk properties", "error", err)
+		}
+		disktype, ok := properties["TYPE"]
+		if ok && strings.Contains(disktype, "isw_raid") {
+			log.Info("skipp raid member", "disk", disk.Name)
+			continue
+		}
+
 		go func(disk *ghw.Disk) {
 			defer wg.Done()
 			if strings.HasPrefix(disk.Name, DiskPrefixToIgnore) {
