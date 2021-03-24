@@ -1,13 +1,14 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"sync"
 
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
+	"golang.org/x/sync/errgroup"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
@@ -30,40 +31,31 @@ func WipeDisks() error {
 
 	log.Info("wipe existing disks", "disks", disks)
 
-	wipeErrors := make(chan error)
-	var wg sync.WaitGroup
-	wg.Add(len(disks))
+	g, _ := errgroup.WithContext(context.Background())
 	for _, disk := range disks {
 		disk := disk
 		properties, err := FetchBlockIDProperties(fmt.Sprintf("/dev/%s", disk.Name))
 		if err != nil {
-			log.Error("failed to detect disk properties", "error", err)
+			log.Warn("failed to detect disk properties", "error", err)
 		}
 		disktype, ok := properties["TYPE"]
 		if ok && strings.Contains(disktype, "isw_raid") {
 			log.Info("skip raid member", "disk", disk.Name)
-			wg.Done()
 			continue
 		}
 
-		go func(disk *ghw.Disk) {
-			defer wg.Done()
+		g.Go(func() error {
 			if strings.HasPrefix(disk.Name, DiskPrefixToIgnore) {
-				return
+				return nil
 			}
-			err := WipeDisk(disk)
-			if err != nil {
-				wipeErrors <- err
-			}
-		}(disk)
+			return WipeDisk(disk)
+		})
 	}
 
-	go func() {
-		for e := range wipeErrors {
-			log.Error("failed to wipe disk", "error", e)
-		}
-	}()
-	wg.Wait()
+	err = g.Wait()
+	if err != nil {
+		log.Error("failed to wipe disk", "error", err)
+	}
 
 	return nil
 }
