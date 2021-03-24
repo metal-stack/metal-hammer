@@ -42,6 +42,7 @@ func WipeDisks() error {
 		disktype, ok := properties["TYPE"]
 		if ok && strings.Contains(disktype, "isw_raid") {
 			log.Info("skip raid member", "disk", disk.Name)
+			wg.Done()
 			continue
 		}
 
