@@ -1,14 +1,12 @@
 package register
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	gonet "net"
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 	"unsafe"
 
 	"github.com/jaypipes/ghw"
@@ -19,7 +17,6 @@ import (
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/vishvananda/netlink"
-	"golang.org/x/sync/errgroup"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
@@ -120,25 +117,33 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 
 	// now attach neighbors, this will wait up to 2*tx-intervall
 	// if during this timeout not all required neighbors where found abort and reboot.
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	g, _ := errgroup.WithContext(ctx)
-	defer cancel()
-	for i := range nics {
-		nic := nics[i]
+	for _, nic := range nics {
+		neighbors, err := r.Network.Neighbors(*nic.Name)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to determine neighbors of interface:%s", *nic.Name)
+		}
+		nic.Neighbors = neighbors
+	}
+	// TODO reactivate parallel version again
+	// ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// g, _ := errgroup.WithContext(ctx)
+	// defer cancel()
+	// for i := range nics {
+	// 	nic := nics[i]
 
-		g.Go(func() error {
-			neighbors, err := r.Network.Neighbors(*nic.Name)
-			if err != nil {
-				return errors.Wrapf(err, "unable to determine neighbors of interface:%s", *nic.Name)
-			}
-			nic.Neighbors = neighbors
-			return nil
-		})
-	}
-	err = g.Wait()
-	if err != nil {
-		log.Info("register", "neighbor detection failed", err)
-	}
+	// 	g.Go(func() error {
+	// 		neighbors, err := r.Network.Neighbors(*nic.Name)
+	// 		if err != nil {
+	// 			return errors.Wrapf(err, "unable to determine neighbors of interface:%s", *nic.Name)
+	// 		}
+	// 		nic.Neighbors = neighbors
+	// 		return nil
+	// 	})
+	// }
+	// err = g.Wait()
+	// if err != nil {
+	// 	log.Info("register", "neighbor detection failed", err)
+	// }
 
 	hw.Nics = nics
 	hw.UUID = r.MachineUUID
