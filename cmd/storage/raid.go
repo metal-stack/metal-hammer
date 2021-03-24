@@ -8,7 +8,7 @@ import (
 
 func ActivateRaid() error {
 	log.Info("activate sw raid devices if any")
-	err := os.ExecuteCommand(command.MDADM, "-A", "s")
+	err := os.ExecuteCommand(command.MDADM, "-A", "-s")
 	if err != nil {
 		log.Error("wipe", "unable to activate sw raid devices", err)
 		return err
