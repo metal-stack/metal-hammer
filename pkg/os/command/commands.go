@@ -8,7 +8,7 @@ import (
 const (
 	BlkID    = "blkid"
 	DD       = "dd"
-	DMRaid   = "dmraid"
+	MDADM    = "mdadm"
 	Ethtool  = "ethtool"
 	HDParm   = "hdparm"
 	IPMITool = "ipmitool"
@@ -25,7 +25,7 @@ const (
 var commands = []string{
 	BlkID,
 	DD,
-	DMRaid,
+	MDADM,
 	Ethtool,
 	HDParm,
 	IPMITool,

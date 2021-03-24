@@ -7,10 +7,10 @@ import (
 )
 
 func ActivateRaid() error {
-	log.Info("activate dmraid devices if any")
-	err := os.ExecuteCommand(command.DMRaid, "-a", "y")
+	log.Info("activate sw raid devices if any")
+	err := os.ExecuteCommand(command.MDADM, "-A", "s")
 	if err != nil {
-		log.Error("wipe", "unable to activate dmraid devices", err)
+		log.Error("wipe", "unable to activate sw raid devices", err)
 		return err
 	}
 	return nil

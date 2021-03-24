@@ -138,6 +138,19 @@ var (
 			},
 		},
 	}
+	intelRaidDisk = Disk{
+		Partitions: []*Partition{
+			{
+				Label:      "root",
+				Number:     1,
+				MountPoint: "/",
+				Filesystem: EXT4,
+				GPTType:    GPTLinux,
+				Size:       -1,
+				Properties: make(map[string]string),
+			},
+		},
+	}
 )
 
 // String for a Partition
@@ -156,7 +169,8 @@ func primaryDeviceBySize(sizeID string, disks []*models.ModelsV1MachineBlockDevi
 	case "y1-medium-x86":
 		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}
 	case "s3-large-x86":
-		return PrimaryDevice{DeviceName: "/dev/dm-0", PartitionPrefix: ""}
+		// TODO switch back to dm-0
+		return PrimaryDevice{DeviceName: "/dev/sda", PartitionPrefix: ""}
 	default:
 		log.Info("getdisk", "sizeID unknown, try to guess disk", sizeID)
 		deviceName := guessDisk(disks)
@@ -212,6 +226,9 @@ func guessDisk(disks []*models.ModelsV1MachineBlockDevice) string {
 func GetDisk(imageID string, size *models.ModelsV1SizeResponse, disks []*models.ModelsV1MachineBlockDevice) Disk {
 	log.Info("getdisk", "imageID", imageID)
 	disk := diskByImage(imageID)
+	// if *size.ID == "s3-large-x86" {
+	// 	disk = intelRaidDisk
+	// }
 
 	primaryDevice := primaryDeviceBySize(*size.ID, disks)
 	disk.Device = primaryDevice.DeviceName
