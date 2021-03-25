@@ -7,6 +7,7 @@ ENV UROOT_GIT_SHA_OR_TAG=v7.0.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
+	dmraid \
 	dosfstools \
 	e2fsprogs \
 	ethtool \
