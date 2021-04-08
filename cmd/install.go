@@ -305,11 +305,13 @@ func (h *Hammer) writeLLDPADConfig() error {
 		MachineUUID: h.Spec.MachineUUID,
 		Timestamp:   time.Now().Format(time.RFC3339),
 	}
-	err := os.MkdirAll("/var/lib/lldpad/", 0755)
+	configdir := path.Join(h.ChrootPrefix, "var", "lib", "lldpad")
+	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
 		return fmt.Errorf("unable to create lldpd directory:%w", err)
 	}
-	f, err := os.OpenFile("/var/lib/lldpad/lldpad.conf.metal", os.O_RDWR|os.O_CREATE, 0600)
+	configfile := path.Join(configdir, "lldpad.conf")
+	f, err := os.OpenFile(configfile, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		return fmt.Errorf("unable to create lldapd.conf:%w", err)
 	}
@@ -322,7 +324,7 @@ func (h *Hammer) writeLLDPADConfig() error {
 	if err != nil {
 		return err
 	}
-	content, err := ioutil.ReadFile("/var/lib/lldpad/lldpad.conf.metal")
+	content, err := ioutil.ReadFile(configfile)
 	if err != nil {
 		return err
 	}
