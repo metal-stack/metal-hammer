@@ -10,7 +10,7 @@ func ActivateRaid() error {
 	// err := os.ExecuteCommand(command.MDADM, "-A", "-s")
 	err := os.ExecuteCommand("dmraid", "-a", "y")
 	if err != nil {
-		log.Error("wipe", "unable to activate sw raid devices", err)
+		log.Warn("wipe", "unable to activate sw raid devices", err)
 		return err
 	}
 	return nil

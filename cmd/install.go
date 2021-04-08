@@ -299,6 +299,7 @@ lldp :
 `
 
 func (h *Hammer) writeLLDPADConfig() error {
+	log.Info("write lldpad config")
 	t := template.Must(template.New("lldpad.conf").Parse(lldpadconf))
 	c := &InstallerConfig{
 		MachineUUID: h.Spec.MachineUUID,
@@ -317,5 +318,14 @@ func (h *Hammer) writeLLDPADConfig() error {
 		_ = f.Close()
 	}()
 
-	return t.Execute(f, c)
+	err = t.Execute(f, c)
+	if err != nil {
+		return err
+	}
+	content, err := ioutil.ReadFile("/var/lib/lldpad/lldpad.conf")
+	if err != nil {
+		return err
+	}
+	log.Info("wrote lldpad.conf", "content", string(content))
+	return nil
 }
