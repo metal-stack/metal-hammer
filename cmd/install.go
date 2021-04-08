@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"text/template"
 	"time"
 
 	"github.com/metal-stack/metal-hammer/cmd/utils"
@@ -93,6 +95,11 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 	err := h.writeInstallerConfig(machine, nics)
 	if err != nil {
 		return nil, errors.Wrap(err, "writing configuration install.yaml failed")
+	}
+
+	err = h.writeLLDPADConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "writing lldpad configuration failed")
 	}
 
 	err = h.writeDiskConfig()
@@ -245,4 +252,69 @@ func nicsWithNeighbors(nics []*models.ModelsV1MachineNicExtended) []*models.Mode
 		}
 	}
 	return result
+}
+
+const lldpadconf = `
+lldp :
+{
+  lan0 :
+  {
+    adminStatus = 3;
+    tlvid00000003 :
+    {
+      enableTx = true;
+      info = 10;
+    };
+    tlvid00000005 :
+    {
+      enableTx = true;
+      info = "{{.MachineUUID}}";
+    };
+    tlvid00000006 :
+    {
+      enableTx = true;
+      info = "provisioned since {{.Timestamp}}";
+    };
+  };
+  lan1 :
+  {
+    adminStatus = 3;
+    tlvid00000003 :
+    {
+      enableTx = true;
+      info = 10;
+    };
+    tlvid00000005 :
+    {
+      enableTx = true;
+      info = "{{.MachineUUID}}";
+    };
+    tlvid00000006 :
+    {
+      enableTx = true;
+      info = "provisioned since {{.Timestamp}}";
+    };
+  };
+};
+`
+
+func (h *Hammer) writeLLDPADConfig() error {
+	t := template.Must(template.New("lldpad.conf").Parse(lldpadconf))
+	c := &InstallerConfig{
+		MachineUUID: h.Spec.MachineUUID,
+		Timestamp:   time.Now().Format(time.RFC3339),
+	}
+	err := os.MkdirAll("/var/lib/lldpad/", 0755)
+	if err != nil {
+		return fmt.Errorf("unable to create lldpd directory:%w", err)
+	}
+	f, err := os.OpenFile("/var/lib/lldpad/lldpad.conf", os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		return fmt.Errorf("unable to create lldapd.conf:%w", err)
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	return t.Execute(f, c)
 }
