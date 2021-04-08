@@ -309,7 +309,7 @@ func (h *Hammer) writeLLDPADConfig() error {
 	if err != nil {
 		return fmt.Errorf("unable to create lldpd directory:%w", err)
 	}
-	f, err := os.OpenFile("/var/lib/lldpad/lldpad.conf", os.O_RDWR|os.O_CREATE, 0600)
+	f, err := os.OpenFile("/var/lib/lldpad/lldpad.conf.metal", os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		return fmt.Errorf("unable to create lldapd.conf:%w", err)
 	}
@@ -322,7 +322,7 @@ func (h *Hammer) writeLLDPADConfig() error {
 	if err != nil {
 		return err
 	}
-	content, err := ioutil.ReadFile("/var/lib/lldpad/lldpad.conf")
+	content, err := ioutil.ReadFile("/var/lib/lldpad/lldpad.conf.metal")
 	if err != nil {
 		return err
 	}
