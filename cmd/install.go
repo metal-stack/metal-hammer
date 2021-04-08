@@ -313,6 +313,7 @@ func (h *Hammer) writeLLDPADConfig() error {
 		return fmt.Errorf("unable to create lldapd.conf:%w", err)
 	}
 	defer func() {
+		_ = f.Sync()
 		_ = f.Close()
 	}()
 
