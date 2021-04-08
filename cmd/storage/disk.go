@@ -19,11 +19,15 @@ const (
 	EXT4 = FSType("ext4")
 	// SWAP is for the swap partition
 	SWAP = FSType("swap")
+	// None
+	NONE = FSType("none")
 
 	// GPTBoot EFI Boot Partition
 	GPTBoot = GPTType("ef00")
 	// GPTLinux Linux Partition
 	GPTLinux = GPTType("8300")
+	// GPTLinux Linux Partition
+	GPTLinuxLVM = GPTType("8e00")
 	// EFISystemPartition see https://en.wikipedia.org/wiki/EFI_system_partition
 	EFISystemPartition = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 	// GIB bytes of a Gigabyte
@@ -169,6 +173,15 @@ var (
 				Properties: make(map[string]string),
 			},
 			// Keep room for a additional Partition to be used by LVM
+			{
+				Label:      "vgroot",
+				Number:     4,
+				MountPoint: "",
+				Filesystem: NONE,
+				GPTType:    GPTLinuxLVM,
+				Size:       -1,
+				Properties: make(map[string]string),
+			},
 		},
 	}
 )
