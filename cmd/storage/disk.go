@@ -138,17 +138,37 @@ var (
 			},
 		},
 	}
-	intelRaidDisk = Disk{
+	s3LargeDisk = Disk{
 		Partitions: []*Partition{
 			{
-				Label:      "root",
+				Label:      "efi",
 				Number:     1,
+				MountPoint: "/boot/efi",
+				Filesystem: VFAT,
+				GPTType:    GPTBoot,
+				GPTGuid:    EFISystemPartition,
+				Size:       300,
+				Properties: make(map[string]string),
+			},
+			{
+				Label:      "root",
+				Number:     2,
 				MountPoint: "/",
 				Filesystem: EXT4,
 				GPTType:    GPTLinux,
-				Size:       -1,
+				Size:       5000,
 				Properties: make(map[string]string),
 			},
+			{
+				Label:      "varlib",
+				Number:     3,
+				MountPoint: "/var/lib",
+				Filesystem: EXT4,
+				GPTType:    GPTLinux,
+				Size:       10000,
+				Properties: make(map[string]string),
+			},
+			// Keep room for a additional Partition to be used by LVM
 		},
 	}
 )
@@ -226,9 +246,10 @@ func guessDisk(disks []*models.ModelsV1MachineBlockDevice) string {
 func GetDisk(imageID string, size *models.ModelsV1SizeResponse, disks []*models.ModelsV1MachineBlockDevice) Disk {
 	log.Info("getdisk", "imageID", imageID)
 	disk := diskByImage(imageID)
-	// if *size.ID == "s3-large-x86" {
-	// 	disk = intelRaidDisk
-	// }
+	// TODO hack, must be moved to metal-api as all other code here as well
+	if *size.ID == "s3-large-x86" {
+		disk = s3LargeDisk
+	}
 
 	primaryDevice := primaryDeviceBySize(*size.ID, disks)
 	disk.Device = primaryDevice.DeviceName
