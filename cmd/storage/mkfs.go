@@ -60,6 +60,8 @@ func assembleMKFSCommand(p *Partition) (string, []string, error) {
 		if p.Label != "" {
 			args = append(args, "-L", p.Label)
 		}
+	case NONE:
+		// noop
 	default:
 		return "", nil, errors.Errorf("unsupported filesystem format: %q", p.Filesystem)
 	}

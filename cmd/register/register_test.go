@@ -89,6 +89,7 @@ func Test_readHardwareDetails(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Register{
 				Client:      tt.fields.Client,
@@ -121,6 +122,7 @@ func TestHammer_readIPMIDetails(t *testing.T) {
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := readIPMIDetails("00:00:00:00:00:01", nil)
 			if (err != nil) != tt.wantErr {

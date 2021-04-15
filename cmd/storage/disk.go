@@ -193,7 +193,6 @@ func primaryDeviceBySize(sizeID string, disks []*models.ModelsV1MachineBlockDevi
 	case "y1-medium-x86":
 		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}
 	case "s3-large-x86":
-		// TODO switch back to dm-0
 		return PrimaryDevice{DeviceName: "/dev/sda", PartitionPrefix: ""}
 	default:
 		log.Info("getdisk", "sizeID unknown, try to guess disk", sizeID)

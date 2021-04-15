@@ -53,6 +53,7 @@ func Test_assembleMKFSCommand(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			mkfs, mkfsargs, err := assembleMKFSCommand(tt.partition.p)
 			if (err != nil) != tt.wantErr {

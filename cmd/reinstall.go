@@ -33,7 +33,6 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 		return false, errors.New("machine is not yet ready for reinstallations, too risky to wipe disks")
 	}
 	var currentPrimaryDiskName string
-	var err error
 	if m.Allocation.BootInfo.PrimaryDisk != nil && *m.Allocation.BootInfo.PrimaryDisk != "" {
 		currentPrimaryDiskName = sanitizeDisk(*m.Allocation.BootInfo.PrimaryDisk)
 	} else {
