@@ -34,6 +34,7 @@ func WipeDisks() error {
 	g, _ := errgroup.WithContext(context.Background())
 	for _, disk := range disks {
 		disk := disk
+		// properties is guaranteed to be not nil
 		properties, err := FetchBlockIDProperties(fmt.Sprintf("/dev/%s", disk.Name))
 		if err != nil {
 			log.Warn("failed to detect disk properties", "error", err)
@@ -43,11 +44,12 @@ func WipeDisks() error {
 			log.Info("skip raid member", "disk", disk.Name)
 			continue
 		}
+		if strings.HasPrefix(disk.Name, DiskPrefixToIgnore) {
+			log.Info("skip because in ignorelist", "disk", disk.Name)
+			continue
+		}
 
 		g.Go(func() error {
-			if strings.HasPrefix(disk.Name, DiskPrefixToIgnore) {
-				return nil
-			}
 			return WipeDisk(disk)
 		})
 	}
