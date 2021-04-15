@@ -77,7 +77,7 @@ vagrant-destroy:
 	vagrant destroy -f
 
 vagrant-up: vagrant-destroy
-	vagrant up && virsh console metal-hammer_pxeclient
+	vagrant up && virsh console metal-hammerpxeclient
 
 # TODO make this work as with vagrant as a lightweight alternative.
 # networking is not working atm.
@@ -96,5 +96,5 @@ qemu-up:
           IMAGE_URL=http://192.168.121.1:4711/images/ubuntu/19.04/img.tar.lz4  \
           DEBUG=1  \
           BGP=1" \
-		-kernel metal-hammer-kernel \
+		-kernel metal-kernel \
 		-initrd metal-hammer-initrd.img.lz4
