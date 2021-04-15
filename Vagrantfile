@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 current_file_path = File.dirname(__FILE__)
-kernel_path = File.join(current_file_path, "metal-hammer-kernel")
+kernel_path = File.join(current_file_path, "metal-kernel")
 initrd_path = File.join(current_file_path, "metal-hammer-initrd.img.lz4")
 
 Vagrant.configure("2") do |config|
@@ -37,7 +37,7 @@ Vagrant.configure("2") do |config|
           "METAL_CORE_ADDRESS=192.168.121.1:4712 " \
           "IMAGE_ID=default " \
           "SIZE_ID=v1-small-x86 " \
-          "IMAGE_URL=http://192.168.121.1:4711/images/ubuntu/19.04/img.tar.lz4 " \
+          "IMAGE_URL=http://192.168.121.1:4711/images/ubuntu/20.04/img.tar.lz4 " \
           "DEBUG=1 " \
           "BGP=1"
       domain.loader = "/usr/share/OVMF/OVMF_CODE.fd"

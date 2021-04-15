@@ -52,6 +52,7 @@ func Test_assembleSGDiskCommand(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := assembleSGDiskCommand(tt.disk.disk); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("assembleSGDiskCommand() = %v, want %v", got, tt.want)

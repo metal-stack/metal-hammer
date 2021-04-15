@@ -19,11 +19,15 @@ const (
 	EXT4 = FSType("ext4")
 	// SWAP is for the swap partition
 	SWAP = FSType("swap")
+	// None
+	NONE = FSType("none")
 
 	// GPTBoot EFI Boot Partition
 	GPTBoot = GPTType("ef00")
 	// GPTLinux Linux Partition
 	GPTLinux = GPTType("8300")
+	// GPTLinux Linux Partition
+	GPTLinuxLVM = GPTType("8e00")
 	// EFISystemPartition see https://en.wikipedia.org/wiki/EFI_system_partition
 	EFISystemPartition = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 	// GIB bytes of a Gigabyte
@@ -138,6 +142,39 @@ var (
 			},
 		},
 	}
+	s3LargeDisk = Disk{
+		Partitions: []*Partition{
+			{
+				Label:      "efi",
+				Number:     1,
+				MountPoint: "/boot/efi",
+				Filesystem: VFAT,
+				GPTType:    GPTBoot,
+				GPTGuid:    EFISystemPartition,
+				Size:       300,
+				Properties: make(map[string]string),
+			},
+			{
+				Label:      "root",
+				Number:     2,
+				MountPoint: "/",
+				Filesystem: EXT4,
+				GPTType:    GPTLinux,
+				Size:       50000,
+				Properties: make(map[string]string),
+			},
+			// Keep room for a additional Partition to be used by LVM
+			{
+				Label:      "vgroot",
+				Number:     3,
+				MountPoint: "",
+				Filesystem: NONE,
+				GPTType:    GPTLinuxLVM,
+				Size:       -1,
+				Properties: make(map[string]string),
+			},
+		},
+	}
 )
 
 // String for a Partition
@@ -155,6 +192,8 @@ func primaryDeviceBySize(sizeID string, disks []*models.ModelsV1MachineBlockDevi
 		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}
 	case "y1-medium-x86":
 		return PrimaryDevice{DeviceName: "/dev/nvme0n1", PartitionPrefix: "p"}
+	case "s3-large-x86":
+		return PrimaryDevice{DeviceName: "/dev/sda", PartitionPrefix: ""}
 	default:
 		log.Info("getdisk", "sizeID unknown, try to guess disk", sizeID)
 		deviceName := guessDisk(disks)
@@ -210,6 +249,10 @@ func guessDisk(disks []*models.ModelsV1MachineBlockDevice) string {
 func GetDisk(imageID string, size *models.ModelsV1SizeResponse, disks []*models.ModelsV1MachineBlockDevice) Disk {
 	log.Info("getdisk", "imageID", imageID)
 	disk := diskByImage(imageID)
+	// TODO hack, must be moved to metal-api as all other code here as well
+	if *size.ID == "s3-large-x86" {
+		disk = s3LargeDisk
+	}
 
 	primaryDevice := primaryDeviceBySize(*size.ID, disks)
 	disk.Device = primaryDevice.DeviceName

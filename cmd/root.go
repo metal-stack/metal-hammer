@@ -73,6 +73,13 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 
 	hammer.Spec.ConsolePassword = password.Generate(16)
 
+	grpcClient, err := NewGrpcClient(certsClient, eventEmitter)
+	if err != nil {
+		log.Error("failed to fetch GRPC certificates", "error", err)
+		return eventEmitter, err
+	}
+	hammer.GrpcClient = grpcClient
+
 	err = hammer.createBmcSuperuser()
 	if err != nil {
 		log.Error("failed to update bmc superuser password", "error", err)
@@ -114,13 +121,6 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	if !spec.DevMode && err != nil {
 		return eventEmitter, errors.Wrap(err, "register")
 	}
-
-	grpcClient, err := NewGrpcClient(certsClient, eventEmitter)
-	if err != nil {
-		log.Error("failed to fetch GRPC certificates", "error", err)
-		return eventEmitter, err
-	}
-	hammer.GrpcClient = grpcClient
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
 	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {

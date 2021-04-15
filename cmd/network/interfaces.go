@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/metal-stack/go-lldpd/pkg/lldp"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
-	"github.com/metal-stack/metal-hammer/pkg/lldp"
 	"github.com/metal-stack/v"
 
 	log "github.com/inconshreveable/log15"

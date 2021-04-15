@@ -40,6 +40,9 @@ func (disk Disk) MountPartitions(prefix string) error {
 	partitions := disk.SortByMountPoint()
 
 	for _, p := range partitions {
+		if p.Filesystem == NONE {
+			continue
+		}
 		err := p.Mount(prefix, false)
 		if err != nil {
 			return err

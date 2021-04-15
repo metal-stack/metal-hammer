@@ -89,7 +89,7 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 	}
 }
 
-var buggyIntelNicDriverNames = []string{"i40e", "ice"}
+var buggyIntelNicDriverNames = []string{"i40e"}
 
 // stopFirmwareLLDP stop Firmeware LLDP not persistent over reboots, only during runtime.
 // mount -t debugfs none /sys/kernel/debug
@@ -98,7 +98,7 @@ var buggyIntelNicDriverNames = []string{"i40e", "ice"}
 // or a loop over all directories in /sys/kernel/debug/i40e/*/command
 func (e *Ethtool) stopFirmwareLLDP() {
 	for _, driver := range buggyIntelNicDriverNames {
-		log.Info("ethtool", "stopFirmwareLLDP", "driver", driver)
+		log.Info("ethtool", "stopFirmwareLLDP for driver", driver)
 		debugFSPath := path.Join("/sys/kernel/debug", driver)
 		err := filepath.Walk(debugFSPath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
