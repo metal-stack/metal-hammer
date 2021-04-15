@@ -18,7 +18,7 @@ require (
 	github.com/jaypipes/ghw v0.7.0
 	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/metal-stack/go-hal v0.3.0
-	github.com/metal-stack/go-lldpd v0.2.6-0.20210414143636-73a3b67dc964
+	github.com/metal-stack/go-lldpd v0.3.1
 	github.com/metal-stack/metal-api v0.14.1
 	github.com/metal-stack/metal-lib v0.7.3
 	github.com/metal-stack/v v1.0.3
