@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -29,20 +28,14 @@ func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse
 
 // wipe only the disk that has the OS installed on one of its partitions, keep all other disks untouched
 func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainMetalHammerRegisterMachineRequest, eventEmitter *event.EventEmitter) (bool, error) {
-	if !isValidBootInfo(m) {
-		return false, errors.New("machine is not yet ready for reinstallations, too risky to wipe disks")
-	}
-	var currentPrimaryDiskName string
-	if m.Allocation.BootInfo.PrimaryDisk != nil && *m.Allocation.BootInfo.PrimaryDisk != "" {
-		currentPrimaryDiskName = sanitizeDisk(*m.Allocation.BootInfo.PrimaryDisk)
-	} else {
-		h.Disk = storage.GetDisk(*m.Allocation.BootInfo.ImageID, m.Size, hw.Disks)
-		currentPrimaryDiskName = sanitizeDisk(h.Disk.Device)
-	}
-	h.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
-	primaryDiskName := sanitizeDisk(h.Disk.Device)
-	if currentPrimaryDiskName != primaryDiskName {
-		return false, fmt.Errorf("current primary disk %s differs from the one that would be taken for the new OS installation %s", currentPrimaryDiskName, primaryDiskName)
+	// FIXME PrimaryDisk should be marked in the FilesystemLayout and then not be wiped during reinstallation
+	// Disk.WipeOnReinstall must be evaluated
+
+	primaryDiskName := ""
+	for _, disk := range h.FilesystemLayout.Disks {
+		if disk.WipeOnReinstall != nil && *disk.WipeOnReinstall && disk.Device != nil {
+			primaryDiskName = *disk.Device
+		}
 	}
 
 	block, err := ghw.Block()
@@ -57,16 +50,14 @@ func (h *Hammer) reinstall(m *models.ModelsV1MachineResponse, hw *models.DomainM
 			break
 		}
 	}
-	if primaryDisk == nil {
-		log.Warn("Unable to find primary disk", "primary disk", primaryDiskName)
-		return false, errors.Wrapf(err, "unable to find primary disk %s", primaryDiskName)
-	}
 
-	log.Info("Wipe primary disk", "primary disk", primaryDisk.Name)
-	err = storage.WipeDisk(primaryDisk)
-	if err != nil {
-		log.Error("failed to wipe primary disk", "error", err)
-		return false, errors.Wrap(err, "wipe")
+	if primaryDisk != nil {
+		log.Info("Wipe primary disk", "primary disk", primaryDisk)
+		err := storage.WipeDisk(primaryDisk)
+		if err != nil {
+			log.Error("failed to wipe primary disk", "error", err)
+			return false, errors.Wrap(err, "wipe")
+		}
 	}
 
 	return true, h.installImage(eventEmitter, m, hw.Nics)

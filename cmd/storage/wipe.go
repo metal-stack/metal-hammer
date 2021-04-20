@@ -18,6 +18,8 @@ import (
 var (
 	nvmeCommand = command.NVME
 	ddCommand   = command.DD
+	// DiskPrefixToIgnore disks with this prefix will not be reported and wiped.
+	DiskPrefixToIgnore = "ram"
 )
 
 // WipeDisks will erase all content and partitions of all existing Disks
@@ -96,7 +98,7 @@ func insecureErase(device string, bytes uint64) error {
 
 func discard(device string) error {
 	log.Info("wipe", "disk", device, "message", "discard existing data")
-	err := os.ExecuteCommand(ext4MkFsCommand, "-F", "-E", "discard", device)
+	err := os.ExecuteCommand(command.MKFSExt4, "-F", "-E", "discard", device)
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "discard of existing data failed", "error", err)
 		return err

@@ -42,14 +42,3 @@ func FetchBlockIDProperties(partitionDevice string) (map[string]string, error) {
 	}
 	return props, nil
 }
-
-// FetchBlockIDProperties use blkid to determine more properties of the partition
-func (p *Partition) fetchBlockIDProperties() error {
-	props, err := FetchBlockIDProperties(p.Device)
-	if err != nil {
-		return err
-	}
-
-	p.Properties = props
-	return nil
-}

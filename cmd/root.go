@@ -26,13 +26,13 @@ import (
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
-	Spec         *Specification
-	Hal          hal.InBand
-	Client       machine.ClientService
-	GrpcClient   *GrpcClient
-	EventEmitter *event.EventEmitter
-	Disk         storage.Disk
-	LLDPClient   *network.LLDPClient
+	Spec             *Specification
+	Hal              hal.InBand
+	Client           machine.ClientService
+	GrpcClient       *GrpcClient
+	EventEmitter     *event.EventEmitter
+	LLDPClient       *network.LLDPClient
+	FilesystemLayout *models.ModelsV1FilesystemLayoutResponse
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress          string
 	Started            time.Time
@@ -240,7 +240,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 
 	log.Info("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 
-	hammer.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
+	hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 	err = hammer.installImage(eventEmitter, m, hw.Nics)
 	return eventEmitter, err
 }
@@ -256,24 +256,24 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 	}
 
 	var osPartition string
-	for _, p := range h.Disk.Partitions {
-		if p.MountPoint == "/" {
-			osPartition = p.Device
+	for _, f := range h.FilesystemLayout.Filesystems {
+		if f.Path != nil && *f.Path == "/" && f.Device != nil {
+			osPartition = *f.Device
 			break
 		}
 	}
-	primaryDisk := sanitizeDisk(h.Disk.Device)
 	rep := &report.Report{
 		MachineUUID:     h.Spec.MachineUUID,
 		Client:          h.Client,
 		ConsolePassword: h.Spec.ConsolePassword,
-		PrimaryDisk:     primaryDisk,
-		OSPartition:     osPartition,
-		Initrd:          info.Initrd,
-		Cmdline:         info.Cmdline,
-		Kernel:          info.Kernel,
-		BootloaderID:    info.BootloaderID,
-		InstallError:    err,
+		// FIXME handle this
+		// PrimaryDisk:     primaryDisk,
+		OSPartition:  osPartition,
+		Initrd:       info.Initrd,
+		Cmdline:      info.Cmdline,
+		Kernel:       info.Kernel,
+		BootloaderID: info.BootloaderID,
+		InstallError: err,
 	}
 
 	err = rep.ReportInstallation()
