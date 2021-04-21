@@ -126,9 +126,6 @@ func (f *Filesystem) createPartitions() error {
 			if p.GPTType != nil {
 				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", p.Number, *p.GPTType))
 			}
-			if p.GUID != nil {
-				opts = append(opts, fmt.Sprintf("--partition-guid=%d:%s", p.Number, *p.GUID))
-			}
 		}
 		if disk.Device != nil {
 			opts = append(opts, *disk.Device)

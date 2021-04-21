@@ -16,7 +16,7 @@ func FetchBlockIDProperties(partitionDevice string) (map[string]string, error) {
 	}
 	out, err := exec.Command(path, "-o", "export", partitionDevice).CombinedOutput()
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to execute %s", command.BlkID)
+		return nil, errors.Wrapf(err, "unable to execute %s output:%s", command.BlkID, out)
 	}
 
 	// output of

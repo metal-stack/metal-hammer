@@ -218,9 +218,6 @@
         "GPTType": {
           "type": "string"
         },
-        "GUID": {
-          "type": "string"
-        },
         "Label": {
           "type": "string"
         },
@@ -235,7 +232,6 @@
       },
       "required": [
         "GPTType",
-        "GUID",
         "Label",
         "Number",
         "Size"
