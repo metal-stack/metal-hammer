@@ -149,8 +149,12 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 		}
 		primary := false // not allocated yet
 		size := int64(disk.SizeBytes)
+		diskName := disk.Name
+		if !strings.HasPrefix(diskName, "/dev/") {
+			diskName = fmt.Sprintf("/dev/%s", disk.Name)
+		}
 		blockDevice := &models.ModelsV1MachineBlockDevice{
-			Name:       &disk.Name,
+			Name:       &diskName,
 			Size:       &size,
 			Primary:    &primary,
 			Partitions: parts,
