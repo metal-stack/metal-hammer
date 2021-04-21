@@ -55,8 +55,9 @@ func (fs fstabEntry) String() string {
 
 func New(chroot string, config models.ModelsV1FilesystemLayoutResponse) *Filesystem {
 	return &Filesystem{
-		config: config,
-		chroot: chroot,
+		config:       config,
+		chroot:       chroot,
+		fstabEntries: fstabEntries{},
 	}
 }
 
@@ -85,7 +86,7 @@ func (f *Filesystem) Run() error {
 	if err != nil {
 		return fmt.Errorf("mount special filesystems failed:%w", err)
 	}
-
+	// FIXME we should expose this to enable call after install.sh to be compatible with old images
 	err = f.createFSTab()
 	if err != nil {
 		return fmt.Errorf("fstab creation failed:%w", err)
@@ -107,7 +108,9 @@ func (f *Filesystem) createPartitions() error {
 	for _, disk := range f.config.Disks {
 		opts := []string{}
 
-		opts = append(opts, "--zap-all")
+		if disk.WipeOnReinstall != nil && *disk.WipeOnReinstall {
+			opts = append(opts, "--zap-all")
+		}
 
 		// TODO sort partitions by number
 		for _, p := range disk.Partitions {
@@ -169,9 +172,7 @@ func (f *Filesystem) createRaids() error {
 			args = append(args, string(o))
 		}
 
-		for _, dev := range raid.Devices {
-			args = append(args, dev)
-		}
+		args = append(args, raid.Devices...)
 
 		log.Info("create mdadm raid", "args", args)
 		err := os.ExecuteCommand(command.MDADM, args...)
@@ -189,7 +190,7 @@ func (f *Filesystem) createFilesystems() error {
 	}
 
 	for _, fs := range f.config.Filesystems {
-		if fs.Format == nil {
+		if fs.Format == nil || *fs.Format == "tmpfs" {
 			continue
 		}
 		mkfs := ""
@@ -252,6 +253,32 @@ func (f *Filesystem) mountFilesystems() error {
 			return err
 		}
 		f.mounts = append(f.mounts, path)
+
+		passno := uint(2)
+		spec := ""
+		if *fs.Format == "tmpfs" {
+			spec = *fs.Format
+			passno = 0
+		} else {
+			properties, err := FetchBlockIDProperties(*fs.Device)
+			if err != nil {
+				return err
+			}
+			spec = fmt.Sprintf("UUID=%s", properties["UUID"])
+		}
+		if *fs.Path == "/" {
+			passno = 1
+		}
+
+		fstabEntry := fstabEntry{
+			spec:      spec,
+			file:      *fs.Device,
+			vfsType:   *fs.Format,
+			mountOpts: fs.MountOptions,
+			freq:      0,
+			passno:    passno,
+		}
+		f.fstabEntries = append(f.fstabEntries, fstabEntry)
 	}
 	return nil
 }
@@ -318,8 +345,7 @@ func (f *Filesystem) umountFilesystems() error {
 }
 
 func (f *Filesystem) createFSTab() error {
-	// FIXME
-	return nil
+	return f.fstabEntries.Write(f.chroot)
 }
 
 func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {

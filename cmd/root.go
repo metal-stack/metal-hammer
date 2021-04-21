@@ -129,7 +129,8 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 			err = errors.New("no image specified")
 		} else {
 			log.Info("perform reinstall", "machineID", *m.ID, "imageID", *m.Allocation.Image.ID)
-			primaryDiskWiped, err = hammer.reinstall(m, hw, eventEmitter)
+			err = hammer.installImage(eventEmitter, m, hw.Nics)
+			primaryDiskWiped = true
 		}
 		if err != nil {
 			log.Error("reinstall failed", "error", err)
@@ -255,25 +256,16 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 		return errors.Wrap(err, "install")
 	}
 
-	var osPartition string
-	for _, f := range h.FilesystemLayout.Filesystems {
-		if f.Path != nil && *f.Path == "/" && f.Device != nil {
-			osPartition = *f.Device
-			break
-		}
-	}
+	// FIXME OSPartition and PrimaryDisk are not used anymore, remove from model in metal-api
 	rep := &report.Report{
 		MachineUUID:     h.Spec.MachineUUID,
 		Client:          h.Client,
 		ConsolePassword: h.Spec.ConsolePassword,
-		// FIXME handle this
-		// PrimaryDisk:     primaryDisk,
-		OSPartition:  osPartition,
-		Initrd:       info.Initrd,
-		Cmdline:      info.Cmdline,
-		Kernel:       info.Kernel,
-		BootloaderID: info.BootloaderID,
-		InstallError: err,
+		Initrd:          info.Initrd,
+		Cmdline:         info.Cmdline,
+		Kernel:          info.Kernel,
+		BootloaderID:    info.BootloaderID,
+		InstallError:    err,
 	}
 
 	err = rep.ReportInstallation()

@@ -8,17 +8,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-const blkidCommand = command.BlkID
-
 // FetchBlockIDProperties use blkid to return more properties of the given partition device
 func FetchBlockIDProperties(partitionDevice string) (map[string]string, error) {
-	path, err := exec.LookPath(blkidCommand)
+	path, err := exec.LookPath(command.BlkID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to locate program:%s in path", blkidCommand)
+		return nil, errors.Wrapf(err, "unable to locate program:%s in path", command.BlkID)
 	}
 	out, err := exec.Command(path, "-o", "export", partitionDevice).CombinedOutput()
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to execute %s", blkidCommand)
+		return nil, errors.Wrapf(err, "unable to execute %s", command.BlkID)
 	}
 
 	// output of
