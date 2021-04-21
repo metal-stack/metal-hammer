@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	gos "os"
@@ -24,6 +25,9 @@ type Filesystem struct {
 	// mounts are collected to be able to umount all in reverse order
 	mounts       []string
 	fstabEntries fstabEntries
+	// disk is the legacy disk.json representatio
+	// TODO remove once old images are gone
+	disk Disk
 }
 
 type fstabEntries []fstabEntry
@@ -58,6 +62,7 @@ func New(chroot string, config models.ModelsV1FilesystemLayoutResponse) *Filesys
 		config:       config,
 		chroot:       chroot,
 		fstabEntries: fstabEntries{},
+		disk:         Disk{Device: "legacy", Partitions: []Partition{}},
 	}
 }
 
@@ -86,10 +91,10 @@ func (f *Filesystem) Run() error {
 	if err != nil {
 		return fmt.Errorf("mount special filesystems failed:%w", err)
 	}
-	// FIXME we should expose this to enable call after install.sh to be compatible with old images
-	err = f.createFSTab()
+
+	err = f.createDiskJSON()
 	if err != nil {
-		return fmt.Errorf("fstab creation failed:%w", err)
+		return fmt.Errorf("disk.json creation failed:%w", err)
 	}
 	return nil
 }
@@ -256,11 +261,12 @@ func (f *Filesystem) mountFilesystems() error {
 
 		passno := uint(2)
 		spec := ""
+		properties := map[string]string{"UUID": ""}
 		if *fs.Format == "tmpfs" {
 			spec = *fs.Format
 			passno = 0
 		} else {
-			properties, err := FetchBlockIDProperties(*fs.Device)
+			properties, err = FetchBlockIDProperties(*fs.Device)
 			if err != nil {
 				return err
 			}
@@ -279,6 +285,19 @@ func (f *Filesystem) mountFilesystems() error {
 			passno:    passno,
 		}
 		f.fstabEntries = append(f.fstabEntries, fstabEntry)
+		if fs.Label == nil {
+			continue
+		}
+		// create legacy disk.json
+		switch *fs.Label {
+		case "root", "efi", "varlib":
+			part := Partition{
+				Label:      *fs.Label,
+				Filesystem: *fs.Format,
+				Properties: map[string]string{"UUID": properties["UUID"]},
+			}
+			f.disk.Partitions = append(f.disk.Partitions, part)
+		}
 	}
 	return nil
 }
@@ -344,8 +363,18 @@ func (f *Filesystem) umountFilesystems() error {
 	return nil
 }
 
-func (f *Filesystem) createFSTab() error {
+func (f *Filesystem) CreateFSTab() error {
 	return f.fstabEntries.Write(f.chroot)
+}
+
+func (f *Filesystem) createDiskJSON() error {
+	configdir := path.Join(f.chroot, "etc", "metal")
+	destination := path.Join(configdir, "disk.json")
+	j, err := json.MarshalIndent(f.disk, "", "  ")
+	if err != nil {
+		return errors.Wrap(err, "unable to marshal to json")
+	}
+	return ioutil.WriteFile(destination, j, 0600)
 }
 
 func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {

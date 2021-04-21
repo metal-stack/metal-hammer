@@ -69,6 +69,12 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models
 	if err != nil {
 		return nil, err
 	}
+
+	err = s.CreateFSTab()
+	if err != nil {
+		return nil, err
+	}
+
 	err = s.Umount()
 	if err != nil {
 		return nil, err
