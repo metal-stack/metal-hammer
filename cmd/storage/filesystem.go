@@ -117,7 +117,6 @@ func (f *Filesystem) createPartitions() error {
 			opts = append(opts, "--zap-all")
 		}
 		// TODO sort partitions by number
-
 		for _, p := range disk.Partitions {
 			opts = append(opts, fmt.Sprintf("--new=%d:0:%dM", *p.Number, *p.Size))
 			if p.Label != nil {
@@ -229,6 +228,7 @@ func (f *Filesystem) createFilesystems() error {
 		default:
 			return fmt.Errorf("unsupported filesystem format: %q", *fs.Format)
 		}
+		args = append(args, *fs.Device)
 		log.Info("create filesystem", "args", args)
 		err := os.ExecuteCommand(mkfs, args...)
 		if err != nil {
