@@ -243,7 +243,7 @@ func (f *Filesystem) createFilesystems() error {
 func (f *Filesystem) mountFilesystems() error {
 	fss := []models.ModelsV1Filesystem{}
 	for _, fs := range f.config.Filesystems {
-		if fs.Path == nil || *fs.Path == "" {
+		if fs.Path == nil || *fs.Path == "" || *fs.Format == "tmpfs" {
 			continue
 		}
 		fss = append(fss, *fs)
