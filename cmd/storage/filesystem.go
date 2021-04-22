@@ -116,15 +116,14 @@ func (f *Filesystem) createPartitions() error {
 		if disk.WipeOnReinstall != nil && *disk.WipeOnReinstall {
 			opts = append(opts, "--zap-all")
 		}
-
 		// TODO sort partitions by number
 		for _, p := range disk.Partitions {
-			opts = append(opts, fmt.Sprintf("--new=%d:0:%d", p.Number, p.Size))
+			opts = append(opts, fmt.Sprintf("--new=%d:0:%d", *p.Number, *p.Size))
 			if p.Label != nil {
-				opts = append(opts, fmt.Sprintf("--change-name=%d:%s", p.Number, *p.Label))
+				opts = append(opts, fmt.Sprintf("--change-name=%d:%s", *p.Number, *p.Label))
 			}
 			if p.GPTType != nil {
-				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", p.Number, *p.GPTType))
+				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", *p.Number, *p.GPTType))
 			}
 		}
 		if disk.Device != nil {
