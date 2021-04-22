@@ -117,8 +117,9 @@ func (f *Filesystem) createPartitions() error {
 			opts = append(opts, "--zap-all")
 		}
 		// TODO sort partitions by number
+
 		for _, p := range disk.Partitions {
-			opts = append(opts, fmt.Sprintf("--new=%d:0:%d", *p.Number, *p.Size))
+			opts = append(opts, fmt.Sprintf("--new=%d:0:%dM", *p.Number, *p.Size))
 			if p.Label != nil {
 				opts = append(opts, fmt.Sprintf("--change-name=%d:%s", *p.Number, *p.Label))
 			}
