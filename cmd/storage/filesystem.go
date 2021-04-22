@@ -367,6 +367,15 @@ func (f *Filesystem) CreateFSTab() error {
 func (f *Filesystem) createDiskJSON() error {
 	configdir := path.Join(f.chroot, "etc", "metal")
 	destination := path.Join(configdir, "disk.json")
+
+	if _, err := gos.Stat(configdir); err != nil && gos.IsNotExist(err) {
+		if err := gos.MkdirAll(configdir, 0755); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
 	j, err := json.MarshalIndent(f.disk, "", "  ")
 	if err != nil {
 		return errors.Wrap(err, "unable to marshal to json")
