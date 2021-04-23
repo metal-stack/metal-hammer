@@ -118,7 +118,6 @@ func (f *Filesystem) createPartitions() error {
 		if disk.WipeOnReinstall != nil && *disk.WipeOnReinstall {
 			opts = append(opts, "--zap-all")
 		}
-		// TODO sort partitions by number
 		for _, p := range disk.Partitions {
 			opts = append(opts, fmt.Sprintf("--new=%d:0:%dM", *p.Number, *p.Size))
 			if p.Label != nil {
@@ -277,7 +276,7 @@ func (f *Filesystem) mountFilesystems() error {
 
 		fstabEntry := fstabEntry{
 			spec:      spec,
-			file:      *fs.Device,
+			file:      *fs.Path,
 			vfsType:   *fs.Format,
 			mountOpts: fs.MountOptions,
 			freq:      0,
