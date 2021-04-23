@@ -15,6 +15,7 @@ import (
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
+	"github.com/metal-stack/v"
 	"github.com/pkg/errors"
 )
 
@@ -40,23 +41,6 @@ type fstabEntry struct {
 	mountOpts []string
 	freq      uint
 	passno    uint
-}
-
-func (fss fstabEntries) Write(chroot string) error {
-	log.Info("write fstab", "content", fss.String())
-	content := []byte(fss.String())
-	return ioutil.WriteFile(path.Join(chroot, "/etc/fstab"), content, 0644)
-}
-
-func (fss fstabEntries) String() string {
-	entries := []string{}
-	for _, fs := range fss {
-		entries = append(entries, fs.String())
-	}
-	return strings.Join(entries, "\n")
-}
-func (fs fstabEntry) String() string {
-	return fmt.Sprintf("%s %s %s %s %d %d", fs.spec, fs.file, fs.vfsType, strings.Join(fs.mountOpts, ","), fs.freq, fs.passno)
 }
 
 func New(chroot string, config models.ModelsV1FilesystemLayoutResponse) *Filesystem {
@@ -244,7 +228,7 @@ func (f *Filesystem) createFilesystems() error {
 func (f *Filesystem) mountFilesystems() error {
 	fss := []models.ModelsV1Filesystem{}
 	for _, fs := range f.config.Filesystems {
-		if fs.Path == nil || *fs.Path == "" || *fs.Format == "tmpfs" {
+		if fs.Path == nil || *fs.Path == "" {
 			continue
 		}
 		fss = append(fss, *fs)
@@ -273,12 +257,15 @@ func (f *Filesystem) mountFilesystems() error {
 		if *fs.Path == "/" {
 			passno = 1
 		}
-
+		mountOpts := []string{"defaults"}
+		if len(fs.MountOptions) > 0 {
+			mountOpts = fs.MountOptions
+		}
 		fstabEntry := fstabEntry{
 			spec:      spec,
 			file:      *fs.Path,
 			vfsType:   *fs.Format,
-			mountOpts: fs.MountOptions,
+			mountOpts: mountOpts,
 			freq:      0,
 			passno:    passno,
 		}
@@ -362,7 +349,7 @@ func (f *Filesystem) umountFilesystems() error {
 }
 
 func (f *Filesystem) CreateFSTab() error {
-	return f.fstabEntries.Write(f.chroot)
+	return f.fstabEntries.write(f.chroot)
 }
 
 func (f *Filesystem) createDiskJSON() error {
@@ -386,7 +373,7 @@ func (f *Filesystem) createDiskJSON() error {
 }
 
 func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {
-	if fs.Format == nil || *fs.Format == "swap" || *fs.Format == "" {
+	if fs.Format == nil || *fs.Format == "swap" || *fs.Format == "" || *fs.Format == "tmpfs" {
 		return "", nil
 	}
 	path := filepath.Join(chroot, *fs.Path)
@@ -421,4 +408,21 @@ func optionSliceToString(opts []string, separator string) string {
 		mountOpts[i] = string(o)
 	}
 	return strings.Join(mountOpts, separator)
+}
+
+// write all fstab entries to /etc/fstab inside chroot
+func (fss fstabEntries) write(chroot string) error {
+	entries := []string{}
+	for _, fs := range fss {
+		entries = append(entries, fs.string())
+	}
+	fstab := strings.Join(entries, "\n")
+	header := fmt.Sprintf("# created by metal-hammer: %q\n", v.V)
+	content := header + fstab + "\n"
+	log.Info("write fstab", "content", content)
+	return ioutil.WriteFile(path.Join(chroot, "/etc/fstab"), []byte(content), 0644)
+}
+
+func (fs fstabEntry) string() string {
+	return fmt.Sprintf("%s %s %s %s %d %d", fs.spec, fs.file, fs.vfsType, strings.Join(fs.mountOpts, ","), fs.freq, fs.passno)
 }
