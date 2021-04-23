@@ -43,7 +43,9 @@ type fstabEntry struct {
 }
 
 func (fss fstabEntries) Write(chroot string) error {
-	return ioutil.WriteFile(path.Join(chroot, "/etc/fstab"), []byte(fss.String()), 0644)
+	log.Info("write fstab", "content", fss.String())
+	content := []byte(fss.String())
+	return ioutil.WriteFile(path.Join(chroot, "/etc/fstab"), content, 0644)
 }
 
 func (fss fstabEntries) String() string {
@@ -380,6 +382,7 @@ func (f *Filesystem) createDiskJSON() error {
 	if err != nil {
 		return errors.Wrap(err, "unable to marshal to json")
 	}
+	log.Info("create legacy disk.json", "content", j)
 	return ioutil.WriteFile(destination, j, 0600)
 }
 
