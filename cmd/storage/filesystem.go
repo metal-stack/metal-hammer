@@ -99,7 +99,7 @@ func (f *Filesystem) createPartitions() error {
 	for _, disk := range f.config.Disks {
 		opts := []string{}
 
-		if disk.WipeOnReinstall != nil && *disk.WipeOnReinstall {
+		if disk.Wipeonreinstall != nil && *disk.Wipeonreinstall {
 			opts = append(opts, "--zap-all")
 		}
 		for _, p := range disk.Partitions {
@@ -107,8 +107,8 @@ func (f *Filesystem) createPartitions() error {
 			if p.Label != nil {
 				opts = append(opts, fmt.Sprintf("--change-name=%d:%s", *p.Number, *p.Label))
 			}
-			if p.GPTType != nil {
-				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", *p.Number, *p.GPTType))
+			if p.Gpttype != nil {
+				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", *p.Number, *p.Gpttype))
 			}
 		}
 		if disk.Device != nil {
@@ -130,7 +130,7 @@ func (f *Filesystem) createRaids() error {
 	}
 
 	for _, raid := range f.config.Raid {
-		if raid.Name == nil {
+		if raid.Arrayname == nil {
 			continue
 		}
 		spares := int32(0)
@@ -142,7 +142,7 @@ func (f *Filesystem) createRaids() error {
 			level = *raid.Level
 		}
 		args := []string{
-			"--create", *raid.Name,
+			"--create", *raid.Arrayname,
 			"--force",
 			"--run",
 			"--homehost", "any",
@@ -154,7 +154,7 @@ func (f *Filesystem) createRaids() error {
 			args = append(args, "--spare-devices", fmt.Sprintf("%d", spares))
 		}
 
-		for _, o := range raid.Options {
+		for _, o := range raid.Createoptions {
 			args = append(args, string(o))
 		}
 
@@ -164,7 +164,7 @@ func (f *Filesystem) createRaids() error {
 		err := os.ExecuteCommand(command.MDADM, args...)
 		if err != nil {
 			log.Error("create mdadm raid", "error", err)
-			return errors.Wrapf(err, "unable to create mdadm raid %s", *raid.Name)
+			return errors.Wrapf(err, "unable to create mdadm raid %s", *raid.Arrayname)
 		}
 	}
 	return nil
@@ -181,7 +181,7 @@ func (f *Filesystem) createFilesystems() error {
 		}
 		mkfs := ""
 		args := []string{}
-		args = append(args, fs.Options...)
+		args = append(args, fs.Createoptions...)
 		switch *fs.Format {
 		case "ext3":
 			mkfs = command.MKFSExt3
@@ -258,8 +258,8 @@ func (f *Filesystem) mountFilesystems() error {
 			passno = 1
 		}
 		mountOpts := []string{"defaults"}
-		if len(fs.MountOptions) > 0 {
-			mountOpts = fs.MountOptions
+		if len(fs.Mountoptions) > 0 {
+			mountOpts = fs.Mountoptions
 		}
 		fstabEntry := fstabEntry{
 			spec:      spec,
@@ -385,7 +385,7 @@ func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {
 	} else if err != nil {
 		return "", err
 	}
-	opts := optionSliceToString(fs.MountOptions, ",")
+	opts := optionSliceToString(fs.Mountoptions, ",")
 	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
 	if err != nil {
 		log.Error("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
