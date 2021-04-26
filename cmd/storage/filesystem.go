@@ -368,7 +368,7 @@ func (f *Filesystem) createDiskJSON() error {
 	if err != nil {
 		return errors.Wrap(err, "unable to marshal to json")
 	}
-	log.Info("create legacy disk.json", "content", j)
+	log.Info("create legacy disk.json", "content", string(j))
 	return ioutil.WriteFile(destination, j, 0600)
 }
 
@@ -386,6 +386,7 @@ func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {
 		return "", err
 	}
 	opts := optionSliceToString(fs.Mountoptions, ",")
+	log.Info("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
 	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
 	if err != nil {
 		log.Error("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
