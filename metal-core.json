@@ -276,10 +276,10 @@
     "models.V1FilesystemLayoutConstraints": {
       "properties": {
         "images": {
-          "items": {
+          "additionalProperties": {
             "type": "string"
           },
-          "type": "array"
+          "type": "object"
         },
         "sizes": {
           "items": {
