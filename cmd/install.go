@@ -70,6 +70,8 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models
 		return nil, err
 	}
 
+	// This is executed after installation to be compatible with images which create fstab by their own
+	// TODO can be removed and be done in s.Run() once all images do not create fstab anymore
 	err = s.CreateFSTab()
 	if err != nil {
 		return nil, err
