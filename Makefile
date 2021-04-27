@@ -48,7 +48,7 @@ ramdisk:
 		-files="/sbin/mkswap:sbin/mkswap" \
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
-		-files="/usr/sbin/lvm:sbin/lvm" \
+		-files="/sbin/lvm:sbin/lvm" \
 		-files="/sbin/mdadm:sbin/mdadm" \
 		-files="/sbin/mdmon:sbin/mdmon" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
