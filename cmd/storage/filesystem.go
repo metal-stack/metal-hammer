@@ -313,7 +313,9 @@ func (f *Filesystem) mountFilesystems() error {
 		if err != nil {
 			return err
 		}
-		f.mounts = append(f.mounts, path)
+		if path != "" {
+			f.mounts = append(f.mounts, path)
+		}
 
 		passno := uint(2)
 		spec := ""
@@ -413,6 +415,9 @@ func (f *Filesystem) umountFilesystems() error {
 	}
 	for index := len(f.mounts) - 1; index >= 0; index-- {
 		m := f.mounts[index]
+		if m == "" {
+			continue
+		}
 		log.Info("unmounting", "mountpoint", m)
 		err := syscall.Unmount(m, syscall.MNT_FORCE)
 		if err != nil {
