@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	gos "os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"sort"
@@ -185,6 +186,9 @@ func (f *Filesystem) createLogicalVolumes() error {
 		if vg.Name == nil || *vg.Name == "" {
 			continue
 		}
+		if vgExists(*vg.Name) {
+			continue
+		}
 		args := []string{
 			"vgcreate",
 			"--verbose",
@@ -205,6 +209,9 @@ func (f *Filesystem) createLogicalVolumes() error {
 
 	for _, lv := range f.config.Logicalvolumes {
 		if lv.Name == nil || *lv.Name == "" || lv.Volumegroup == nil || *lv.Volumegroup == "" {
+			continue
+		}
+		if lvExists(*lv.Volumegroup, *lv.Name) {
 			continue
 		}
 
@@ -505,4 +512,24 @@ func (fss fstabEntries) write(chroot string) error {
 
 func (fs fstabEntry) string() string {
 	return fmt.Sprintf("%s %s %s %s %d %d", fs.spec, fs.file, fs.vfsType, strings.Join(fs.mountOpts, ","), fs.freq, fs.passno)
+}
+
+func lvExists(vg string, name string) bool {
+	cmd := exec.Command("lvm", "lvs", vg+"/"+name, "--noheadings", "-o", "lv_name")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Info("unable to list existing volumes", "lv", name, "error", err)
+		return false
+	}
+	return name == strings.TrimSpace(string(out))
+}
+
+func vgExists(vgname string) bool {
+	cmd := exec.Command("lvm", "vgs", vgname, "--noheadings", "-o", "vg_name")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Info("unable to list existing volumegroups", "vg", vgname, "error", err)
+		return false
+	}
+	return vgname == strings.TrimSpace(string(out))
 }
