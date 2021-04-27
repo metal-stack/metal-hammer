@@ -190,9 +190,8 @@ func (f *Filesystem) createLogicalVolumes() error {
 			"--verbose",
 			*vg.Name,
 		}
-		if len(vg.Tags) > 0 {
-			args = append(args, "--tags")
-			args = append(args, vg.Tags...)
+		for _, tag := range vg.Tags {
+			args = append(args, "--addtag", tag)
 		}
 		args = append(args, vg.Devices...)
 
