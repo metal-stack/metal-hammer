@@ -40,17 +40,6 @@ func WipeDisks() error {
 			log.Info("skip because in ignorelist", "disk", disk.Name)
 			continue
 		}
-		// properties is guaranteed to be not nil
-		properties, err := FetchBlockIDProperties(fmt.Sprintf("/dev/%s", disk.Name))
-		if err != nil {
-			log.Warn("failed to detect disk properties", "error", err)
-		}
-		disktype, ok := properties["TYPE"]
-		if ok && strings.Contains(disktype, "isw_raid") {
-			log.Info("skip raid member", "disk", disk.Name)
-			continue
-		}
-
 		g.Go(func() error {
 			return WipeDisk(disk)
 		})

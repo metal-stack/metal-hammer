@@ -49,7 +49,8 @@ ramdisk:
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
 		-files="/sbin/lvm:sbin/lvm" \
-		-files="/etc/lvm:etc/lvm" \
+		-files="/etc/lvm/lvm.conf:etc/lvm/lvm.conf" \
+		-files="lvmlocal.conf:etc/lvm/lvmlocal.conf" \
 		-files="/sbin/mdadm:sbin/mdadm" \
 		-files="/sbin/mdmon:sbin/mdmon" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
@@ -58,7 +59,6 @@ ramdisk:
 		-files="passwd:etc/passwd" \
 		-files="varrun:var/run/keep" \
 		-files="ice.pkg:lib/firmware/intel/ice/ddp/ice.pkg" \
-		-files="lvmlocal.conf:etc/lvm/lvmlocal.conf" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 		-files="sum:sbin/sum" \
