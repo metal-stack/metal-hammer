@@ -64,6 +64,11 @@ func (f *Filesystem) Run() error {
 		return fmt.Errorf("create raids failed:%w", err)
 	}
 
+	err = f.createLogicalVolumes()
+	if err != nil {
+		return fmt.Errorf("create logical volumes failed:%w", err)
+	}
+
 	err = f.createFilesystems()
 	if err != nil {
 		return fmt.Errorf("create filesystems failed:%w", err)
@@ -167,6 +172,76 @@ func (f *Filesystem) createRaids() error {
 			return errors.Wrapf(err, "unable to create mdadm raid %s", *raid.Arrayname)
 		}
 	}
+	return nil
+}
+
+func (f *Filesystem) createLogicalVolumes() error {
+	if len(f.config.Volumegroups) == 0 {
+		return nil
+	}
+
+	pvcount := make(map[string]int)
+	for _, vg := range f.config.Volumegroups {
+		if vg.Name == nil || *vg.Name == "" {
+			continue
+		}
+		args := []string{
+			"vgcreate",
+			"--verbose",
+			*vg.Name,
+		}
+		if len(vg.Tags) > 0 {
+			args = append(args, "--tags")
+			args = append(args, vg.Tags...)
+		}
+		args = append(args, vg.Devices...)
+
+		pvcount[*vg.Name] = len(vg.Devices)
+		err := os.ExecuteCommand(command.LVM, args...)
+		if err != nil {
+			log.Error("vgcreate", "error", err)
+			return errors.Wrapf(err, "unable to create volume group %s", *vg.Name)
+		}
+	}
+
+	for _, lv := range f.config.Logicalvolumes {
+		if lv.Name == nil || *lv.Name == "" || lv.Volumegroup == nil || *lv.Volumegroup == "" {
+			continue
+		}
+
+		args := []string{
+			"lvcreate",
+			"--verbose",
+			"--name", *lv.Name,
+			"--wipesignatures", "y",
+			"--size", fmt.Sprintf("%dm", *lv.Size),
+		}
+
+		lvmtype := "linear"
+		if lv.Lvmtype != nil {
+			lvmtype = *lv.Lvmtype
+		}
+		if pvcount[*lv.Volumegroup] < 2 {
+			log.Warn("volumegroup has only 1 pv, only linear is supported", "lv", *lv.Name, "vg", *lv.Volumegroup)
+			lvmtype = "linear"
+		}
+
+		switch lvmtype {
+		case "linear":
+		case "raid1":
+			args = append(args, "--type", "raid1", "--mirrors", "1", "--nosync")
+		default:
+			return fmt.Errorf("unsupported lvmtype:%s", lvmtype)
+		}
+		args = append(args, *lv.Volumegroup)
+
+		err := os.ExecuteCommand(command.LVM, args...)
+		if err != nil {
+			log.Error("lvcreate", "error", err)
+			return errors.Wrapf(err, "unable to create logical volume %s", *lv.Name)
+		}
+	}
+
 	return nil
 }
 

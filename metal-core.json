@@ -316,12 +316,24 @@
         "id": {
           "type": "string"
         },
+        "logicalvolumes": {
+          "items": {
+            "$ref": "#/definitions/models.V1LogicalVolume"
+          },
+          "type": "array"
+        },
         "name": {
           "type": "string"
         },
         "raid": {
           "items": {
             "$ref": "#/definitions/models.V1Raid"
+          },
+          "type": "array"
+        },
+        "volumegroups": {
+          "items": {
+            "$ref": "#/definitions/models.V1VolumeGroup"
           },
           "type": "array"
         }
@@ -331,7 +343,9 @@
         "disks",
         "filesystems",
         "id",
-        "raid"
+        "logicalvolumes",
+        "raid",
+        "volumegroups"
       ]
     },
     "models.V1ImageResponse": {
@@ -378,6 +392,29 @@
         "features",
         "id",
         "usedby"
+      ]
+    },
+    "models.V1LogicalVolume": {
+      "properties": {
+        "lvmtype": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "size": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "volumegroup": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "lvmtype",
+        "name",
+        "size",
+        "volumegroup"
       ]
     },
     "models.V1MachineAllocation": {
@@ -995,6 +1032,30 @@
       "required": [
         "constraints",
         "id"
+      ]
+    },
+    "models.V1VolumeGroup": {
+      "properties": {
+        "devices": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "devices",
+        "name",
+        "tags"
       ]
     }
   },
