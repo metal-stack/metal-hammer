@@ -234,6 +234,8 @@ func (f *Filesystem) createLogicalVolumes() error {
 
 		switch lvmtype {
 		case "linear":
+		case "striped":
+			args = append(args, "--type", "striped", "--stripes", fmt.Sprintf("%d", pvcount[*lv.Volumegroup]))
 		case "raid1":
 			args = append(args, "--type", "raid1", "--mirrors", "1", "--nosync")
 		default:
