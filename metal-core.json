@@ -193,9 +193,6 @@
         "device": {
           "type": "string"
         },
-        "partitionprefix": {
-          "type": "string"
-        },
         "partitions": {
           "items": {
             "$ref": "#/definitions/models.V1DiskPartition"
@@ -208,7 +205,6 @@
       },
       "required": [
         "device",
-        "partitionprefix",
         "partitions",
         "wipeonreinstall"
       ]
