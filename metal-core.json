@@ -498,15 +498,6 @@
         "name": {
           "type": "string"
         },
-        "partitions": {
-          "items": {
-            "$ref": "#/definitions/models.V1MachineDiskPartition"
-          },
-          "type": "array"
-        },
-        "primary": {
-          "type": "boolean"
-        },
         "size": {
           "format": "int64",
           "type": "integer"
@@ -514,62 +505,6 @@
       },
       "required": [
         "name",
-        "partitions",
-        "primary",
-        "size"
-      ]
-    },
-    "models.V1MachineDiskPartition": {
-      "properties": {
-        "device": {
-          "type": "string"
-        },
-        "filesystem": {
-          "type": "string"
-        },
-        "gptguid": {
-          "type": "string"
-        },
-        "gpttyoe": {
-          "type": "string"
-        },
-        "label": {
-          "type": "string"
-        },
-        "mountoptions": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "mountpoint": {
-          "type": "string"
-        },
-        "number": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "properties": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "size": {
-          "format": "int64",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "device",
-        "filesystem",
-        "gptguid",
-        "gpttyoe",
-        "label",
-        "mountoptions",
-        "mountpoint",
-        "number",
-        "properties",
         "size"
       ]
     },

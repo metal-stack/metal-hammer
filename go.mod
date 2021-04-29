@@ -8,7 +8,7 @@ require (
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/frankban/quicktest v1.11.3 // indirect
 	github.com/go-openapi/errors v0.20.0
-	github.com/go-openapi/runtime v0.19.27
+	github.com/go-openapi/runtime v0.19.28
 	github.com/go-openapi/strfmt v0.20.1
 	github.com/go-openapi/swag v0.19.15
 	github.com/go-openapi/validate v0.20.2
@@ -32,9 +32,9 @@ require (
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
-	golang.org/x/net v0.0.0-20210414194228-064579744ee0 // indirect
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210415045647-66c3f260301c
+	golang.org/x/sys v0.0.0-20210426230700-d19ff857e887
 	google.golang.org/grpc v1.37.0
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/yaml.v2 v2.4.0

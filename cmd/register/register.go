@@ -136,28 +136,14 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 		if strings.HasPrefix(disk.Name, storage.DiskPrefixToIgnore) {
 			continue
 		}
-		var parts []*models.ModelsV1MachineDiskPartition
-		for _, p := range blockInfo.Partitions {
-			size := int64(p.SizeBytes)
-			parts = append(parts, &models.ModelsV1MachineDiskPartition{
-				Filesystem: &p.Type,
-				Device:     &p.Name,
-				Label:      &p.Label,
-				Mountpoint: &p.MountPoint,
-				Size:       &size,
-			})
-		}
-		primary := false // not allocated yet
 		size := int64(disk.SizeBytes)
 		diskName := disk.Name
 		if !strings.HasPrefix(diskName, "/dev/") {
 			diskName = fmt.Sprintf("/dev/%s", disk.Name)
 		}
 		blockDevice := &models.ModelsV1MachineBlockDevice{
-			Name:       &diskName,
-			Size:       &size,
-			Primary:    &primary,
-			Partitions: parts,
+			Name: &diskName,
+			Size: &size,
 		}
 		hw.Disks = append(hw.Disks, blockDevice)
 	}
