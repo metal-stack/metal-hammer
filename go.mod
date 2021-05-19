@@ -17,7 +17,7 @@ require (
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
 	github.com/jaypipes/ghw v0.8.0
 	github.com/mattn/go-runewidth v0.0.12 // indirect
-	github.com/metal-stack/go-hal v0.3.0
+	github.com/metal-stack/go-hal v0.3.2-0.20210519061219-db364a5530cc
 	github.com/metal-stack/go-lldpd v0.3.1
 	github.com/metal-stack/metal-api v0.14.2-0.20210419143005-432e73b48c63
 	github.com/metal-stack/metal-lib v0.8.0
@@ -32,7 +32,6 @@ require (
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
-	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
 	google.golang.org/grpc v1.37.1
