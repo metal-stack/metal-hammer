@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"strings"
 	"time"
 
 	log "github.com/inconshreveable/log15"
@@ -49,28 +48,4 @@ func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped
 	}
 
 	return kernel.RunKexec(bootInfo)
-}
-
-func isValidBootInfo(m *models.ModelsV1MachineResponse) bool {
-	if m.Allocation == nil || m.Allocation.BootInfo == nil {
-		return false
-	}
-
-	pd := m.Allocation.BootInfo.PrimaryDisk
-	if pd != nil && *pd != "" {
-		return true
-	}
-	id := m.Allocation.BootInfo.ImageID
-	if id != nil && *id != "" {
-		return true
-	}
-
-	return false
-}
-
-func sanitizeDisk(disk string) string {
-	if strings.HasPrefix(disk, "/dev/") {
-		return disk[5:]
-	}
-	return disk
 }

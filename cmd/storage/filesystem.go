@@ -90,12 +90,8 @@ func (f *Filesystem) Run() error {
 	}
 	return nil
 }
-func (f *Filesystem) Umount() error {
-	err := f.umountFilesystems()
-	if err != nil {
-		return fmt.Errorf("umount filesystems failed:%w", err)
-	}
-	return nil
+func (f *Filesystem) Umount() {
+	f.umountFilesystems()
 }
 
 func (f *Filesystem) createPartitions() error {
@@ -413,7 +409,7 @@ func (f *Filesystem) mountSpecialFilesystems() error {
 	return nil
 }
 
-func (f *Filesystem) umountFilesystems() error {
+func (f *Filesystem) umountFilesystems() {
 	for index := len(specialMounts) - 1; index >= 0; index-- {
 		m := filepath.Join(f.chroot, specialMounts[index].target)
 		log.Info("unmounting", "mountpoint", m)
@@ -433,7 +429,6 @@ func (f *Filesystem) umountFilesystems() error {
 			log.Error("unable to unmount", "path", m, "error", err)
 		}
 	}
-	return nil
 }
 
 func (f *Filesystem) CreateFSTab() error {
@@ -509,6 +504,7 @@ func (fss fstabEntries) write(chroot string) error {
 	header := fmt.Sprintf("# created by metal-hammer: %q\n", v.V)
 	content := header + fstab + "\n"
 	log.Info("write fstab", "content", content)
+	//nolint:gosec
 	return ioutil.WriteFile(path.Join(chroot, "/etc/fstab"), []byte(content), 0644)
 }
 
@@ -517,6 +513,7 @@ func (fs fstabEntry) string() string {
 }
 
 func lvExists(vg string, name string) bool {
+	//nolint:gosec
 	cmd := exec.Command("lvm", "lvs", vg+"/"+name, "--noheadings", "-o", "lv_name")
 	out, err := cmd.CombinedOutput()
 	if err != nil {

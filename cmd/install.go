@@ -77,10 +77,7 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models
 		return nil, err
 	}
 
-	err = s.Umount()
-	if err != nil {
-		return nil, err
-	}
+	s.Umount()
 
 	return info, nil
 }

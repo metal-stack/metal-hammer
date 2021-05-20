@@ -182,6 +182,7 @@ func createSyslog() error {
 		return err
 	}
 
+	//nolint:gosec
 	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0666)
 }
 

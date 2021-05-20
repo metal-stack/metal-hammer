@@ -8,6 +8,7 @@ import (
 	lz4 "github.com/pierrec/lz4"
 	pb "gopkg.in/cheggaaa/pb.v1"
 
+	//nolint:gosec
 	"crypto/md5"
 	"io"
 	"io/ioutil"
@@ -113,6 +114,7 @@ func checkMD5(file, md5file string) (bool, error) {
 	}
 	defer f.Close()
 
+	//nolint:gosec
 	h := md5.New()
 	if _, err := io.Copy(h, f); err != nil {
 		return false, errors.Wrapf(err, "unable to calculate md5sum of file: %s", file)
@@ -137,6 +139,7 @@ func download(source, dest string) error {
 	defer out.Close()
 
 	// Get the data
+	//nolint:gosec,noctx
 	resp, err := http.Get(source)
 	if err != nil {
 		return err
