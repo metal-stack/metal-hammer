@@ -14,6 +14,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@master
+      - name: Lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          args: -p bugs -p unused --timeout=3m
       - uses: google-github-actions/setup-gcloud@master
         with:
             service_account_email: ${{ secrets.GCP_SA_EMAIL }}
