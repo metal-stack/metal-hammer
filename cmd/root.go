@@ -123,7 +123,15 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	}
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
-	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
+	if err != nil {
+		return eventEmitter, errors.Wrap(err, "fetch")
+	}
+	if m == nil && m.Allocation == nil {
+		return eventEmitter, errors.New("machine without allocation")
+	}
+
+	hammer.FilesystemLayout = m.Allocation.Filesystemlayout
+	if m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
 		primaryDiskWiped := false
 		if m.Allocation.Image == nil || m.Allocation.Image.ID == nil {
 			err = errors.New("no image specified")
@@ -241,7 +249,6 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 
 	log.Info("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 
-	hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 	err = hammer.installImage(eventEmitter, m, hw.Nics)
 	return eventEmitter, err
 }
