@@ -525,8 +525,8 @@ github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7/go.mod h1:U6ZQob
 github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 h1:i4JJtLb5iDVsncU7splD9ZCQXvxN13tGDUWihfKOq18=
 github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/4B6NhGzofHK/+I+N31NTUz/hrEm4ssUwA=
 github.com/mdlayher/raw v0.0.0-20190606142536-fef19f00fc18/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
-github.com/metal-stack/go-hal v0.3.2-0.20210519101016-7a54fb26d492 h1:dOfQhe8OmiXN0qNxF1sDJBz4AWwiq0ECzdtRPcxaJwA=
-github.com/metal-stack/go-hal v0.3.2-0.20210519101016-7a54fb26d492/go.mod h1:sW5Q48o3LGdiYvzo6nhGsT9+WMGRiL5Xz2QCoyfRf34=
+github.com/metal-stack/go-hal v0.3.2-0.20210521112739-0b84fa3ea526 h1:J4hZJBFmcZLRSJeqwIZku5T8X5DrA7WQEw/a2HWNFn0=
+github.com/metal-stack/go-hal v0.3.2-0.20210521112739-0b84fa3ea526/go.mod h1:sW5Q48o3LGdiYvzo6nhGsT9+WMGRiL5Xz2QCoyfRf34=
 github.com/metal-stack/go-ipam v1.7.0/go.mod h1:d4odlA8XAoF+OV0NBcWGtG9RItONHMctIW3Y/jP/vzY=
 github.com/metal-stack/go-lldpd v0.3.1 h1:fDcR362ivxLTf/CjnlvseO8RdSZHuaQPS9naM2xeQ7U=
 github.com/metal-stack/go-lldpd v0.3.1/go.mod h1:udPb0XfQSRnI3WHc6okvChnRxVRs7rkc6Eeg7Iq59Cc=
