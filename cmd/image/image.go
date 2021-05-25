@@ -3,10 +3,10 @@ package image
 import (
 	"fmt"
 
+	pb "github.com/cheggaaa/pb/v3"
 	log "github.com/inconshreveable/log15"
 	"github.com/mholt/archiver"
 	lz4 "github.com/pierrec/lz4"
-	pb "gopkg.in/cheggaaa/pb.v1"
 
 	//nolint:gosec
 	"crypto/md5"
@@ -74,10 +74,10 @@ func Burn(prefix, image, source string) error {
 	csize := stat.Size() * 2
 	defer creader.Close()
 
-	bar := pb.New64(csize).SetUnits(pb.U_BYTES)
+	bar := pb.New64(csize)
+	bar.Set(pb.Bytes, true)
 	bar.Start()
 	bar.SetWidth(80)
-	bar.ShowSpeed = true
 
 	reader := bar.NewProxyReader(creader)
 
@@ -151,9 +151,9 @@ func download(source, dest string) error {
 
 	fileSize := resp.ContentLength
 
-	bar := pb.New64(fileSize).SetUnits(pb.U_BYTES)
+	bar := pb.New64(fileSize)
+	bar.Set(pb.Bytes, true)
 	bar.SetWidth(80)
-	bar.ShowSpeed = true
 	bar.Start()
 	defer bar.Finish()
 
