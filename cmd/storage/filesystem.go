@@ -105,10 +105,10 @@ func (f *Filesystem) createPartitions() error {
 			opts = append(opts, "--zap-all")
 		}
 		for _, p := range disk.Partitions {
-			opts = append(opts, fmt.Sprintf("--new=%d:0:+%dM", *p.Number, *p.Size))
-			if p.Label != nil {
-				opts = append(opts, fmt.Sprintf("--change-name=%d:%s", *p.Number, *p.Label))
+			if p.Size != nil {
+				opts = append(opts, fmt.Sprintf("--new=%d:0:+%dM", *p.Number, *p.Size))
 			}
+			opts = append(opts, fmt.Sprintf("--change-name=%d:%s", *p.Number, p.Label))
 			if p.Gpttype != nil {
 				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", *p.Number, *p.Gpttype))
 			}
@@ -265,28 +265,20 @@ func (f *Filesystem) createFilesystems() error {
 		case "ext3":
 			mkfs = command.MKFSExt3
 			args = append(args, "-F")
-			if fs.Label != nil {
-				args = append(args, "-L", *fs.Label)
-			}
+			args = append(args, "-L", fs.Label)
 		case "ext4":
 			mkfs = command.MKFSExt4
 			args = append(args, "-F")
-			if fs.Label != nil {
-				args = append(args, "-L", *fs.Label)
-			}
+			args = append(args, "-L", fs.Label)
 		case "swap":
 			mkfs = command.MKSwap
 			args = append(args, "-f")
-			if fs.Label != nil {
-				args = append(args, "-L", *fs.Label)
-			}
+			args = append(args, "-L", fs.Label)
 		case "vfat":
 			mkfs = command.MKFSVFat
 			// There is no force flag for mkfs.vfat, it always destroys any data on
 			// the device at which it is pointed.
-			if fs.Label != nil {
-				args = append(args, "-n", *fs.Label)
-			}
+			args = append(args, "-n", fs.Label)
 		case "none":
 			//
 		default:
@@ -307,12 +299,12 @@ func (f *Filesystem) createFilesystems() error {
 func (f *Filesystem) mountFilesystems() error {
 	fss := []models.ModelsV1Filesystem{}
 	for _, fs := range f.config.Filesystems {
-		if fs.Path == nil || *fs.Path == "" {
+		if fs.Path == "" {
 			continue
 		}
 		fss = append(fss, *fs)
 	}
-	sort.Slice(fss, func(i, j int) bool { return depth(*fss[i].Path) < depth(*fss[j].Path) })
+	sort.Slice(fss, func(i, j int) bool { return depth(fss[i].Path) < depth(fss[j].Path) })
 	for _, fs := range fss {
 		path, err := mountFs(f.chroot, fs)
 		if err != nil {
@@ -335,7 +327,7 @@ func (f *Filesystem) mountFilesystems() error {
 			}
 			spec = fmt.Sprintf("UUID=%s", properties["UUID"])
 		}
-		if *fs.Path == "/" {
+		if fs.Path == "/" {
 			passno = 1
 		}
 		mountOpts := []string{"defaults"}
@@ -344,21 +336,18 @@ func (f *Filesystem) mountFilesystems() error {
 		}
 		fstabEntry := fstabEntry{
 			spec:      spec,
-			file:      *fs.Path,
+			file:      fs.Path,
 			vfsType:   *fs.Format,
 			mountOpts: mountOpts,
 			freq:      0,
 			passno:    passno,
 		}
 		f.fstabEntries = append(f.fstabEntries, fstabEntry)
-		if fs.Label == nil {
-			continue
-		}
 		// create legacy disk.json
-		switch *fs.Label {
+		switch fs.Label {
 		case "root", "efi", "varlib":
 			part := Partition{
-				Label:      *fs.Label,
+				Label:      fs.Label,
 				Filesystem: *fs.Format,
 				Properties: map[string]string{"UUID": properties["UUID"]},
 			}
@@ -459,7 +448,7 @@ func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {
 	if fs.Format == nil || *fs.Format == "swap" || *fs.Format == "" || *fs.Format == "tmpfs" {
 		return "", nil
 	}
-	path := filepath.Join(chroot, *fs.Path)
+	path := filepath.Join(chroot, fs.Path)
 
 	if _, err := gos.Stat(path); err != nil && gos.IsNotExist(err) {
 		if err := gos.MkdirAll(path, 0755); err != nil {
@@ -473,7 +462,7 @@ func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {
 	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
 	if err != nil {
 		log.Error("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
-		return "", errors.Wrapf(err, "unable to create filesystem %s on %s", *fs.Device, *fs.Path)
+		return "", errors.Wrapf(err, "unable to create filesystem %s on %s", *fs.Device, fs.Path)
 	}
 	return path, nil
 }

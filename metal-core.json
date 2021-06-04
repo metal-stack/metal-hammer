@@ -228,7 +228,6 @@
       },
       "required": [
         "gpttype",
-        "label",
         "number",
         "size"
       ]
@@ -264,9 +263,7 @@
         "createoptions",
         "device",
         "format",
-        "label",
-        "mountoptions",
-        "path"
+        "mountoptions"
       ]
     },
     "models.V1FilesystemLayoutConstraints": {

@@ -20,22 +20,22 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/metal-stack/go-hal v0.3.3
 	github.com/metal-stack/go-lldpd v0.3.1
-	github.com/metal-stack/metal-api v0.14.2-0.20210419143005-432e73b48c63
+	github.com/metal-stack/metal-api v0.14.3-0.20210604055611-77d897573c2f
 	github.com/metal-stack/metal-lib v0.8.0
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
-	github.com/pierrec/lz4 v2.6.0+incompatible
+	github.com/pierrec/lz4 v2.6.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
-	github.com/tidwall/pretty v1.1.0 // indirect
+	github.com/tidwall/pretty v1.1.1 // indirect
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
-	google.golang.org/grpc v1.37.1
+	golang.org/x/sys v0.0.0-20210603125802-9665404d3644
+	google.golang.org/grpc v1.38.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
