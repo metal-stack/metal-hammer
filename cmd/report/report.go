@@ -12,8 +12,6 @@ type Report struct {
 	ConsolePassword string
 	MachineUUID     string
 	InstallError    error
-	PrimaryDisk     string
-	OSPartition     string
 	Initrd          string
 	Cmdline         string
 	Kernel          string
@@ -25,8 +23,6 @@ func (r *Report) ReportInstallation() error {
 	report := &models.DomainReport{
 		Success:         true,
 		ConsolePassword: &r.ConsolePassword,
-		PrimaryDisk:     &r.PrimaryDisk,
-		OsPartition:     &r.OSPartition,
 		Initrd:          &r.Initrd,
 		Cmdline:         &r.Cmdline,
 		Kernel:          &r.Kernel,

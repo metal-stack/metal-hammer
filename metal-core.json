@@ -188,6 +188,159 @@
         "value"
       ]
     },
+    "models.V1Disk": {
+      "properties": {
+        "device": {
+          "type": "string"
+        },
+        "partitions": {
+          "items": {
+            "$ref": "#/definitions/models.V1DiskPartition"
+          },
+          "type": "array"
+        },
+        "wipeonreinstall": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "device",
+        "partitions",
+        "wipeonreinstall"
+      ]
+    },
+    "models.V1DiskPartition": {
+      "properties": {
+        "gpttype": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "number": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "size": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "gpttype",
+        "number",
+        "size"
+      ]
+    },
+    "models.V1Filesystem": {
+      "properties": {
+        "createoptions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "device": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "mountoptions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "createoptions",
+        "device",
+        "format",
+        "mountoptions"
+      ]
+    },
+    "models.V1FilesystemLayoutConstraints": {
+      "properties": {
+        "images": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "sizes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "images",
+        "sizes"
+      ]
+    },
+    "models.V1FilesystemLayoutResponse": {
+      "properties": {
+        "constraints": {
+          "$ref": "#/definitions/models.V1FilesystemLayoutConstraints"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disks": {
+          "items": {
+            "$ref": "#/definitions/models.V1Disk"
+          },
+          "type": "array"
+        },
+        "filesystems": {
+          "items": {
+            "$ref": "#/definitions/models.V1Filesystem"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "logicalvolumes": {
+          "items": {
+            "$ref": "#/definitions/models.V1LogicalVolume"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "raid": {
+          "items": {
+            "$ref": "#/definitions/models.V1Raid"
+          },
+          "type": "array"
+        },
+        "volumegroups": {
+          "items": {
+            "$ref": "#/definitions/models.V1VolumeGroup"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "constraints",
+        "disks",
+        "filesystems",
+        "id",
+        "logicalvolumes",
+        "raid",
+        "volumegroups"
+      ]
+    },
     "models.V1ImageResponse": {
       "properties": {
         "changed": {
@@ -234,6 +387,29 @@
         "usedby"
       ]
     },
+    "models.V1LogicalVolume": {
+      "properties": {
+        "lvmtype": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "size": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "volumegroup": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "lvmtype",
+        "name",
+        "size",
+        "volumegroup"
+      ]
+    },
     "models.V1MachineAllocation": {
       "properties": {
         "boot_info": {
@@ -247,6 +423,9 @@
         },
         "description": {
           "type": "string"
+        },
+        "filesystemlayout": {
+          "$ref": "#/definitions/models.V1FilesystemLayoutResponse"
         },
         "hostname": {
           "type": "string"
@@ -316,15 +495,6 @@
         "name": {
           "type": "string"
         },
-        "partitions": {
-          "items": {
-            "$ref": "#/definitions/models.V1MachineDiskPartition"
-          },
-          "type": "array"
-        },
-        "primary": {
-          "type": "boolean"
-        },
         "size": {
           "format": "int64",
           "type": "integer"
@@ -332,62 +502,6 @@
       },
       "required": [
         "name",
-        "partitions",
-        "primary",
-        "size"
-      ]
-    },
-    "models.V1MachineDiskPartition": {
-      "properties": {
-        "device": {
-          "type": "string"
-        },
-        "filesystem": {
-          "type": "string"
-        },
-        "gptguid": {
-          "type": "string"
-        },
-        "gpttyoe": {
-          "type": "string"
-        },
-        "label": {
-          "type": "string"
-        },
-        "mountoptions": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "mountpoint": {
-          "type": "string"
-        },
-        "number": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "properties": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "size": {
-          "format": "int64",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "device",
-        "filesystem",
-        "gptguid",
-        "gpttyoe",
-        "label",
-        "mountoptions",
-        "mountpoint",
-        "number",
-        "properties",
         "size"
       ]
     },
@@ -438,6 +552,36 @@
         "nics": {
           "items": {
             "$ref": "#/definitions/models.V1MachineNic"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "cpu_cores",
+        "disks",
+        "memory",
+        "nics"
+      ]
+    },
+    "models.V1MachineHardwareExtended": {
+      "properties": {
+        "cpu_cores": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "disks": {
+          "items": {
+            "$ref": "#/definitions/models.V1MachineBlockDevice"
+          },
+          "type": "array"
+        },
+        "memory": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "nics": {
+          "items": {
+            "$ref": "#/definitions/models.V1MachineNicExtended"
           },
           "type": "array"
         }
@@ -608,7 +752,6 @@
       },
       "required": [
         "incomplete_provisioning_cycles",
-        "last_event_time",
         "log"
       ]
     },
@@ -737,6 +880,39 @@
         "id"
       ]
     },
+    "models.V1Raid": {
+      "properties": {
+        "arrayname": {
+          "type": "string"
+        },
+        "createoptions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "devices": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "level": {
+          "type": "string"
+        },
+        "spares": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "arrayname",
+        "createoptions",
+        "devices",
+        "level",
+        "spares"
+      ]
+    },
     "models.V1SizeConstraint": {
       "properties": {
         "max": {
@@ -784,6 +960,30 @@
       "required": [
         "constraints",
         "id"
+      ]
+    },
+    "models.V1VolumeGroup": {
+      "properties": {
+        "devices": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "devices",
+        "name",
+        "tags"
       ]
     }
   },

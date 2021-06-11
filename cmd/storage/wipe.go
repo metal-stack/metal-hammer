@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	nvmeCommand = command.NVME
-	ddCommand   = command.DD
+	// DiskPrefixToIgnore disks with this prefix will not be reported and wiped.
+	DiskPrefixToIgnore = "ram"
 )
 
 // WipeDisks will erase all content and partitions of all existing Disks
@@ -34,21 +34,10 @@ func WipeDisks() error {
 	g, _ := errgroup.WithContext(context.Background())
 	for _, disk := range disks {
 		disk := disk
-		// properties is guaranteed to be not nil
-		properties, err := FetchBlockIDProperties(fmt.Sprintf("/dev/%s", disk.Name))
-		if err != nil {
-			log.Warn("failed to detect disk properties", "error", err)
-		}
-		disktype, ok := properties["TYPE"]
-		if ok && strings.Contains(disktype, "isw_raid") {
-			log.Info("skip raid member", "disk", disk.Name)
-			continue
-		}
 		if strings.HasPrefix(disk.Name, DiskPrefixToIgnore) {
 			log.Info("skip because in ignorelist", "disk", disk.Name)
 			continue
 		}
-
 		g.Go(func() error {
 			return WipeDisk(disk)
 		})
@@ -96,14 +85,14 @@ func insecureErase(device string, bytes uint64) error {
 
 func discard(device string) error {
 	log.Info("wipe", "disk", device, "message", "discard existing data")
-	err := os.ExecuteCommand(ext4MkFsCommand, "-F", "-E", "discard", device)
+	err := os.ExecuteCommand(command.MKFSExt4, "-F", "-E", "discard", device)
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "discard of existing data failed", "error", err)
 		return err
 	}
 
 	// additionally wipe magic bytes in the first 1MiB
-	err = os.ExecuteCommand(ddCommand, "status=progress", "if=/dev/zero", "of="+device, "bs=1M", "count=1")
+	err = os.ExecuteCommand(command.DD, "status=progress", "if=/dev/zero", "of="+device, "bs=1M", "count=1")
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "overwrite of the first bytes of data with dd failed", "error", err)
 		return err
@@ -118,7 +107,7 @@ func wipeSlow(device string, bytes uint64) error {
 	count := bytes / bs
 	bsArg := fmt.Sprintf("bs=%d", bs)
 	countArg := fmt.Sprintf("count=%d", count)
-	err := os.ExecuteCommand(ddCommand, "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
+	err := os.ExecuteCommand(command.DD, "status=progress", "if=/dev/zero", "of="+device, bsArg, countArg)
 	if err != nil {
 		log.Error("wipe", "disk", device, "message", "overwrite of existing data with dd failed", "error", err)
 		return err
@@ -140,7 +129,7 @@ func isNVMeDisk(device string) bool {
 // https://github.com/arunar/nvmeqemu
 func secureEraseNVMe(device string) error {
 	log.Info("wipe", "disk", device, "message", "start very fast deleting of existing data")
-	err := os.ExecuteCommand(nvmeCommand, "--format", "--ses=1", device)
+	err := os.ExecuteCommand(command.NVME, "--format", "--ses=1", device)
 	if err != nil {
 		return errors.Wrapf(err, "unable to secure erase nvme disk %s", device)
 	}

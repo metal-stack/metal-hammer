@@ -1,6 +1,6 @@
 FROM metalstack/builder:latest as builder
 
-FROM registry.fi-ts.io/metal/supermicro:2.5.0 as sum
+FROM r.metal-stack.io/metal/supermicro:2.5.2 as sum
 
 FROM golang:1.14-buster as initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v7.0.0
@@ -15,6 +15,7 @@ RUN apt-get update \
 	hdparm \
 	ipmitool \
 	liblz4-tool \
+	lvm2 \
 	mdadm \
 	net-tools \
 	nvme-cli \
@@ -28,7 +29,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && go install
 WORKDIR /work
-COPY ice.pkg metal.key metal.key.pub passwd varrun Makefile .git /work/
+COPY lvmlocal.conf ice.pkg metal.key metal.key.pub passwd varrun Makefile .git /work/
 COPY --from=sum /usr/bin/sum /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/bin/metal-hammer /work/bin/

@@ -26,13 +26,13 @@ import (
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
-	Spec         *Specification
-	Hal          hal.InBand
-	Client       machine.ClientService
-	GrpcClient   *GrpcClient
-	EventEmitter *event.EventEmitter
-	Disk         storage.Disk
-	LLDPClient   *network.LLDPClient
+	Spec             *Specification
+	Hal              hal.InBand
+	Client           machine.ClientService
+	GrpcClient       *GrpcClient
+	EventEmitter     *event.EventEmitter
+	LLDPClient       *network.LLDPClient
+	FilesystemLayout *models.ModelsV1FilesystemLayoutResponse
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress          string
 	Started            time.Time
@@ -123,13 +123,18 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	}
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
-	if err == nil && m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
+	if err != nil {
+		return eventEmitter, errors.Wrap(err, "fetch")
+	}
+	if m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
+		hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 		primaryDiskWiped := false
 		if m.Allocation.Image == nil || m.Allocation.Image.ID == nil {
 			err = errors.New("no image specified")
 		} else {
 			log.Info("perform reinstall", "machineID", *m.ID, "imageID", *m.Allocation.Image.ID)
-			primaryDiskWiped, err = hammer.reinstall(m, hw, eventEmitter)
+			err = hammer.installImage(eventEmitter, m, hw.Nics)
+			primaryDiskWiped = true
 		}
 		if err != nil {
 			log.Error("reinstall failed", "error", err)
@@ -239,8 +244,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	}
 
 	log.Info("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
-
-	hammer.Disk = storage.GetDisk(*m.Allocation.Image.ID, m.Size, hw.Disks)
+	hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 	err = hammer.installImage(eventEmitter, m, hw.Nics)
 	return eventEmitter, err
 }
@@ -255,20 +259,11 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 		return errors.Wrap(err, "install")
 	}
 
-	var osPartition string
-	for _, p := range h.Disk.Partitions {
-		if p.MountPoint == "/" {
-			osPartition = p.Device
-			break
-		}
-	}
-	primaryDisk := sanitizeDisk(h.Disk.Device)
+	// FIXME OSPartition and PrimaryDisk are not used anymore, remove from model in metal-api
 	rep := &report.Report{
 		MachineUUID:     h.Spec.MachineUUID,
 		Client:          h.Client,
 		ConsolePassword: h.Spec.ConsolePassword,
-		PrimaryDisk:     primaryDisk,
-		OSPartition:     osPartition,
 		Initrd:          info.Initrd,
 		Cmdline:         info.Cmdline,
 		Kernel:          info.Kernel,

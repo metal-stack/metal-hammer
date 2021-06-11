@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -48,12 +47,8 @@ type InstallerConfig struct {
 
 // Install a given image to the disk by using genuinetools/img
 func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
-	err := h.Disk.Partition()
-	if err != nil {
-		return nil, err
-	}
-
-	err = h.Disk.MountPartitions(h.ChrootPrefix)
+	s := storage.New(h.ChrootPrefix, *h.FilesystemLayout)
+	err := s.Run()
 	if err != nil {
 		return nil, err
 	}
@@ -70,17 +65,19 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models
 		return nil, err
 	}
 
-	err = storage.MountSpecialFilesystems(h.ChrootPrefix)
-	if err != nil {
-		return nil, err
-	}
-
 	info, err := h.install(h.ChrootPrefix, machine, nics)
 	if err != nil {
 		return nil, err
 	}
 
-	storage.UnMountAll(h.ChrootPrefix)
+	// This is executed after installation to be compatible with images which create fstab by their own
+	// TODO can be removed and be done in s.Run() once all images do not create fstab anymore
+	err = s.CreateFSTab()
+	if err != nil {
+		return nil, err
+	}
+
+	s.Umount()
 
 	return info, nil
 }
@@ -93,11 +90,6 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 	err := h.writeInstallerConfig(machine, nics)
 	if err != nil {
 		return nil, errors.Wrap(err, "writing configuration install.yaml failed")
-	}
-
-	err = h.writeDiskConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "writing configuration disk.json failed")
 	}
 
 	err = h.writeUserData(machine)
@@ -166,16 +158,6 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 	info.Initrd = path.Join(tmp, filepath.Base(info.Initrd))
 
 	return info, nil
-}
-
-func (h *Hammer) writeDiskConfig() error {
-	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
-	destination := path.Join(configdir, "disk.json")
-	j, err := json.MarshalIndent(h.Disk, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "unable to marshal to json")
-	}
-	return ioutil.WriteFile(destination, j, 0600)
 }
 
 func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {

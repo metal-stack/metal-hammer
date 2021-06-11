@@ -48,6 +48,9 @@ ramdisk:
 		-files="/sbin/mkswap:sbin/mkswap" \
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
+		-files="/sbin/lvm:sbin/lvm" \
+		-files="/etc/lvm/lvm.conf:etc/lvm/lvm.conf" \
+		-files="lvmlocal.conf:etc/lvm/lvmlocal.conf" \
 		-files="/sbin/mdadm:sbin/mdadm" \
 		-files="/sbin/mdmon:sbin/mdmon" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
