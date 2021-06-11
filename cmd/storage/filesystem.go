@@ -84,6 +84,7 @@ func (f *Filesystem) Run() error {
 		return fmt.Errorf("mount special filesystems failed:%w", err)
 	}
 
+	// TODO legacy image support, can be removed once all images in use do no depend on disk.json anymore
 	err = f.createDiskJSON()
 	if err != nil {
 		return fmt.Errorf("disk.json creation failed:%w", err)
