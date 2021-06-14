@@ -49,6 +49,7 @@ func NewGrpcClient(certsClient certs.ClientService, emitter *event.EventEmitter)
 	tlsConfig := &tls.Config{
 		RootCAs:      caCertPool,
 		Certificates: []tls.Certificate{clientCert},
+		MinVersion:   tls.VersionTLS12,
 	}
 	return &GrpcClient{
 		EventEmitter: emitter,

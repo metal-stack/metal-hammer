@@ -2,12 +2,16 @@ package cmd
 
 import (
 	"context"
+	"errors"
+	"io"
+	"time"
+
 	log "github.com/inconshreveable/log15"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/metal-stack/metal-hammer/cmd/event"
-	"io"
-	"time"
 )
+
+const defaultWaitTimeOut = 2 * time.Second
 
 func (c *GrpcClient) NewWaitClient() (v1.WaitClient, io.Closer, error) {
 	conn, err := c.newConnection()
@@ -32,21 +36,21 @@ func (c *GrpcClient) WaitForAllocation(machineID string) error {
 	for {
 		stream, err := client.Wait(context.Background(), req)
 		if err != nil {
-			log.Error("failed waiting for allocation, retry in 2sec", "error", err)
-			time.Sleep(2 * time.Second)
+			log.Error("failed waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
+			time.Sleep(defaultWaitTimeOut)
 			continue
 		}
 
 		for {
 			_, err := stream.Recv()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				log.Info("machine has been requested for allocation", "machineID", machineID)
 				return nil
 			}
 
 			if err != nil {
-				log.Error("failed waiting for allocation, retry in 2sec", "error", err)
-				time.Sleep(2 * time.Second)
+				log.Error("failed stream receiving during waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
+				time.Sleep(defaultWaitTimeOut)
 				break
 			}
 

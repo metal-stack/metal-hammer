@@ -3,7 +3,7 @@
 # Intentionally added to download metal-hammer-kernel.
 set -e
 
-BLOBSTORE=https://blobstore.fi-ts.io
+KERNEL=https://github.com/metal-stack/kernel/releases/download/5.10.28-55/metal-kernel
 
 dirty() {
     curl \
@@ -11,8 +11,8 @@ dirty() {
         --location \
         --remote-name \
         --silent \
-        "${BLOBSTORE}/metal/images/metal-hammer/mainline/${1}.md5"
-    local res=$(md5sum --check "${1}.md5" 2>/dev/null 1>&2; echo $?)
+        "${KERNEL}.md5"
+    local res=$(md5sum --check "${KERNEL}.md5" 2>/dev/null 1>&2; echo $?)
     echo "${res}"
 }
 
@@ -21,22 +21,19 @@ download() {
         --fail \
         --location \
         --remote-name \
-        "${BLOBSTORE}/metal/images/metal-hammer/mainline/$1"
+        "${KERNEL}"
 }
 
 download_if_dirty() {
-    local isDirty=$(dirty "${1}")
+    local isDirty=$(dirty)
     if [[ "$isDirty" = "1" ]]
     then
-        echo "Downloading $i..."
-        download ${1}
+        echo "Downloading ..."
+        download
     fi
 }
 
-for i in "metal-hammer-kernel"
-do
-    download_if_dirty $i
-done
+download_if_dirty
 
 # Ensure files remain writable for group to enable re-download (libvirt takes ownership for unknown reason)
-chmod 660 metal-hammer-* 2>/dev/null || true
+chmod 660 metal-kernel 2>/dev/null || true

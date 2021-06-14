@@ -48,11 +48,17 @@ ramdisk:
 		-files="/sbin/mkswap:sbin/mkswap" \
 		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
+		-files="/sbin/lvm:sbin/lvm" \
+		-files="/etc/lvm/lvm.conf:etc/lvm/lvm.conf" \
+		-files="lvmlocal.conf:etc/lvm/lvmlocal.conf" \
+		-files="/sbin/mdadm:sbin/mdadm" \
+		-files="/sbin/mdmon:sbin/mdmon" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/usr/lib/x86_64-linux-gnu/libnss_files.so:lib/libnss_files.so.2" \
 		-files="passwd:etc/passwd" \
 		-files="varrun:var/run/keep" \
+		-files="ice.pkg:lib/firmware/intel/ice/ddp/ice.pkg" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 		-files="sum:sbin/sum" \
@@ -73,7 +79,7 @@ vagrant-destroy:
 	vagrant destroy -f
 
 vagrant-up: vagrant-destroy
-	vagrant up && virsh console metal-hammer_pxeclient
+	vagrant up && virsh console metal-hammerpxeclient
 
 # TODO make this work as with vagrant as a lightweight alternative.
 # networking is not working atm.
@@ -92,5 +98,5 @@ qemu-up:
           IMAGE_URL=http://192.168.121.1:4711/images/ubuntu/19.04/img.tar.lz4  \
           DEBUG=1  \
           BGP=1" \
-		-kernel metal-hammer-kernel \
+		-kernel metal-kernel \
 		-initrd metal-hammer-initrd.img.lz4
