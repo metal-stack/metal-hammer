@@ -18,7 +18,7 @@ require (
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
 	github.com/jaypipes/ghw v0.8.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect
-	github.com/metal-stack/go-hal v0.3.3
+	github.com/metal-stack/go-hal v0.3.4-0.20210616112309-6d22fcf9b4db
 	github.com/metal-stack/go-lldpd v0.3.1
 	github.com/metal-stack/metal-api v0.15.0
 	github.com/metal-stack/metal-lib v0.8.0
