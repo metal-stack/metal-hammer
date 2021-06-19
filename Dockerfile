@@ -21,7 +21,8 @@ RUN apt-get update \
 	nvme-cli \
 	pciutils \
 	strace \
-	util-linux
+	util-linux \
+	zstd
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \
@@ -37,4 +38,4 @@ RUN COMMONDIR=/common make ramdisk
 
 FROM scratch
 COPY --from=builder /work/bin/metal-hammer /
-COPY --from=initrd-builder /work/metal-hammer-initrd.img.lz4 /
+COPY --from=initrd-builder /work/metal-hammer-initrd.img.zstd /
