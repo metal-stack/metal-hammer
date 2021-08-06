@@ -126,6 +126,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	if err != nil {
 		return eventEmitter, errors.Wrap(err, "fetch")
 	}
+
 	if m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
 		hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 		primaryDiskWiped := false
@@ -143,9 +144,22 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		return eventEmitter, err
 	}
 
-	err = storage.WipeDisks()
-	if err != nil {
-		return eventEmitter, errors.Wrap(err, "wipe")
+	wipeDisks := false
+	if m == nil || m.Allocation == nil {
+		// the machine belongs to no one, we can safely erase disks
+		wipeDisks = true
+	}
+	if m != nil && m.Allocation != nil && !*m.Allocation.Succeeded {
+		// the allocation has not succeeded, so a user was never able to work with this machine
+		// we're most certainly running in a crash loop and are safe to start all over again
+		wipeDisks = true
+	}
+
+	if wipeDisks {
+		err = storage.WipeDisks()
+		if err != nil {
+			return eventEmitter, errors.Wrap(err, "wipe")
+		}
 	}
 
 	err = hammer.ConfigureBIOS()
