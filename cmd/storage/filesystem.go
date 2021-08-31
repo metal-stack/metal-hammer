@@ -151,6 +151,14 @@ func (f *Filesystem) createRaids() error {
 			"--raid-devices", fmt.Sprintf("%d", int32(len(raid.Devices))-spares),
 		}
 
+		switch level {
+		case "0", "1":
+			args = append(args, "--assume-clean")
+		default:
+			// only safe to skip initial sync for raid 0 and 1
+			// see https://raid.wiki.kernel.org/index.php/Initial_Array_Creation#raid5
+		}
+
 		if spares > 0 {
 			args = append(args, "--spare-devices", fmt.Sprintf("%d", spares))
 		}
