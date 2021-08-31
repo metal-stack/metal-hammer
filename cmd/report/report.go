@@ -1,10 +1,11 @@
 package report
 
 import (
+	"fmt"
+
 	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
-	"github.com/pkg/errors"
 )
 
 type Report struct {
@@ -40,7 +41,7 @@ func (r *Report) ReportInstallation() error {
 	_, err := r.Client.Report(params)
 	if err != nil {
 		log.Error("report", "error", err)
-		return errors.Wrap(err, "unable to report image installation")
+		return fmt.Errorf("unable to report image installation %w", err)
 	}
 	log.Info("report image installation was successful")
 	return nil

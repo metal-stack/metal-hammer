@@ -3,8 +3,9 @@ package storage
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"strings"
+
+	gos "os"
 
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
@@ -12,7 +13,6 @@ import (
 
 	log "github.com/inconshreveable/log15"
 	"github.com/jaypipes/ghw"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -25,7 +25,7 @@ func WipeDisks() error {
 	log.Info("wipe")
 	block, err := ghw.Block()
 	if err != nil {
-		return errors.Wrap(err, "unable to gather disks")
+		return fmt.Errorf("unable to gather disks %w", err)
 	}
 	disks := block.Disks
 
@@ -131,14 +131,14 @@ func secureEraseNVMe(device string) error {
 	log.Info("wipe", "disk", device, "message", "start very fast deleting of existing data")
 	err := os.ExecuteCommand(command.NVME, "--format", "--ses=1", device)
 	if err != nil {
-		return errors.Wrapf(err, "unable to secure erase nvme disk %s", device)
+		return fmt.Errorf("unable to secure erase nvme disk %s %w", device, err)
 	}
 	return nil
 }
 
 func isRotational(deviceName string) bool {
 	sysfsRotational := fmt.Sprintf("/sys/block/%s/queue/rotational", deviceName)
-	rotational, err := ioutil.ReadFile(sysfsRotational)
+	rotational, err := gos.ReadFile(sysfsRotational)
 	result := true
 	if err != nil {
 		// defensive guess, fall back to hdd if unknown

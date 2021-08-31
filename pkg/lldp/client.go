@@ -9,7 +9,6 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 )
 
 // LinkType can be Interface or Mac
@@ -64,20 +63,20 @@ type Client struct {
 func NewClient(ifi string) (*Client, error) {
 	iface, err := net.InterfaceByName(ifi)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to lookup interface:%s", ifi)
+		return nil, fmt.Errorf("unable to lookup interface:%s %w", ifi, err)
 	}
 	log.Info("lldp", "listen on interface", iface.Name)
 
 	handle, err := pcap.OpenLive(iface.Name, 65536, true, 5*time.Second)
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to open interface:%s in promiscuous mode", iface.Name)
+		return nil, fmt.Errorf("unable to open interface:%s in promiscuous mode %w", iface.Name, err)
 	}
 	// Only snoop for LLDP Packets not coming from this interface
 	bpfFilter := fmt.Sprintf("ether proto 0x88cc and not ether host %s", iface.HardwareAddr)
 	err = handle.SetBPFFilter(bpfFilter)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to filter ethernet traffic 088cc on interface:%s", iface.Name)
+		return nil, fmt.Errorf("unable to filter ethernet traffic 088cc on interface:%s %w", iface.Name, err)
 	}
 	src := gopacket.NewPacketSource(handle, handle.LinkType())
 	return &Client{Source: src, Handle: handle, Interface: iface}, nil

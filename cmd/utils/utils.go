@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 	"io"
 	"os"
 )
@@ -13,7 +13,7 @@ func Copy(src, dst string) (int64, error) {
 	}
 
 	if !sourceFileStat.Mode().IsRegular() {
-		return 0, errors.Errorf("%s is not a regular file", src)
+		return 0, fmt.Errorf("%s is not a regular file", src)
 	}
 
 	source, err := os.Open(src)

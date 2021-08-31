@@ -1,10 +1,10 @@
 package firmware
 
 import (
+	"fmt"
 	"os/exec"
 
 	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 )
 
 // updater check if a firmware update is required and updates
@@ -62,7 +62,7 @@ func (f *Firmware) Update() {
 func run(command string, args ...string) (string, error) {
 	path, err := exec.LookPath(command)
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to locate program:%s in path", command)
+		return "", fmt.Errorf("unable to locate program:%s in path %w", command, err)
 	}
 	cmd := exec.Command(path, args...)
 	output, err := cmd.Output()

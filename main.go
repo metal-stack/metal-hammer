@@ -14,7 +14,6 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
-	"github.com/pkg/errors"
 )
 
 func main() {
@@ -74,8 +73,6 @@ func main() {
 	emitter, err := cmd.Run(spec, hal)
 	if err != nil {
 		wait := 5 * time.Second
-		st := errors.WithStack(err)
-		fmt.Printf("%+v", st)
 		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
 		emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
 		time.Sleep(wait)

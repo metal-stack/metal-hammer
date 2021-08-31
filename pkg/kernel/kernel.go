@@ -1,13 +1,11 @@
 package kernel
 
 import (
-	"io/ioutil"
+	"fmt"
 	"os"
 	"strings"
 	"time"
 	"unsafe"
-
-	"github.com/pkg/errors"
 
 	log "github.com/inconshreveable/log15"
 	"github.com/u-root/u-root/pkg/boot/kexec"
@@ -32,24 +30,24 @@ type Bootinfo struct {
 // ReadBootinfo read boot-info.yaml which was written by the OS install.sh
 // to get all information required to do kexec.
 func ReadBootinfo(file string) (*Bootinfo, error) {
-	bi, err := ioutil.ReadFile(file)
+	bi, err := os.ReadFile(file)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not read boot-info.yaml")
+		return nil, fmt.Errorf("could not read boot-info.yaml %w", err)
 	}
 
 	info := &Bootinfo{}
 	err = yaml.Unmarshal(bi, info)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal boot-info.yaml")
+		return nil, fmt.Errorf("could not unmarshal boot-info.yaml %w", err)
 	}
 	return info, nil
 }
 
 // ParseCmdline will put each key=value pair from /proc/cmdline into a map.
 func ParseCmdline() (map[string]string, error) {
-	cmdLine, err := ioutil.ReadFile(cmdline)
+	cmdLine, err := os.ReadFile(cmdline)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to read %s", cmdLine)
+		return nil, fmt.Errorf("unable to read %s %w", cmdLine, err)
 	}
 
 	cmdLineValues := strings.Split(string(cmdLine), " ")
@@ -70,7 +68,7 @@ func RunKexec(info *Bootinfo) error {
 	if info != nil {
 		kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
 		if err != nil {
-			return errors.Wrapf(err, "could not open kernel: %s", info.Kernel)
+			return fmt.Errorf("could not open kernel: %s %w", info.Kernel, err)
 		}
 		defer kernel.Close()
 
@@ -79,19 +77,19 @@ func RunKexec(info *Bootinfo) error {
 		if info.Initrd != "" {
 			ramfs, err = os.OpenFile(info.Initrd, os.O_RDONLY, 0)
 			if err != nil {
-				return errors.Wrapf(err, "could not open initrd: %s", info.Initrd)
+				return fmt.Errorf("could not open initrd: %s %w", info.Initrd, err)
 			}
 			defer ramfs.Close()
 		}
 
 		if err := kexec.FileLoad(kernel, ramfs, info.Cmdline); err != nil {
-			return errors.Wrapf(err, "could not execute kexec load: %v", info)
+			return fmt.Errorf("could not execute kexec load: %v %w", info, err)
 		}
 	}
 
 	err := kexec.Reboot()
 	if err != nil {
-		return errors.Wrapf(err, "could not fire kexec reboot info: %v", info)
+		return fmt.Errorf("could not fire kexec reboot info: %v %w", info, err)
 	}
 	return nil
 }
@@ -99,7 +97,7 @@ func RunKexec(info *Bootinfo) error {
 // Reboot reboots the the server
 func Reboot() error {
 	if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
-		return errors.Wrap(err, "unable to reboot")
+		return fmt.Errorf("unable to reboot %w", err)
 	}
 	return nil
 }

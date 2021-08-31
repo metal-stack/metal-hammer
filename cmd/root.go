@@ -21,7 +21,6 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/password"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/v"
-	"github.com/pkg/errors"
 )
 
 // Hammer is the machine which forms a bare metal to a working server
@@ -98,7 +97,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 
 	err = n.UpAllInterfaces()
 	if err != nil {
-		return eventEmitter, errors.Wrap(err, "interfaces")
+		return eventEmitter, fmt.Errorf("interfaces %w", err)
 	}
 
 	// Set Time from ntp
@@ -113,24 +112,24 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 
 	hw, err := reg.ReadHardwareDetails()
 	if err != nil {
-		return eventEmitter, errors.Wrap(err, "unable to read all hardware details")
+		return eventEmitter, fmt.Errorf("unable to read all hardware details %w", err)
 	}
 
 	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
 	err = reg.RegisterMachine(hw)
 	if !spec.DevMode && err != nil {
-		return eventEmitter, errors.Wrap(err, "register")
+		return eventEmitter, fmt.Errorf("register %w", err)
 	}
 
 	m, err := hammer.fetchMachine(spec.MachineUUID)
 	if err != nil {
-		return eventEmitter, errors.Wrap(err, "fetch")
+		return eventEmitter, fmt.Errorf("fetch %w", err)
 	}
 	if m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
 		hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 		primaryDiskWiped := false
 		if m.Allocation.Image == nil || m.Allocation.Image.ID == nil {
-			err = errors.New("no image specified")
+			err = fmt.Errorf("no image specified")
 		} else {
 			log.Info("perform reinstall", "machineID", *m.ID, "imageID", *m.Allocation.Image.ID)
 			err = hammer.installImage(eventEmitter, m, hw.Nics)
@@ -145,7 +144,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 
 	err = storage.WipeDisks()
 	if err != nil {
-		return eventEmitter, errors.Wrap(err, "wipe")
+		return eventEmitter, fmt.Errorf("wipe %w", err)
 	}
 
 	err = hammer.ConfigureBIOS()
@@ -235,11 +234,11 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	} else {
 		err := hammer.GrpcClient.WaitForAllocation(spec.MachineUUID)
 		if err != nil {
-			return eventEmitter, errors.Wrap(err, "wait for installation")
+			return eventEmitter, fmt.Errorf("wait for installation %w", err)
 		}
 		m, err = hammer.fetchMachine(spec.MachineUUID)
 		if err != nil {
-			return eventEmitter, errors.Wrap(err, "wait for installation")
+			return eventEmitter, fmt.Errorf("wait for installation %w", err)
 		}
 	}
 
@@ -256,7 +255,7 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 
 	// FIXME, must not return here.
 	if err != nil {
-		return errors.Wrap(err, "install")
+		return fmt.Errorf("install %w ", err)
 	}
 
 	// FIXME OSPartition and PrimaryDisk are not used anymore, remove from model in metal-api

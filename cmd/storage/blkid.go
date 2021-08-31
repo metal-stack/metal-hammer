@@ -1,22 +1,22 @@
 package storage
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
-	"github.com/pkg/errors"
 )
 
 // FetchBlockIDProperties use blkid to return more properties of the given partition device
 func FetchBlockIDProperties(partitionDevice string) (map[string]string, error) {
 	path, err := exec.LookPath(command.BlkID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to locate program:%s in path", command.BlkID)
+		return nil, fmt.Errorf("unable to locate program:%s in path %w", command.BlkID, err)
 	}
 	out, err := exec.Command(path, "-o", "export", partitionDevice).CombinedOutput()
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to execute %s %s output:%s", command.BlkID, partitionDevice, out)
+		return nil, fmt.Errorf("unable to execute %s %s output:%s %w", command.BlkID, partitionDevice, out, err)
 	}
 
 	// output of
