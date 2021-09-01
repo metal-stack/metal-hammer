@@ -11,7 +11,6 @@ import (
 	"github.com/metal-stack/v"
 
 	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
 )
 
@@ -44,19 +43,19 @@ func (n *Network) UpAllInterfaces() error {
 
 		err := linkSetMTU(name, MTU)
 		if err != nil {
-			return errors.Wrapf(err, "Error set link %s mtu", name)
+			return fmt.Errorf("error set link %s mtu %w", name, err)
 		}
 
 		err = linkSetUp(name)
 		if err != nil {
-			return errors.Wrapf(err, "Error set link %s up", name)
+			return fmt.Errorf("error set link %s up %w", name, err)
 		}
 
 		ethtool.disableFirmwareLLDP(name)
 
 		lldpd, err := lldp.NewDaemon(n.MachineUUID, description, name, 5*time.Second)
 		if err != nil {
-			return errors.Wrapf(err, "Error start lldpd on %s", name)
+			return fmt.Errorf("error start lldpd on %s %w", name, err)
 		}
 		lldpd.Start()
 	}
@@ -108,7 +107,7 @@ func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNicExtended, 
 
 		duration := time.Since(host.start)
 		if duration > host.timeout {
-			return nil, errors.Errorf("not all neighbor requirements where met within: %s, exiting", host.timeout)
+			return nil, fmt.Errorf("not all neighbor requirements where met within: %s, exiting", host.timeout)
 		}
 	}
 	log.Info("all lldp pdu's received", "interface", name)

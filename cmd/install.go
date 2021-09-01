@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"encoding/base64"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
@@ -18,7 +18,6 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -89,18 +88,18 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 
 	err := h.writeInstallerConfig(machine, nics)
 	if err != nil {
-		return nil, errors.Wrap(err, "writing configuration install.yaml failed")
+		return nil, fmt.Errorf("writing configuration install.yaml failed %w", err)
 	}
 
 	err = h.writeUserData(machine)
 	if err != nil {
-		return nil, errors.Wrap(err, "writing userdata failed")
+		return nil, fmt.Errorf("writing userdata failed %w", err)
 	}
 
 	log.Info("running /install.sh on", "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to chdir to: %s error", prefix)
+		return nil, fmt.Errorf("unable to chdir to: %s error %w", prefix, err)
 	}
 	cmd := exec.Command("/install.sh")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
@@ -114,12 +113,12 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 		Chroot: prefix,
 	}
 	if err := cmd.Run(); err != nil {
-		return nil, errors.Wrap(err, "running install.sh in chroot failed")
+		return nil, fmt.Errorf("running install.sh in chroot failed %w", err)
 	}
 
 	err = os.Chdir("/")
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to chdir to: / error")
+		return nil, fmt.Errorf("unable to chdir to: / error %w", err)
 	}
 	log.Info("finish running install.sh")
 
@@ -130,12 +129,12 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 
 	info, err := kernel.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
 	if err != nil {
-		return info, errors.Wrap(err, "unable to read boot-info.yaml")
+		return info, fmt.Errorf("unable to read boot-info.yaml %w", err)
 	}
 
 	err = h.EnsureBootOrder(info.BootloaderID)
 	if err != nil {
-		return info, errors.Wrap(err, "unable to ensure boot order")
+		return info, fmt.Errorf("unable to ensure boot order %w", err)
 	}
 
 	tmp := "/tmp"
@@ -171,7 +170,7 @@ func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 			log.Info("install", "base64 decode of userdata failed, using plain text", err)
 			userdata = []byte(base64UserData)
 		}
-		return ioutil.WriteFile(destination, userdata, 0600)
+		return os.WriteFile(destination, userdata, 0600)
 	}
 	return nil
 }
@@ -181,7 +180,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, n
 	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
-		return errors.Wrapf(err, "mkdir of %s target os failed", configdir)
+		return fmt.Errorf("mkdir of %s target os failed %w", configdir, err)
 	}
 	destination := path.Join(configdir, "install.yaml")
 
@@ -190,7 +189,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, n
 	sshPubkeys := strings.Join(alloc.SSHPubKeys, "\n")
 	cmdline, err := kernel.ParseCmdline()
 	if err != nil {
-		return errors.Wrap(err, "unable to get kernel cmdline map")
+		return fmt.Errorf("unable to get kernel cmdline map %w", err)
 	}
 
 	console, ok := cmdline["console"]
@@ -214,7 +213,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, n
 		return err
 	}
 
-	return ioutil.WriteFile(destination, yamlContent, 0600)
+	return os.WriteFile(destination, yamlContent, 0600)
 }
 
 func nicsWithNeighbors(nics []*models.ModelsV1MachineNicExtended) []*models.ModelsV1MachineNicExtended {

@@ -11,13 +11,10 @@ import (
 	//nolint:gosec
 	"crypto/md5"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Pull a image from s3
@@ -27,17 +24,17 @@ func Pull(image, destination string) error {
 	md5file := image + ".md5"
 	err := download(image, destination)
 	if err != nil {
-		return errors.Wrapf(err, "unable to pull image %s", image)
+		return fmt.Errorf("unable to pull image %s %w", image, err)
 	}
 	err = download(md5file, md5destination)
 	defer os.Remove(md5destination)
 	if err != nil {
-		return errors.Wrapf(err, "unable to pull md5 %s", md5file)
+		return fmt.Errorf("unable to pull md5 %s %w", md5file, err)
 	}
 	log.Info("check md5")
 	matches, err := checkMD5(destination, md5destination)
 	if err != nil || !matches {
-		return errors.New("md5sum mismatch")
+		return fmt.Errorf("md5sum mismatch")
 	}
 
 	log.Info("pull image done", "image", image)
@@ -51,23 +48,23 @@ func Burn(prefix, image, source string) error {
 
 	file, err := os.Open(source)
 	if err != nil {
-		return errors.Wrapf(err, "%s: failed to open archive", source)
+		return fmt.Errorf("%s: failed to open archive %w", source, err)
 
 	}
 	defer file.Close()
 
 	stat, err := file.Stat()
 	if err != nil {
-		return errors.Wrapf(err, "unable to stat %s", source)
+		return fmt.Errorf("unable to stat %s %w", source, err)
 	}
 
 	if !strings.HasSuffix(image, "lz4") {
-		return errors.Errorf("unsupported image compression format of image:%s", image)
+		return fmt.Errorf("unsupported image compression format of image:%s", image)
 	}
 
 	lz4Reader := lz4.NewReader(file)
 	log.Info("lz4", "size", lz4Reader.Header.Size)
-	creader := ioutil.NopCloser(lz4Reader)
+	creader := io.NopCloser(lz4Reader)
 	// wild guess for lz4 compression ratio
 	// lz4 is a stream format and therefore the
 	// final size cannot be calculated upfront
@@ -83,7 +80,7 @@ func Burn(prefix, image, source string) error {
 
 	err = archiver.Tar.Read(reader, prefix)
 	if err != nil {
-		return errors.Wrapf(err, "unable to burn image %s", source)
+		return fmt.Errorf("unable to burn image %s %w", source, err)
 	}
 
 	bar.Finish()
@@ -102,27 +99,27 @@ func Burn(prefix, image, source string) error {
 // <md5sum> filename
 // this is the same format as create by the "md5sum" unix command
 func checkMD5(file, md5file string) (bool, error) {
-	md5fileContent, err := ioutil.ReadFile(md5file)
+	md5fileContent, err := os.ReadFile(md5file)
 	if err != nil {
-		return false, errors.Wrapf(err, "unable to read md5sum file %s", md5file)
+		return false, fmt.Errorf("unable to read md5sum file %s %w", md5file, err)
 	}
 	expectedMD5 := strings.Split(string(md5fileContent), " ")[0]
 
 	f, err := os.Open(file)
 	if err != nil {
-		return false, errors.Wrapf(err, "unable to read file: %s", file)
+		return false, fmt.Errorf("unable to read file: %s %w", file, err)
 	}
 	defer f.Close()
 
 	//nolint:gosec
 	h := md5.New()
 	if _, err := io.Copy(h, f); err != nil {
-		return false, errors.Wrapf(err, "unable to calculate md5sum of file: %s", file)
+		return false, fmt.Errorf("unable to calculate md5sum of file: %s %w", file, err)
 	}
 	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
 	log.Info("check md5", "source md5", sourceMD5, "expected md5", expectedMD5)
 	if sourceMD5 != expectedMD5 {
-		return false, errors.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
+		return false, fmt.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
 	}
 	return true, nil
 }
@@ -134,7 +131,7 @@ func download(source, dest string) error {
 	log.Info("download", "from", source, "to", dest)
 	out, err := os.Create(dest)
 	if err != nil {
-		return errors.Wrapf(err, "unable to create destination %s", dest)
+		return fmt.Errorf("unable to create destination %s %w", dest, err)
 	}
 	defer out.Close()
 
@@ -146,7 +143,7 @@ func download(source, dest string) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= http.StatusBadRequest {
-		return errors.Errorf("download of %s did not work, statuscode was: %d", source, resp.StatusCode)
+		return fmt.Errorf("download of %s did not work, statuscode was: %d", source, resp.StatusCode)
 	}
 
 	fileSize := resp.ContentLength

@@ -1,8 +1,9 @@
 package firmware
 
 import (
+	"fmt"
+
 	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 )
 
 type intel struct {
@@ -19,7 +20,7 @@ func (r intel) String() string {
 func (r intel) update() error {
 	output, err := run("/intel/nvmupdate64e", "-u", "-s", "-a", "/intel")
 	if err != nil {
-		return errors.Wrap(err, "unable to update intel firmware")
+		return fmt.Errorf("unable to update intel firmware %w", err)
 	}
 	log.Info("intel", "updated firware output", output)
 	return nil

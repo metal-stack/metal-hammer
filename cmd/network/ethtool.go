@@ -2,6 +2,7 @@ package network
 
 import (
 	"bufio"
+	"fmt"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -10,12 +11,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"io/ioutil"
-
 	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
-
-	"github.com/pkg/errors"
 )
 
 // EthtoolCommand to gather ethernet informations
@@ -39,7 +36,7 @@ func NewEthtool() *Ethtool {
 func (e *Ethtool) Run(args ...string) (string, error) {
 	path, err := exec.LookPath(e.command)
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to locate program:%s in path", e.command)
+		return "", fmt.Errorf("unable to locate program:%s in path %w", e.command, err)
 	}
 	cmd := exec.Command(path, args...)
 	output, err := cmd.Output()
@@ -108,7 +105,7 @@ func (e *Ethtool) stopFirmwareLLDP() {
 			if !info.IsDir() && info.Name() == "command" {
 				log.Info("ethtool", "stopFirmwareLLDP found command", path)
 				stopCommand := []byte("lldp stop")
-				err := ioutil.WriteFile(path, stopCommand, os.ModePerm)
+				err := os.WriteFile(path, stopCommand, os.ModePerm)
 				if err != nil {
 					log.Error("ethtool", "stopFirmwareLLDP stop lldp > command", path, "error", err)
 				}

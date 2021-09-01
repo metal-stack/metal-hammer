@@ -1,7 +1,6 @@
 package image
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
@@ -11,7 +10,7 @@ func TestCheckMD5(t *testing.T) {
 	testfile := "/tmp/testmd5"
 	testfileMD5 := "/tmp/testmd5.md5"
 	content := []byte("This is testcontent")
-	err := ioutil.WriteFile(testfile, content, os.ModePerm)
+	err := os.WriteFile(testfile, content, os.ModePerm)
 	if err != nil {
 		t.Error(err)
 	}

@@ -2,7 +2,6 @@ package kernel
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -64,7 +63,7 @@ func TestFirmware(t *testing.T) {
 }
 
 func writeCmdline(content string) error {
-	err := ioutil.WriteFile(cmdline, []byte(content), os.ModePerm)
+	err := os.WriteFile(cmdline, []byte(content), os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("unable to write test cmdline")
 	}

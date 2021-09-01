@@ -3,7 +3,7 @@ package report
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,7 +20,7 @@ func TestReportInstallation(t *testing.T) {
 	resp := &models.DomainReport{}
 
 	handler := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Error(err)
 		}

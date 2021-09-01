@@ -2,8 +2,8 @@ package register
 
 import (
 	"fmt"
-	"io/ioutil"
 	gonet "net"
+	"os"
 	"strconv"
 	"strings"
 	"syscall"
@@ -19,7 +19,6 @@ import (
 	"github.com/vishvananda/netlink"
 
 	log "github.com/inconshreveable/log15"
-	"github.com/pkg/errors"
 )
 
 // Register the Machine
@@ -38,10 +37,10 @@ func (r *Register) RegisterMachine(hw *models.DomainMetalHammerRegisterMachineRe
 	resp, err := r.Client.Register(params)
 
 	if err != nil {
-		return errors.Wrapf(err, "unable to register machine:%#v", hw)
+		return fmt.Errorf("unable to register machine:%#v %w", hw, err)
 	}
 	if resp == nil {
-		return errors.Errorf("unable to register machine:%#v response payload is nil", hw)
+		return fmt.Errorf("unable to register machine:%#v response payload is nil", hw)
 	}
 
 	log.Info("register machine returned", "response", resp.Payload)
@@ -52,21 +51,21 @@ func (r *Register) RegisterMachine(hw *models.DomainMetalHammerRegisterMachineRe
 func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachineRequest, error) {
 	err := createSyslog()
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to write kernel boot message to /var/log/syslog")
+		return nil, fmt.Errorf("unable to write kernel boot message to /var/log/syslog %w", err)
 	}
 
 	hw := &models.DomainMetalHammerRegisterMachineRequest{}
 
 	memory, err := ghw.Memory()
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get system memory")
+		return nil, fmt.Errorf("unable to get system memory %w", err)
 	}
 	hw.Memory = &memory.TotalPhysicalBytes
 
 	// FIXME can be replaced by runtime.NumCPU()
 	cpu, err := ghw.CPU()
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get system cpu(s)")
+		return nil, fmt.Errorf("unable to get system cpu(s) %w", err)
 	}
 	cores := int32(cpu.TotalCores)
 	hw.CPUCores = &cores
@@ -75,7 +74,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	loFound := false
 	links, err := netlink.LinkList()
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get all links")
+		return nil, fmt.Errorf("unable to get all links %w", err)
 	}
 	for _, l := range links {
 		attrs := l.Attrs()
@@ -120,7 +119,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	for _, nic := range nics {
 		neighbors, err := r.Network.Neighbors(*nic.Name)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to determine neighbors of interface:%s", *nic.Name)
+			return nil, fmt.Errorf("unable to determine neighbors of interface:%s %w", *nic.Name, err)
 		}
 		nic.Neighbors = neighbors
 	}
@@ -130,7 +129,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 
 	blockInfo, err := ghw.Block()
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get system block devices")
+		return nil, fmt.Errorf("unable to get system block devices %w", err)
 	}
 	for _, disk := range blockInfo.Disks {
 		if strings.HasPrefix(disk.Name, storage.DiskPrefixToIgnore) {
@@ -157,7 +156,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	board := r.Hal.Board()
 	b := board.BIOS
 	if b == nil {
-		return nil, errors.New("unable to read bios informations from bmc")
+		return nil, fmt.Errorf("unable to read bios informations from bmc")
 	}
 	hw.Bios = &models.ModelsV1MachineBIOS{
 		Version: &b.Version,
@@ -183,7 +182,7 @@ func createSyslog() error {
 	}
 
 	//nolint:gosec
-	return ioutil.WriteFile("/var/log/syslog", b[:amt], 0666)
+	return os.WriteFile("/var/log/syslog", b[:amt], 0666)
 }
 
 // IPMI configuration and
@@ -201,13 +200,13 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		board := hal.Board()
 		bmc := board.BMC
 		if bmc == nil {
-			return nil, errors.New("unable to read ipmi bmc info configuration")
+			return nil, fmt.Errorf("unable to read ipmi bmc info configuration")
 		}
 
 		// FIXME userid should be verified if available
 		pw, err := bmcConn.CreateUserAndPassword(bmcConn.User(), api.AdministratorPrivilege)
 		if err != nil {
-			return nil, errors.Wrap(err, "ipmi create user failed")
+			return nil, fmt.Errorf("ipmi create user failed %w", err)
 		}
 
 		bmcUser := bmcConn.User().Name
@@ -241,7 +240,7 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 	lastOctet := macParts[len(macParts)-1]
 	port, err := strconv.ParseUint(lastOctet, 16, 32)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse last octet of eth0 mac to a integer")
+		return nil, fmt.Errorf("unable to parse last octet of eth0 mac to a integer %w", err)
 	}
 
 	const baseIPMIPort = 6230

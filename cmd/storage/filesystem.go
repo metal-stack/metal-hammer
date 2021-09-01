@@ -3,7 +3,6 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	gos "os"
 	"os/exec"
 	"path"
@@ -17,7 +16,6 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
-	"github.com/pkg/errors"
 )
 
 type Filesystem struct {
@@ -120,7 +118,7 @@ func (f *Filesystem) createPartitions() error {
 			err := os.ExecuteCommand(command.SGDisk, opts...)
 			if err != nil {
 				log.Error("sgdisk creating partitions failed", "error", err)
-				return errors.Wrapf(err, "unable to create partitions on %s", *disk.Device)
+				return fmt.Errorf("unable to create partitions on %s %w", *disk.Device, err)
 			}
 		}
 	}
@@ -153,6 +151,14 @@ func (f *Filesystem) createRaids() error {
 			"--raid-devices", fmt.Sprintf("%d", int32(len(raid.Devices))-spares),
 		}
 
+		switch level {
+		case "0", "1":
+			args = append(args, "--assume-clean")
+		default:
+			// only safe to skip initial sync for raid 0 and 1
+			// see https://raid.wiki.kernel.org/index.php/Initial_Array_Creation#raid5
+		}
+
 		if spares > 0 {
 			args = append(args, "--spare-devices", fmt.Sprintf("%d", spares))
 		}
@@ -167,7 +173,7 @@ func (f *Filesystem) createRaids() error {
 		err := os.ExecuteCommand(command.MDADM, args...)
 		if err != nil {
 			log.Error("create mdadm raid", "error", err)
-			return errors.Wrapf(err, "unable to create mdadm raid %s", *raid.Arrayname)
+			return fmt.Errorf("unable to create mdadm raid %s %w", *raid.Arrayname, err)
 		}
 	}
 	return nil
@@ -200,7 +206,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
 			log.Error("vgcreate", "error", err)
-			return errors.Wrapf(err, "unable to create volume group %s", *vg.Name)
+			return fmt.Errorf("unable to create volume group %s %w", *vg.Name, err)
 		}
 	}
 
@@ -243,7 +249,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
 			log.Error("lvcreate", "error", err)
-			return errors.Wrapf(err, "unable to create logical volume %s", *lv.Name)
+			return fmt.Errorf("unable to create logical volume %s %w", *lv.Name, err)
 		}
 	}
 
@@ -290,7 +296,7 @@ func (f *Filesystem) createFilesystems() error {
 		err := os.ExecuteCommand(mkfs, args...)
 		if err != nil {
 			log.Error("create filesystem failed", "device", *fs.Device, "error", err)
-			return errors.Wrapf(err, "unable to create filesystem on %s", *fs.Device)
+			return fmt.Errorf("unable to create filesystem on %s %w", *fs.Device, err)
 		}
 	}
 
@@ -393,7 +399,7 @@ func (f *Filesystem) mountSpecialFilesystems() error {
 		log.Info("mount", "source", m.source, "target", mountPoint, "fstype", m.fstype, "flags", m.flags, "data", m.data)
 		err := syscall.Mount(m.source, mountPoint, m.fstype, m.flags, m.data)
 		if err != nil {
-			return errors.Wrapf(err, "mounting %s to %s failed", m.source, m.target)
+			return fmt.Errorf("mounting %s to %s failed %w", m.source, m.target, err)
 		}
 	}
 	return nil
@@ -439,10 +445,10 @@ func (f *Filesystem) createDiskJSON() error {
 
 	j, err := json.MarshalIndent(f.disk, "", "  ")
 	if err != nil {
-		return errors.Wrap(err, "unable to marshal to json")
+		return fmt.Errorf("unable to marshal to json %w", err)
 	}
 	log.Info("create legacy disk.json", "content", string(j))
-	return ioutil.WriteFile(destination, j, 0600)
+	return gos.WriteFile(destination, j, 0600)
 }
 
 func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {
@@ -463,7 +469,7 @@ func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {
 	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
 	if err != nil {
 		log.Error("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
-		return "", errors.Wrapf(err, "unable to create filesystem %s on %s", *fs.Device, fs.Path)
+		return "", fmt.Errorf("unable to create filesystem %s on %s %w", *fs.Device, fs.Path, err)
 	}
 	return path, nil
 }
@@ -495,7 +501,7 @@ func (fss fstabEntries) write(chroot string) error {
 	content := header + fstab + "\n"
 	log.Info("write fstab", "content", content)
 	//nolint:gosec
-	return ioutil.WriteFile(path.Join(chroot, "/etc/fstab"), []byte(content), 0644)
+	return gos.WriteFile(path.Join(chroot, "/etc/fstab"), []byte(content), 0644)
 }
 
 func (fs fstabEntry) string() string {
