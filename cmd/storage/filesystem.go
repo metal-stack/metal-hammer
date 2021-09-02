@@ -175,6 +175,12 @@ func (f *Filesystem) createRaids() error {
 			log.Error("create mdadm raid", "error", err)
 			return fmt.Errorf("unable to create mdadm raid %s %w", *raid.Arrayname, err)
 		}
+
+		// set sync speed
+		err = gos.WriteFile("/proc/sys/dev/raid/speed_limit_min", []byte("200000000"), 0644)
+		if err != nil {
+			log.Error("unable to set min sync speed, ignoring...", "error", err)
+		}
 	}
 	return nil
 }
