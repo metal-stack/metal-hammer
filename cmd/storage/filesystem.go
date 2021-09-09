@@ -113,7 +113,7 @@ func (f *Filesystem) createPartitions() error {
 			}
 		}
 		if disk.Device != nil {
-			log.Info("wipe existing partition signatures")
+			log.Info("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+*disk.Device)
 			err := os.ExecuteCommand(command.WIPEFS, "--all", *disk.Device)
 			if err != nil {
 				log.Error("wipe existing partition signatures failed", "error", err)
