@@ -190,18 +190,6 @@ func (f *Filesystem) createLogicalVolumes() error {
 		return nil
 	}
 
-	// TODO decide where to create this config
-	lvmlocal := "/etc/lvm/lvmlocal.conf"
-	input, err := gos.ReadFile(lvmlocal)
-	if err != nil {
-		log.Error("unable to read lvmlocal.conf", "error", err)
-	}
-
-	err = gos.WriteFile(path.Join(f.chroot, lvmlocal), input, 0600)
-	if err != nil {
-		log.Error("unable to write lvmlocal.conf", "error", err)
-	}
-
 	pvcount := make(map[string]int)
 	for _, vg := range f.config.Volumegroups {
 		if vg.Name == nil || *vg.Name == "" {

@@ -96,6 +96,12 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 		return nil, fmt.Errorf("writing userdata failed %w", err)
 	}
 
+	err = h.writeLVMLocalConf()
+	if err != nil {
+		log.Error("unable to write lvmlocal.conf", "error", err)
+		// TODO decide if we need to break here
+	}
+
 	log.Info("running /install.sh on", "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
@@ -157,6 +163,21 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 	info.Initrd = path.Join(tmp, filepath.Base(info.Initrd))
 
 	return info, nil
+}
+
+func (h *Hammer) writeLVMLocalConf() error {
+	// TODO decide where to create this config
+	lvmlocal := "/etc/lvm/lvmlocal.conf"
+	input, err := os.ReadFile(lvmlocal)
+	if err != nil {
+		return fmt.Errorf("unable to read lvmlocal.conf %w", err)
+	}
+
+	err = os.WriteFile(path.Join(h.ChrootPrefix, lvmlocal), input, 0600)
+	if err != nil {
+		return fmt.Errorf("unable to write lvmlocal.conf %w", err)
+	}
+	return nil
 }
 
 func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
