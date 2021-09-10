@@ -96,6 +96,11 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 		return nil, fmt.Errorf("writing userdata failed %w", err)
 	}
 
+	err = h.writeLVMLocalConf()
+	if err != nil {
+		return nil, err
+	}
+
 	log.Info("running /install.sh on", "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
@@ -157,6 +162,36 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 	info.Initrd = path.Join(tmp, filepath.Base(info.Initrd))
 
 	return info, nil
+}
+
+// writeLVMLocalConf to make lvm more compatible with os without udevd
+// will only be written if lvm is installed in the target image
+func (h *Hammer) writeLVMLocalConf() error {
+	srclvmlocal := "/etc/lvm/lvmlocal.conf"
+	dstlvm := path.Join(h.ChrootPrefix, "/etc/lvm")
+	dstlvmlocal := path.Join(h.ChrootPrefix, srclvmlocal)
+
+	_, err := os.Stat(srclvmlocal)
+	if os.IsNotExist(err) {
+		log.Info("src lvmlocal.conf not present, not creating lvmlocal.conf")
+		return nil
+	}
+	_, err = os.Stat(dstlvm)
+	if os.IsNotExist(err) {
+		log.Info("dst /etc/lvm not present, not creating lvmlocal.conf")
+		return nil
+	}
+
+	input, err := os.ReadFile(srclvmlocal)
+	if err != nil {
+		return fmt.Errorf("unable to read lvmlocal.conf %w", err)
+	}
+
+	err = os.WriteFile(dstlvmlocal, input, 0600)
+	if err != nil {
+		return fmt.Errorf("unable to write lvmlocal.conf %w", err)
+	}
+	return nil
 }
 
 func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {

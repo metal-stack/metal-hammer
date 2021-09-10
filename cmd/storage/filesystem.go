@@ -223,13 +223,21 @@ func (f *Filesystem) createLogicalVolumes() error {
 		if lvExists(*lv.Volumegroup, *lv.Name) {
 			continue
 		}
+		if lv.Size == nil {
+			continue
+		}
 
 		args := []string{
 			"lvcreate",
 			"--verbose",
 			"--name", *lv.Name,
 			"--wipesignatures", "y",
-			"--size", fmt.Sprintf("%dm", *lv.Size),
+		}
+
+		if *lv.Size > int64(0) {
+			args = append(args, "--size", fmt.Sprintf("%dm", *lv.Size))
+		} else {
+			args = append(args, "--extents", "100%FREE")
 		}
 
 		lvmtype := "linear"
@@ -252,6 +260,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		}
 		args = append(args, *lv.Volumegroup)
 
+		log.Info("lvcreate", "args", args)
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
 			log.Error("lvcreate", "error", err)
@@ -384,7 +393,8 @@ var (
 		{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
 		{source: "efivarfs", target: "/sys/firmware/efi/efivars", fstype: "efivarfs", flags: 0, data: ""},
 		{source: "tmpfs", target: "/tmp", fstype: "tmpfs", flags: 0, data: ""},
-		// /dev is a bind mount, a bind mount must have MS_BIND flags set see man 2 mount
+		// /dev and /run are bind mounts, a bind mount must have MS_BIND flags set see man 2 mount
+		{source: "/run", target: "/run", fstype: "", flags: syscall.MS_BIND, data: ""},
 		{source: "/dev", target: "/dev", fstype: "", flags: syscall.MS_BIND, data: ""},
 	}
 )
