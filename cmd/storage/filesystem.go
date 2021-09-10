@@ -260,6 +260,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		}
 		args = append(args, *lv.Volumegroup)
 
+		log.Info("lvcreate", "args", args)
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
 			log.Error("lvcreate", "error", err)
