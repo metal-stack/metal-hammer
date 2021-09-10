@@ -232,7 +232,6 @@ func (f *Filesystem) createLogicalVolumes() error {
 			"--verbose",
 			"--name", *lv.Name,
 			"--wipesignatures", "y",
-			"--size", fmt.Sprintf("%dm", *lv.Size),
 		}
 
 		if *lv.Size >= int64(0) {
