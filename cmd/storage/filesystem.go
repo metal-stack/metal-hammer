@@ -234,7 +234,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 			"--wipesignatures", "y",
 		}
 
-		if *lv.Size >= int64(0) {
+		if *lv.Size > int64(0) {
 			args = append(args, "--size", fmt.Sprintf("%dm", *lv.Size))
 		} else {
 			args = append(args, "--extends", "100%FREE")
