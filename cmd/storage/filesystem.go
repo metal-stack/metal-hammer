@@ -393,7 +393,8 @@ var (
 		{source: "sys", target: "/sys", fstype: "sysfs", flags: 0, data: ""},
 		{source: "efivarfs", target: "/sys/firmware/efi/efivars", fstype: "efivarfs", flags: 0, data: ""},
 		{source: "tmpfs", target: "/tmp", fstype: "tmpfs", flags: 0, data: ""},
-		// /dev is a bind mount, a bind mount must have MS_BIND flags set see man 2 mount
+		// /dev and /run are bind mounts, a bind mount must have MS_BIND flags set see man 2 mount
+		{source: "/run", target: "/run", fstype: "", flags: syscall.MS_BIND, data: ""},
 		{source: "/dev", target: "/dev", fstype: "", flags: syscall.MS_BIND, data: ""},
 	}
 )
