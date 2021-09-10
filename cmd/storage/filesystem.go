@@ -223,6 +223,9 @@ func (f *Filesystem) createLogicalVolumes() error {
 		if lvExists(*lv.Volumegroup, *lv.Name) {
 			continue
 		}
+		if lv.Size == nil {
+			continue
+		}
 
 		args := []string{
 			"lvcreate",
@@ -230,6 +233,12 @@ func (f *Filesystem) createLogicalVolumes() error {
 			"--name", *lv.Name,
 			"--wipesignatures", "y",
 			"--size", fmt.Sprintf("%dm", *lv.Size),
+		}
+
+		if *lv.Size >= int64(0) {
+			args = append(args, "--size", fmt.Sprintf("%dm", *lv.Size))
+		} else {
+			args = append(args, "--extends", "100%FREE")
 		}
 
 		lvmtype := "linear"
