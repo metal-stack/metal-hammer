@@ -21,6 +21,7 @@ const (
 	SGDisk   = "sgdisk"
 	SSHD     = "sshd"
 	SUM      = "sum"
+	WIPEFS   = "wipefs"
 )
 
 var commands = []string{
@@ -39,6 +40,7 @@ var commands = []string{
 	SGDisk,
 	SSHD,
 	SUM,
+	WIPEFS,
 }
 
 // CommandsExist check that all required binaries are installed in the initrd.

@@ -113,9 +113,15 @@ func (f *Filesystem) createPartitions() error {
 			}
 		}
 		if disk.Device != nil {
+			log.Info("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+*disk.Device)
+			err := os.ExecuteCommand(command.WIPEFS, "--all", *disk.Device)
+			if err != nil {
+				log.Error("wipe existing partition signatures failed", "error", err)
+				return fmt.Errorf("unable wipe existing partitions on %s %w", *disk.Device, err)
+			}
 			opts = append(opts, *disk.Device)
 			log.Info("sgdisk create partitions", "command", opts)
-			err := os.ExecuteCommand(command.SGDisk, opts...)
+			err = os.ExecuteCommand(command.SGDisk, opts...)
 			if err != nil {
 				log.Error("sgdisk creating partitions failed", "error", err)
 				return fmt.Errorf("unable to create partitions on %s %w", *disk.Device, err)

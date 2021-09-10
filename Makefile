@@ -54,6 +54,7 @@ ramdisk:
 		-files="/sbin/mdadm:sbin/mdadm" \
 		-files="/sbin/mdmon:sbin/mdmon" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
+		-files="/sbin/wipefs:sbin/wipefs" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/usr/lib/x86_64-linux-gnu/libnss_files.so:lib/libnss_files.so.2" \
 		-files="passwd:etc/passwd" \
