@@ -237,7 +237,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		if *lv.Size > int64(0) {
 			args = append(args, "--size", fmt.Sprintf("%dm", *lv.Size))
 		} else {
-			args = append(args, "--extends", "100%FREE")
+			args = append(args, "--extents", "100%FREE")
 		}
 
 		lvmtype := "linear"
