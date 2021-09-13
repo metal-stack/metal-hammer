@@ -400,7 +400,6 @@ var (
 		{source: "efivarfs", target: "/sys/firmware/efi/efivars", fstype: "efivarfs", flags: 0, data: ""},
 		{source: "tmpfs", target: "/tmp", fstype: "tmpfs", flags: 0, data: ""},
 		// /dev and /run are bind mounts, a bind mount must have MS_BIND flags set see man 2 mount
-		{source: "/run", target: "/run", fstype: "", flags: syscall.MS_BIND, data: ""},
 		{source: "/dev", target: "/dev", fstype: "", flags: syscall.MS_BIND, data: ""},
 	}
 )
