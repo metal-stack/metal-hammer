@@ -1,0 +1,13 @@
+apiVersion: ignite.weave.works/v1alpha4
+kind: VM
+metadata:
+  name: metal-hammer
+spec:
+  image:
+    oci: metal-hammer
+  kernel:
+    oci: metal-kernel
+    cmdLine: console=ttyS0 ip=dhcp carrier_timeout=10 DEBUG=1 init=/metal-hammer
+  cpus: 2
+  diskSize: 3GB
+  memory: 800MB

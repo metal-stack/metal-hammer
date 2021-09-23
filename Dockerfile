@@ -34,7 +34,14 @@ COPY --from=sum /usr/bin/sum /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/bin/metal-hammer /work/bin/
 RUN COMMONDIR=/common make ramdisk
+RUN apt install -y cpio
+RUN lz4 -c -d ./metal-hammer-initrd.img.lz4 > metal-hammer-initrd.img
+
+WORKDIR /work/initrd/
+RUN cat ../metal-hammer-initrd.img | cpio -idmv
+RUN ls -alh ./usr/bin/
 
 FROM scratch
 COPY --from=builder /work/bin/metal-hammer /
-COPY --from=initrd-builder /work/metal-hammer-initrd.img.lz4 /
+COPY --from=initrd-builder /work/initrd/* /
+
