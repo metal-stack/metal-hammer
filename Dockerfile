@@ -1,9 +1,10 @@
 FROM metalstack/builder:latest as builder
 
-FROM r.metal-stack.io/metal/supermicro:2.5.2 as sum
+FROM r.metal-stack.io/metal/supermicro:2.6.0 as sum
 
-FROM golang:1.14-buster as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=v7.0.0
+FROM golang:1.16-buster as initrd-builder
+# keep u-root sha in sync with go.mod
+ENV UROOT_GIT_SHA_OR_TAG=c0a6cbaae564980cc578855c713e0af70a13290a
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
