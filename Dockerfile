@@ -1,6 +1,6 @@
 FROM metalstack/builder:latest as builder
 
-FROM r.metal-stack.io/metal/supermicro:2.6.0 as sum
+FROM r.metal-stack.io/metal/supermicro:2.7.0 as sum
 
 FROM golang:1.16-buster as initrd-builder
 # keep u-root sha in sync with go.mod
