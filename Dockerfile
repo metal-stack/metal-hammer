@@ -4,7 +4,7 @@ FROM r.metal-stack.io/metal/supermicro:2.7.0 as sum
 
 FROM golang:1.16-buster as initrd-builder
 # keep u-root sha in sync with go.mod
-ENV UROOT_GIT_SHA_OR_TAG=c0a6cbaae564980cc578855c713e0af70a13290a
+ENV UROOT_GIT_SHA_OR_TAG=v7.0.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
