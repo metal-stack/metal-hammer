@@ -30,7 +30,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.2.0 // indirect
 	// keep u-root sha in sync with Dockerfile
-	github.com/u-root/u-root v0.0.0-20210920205541-c0a6cbaae564
+	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/vishvananda/netlink v1.1.1-0.20200221165523-c79a4b7b4066
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
