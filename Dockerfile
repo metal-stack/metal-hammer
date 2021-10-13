@@ -2,7 +2,7 @@ FROM metalstack/builder:latest as builder
 
 FROM r.metal-stack.io/metal/supermicro:2.7.0 as sum
 
-FROM golang:1.16-buster as initrd-builder
+FROM golang:1.14-buster as initrd-builder
 # keep u-root sha in sync with go.mod
 ENV UROOT_GIT_SHA_OR_TAG=v7.0.0
 RUN apt-get update \
