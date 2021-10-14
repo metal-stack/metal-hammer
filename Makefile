@@ -55,7 +55,6 @@ ramdisk:
 		-files="/sbin/mdmon:sbin/mdmon" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/sbin/wipefs:sbin/wipefs" \
-		-files="/usr/bin/acpidump:/usr/bin/acpidump" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/usr/lib/x86_64-linux-gnu/libnss_files.so:lib/libnss_files.so.2" \
 		-files="passwd:etc/passwd" \
@@ -63,6 +62,7 @@ ramdisk:
 		-files="ice.pkg:lib/firmware/intel/ice/ddp/ice.pkg" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
+		-files="/usr/bin/acpidump:/sbin/acpica_bin/acpidump" \
 		-files="sum:sbin/sum" \
 	-o ${INITRD} \
 	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \

@@ -35,7 +35,8 @@ COPY lvmlocal.conf ice.pkg metal.key metal.key.pub passwd varrun Makefile .git /
 COPY --from=sum /usr/bin/sum /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/bin/metal-hammer /work/bin/
-RUN COMMONDIR=/common make ramdisk
+RUN mkdir -p /sbin/acpica_bin \
+ && COMMONDIR=/common make ramdisk
 
 FROM scratch
 COPY --from=builder /work/bin/metal-hammer /
