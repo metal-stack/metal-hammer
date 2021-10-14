@@ -39,4 +39,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-replace github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+replace (
+	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20211014052542-921213262a61
+)
