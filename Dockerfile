@@ -7,6 +7,7 @@ FROM golang:1.14-buster as initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v7.0.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
+	acpica-tools \
 	curl \
 	dosfstools \
 	e2fsprogs \
