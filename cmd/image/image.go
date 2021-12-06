@@ -6,7 +6,7 @@ import (
 	pb "github.com/cheggaaa/pb/v3"
 	log "github.com/inconshreveable/log15"
 	"github.com/mholt/archiver"
-	lz4 "github.com/pierrec/lz4"
+	lz4 "github.com/pierrec/lz4/v4"
 
 	//nolint:gosec
 	"crypto/md5"
@@ -63,7 +63,7 @@ func Burn(prefix, image, source string) error {
 	}
 
 	lz4Reader := lz4.NewReader(file)
-	log.Info("lz4", "size", lz4Reader.Header.Size)
+	log.Info("lz4", "size", lz4Reader.Size())
 	creader := io.NopCloser(lz4Reader)
 	// wild guess for lz4 compression ratio
 	// lz4 is a stream format and therefore the
