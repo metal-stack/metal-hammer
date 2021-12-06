@@ -30,7 +30,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.12
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.2.0 // indirect
-	github.com/u-root/u-root v7.0.0+incompatible
+	github.com/u-root/u-root v0.7.0
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
