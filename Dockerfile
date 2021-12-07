@@ -2,8 +2,8 @@ FROM metalstack/builder:latest as builder
 
 FROM r.metal-stack.io/metal/supermicro:2.5.2 as sum
 
-FROM golang:1.17-bullseye as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=v0.8.0
+FROM golang:1.14-buster as initrd-builder
+ENV UROOT_GIT_SHA_OR_TAG=v0.7.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
