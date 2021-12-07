@@ -27,7 +27,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \
  && cd u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
- && go install
+ && GO111MODULE=off go install
 WORKDIR /work
 COPY lvmlocal.conf ice.pkg metal.key metal.key.pub passwd varrun Makefile .git /work/
 COPY --from=sum /usr/bin/sum /work/
