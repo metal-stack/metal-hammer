@@ -253,12 +253,17 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, n
 
 func nicsWithNeighbors(nics []*models.ModelsV1MachineNicExtended) []*models.ModelsV1MachineNicExtended {
 	result := []*models.ModelsV1MachineNicExtended{}
-	for _, nic := range nics {
-		for _, neigh := range nic.Neighbors {
+	for i := range nics {
+		nic := nics[i]
+		neighs := []*models.ModelsV1MachineNicExtended{}
+		for j := range nic.Neighbors {
+			neigh := nic.Neighbors[j]
 			if *neigh.Mac != "" {
-				result = append(result, nic)
+				neighs = append(neighs, neigh)
 			}
 		}
+		nic.Neighbors = neighs
+		result = append(result, nic)
 	}
 	return result
 }
