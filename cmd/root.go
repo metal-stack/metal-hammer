@@ -66,7 +66,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
-	go kernel.AutoReboot(24*time.Hour, func() {
+	go kernel.AutoReboot(3*24*time.Hour, 24*time.Hour, func() {
 		eventEmitter.Emit(event.ProvisioningEventPlannedReboot, "autoreboot after 24h")
 	})
 

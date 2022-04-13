@@ -1,7 +1,9 @@
 package kernel
 
 import (
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"os"
 	"strings"
 	"time"
@@ -134,15 +136,24 @@ func Watchdog() {
 	}
 }
 
-// AutoReboot will start a timer and reboot after given duration
-func AutoReboot(after time.Duration, callback func()) {
-	log.Info("autoreboot", "after", after)
+// AutoReboot will start a timer and reboot after given duration a random variation of 1/3rd is added
+func AutoReboot(after, spread time.Duration, callback func()) {
+	log.Info("autoreboot set to", "after", after, "spread", spread)
+	spreadMinutes, err := rand.Int(rand.Reader, big.NewInt(int64(spread.Minutes())))
+	if err != nil {
+		log.Warn("autoreboot", "unable to calculate spread, disable spread", err)
+		spread = time.Duration(0)
+	}
+	spread = time.Minute * time.Duration(spreadMinutes.Int64())
+	after = after + spread
+
+	log.Info("autoreboot with spread", "after", after)
 	rebootTimer := time.NewTimer(after)
 	<-rebootTimer.C
 	log.Info("autoreboot", "timeout reached", "rebooting in 10sec")
 	callback()
 	time.Sleep(10 * time.Second)
-	err := Reboot()
+	err = Reboot()
 	if err != nil {
 		log.Error("autoreboot", "unable to reboot, error", err)
 	}
