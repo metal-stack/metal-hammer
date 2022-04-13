@@ -136,7 +136,7 @@ func Watchdog() {
 	}
 }
 
-// AutoReboot will start a timer and reboot after given duration a random variation of 1/3rd is added
+// AutoReboot will start a timer and reboot after given duration a random variation spread is added
 func AutoReboot(after, spread time.Duration, callback func()) {
 	log.Info("autoreboot set to", "after", after, "spread", spread)
 	spreadMinutes, err := rand.Int(rand.Reader, big.NewInt(int64(spread.Minutes())))
