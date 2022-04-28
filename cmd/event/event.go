@@ -62,6 +62,6 @@ func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 	log.Info("event", "event", eventString, "message", event.Message)
 	_, err := e.client.AddProvisioningEvent(params)
 	if err != nil {
-		log.Error("event", "cannot sent event", eventType, "error", err)
+		log.Error("event", "cannot send event", eventType, "error", err)
 	}
 }
