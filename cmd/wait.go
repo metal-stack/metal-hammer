@@ -8,17 +8,10 @@ import (
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/metal-stack/metal-hammer/cmd/event"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const defaultWaitTimeOut = 2 * time.Second
-
-func (c *GrpcClient) NewWaitClient() (v1.WaitClient, io.Closer, error) {
-	conn, err := c.newConnection()
-	if err != nil {
-		return nil, nil, err
-	}
-	return v1.NewWaitClient(conn), conn, nil
-}
 
 func (c *GrpcClient) WaitForAllocation(machineID string) error {
 	client, closer, err := c.NewWaitClient()
@@ -27,7 +20,21 @@ func (c *GrpcClient) WaitForAllocation(machineID string) error {
 	}
 	defer closer.Close()
 
-	c.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
+	e, eventCloser, err := c.NewEventClient()
+	if err != nil {
+		return err
+	}
+	defer eventCloser.Close()
+
+	_, err = e.Send(context.Background(), &v1.EventServiceSendRequest{
+		MachineId: machineID,
+		Time:      timestamppb.Now(),
+		Event:     string(event.ProvisioningEventWaiting),
+		Message:   "waiting for allocation",
+	})
+	if err != nil {
+		return err
+	}
 
 	req := &v1.WaitRequest{
 		MachineID: machineID,

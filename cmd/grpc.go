@@ -5,9 +5,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"io"
 	"time"
 
-	"github.com/metal-stack/metal-hammer/cmd/event"
+	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -16,7 +17,6 @@ import (
 )
 
 type GrpcClient struct {
-	*event.EventEmitter
 	addr     string
 	dialOpts []grpc.DialOption
 	log      *zap.SugaredLogger
@@ -24,7 +24,7 @@ type GrpcClient struct {
 
 // NewGrpcClient fetches the address and certificates from metal-core needed to communicate with metal-api via grpc,
 // and returns a new grpc client that can be used to invoke all provided grpc endpoints.
-func NewGrpcClient(log *zap.SugaredLogger, certsClient certs.ClientService, emitter *event.EventEmitter) (*GrpcClient, error) {
+func NewGrpcClient(log *zap.SugaredLogger, certsClient certs.ClientService) (*GrpcClient, error) {
 	params := certs.NewGrpcClientCertParams()
 	resp, err := certsClient.GrpcClientCert(params)
 	if err != nil {
@@ -54,15 +54,38 @@ func NewGrpcClient(log *zap.SugaredLogger, certsClient certs.ClientService, emit
 		MinVersion:   tls.VersionTLS12,
 	}
 	return &GrpcClient{
-		EventEmitter: emitter,
-		addr:         resp.Payload.Address,
-		log:          log,
+		addr: resp.Payload.Address,
+		log:  log,
 		dialOpts: []grpc.DialOption{
 			grpc.WithKeepaliveParams(kacp),
 			grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 			grpc.WithBlock(),
 		},
 	}, nil
+}
+
+func (c *GrpcClient) NewEventClient() (v1.EventServiceClient, io.Closer, error) {
+	conn, err := c.newConnection()
+	if err != nil {
+		return nil, nil, err
+	}
+	return v1.NewEventServiceClient(conn), conn, nil
+}
+
+func (c *GrpcClient) NewWaitClient() (v1.WaitClient, io.Closer, error) {
+	conn, err := c.newConnection()
+	if err != nil {
+		return nil, nil, err
+	}
+	return v1.NewWaitClient(conn), conn, nil
+}
+
+func (c *GrpcClient) newSuperUserPasswordClient() (v1.SuperUserPasswordClient, io.Closer, error) {
+	conn, err := c.newConnection()
+	if err != nil {
+		return nil, nil, err
+	}
+	return v1.NewSuperUserPasswordClient(conn), conn, nil
 }
 
 func (c *GrpcClient) newConnection() (*grpc.ClientConn, error) {

@@ -47,11 +47,24 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := machine.New(transport, strfmt.Default)
 	certsClient := certs.New(transport, strfmt.Default)
-	eventEmitter := event.NewEventEmitter(log, client, spec.MachineUUID)
+
+	grpcClient, err := NewGrpcClient(log, certsClient)
+	if err != nil {
+		log.Errorw("failed to fetch GRPC certificates", "error", err)
+		return nil, err
+	}
+	eventClient, eventCloser, err := grpcClient.NewEventClient()
+	if err != nil {
+		log.Errorw("failed to create event client", "error", err)
+		return nil, err
+	}
+	defer eventCloser.Close()
+
+	eventEmitter := event.NewEventEmitter(log, eventClient, spec.MachineUUID)
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, fmt.Sprintf("starting metal-hammer version:%q", v.V))
 
-	err := command.CommandsExist()
+	err = command.CommandsExist()
 	if err != nil {
 		return eventEmitter, err
 	}
@@ -65,6 +78,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 		EventEmitter:       eventEmitter,
 		ChrootPrefix:       "/rootfs",
 		OsImageDestination: "/tmp/os.tgz",
+		GrpcClient:         grpcClient,
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
@@ -73,13 +87,6 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	})
 
 	hammer.Spec.ConsolePassword = password.Generate(16)
-
-	grpcClient, err := NewGrpcClient(log, certsClient, eventEmitter)
-	if err != nil {
-		log.Errorw("failed to fetch GRPC certificates", "error", err)
-		return eventEmitter, err
-	}
-	hammer.GrpcClient = grpcClient
 
 	err = hammer.createBmcSuperuser()
 	if err != nil {

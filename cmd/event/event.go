@@ -1,12 +1,13 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
-	"github.com/metal-stack/metal-hammer/metal-core/models"
+	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ProvisioningEventType indicates an event emitted by a machine during the provisioning sequence
@@ -29,16 +30,16 @@ const (
 )
 
 type EventEmitter struct {
-	log       *zap.SugaredLogger
-	client    machine.ClientService
-	machineID string
+	log         *zap.SugaredLogger
+	eventClient v1.EventServiceClient
+	machineID   string
 }
 
-func NewEventEmitter(log *zap.SugaredLogger, client machine.ClientService, machineID string) *EventEmitter {
+func NewEventEmitter(log *zap.SugaredLogger, eventClient v1.EventServiceClient, machineID string) *EventEmitter {
 	emitter := &EventEmitter{
-		client:    client,
-		machineID: machineID,
-		log:       log,
+		eventClient: eventClient,
+		machineID:   machineID,
+		log:         log,
 	}
 
 	ticker := time.NewTicker(1 * time.Minute)
@@ -51,18 +52,14 @@ func NewEventEmitter(log *zap.SugaredLogger, client machine.ClientService, machi
 }
 
 func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
-
 	eventString := string(eventType)
-	event := &models.ModelsV1MachineProvisioningEvent{
-		Event:   &eventString,
-		Message: message,
-	}
-	params := machine.NewAddProvisioningEventParams()
-	params.ID = e.machineID
-	params.Body = event
-
-	e.log.Infow("event", "event", eventString, "message", event.Message)
-	_, err := e.client.AddProvisioningEvent(params)
+	e.log.Infow("event", "event", eventString, "message", message)
+	_, err := e.eventClient.Send(context.Background(), &v1.EventServiceSendRequest{
+		MachineId: e.machineID,
+		Time:      timestamppb.Now(),
+		Event:     eventString,
+		Message:   message,
+	})
 	if err != nil {
 		e.log.Errorw("event", "cannot send event", eventType, "error", err)
 	}
