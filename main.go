@@ -97,6 +97,7 @@ func updateResolvConf() error {
 
 func initLog(d bool) *zap.SugaredLogger {
 	pe := zap.NewProductionEncoderConfig()
+	pe.EncodeLevel = zapcore.LowercaseColorLevelEncoder
 	pe.EncodeTime = zapcore.ISO8601TimeEncoder
 	consoleEncoder := zapcore.NewConsoleEncoder(pe)
 
