@@ -3,9 +3,9 @@ package report
 import (
 	"fmt"
 
-	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"go.uber.org/zap"
 )
 
 type Report struct {
@@ -17,6 +17,7 @@ type Report struct {
 	Cmdline         string
 	Kernel          string
 	BootloaderID    string
+	Log             *zap.SugaredLogger
 }
 
 // ReportInstallation will tell metal-core the result of the installation
@@ -40,9 +41,9 @@ func (r *Report) ReportInstallation() error {
 	params.ID = r.MachineUUID
 	_, err := r.Client.Report(params)
 	if err != nil {
-		log.Error("report", "error", err)
+		r.Log.Errorw("report", "error", err)
 		return fmt.Errorf("unable to report image installation %w", err)
 	}
-	log.Info("report image installation was successful")
+	r.Log.Infow("report image installation was successful")
 	return nil
 }

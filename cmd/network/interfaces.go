@@ -9,8 +9,8 @@ import (
 	"github.com/metal-stack/go-lldpd/pkg/lldp"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/metal-stack/v"
+	"go.uber.org/zap"
 
-	log "github.com/inconshreveable/log15"
 	"github.com/vishvananda/netlink"
 )
 
@@ -21,6 +21,7 @@ type Network struct {
 	MachineUUID string
 	LLDPClient  *LLDPClient
 	Eth0Mac     string // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
+	Log         *zap.SugaredLogger
 }
 
 // We expect to have storage and MTU of 9000 supports efficient transmission.
@@ -34,7 +35,7 @@ const MTU = 9000
 func (n *Network) UpAllInterfaces() error {
 	description := fmt.Sprintf("metal-hammer IP:%s version:%s waiting since %s for installation", n.IPAddress, v.V, n.Started)
 	interfaces := make([]string, 0)
-	ethtool := NewEthtool()
+	ethtool := NewEthtool(n.Log)
 	for _, name := range Interfaces() {
 		if !strings.HasPrefix(name, "eth") {
 			continue
@@ -53,14 +54,14 @@ func (n *Network) UpAllInterfaces() error {
 
 		ethtool.disableFirmwareLLDP(name)
 
-		lldpd, err := lldp.NewDaemon(n.MachineUUID, description, name, 5*time.Second)
+		lldpd, err := lldp.NewDaemon(n.Log, n.MachineUUID, description, name, 5*time.Second)
 		if err != nil {
 			return fmt.Errorf("error start lldpd on %s %w", name, err)
 		}
 		lldpd.Start()
 	}
 
-	lc := NewLLDPClient(interfaces, 2, 2, 0)
+	lc := NewLLDPClient(n.Log, interfaces, 2, 2, 0)
 	n.LLDPClient = lc
 	go lc.Start()
 
@@ -102,7 +103,7 @@ func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNicExtended, 
 	for !host.done {
 		actualNeigh := len(host.neighbors)
 		minimumNeigh := host.minimumNeighbors
-		log.Info("waiting for lldp neighbors", "interface", name, "actual", actualNeigh, "minimum", minimumNeigh)
+		n.Log.Infow("waiting for lldp neighbors", "interface", name, "actual", actualNeigh, "minimum", minimumNeigh)
 		time.Sleep(1 * time.Second)
 
 		duration := time.Since(host.start)
@@ -110,7 +111,7 @@ func (n *Network) Neighbors(name string) ([]*models.ModelsV1MachineNicExtended, 
 			return nil, fmt.Errorf("not all neighbor requirements where met within: %s, exiting", host.timeout)
 		}
 	}
-	log.Info("all lldp pdu's received", "interface", name)
+	n.Log.Infow("all lldp pdu's received", "interface", name)
 
 	neighs := host.neighbors[name]
 	for _, neigh := range neighs {

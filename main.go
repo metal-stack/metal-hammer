@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/metal-stack/v"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
-	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/go-hal/connect"
-	hallog15 "github.com/metal-stack/go-hal/pkg/logger/log15"
+	halzap "github.com/metal-stack/go-hal/pkg/logger/zap"
 	"github.com/metal-stack/metal-hammer/cmd"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
@@ -18,67 +19,59 @@ import (
 
 func main() {
 	fmt.Print(cmd.HammerBanner)
-	// Reboot if metal-hammer crashes after 60sec.
-	go kernel.Watchdog()
-
 	if len(os.Args) > 1 {
-		log.Error("cmd args are not supported")
-		os.Exit(1)
+		panic("cmd args are not supported")
 	}
 
 	err := updateResolvConf()
 	if err != nil {
-		log.Error("error updating resolv.conf", "error", err)
+		fmt.Printf("error updating resolv.conf %s", err)
 		os.Exit(1)
 	}
 
-	hal, err := connect.InBand(hallog15.New(log.New()))
+	log := initLog(true)
+
+	// Reboot if metal-hammer crashes after 60sec.
+	go kernel.Watchdog(log)
+
+	hal, err := connect.InBand(halzap.New(log))
 	if err != nil {
-		log.Error("unable to detect hardware", "error", err)
+		log.Errorw("unable to detect hardware", "error", err)
 		os.Exit(1)
 	}
 
 	uuid, err := hal.UUID()
 	if err != nil {
-		log.Error("unable to get uuid hardware", "error", err)
+		log.Errorw("unable to get uuid hardware", "error", err)
 		os.Exit(1)
 	}
 
 	ip := network.InternalIP()
-	err = cmd.StartSSHD(ip)
+	err = cmd.StartSSHD(log, ip)
 	if err != nil {
-		log.Error("sshd error", "error", err)
+		log.Errorw("sshd error", "error", err)
 		os.Exit(1)
 	}
 
-	log.Info("metal-hammer", "version", v.V, "hal", hal.Describe())
+	log.Infow("metal-hammer", "version", v.V, "hal", hal.Describe())
 
-	spec := cmd.NewSpec()
+	spec := cmd.NewSpec(log)
 	spec.MachineUUID = uuid.String()
 	spec.IP = ip
 
 	spec.Log()
 
-	var level log.Lvl
-	if spec.Debug {
-		level = log.LvlDebug
-	} else {
-		level = log.LvlInfo
-	}
+	// FIXME set loglevel from spec.Debug
 
-	h := log.CallerFileHandler(log.StdoutHandler)
-	h = log.LvlFilterHandler(level, h)
-	log.Root().SetHandler(h)
-
-	emitter, err := cmd.Run(spec, hal)
+	emitter, err := cmd.Run(log, spec, hal)
 	if err != nil {
 		wait := 5 * time.Second
-		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
+		log.Errorw("metal-hammer failed", "rebooting in", wait, "error", err)
 		emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
 		time.Sleep(wait)
 		err := kernel.Reboot()
 		if err != nil {
-			log.Error("metal-hammer reboot failed", "error", err)
+			log.Errorw("metal-hammer reboot failed", "error", err)
 			emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
 		}
 	}
@@ -100,4 +93,23 @@ func updateResolvConf() error {
 	}
 
 	return os.Symlink(target, symlink)
+}
+
+func initLog(d bool) *zap.SugaredLogger {
+	pe := zap.NewProductionEncoderConfig()
+	pe.EncodeLevel = zapcore.LowercaseColorLevelEncoder
+	pe.EncodeTime = zapcore.ISO8601TimeEncoder
+	consoleEncoder := zapcore.NewConsoleEncoder(pe)
+
+	level := zap.InfoLevel
+	if d {
+		level = zap.DebugLevel
+	}
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level),
+	)
+
+	l := zap.New(core)
+	return l.Sugar()
 }

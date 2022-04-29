@@ -10,6 +10,7 @@ import (
 
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"go.uber.org/zap/zaptest"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
@@ -40,6 +41,7 @@ func TestReportInstallation(t *testing.T) {
 	r := &Report{
 		Client:       client,
 		InstallError: errors.New("an error occurred"),
+		Log:          zaptest.NewLogger(t).Sugar(),
 	}
 
 	err := r.ReportInstallation()

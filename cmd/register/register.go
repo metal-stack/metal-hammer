@@ -17,8 +17,7 @@ import (
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/vishvananda/netlink"
-
-	log "github.com/inconshreveable/log15"
+	"go.uber.org/zap"
 )
 
 // Register the Machine
@@ -27,6 +26,7 @@ type Register struct {
 	Client      machine.ClientService
 	Network     *network.Network
 	Hal         hal.InBand
+	Log         *zap.SugaredLogger
 }
 
 // RegisterMachine register a machine at the metal-api via metal-core
@@ -43,7 +43,7 @@ func (r *Register) RegisterMachine(hw *models.DomainMetalHammerRegisterMachineRe
 		return fmt.Errorf("unable to register machine:%#v response payload is nil", hw)
 	}
 
-	log.Info("register machine returned", "response", resp.Payload)
+	r.Log.Infow("register machine returned", "response", resp.Payload)
 	return nil
 }
 
@@ -83,7 +83,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 		_, err := gonet.ParseMAC(mac)
 
 		if err != nil {
-			log.Debug("skip interface with invalid mac", "interface", name, "mac", mac)
+			r.Log.Debugw("skip interface with invalid mac", "interface", name, "mac", mac)
 			continue
 		}
 		// check if after mac validation loopback is still present
@@ -98,7 +98,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 			Mac:  &mac,
 			Name: &name,
 		}
-		log.Info("register", "nic", name, "mac", mac)
+		r.Log.Infow("register", "nic", name, "mac", mac)
 		nics = append(nics, nic)
 	}
 	// add a lo interface if not present
@@ -147,7 +147,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 		hw.Disks = append(hw.Disks, blockDevice)
 	}
 
-	ipmiconfig, err := readIPMIDetails(r.Network.Eth0Mac, r.Hal)
+	ipmiconfig, err := readIPMIDetails(r.Log, r.Network.Eth0Mac, r.Hal)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func createSyslog() error {
 }
 
 // IPMI configuration and
-func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPMI, error) {
+func readIPMIDetails(log *zap.SugaredLogger, eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPMI, error) {
 	var pw string
 	intf := "lanplus"
 	details := &models.ModelsV1MachineIPMI{
@@ -196,7 +196,7 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 	bmcVersion := "unknown"
 	bmcConn := hal.BMCConnection()
 	if bmcConn.Present() {
-		log.Info("ipmi details from bmc")
+		log.Infow("ipmi details from bmc")
 		board := hal.Board()
 		bmc := board.BMC
 		if bmc == nil {
@@ -231,7 +231,7 @@ func readIPMIDetails(eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPM
 		return details, nil
 	}
 
-	log.Info("ipmi details faked")
+	log.Infow("ipmi details faked")
 	if len(eth0Mac) == 0 {
 		eth0Mac = "00:00:00:00:00:00"
 	}

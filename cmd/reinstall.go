@@ -3,7 +3,6 @@ package cmd
 import (
 	"time"
 
-	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
@@ -22,7 +21,7 @@ func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse
 }
 
 func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped bool) error {
-	log.Error("reinstall cancelled => boot into existing OS...", "reason", reason)
+	h.log.Errorw("reinstall cancelled => boot into existing OS...", "reason", reason)
 
 	params := machine.NewAbortReinstallParams()
 	params.ID = machineID
@@ -34,7 +33,7 @@ func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped
 
 	resp, err := h.Client.AbortReinstall(params)
 	if err != nil {
-		log.Error("failed to abort reinstall", "error", err)
+		h.log.Errorw("failed to abort reinstall", "error", err)
 		time.Sleep(5 * time.Second)
 	}
 

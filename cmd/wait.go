@@ -6,7 +6,6 @@ import (
 	"io"
 	"time"
 
-	log "github.com/inconshreveable/log15"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 )
@@ -36,7 +35,7 @@ func (c *GrpcClient) WaitForAllocation(machineID string) error {
 	for {
 		stream, err := client.Wait(context.Background(), req)
 		if err != nil {
-			log.Error("failed waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
+			c.log.Errorw("failed waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
 			time.Sleep(defaultWaitTimeOut)
 			continue
 		}
@@ -44,17 +43,17 @@ func (c *GrpcClient) WaitForAllocation(machineID string) error {
 		for {
 			_, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
-				log.Info("machine has been requested for allocation", "machineID", machineID)
+				c.log.Infow("machine has been requested for allocation", "machineID", machineID)
 				return nil
 			}
 
 			if err != nil {
-				log.Error("failed stream receiving during waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
+				c.log.Errorw("failed stream receiving during waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
 				time.Sleep(defaultWaitTimeOut)
 				break
 			}
 
-			log.Info("wait for allocation...", "machineID", machineID)
+			c.log.Infow("wait for allocation...", "machineID", machineID)
 		}
 	}
 }

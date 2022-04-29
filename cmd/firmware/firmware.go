@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	log "github.com/inconshreveable/log15"
+	"go.uber.org/zap"
 )
 
 // updater check if a firmware update is required and updates
@@ -19,21 +19,25 @@ type updater interface {
 // Firmware take care of firmware management
 type Firmware struct {
 	updaters []updater
+	log      *zap.SugaredLogger
 }
 
 // New create a new Firmware manager with all Updaters.
-func New() *Firmware {
+func New(log *zap.SugaredLogger) *Firmware {
 
 	_ = raidcontroller{
 		name:           "lsi3108",
 		desiredVersion: "4.680.00-8290",
+		log:            log,
 	}
 	_ = intel{
 		name:           "intel nics",
 		desiredVersion: "6.8",
+		log:            log,
 	}
 	return &Firmware{
 		updaters: []updater{},
+		log:      log,
 	}
 }
 
@@ -42,24 +46,24 @@ func (f *Firmware) Update() {
 	for _, u := range f.updaters {
 		cv, err := u.current()
 		if err != nil {
-			log.Error("firmware", "unable to get current version", err)
+			f.log.Errorw("firmware", "unable to get current version", err)
 			continue
 		}
 		dv := u.desired()
-		log.Info("firmware", "name", u, "current", cv, "desired", dv, "update required", u.updateRequired())
+		f.log.Infow("firmware", "name", u, "current", cv, "desired", dv, "update required", u.updateRequired())
 		if !u.updateRequired() {
 			continue
 		}
 		err = u.update()
 		if err != nil {
-			log.Error("firmware", "unable to update", err)
+			f.log.Errorw("firmware", "unable to update", err)
 			continue
 		}
 	}
 }
 
 // Run execute a comand with arguments, returns output and error
-func run(command string, args ...string) (string, error) {
+func run(log *zap.SugaredLogger, command string, args ...string) (string, error) {
 	path, err := exec.LookPath(command)
 	if err != nil {
 		return "", fmt.Errorf("unable to locate program:%s in path %w", command, err)
@@ -67,6 +71,6 @@ func run(command string, args ...string) (string, error) {
 	cmd := exec.Command(path, args...)
 	output, err := cmd.Output()
 
-	log.Debug("run", "command", command, "args", args, "output", string(output), "error", err)
+	log.Debugw("run", "command", command, "args", args, "output", string(output), "error", err)
 	return string(output), err
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"go.uber.org/zap/zaptest"
 )
 
 func TestRegisterMachine(t *testing.T) {
@@ -40,7 +41,7 @@ func TestRegisterMachine(t *testing.T) {
 	client := machine.New(transport, strfmt.Default)
 
 	interfaces := make([]string, 0)
-	lldpc := network.NewLLDPClient(interfaces, 0, 0, 2*time.Second)
+	lldpc := network.NewLLDPClient(zaptest.NewLogger(t).Sugar(), interfaces, 0, 0, 2*time.Second)
 	go lldpc.Start()
 	n := &network.Network{
 		LLDPClient: lldpc,
@@ -124,7 +125,7 @@ func TestHammer_readIPMIDetails(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := readIPMIDetails("00:00:00:00:00:01", nil)
+			got, err := readIPMIDetails(zaptest.NewLogger(t).Sugar(), "00:00:00:00:00:01", nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Hammer.readIPMIDetails() error = %v, wantErr %v", err, tt.wantErr)
 				return

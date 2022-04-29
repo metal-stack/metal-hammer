@@ -11,8 +11,8 @@ import (
 	"path"
 	"path/filepath"
 
-	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
+	"go.uber.org/zap"
 )
 
 // EthtoolCommand to gather ethernet informations
@@ -21,15 +21,16 @@ const ethtoolCommand = command.Ethtool
 // Ethtool to query/set ethernet interfaces
 type Ethtool struct {
 	command string
+	log     *zap.SugaredLogger
 }
 
 // NewEthtool create a new Ethtool with the default command
-func NewEthtool() *Ethtool {
+func NewEthtool(log *zap.SugaredLogger) *Ethtool {
 	err := syscall.Mount("debugfs", "/sys/kernel/debug", "debugfs", 0, "")
 	if err != nil {
-		log.Warn("ethtool", "mounting debugfs failed", err)
+		log.Warnw("ethtool", "mounting debugfs failed", err)
 	}
-	return &Ethtool{command: ethtoolCommand}
+	return &Ethtool{command: ethtoolCommand, log: log}
 }
 
 // Run execute ethtool
@@ -41,7 +42,7 @@ func (e *Ethtool) Run(args ...string) (string, error) {
 	cmd := exec.Command(path, args...)
 	output, err := cmd.Output()
 
-	log.Debug("run", "command", e.command, "args", args, "output", string(output), "error", err)
+	e.log.Debugw("run", "command", e.command, "args", args, "output", string(output), "error", err)
 	return string(output), err
 }
 
@@ -53,12 +54,12 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 
 	output, err := e.Run("--show-priv-flags", ifi)
 	if err != nil {
-		log.Info("ethtool", "interface", ifi, "msg", "no priv-flags or disable-fw-lldp not present, try disable via debugfs")
+		e.log.Infow("ethtool", "interface", ifi, "msg", "no priv-flags or disable-fw-lldp not present, try disable via debugfs")
 		e.stopFirmwareLLDP()
 		return
 	}
 
-	log.Debug("ethtool", "show-priv-flags", output)
+	e.log.Debugw("ethtool", "show-priv-flags", output)
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	fwLLDP := ""
 	for scanner.Scan() {
@@ -72,17 +73,17 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 	}
 
 	if fwLLDP != "" {
-		log.Info("ethtool", "interface", ifi, "disable-fw-lldp is set to", fwLLDP)
+		e.log.Infow("ethtool", "interface", ifi, "disable-fw-lldp is set to", fwLLDP)
 	}
 
 	if fwLLDP == "off" {
 		_, err := e.Run("--set-priv-flags", ifi, "disable-fw-lldp", "on")
 		if err != nil {
-			log.Error("ethtool", "interface", ifi, "error disabling fw-lldp try to stop it", err)
+			e.log.Errorw("ethtool", "interface", ifi, "error disabling fw-lldp try to stop it", err)
 			e.stopFirmwareLLDP()
 			return
 		}
-		log.Info("ethtool", "interface", ifi, "fw-lldp", "disabled")
+		e.log.Infow("ethtool", "interface", ifi, "fw-lldp", "disabled")
 	}
 }
 
@@ -95,25 +96,25 @@ var buggyIntelNicDriverNames = []string{"i40e"}
 // or a loop over all directories in /sys/kernel/debug/i40e/*/command
 func (e *Ethtool) stopFirmwareLLDP() {
 	for _, driver := range buggyIntelNicDriverNames {
-		log.Info("ethtool", "stopFirmwareLLDP for driver", driver)
+		e.log.Infow("ethtool", "stopFirmwareLLDP for driver", driver)
 		debugFSPath := path.Join("/sys/kernel/debug", driver)
 		err := filepath.Walk(debugFSPath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				log.Warn("ethtool", "stopFirmwareLLDP in path", path, "error", err)
+				e.log.Warnw("ethtool", "stopFirmwareLLDP in path", path, "error", err)
 				return err
 			}
 			if !info.IsDir() && info.Name() == "command" {
-				log.Info("ethtool", "stopFirmwareLLDP found command", path)
+				e.log.Infow("ethtool", "stopFirmwareLLDP found command", path)
 				stopCommand := []byte("lldp stop")
 				err := os.WriteFile(path, stopCommand, os.ModePerm)
 				if err != nil {
-					log.Error("ethtool", "stopFirmwareLLDP stop lldp > command", path, "error", err)
+					e.log.Errorw("ethtool", "stopFirmwareLLDP stop lldp > command", path, "error", err)
 				}
 			}
 			return nil
 		})
 		if err != nil {
-			log.Error("ethtool", "stopFirmwareLLDP unable to walk through debugfs", debugFSPath, "error", err)
+			e.log.Errorw("ethtool", "stopFirmwareLLDP unable to walk through debugfs", debugFSPath, "error", err)
 		}
 	}
 }

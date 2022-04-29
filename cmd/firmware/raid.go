@@ -1,12 +1,13 @@
 package firmware
 
 import (
-	log "github.com/inconshreveable/log15"
+	"go.uber.org/zap"
 )
 
 type raidcontroller struct {
 	name           string
 	desiredVersion string
+	log            *zap.SugaredLogger
 }
 
 func (r raidcontroller) String() string {
@@ -16,12 +17,12 @@ func (r raidcontroller) String() string {
 // firmware update via
 // storcli /cX download file=smc3108.rom
 func (r raidcontroller) update() error {
-	log.Error("not implemented")
+	r.log.Error("not implemented")
 	return nil
 }
 
 func (r raidcontroller) current() (string, error) {
-	log.Error("not implemented")
+	r.log.Error("not implemented")
 	return "", nil
 }
 
@@ -30,6 +31,6 @@ func (r raidcontroller) desired() string {
 }
 
 func (r raidcontroller) updateRequired() bool {
-	log.Error("not implemented")
+	r.log.Error("not implemented")
 	return true
 }

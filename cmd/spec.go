@@ -7,8 +7,7 @@ import (
 	"os"
 
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
-
-	log "github.com/inconshreveable/log15"
+	"go.uber.org/zap"
 )
 
 //Specification defines configuration items of the application
@@ -39,15 +38,17 @@ type Specification struct {
 	MachineUUID string
 	// IP of this instance
 	IP string
+
+	log *zap.SugaredLogger
 }
 
 // NewSpec fills Specification with configuration made by kernel commandline
-func NewSpec() *Specification {
+func NewSpec(log *zap.SugaredLogger) *Specification {
 	spec := &Specification{}
 	// Grab metal-hammer configuration from kernel commandline
 	envmap, err := kernel.ParseCmdline()
 	if err != nil {
-		log.Error("parse cmdline", "error", err)
+		log.Errorw("parse cmdline", "error", err)
 		os.Exit(1)
 	}
 
@@ -87,13 +88,14 @@ func NewSpec() *Specification {
 			spec.BGPEnabled = enabled
 		}
 	}
+	spec.log = log
 
 	return spec
 }
 
 // Log print configuration options
 func (s *Specification) Log() {
-	log.Info("configuration",
+	s.log.Infow("configuration",
 		"debug", s.Debug,
 		"metalCoreURL", s.MetalCoreURL,
 		"imageURL", s.ImageURL,

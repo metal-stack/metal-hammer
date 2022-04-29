@@ -6,14 +6,14 @@ import (
 	"os/exec"
 	"syscall"
 
-	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
+	"go.uber.org/zap"
 )
 
 const sshdCommand = command.SSHD
 
 // StartSSHD will start sshd to be able to diagnose problems on the pxe bootet machine.
-func StartSSHD(ip string) error {
+func StartSSHD(log *zap.SugaredLogger, ip string) error {
 	sshd, err := exec.LookPath(sshdCommand)
 	if err != nil {
 		return fmt.Errorf("unable to locate sshd %w", err)

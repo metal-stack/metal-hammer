@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"go.uber.org/zap"
 )
 
 // ProvisioningEventType indicates an event emitted by a machine during the provisioning sequence
@@ -29,14 +29,16 @@ const (
 )
 
 type EventEmitter struct {
+	log       *zap.SugaredLogger
 	client    machine.ClientService
 	machineID string
 }
 
-func NewEventEmitter(client machine.ClientService, machineID string) *EventEmitter {
+func NewEventEmitter(log *zap.SugaredLogger, client machine.ClientService, machineID string) *EventEmitter {
 	emitter := &EventEmitter{
 		client:    client,
 		machineID: machineID,
+		log:       log,
 	}
 
 	ticker := time.NewTicker(1 * time.Minute)
@@ -59,9 +61,9 @@ func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 	params.ID = e.machineID
 	params.Body = event
 
-	log.Info("event", "event", eventString, "message", event.Message)
+	e.log.Infow("event", "event", eventString, "message", event.Message)
 	_, err := e.client.AddProvisioningEvent(params)
 	if err != nil {
-		log.Error("event", "cannot send event", eventType, "error", err)
+		e.log.Errorw("event", "cannot send event", eventType, "error", err)
 	}
 }

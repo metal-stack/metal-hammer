@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
+	"go.uber.org/zap/zaptest"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/stretchr/testify/assert"
@@ -58,7 +59,7 @@ func TestEventEmitter_Emit(t *testing.T) {
 	}{
 		{
 			name: "TestEventEmitter_Emit Test 1",
-			e:    NewEventEmitter(client, "machineID"),
+			e:    NewEventEmitter(zaptest.NewLogger(t).Sugar(), client, "machineID"),
 			args: args{
 				eventType: "ProvisioningEventType",
 				message:   "message",
