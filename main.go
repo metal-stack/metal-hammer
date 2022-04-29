@@ -29,19 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	zcfg := zap.NewProductionConfig()
-	lvl, err := zap.ParseAtomicLevel("debug")
-	if err != nil {
-		fmt.Printf("unable to set log level %s", err)
-		os.Exit(1)
-	}
-	zcfg.Level = lvl
-	zcfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	zlog, err := zcfg.Build()
-	if err != nil {
-		panic(err)
-	}
-	log := zlog.Sugar()
+	log := initLog(true)
 
 	// Reboot if metal-hammer crashes after 60sec.
 	go kernel.Watchdog(log)
@@ -105,4 +93,22 @@ func updateResolvConf() error {
 	}
 
 	return os.Symlink(target, symlink)
+}
+
+func initLog(d bool) *zap.SugaredLogger {
+	pe := zap.NewProductionEncoderConfig()
+	pe.EncodeTime = zapcore.ISO8601TimeEncoder
+	consoleEncoder := zapcore.NewConsoleEncoder(pe)
+
+	level := zap.InfoLevel
+	if d {
+		level = zap.DebugLevel
+	}
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level),
+	)
+
+	l := zap.New(core)
+	return l.Sugar()
 }
