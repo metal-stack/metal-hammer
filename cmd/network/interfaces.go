@@ -54,7 +54,7 @@ func (n *Network) UpAllInterfaces() error {
 
 		ethtool.disableFirmwareLLDP(name)
 
-		lldpd, err := lldp.NewDaemon(n.MachineUUID, description, name, 5*time.Second)
+		lldpd, err := lldp.NewDaemon(n.Log, n.MachineUUID, description, name, 5*time.Second)
 		if err != nil {
 			return fmt.Errorf("error start lldpd on %s %w", name, err)
 		}

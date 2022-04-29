@@ -17,7 +17,7 @@ require (
 	github.com/jaypipes/ghw v0.9.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/metal-stack/go-hal v0.4.0
-	github.com/metal-stack/go-lldpd v0.3.6
+	github.com/metal-stack/go-lldpd v0.3.9-0.20220429073208-f469d92a296b
 	github.com/metal-stack/metal-api v0.16.4
 	github.com/metal-stack/metal-lib v0.9.0
 	github.com/metal-stack/v v1.0.3
@@ -31,7 +31,6 @@ require (
 	github.com/u-root/u-root v0.8.0
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
-	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
 	go.uber.org/zap v1.21.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
