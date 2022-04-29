@@ -33,6 +33,7 @@ func (c *GrpcClient) WaitForAllocation(machineID string) error {
 		Message:   "waiting for allocation",
 	})
 	if err != nil {
+		c.log.Errorw("wait unable to send event", "error", err)
 		return err
 	}
 
