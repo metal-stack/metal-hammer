@@ -6,7 +6,6 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/go-hal"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
@@ -21,11 +20,13 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/password"
 	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/v"
+	"go.uber.org/zap"
 )
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
 	Spec             *Specification
+	log              *zap.SugaredLogger
 	Hal              hal.InBand
 	Client           machine.ClientService
 	GrpcClient       *GrpcClient
@@ -40,13 +41,13 @@ type Hammer struct {
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
-func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
-	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
+func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
+	log.Infow("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
 
 	transport := httptransport.New(spec.MetalCoreURL, "", nil)
 	client := machine.New(transport, strfmt.Default)
 	certsClient := certs.New(transport, strfmt.Default)
-	eventEmitter := event.NewEventEmitter(client, spec.MachineUUID)
+	eventEmitter := event.NewEventEmitter(log, client, spec.MachineUUID)
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, fmt.Sprintf("starting metal-hammer version:%q", v.V))
 
@@ -59,6 +60,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		Hal:                hal,
 		Client:             client,
 		Spec:               spec,
+		log:                log,
 		IPAddress:          spec.IP,
 		EventEmitter:       eventEmitter,
 		ChrootPrefix:       "/rootfs",
@@ -66,22 +68,22 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
-	go kernel.AutoReboot(3*24*time.Hour, 24*time.Hour, func() {
+	go kernel.AutoReboot(log, 3*24*time.Hour, 24*time.Hour, func() {
 		eventEmitter.Emit(event.ProvisioningEventPlannedReboot, "autoreboot after 24h")
 	})
 
 	hammer.Spec.ConsolePassword = password.Generate(16)
 
-	grpcClient, err := NewGrpcClient(certsClient, eventEmitter)
+	grpcClient, err := NewGrpcClient(log, certsClient, eventEmitter)
 	if err != nil {
-		log.Error("failed to fetch GRPC certificates", "error", err)
+		log.Errorw("failed to fetch GRPC certificates", "error", err)
 		return eventEmitter, err
 	}
 	hammer.GrpcClient = grpcClient
 
 	err = hammer.createBmcSuperuser()
 	if err != nil {
-		log.Error("failed to update bmc superuser password", "error", err)
+		log.Errorw("failed to update bmc superuser password", "error", err)
 		return eventEmitter, err
 	}
 
@@ -89,6 +91,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		MachineUUID: spec.MachineUUID,
 		IPAddress:   spec.IP,
 		Started:     time.Now(),
+		Log:         log,
 	}
 
 	// TODO: Does not work yet, needs to be done manually
@@ -101,13 +104,14 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	}
 
 	// Set Time from ntp
-	network.NtpDate()
+	network.NtpDate(log)
 
 	reg := &register.Register{
 		MachineUUID: spec.MachineUUID,
 		Client:      client,
 		Network:     n,
 		Hal:         hal,
+		Log:         log,
 	}
 
 	hw, err := reg.ReadHardwareDetails()
@@ -131,25 +135,25 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		if m.Allocation.Image == nil || m.Allocation.Image.ID == nil {
 			err = fmt.Errorf("no image specified")
 		} else {
-			log.Info("perform reinstall", "machineID", *m.ID, "imageID", *m.Allocation.Image.ID)
+			log.Infow("perform reinstall", "machineID", *m.ID, "imageID", *m.Allocation.Image.ID)
 			err = hammer.installImage(eventEmitter, m, hw.Nics)
 			primaryDiskWiped = true
 		}
 		if err != nil {
-			log.Error("reinstall failed", "error", err)
+			log.Errorw("reinstall failed", "error", err)
 			err = hammer.abortReinstall(err, *m.ID, primaryDiskWiped)
 		}
 		return eventEmitter, err
 	}
 
-	err = storage.WipeDisks()
+	err = storage.NewDisks(log).Wipe()
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wipe %w", err)
 	}
 
 	err = hammer.ConfigureBIOS()
 	if err != nil {
-		log.Error("failed to configure BIOS", "error", err)
+		log.Errorw("failed to configure BIOS", "error", err)
 		return eventEmitter, err
 	}
 
@@ -242,7 +246,7 @@ func Run(spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 		}
 	}
 
-	log.Info("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
+	log.Infow("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 	hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 	err = hammer.installImage(eventEmitter, m, hw.Nics)
 	return eventEmitter, err
@@ -268,6 +272,7 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 		Kernel:          info.Kernel,
 		BootloaderID:    info.BootloaderID,
 		InstallError:    err,
+		Log:             h.log,
 	}
 
 	err = rep.ReportInstallation()
@@ -275,7 +280,7 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 		return err
 	}
 
-	log.Info("installation", "took", time.Since(installationStart))
+	h.log.Infow("installation", "took", time.Since(installationStart))
 	eventEmitter.Emit(event.ProvisioningEventBootingNewKernel, "booting into distro kernel")
 	return kernel.RunKexec(info)
 }

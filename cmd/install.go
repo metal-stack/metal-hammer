@@ -13,7 +13,6 @@ import (
 
 	"github.com/metal-stack/metal-hammer/cmd/utils"
 
-	log "github.com/inconshreveable/log15"
 	img "github.com/metal-stack/metal-hammer/cmd/image"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
@@ -46,7 +45,7 @@ type InstallerConfig struct {
 
 // Install a given image to the disk by using genuinetools/img
 func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
-	s := storage.New(h.ChrootPrefix, *h.FilesystemLayout)
+	s := storage.New(h.log, h.ChrootPrefix, *h.FilesystemLayout)
 	err := s.Run()
 	if err != nil {
 		return nil, err
@@ -54,12 +53,12 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models
 
 	image := machine.Allocation.Image.URL
 
-	err = img.Pull(image, h.OsImageDestination)
+	err = img.NewImage(h.log).Pull(image, h.OsImageDestination)
 	if err != nil {
 		return nil, err
 	}
 
-	err = img.Burn(h.ChrootPrefix, image, h.OsImageDestination)
+	err = img.NewImage(h.log).Burn(h.ChrootPrefix, image, h.OsImageDestination)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,7 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
 func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
-	log.Info("install", "image", machine.Allocation.Image.URL)
+	h.log.Infow("install", "image", machine.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(machine, nics)
 	if err != nil {
@@ -101,7 +100,7 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 		return nil, err
 	}
 
-	log.Info("running /install.sh on", "prefix", prefix)
+	h.log.Infow("running /install.sh on", "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: %s error %w", prefix, err)
@@ -125,11 +124,11 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: / error %w", err)
 	}
-	log.Info("finish running install.sh")
+	h.log.Infow("finish running install.sh")
 
 	err = os.Remove(path.Join(prefix, "install.sh"))
 	if err != nil {
-		log.Warn("unable to remove install.sh, ignoring...", "error")
+		h.log.Warnw("unable to remove install.sh, ignoring...", "error")
 	}
 
 	info, err := kernel.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
@@ -145,7 +144,7 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 	tmp := "/tmp"
 	_, err = utils.Copy(path.Join(prefix, info.Kernel), path.Join(tmp, filepath.Base(info.Kernel)))
 	if err != nil {
-		log.Error("install", "could not copy kernel", "error", err)
+		h.log.Errorw("install", "could not copy kernel", "error", err)
 		return info, err
 	}
 	info.Kernel = path.Join(tmp, filepath.Base(info.Kernel))
@@ -156,7 +155,7 @@ func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse,
 
 	_, err = utils.Copy(path.Join(prefix, info.Initrd), path.Join(tmp, filepath.Base(info.Initrd)))
 	if err != nil {
-		log.Error("install", "could not copy initrd", "error", err)
+		h.log.Errorw("install", "could not copy initrd", "error", err)
 		return info, err
 	}
 	info.Initrd = path.Join(tmp, filepath.Base(info.Initrd))
@@ -173,12 +172,12 @@ func (h *Hammer) writeLVMLocalConf() error {
 
 	_, err := os.Stat(srclvmlocal)
 	if os.IsNotExist(err) {
-		log.Info("src lvmlocal.conf not present, not creating lvmlocal.conf")
+		h.log.Infow("src lvmlocal.conf not present, not creating lvmlocal.conf")
 		return nil
 	}
 	_, err = os.Stat(dstlvm)
 	if os.IsNotExist(err) {
-		log.Info("dst /etc/lvm not present, not creating lvmlocal.conf")
+		h.log.Infow("dst /etc/lvm not present, not creating lvmlocal.conf")
 		return nil
 	}
 
@@ -202,7 +201,7 @@ func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 	if base64UserData != "" {
 		userdata, err := base64.StdEncoding.DecodeString(base64UserData)
 		if err != nil {
-			log.Info("install", "base64 decode of userdata failed, using plain text", err)
+			h.log.Infow("install", "base64 decode of userdata failed, using plain text", err)
 			userdata = []byte(base64UserData)
 		}
 		return os.WriteFile(destination, userdata, 0600)
@@ -211,7 +210,7 @@ func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 }
 
 func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) error {
-	log.Info("write installation configuration")
+	h.log.Infow("write installation configuration")
 	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {

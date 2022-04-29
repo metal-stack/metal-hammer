@@ -11,11 +11,11 @@ import (
 	"strings"
 	"syscall"
 
-	log "github.com/inconshreveable/log15"
 	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
+	"go.uber.org/zap"
 )
 
 type Filesystem struct {
@@ -28,6 +28,7 @@ type Filesystem struct {
 	// disk is the legacy disk.json representatio
 	// TODO remove once old images are gone
 	disk Disk
+	log  *zap.SugaredLogger
 }
 
 type fstabEntries []fstabEntry
@@ -42,12 +43,13 @@ type fstabEntry struct {
 	passno    uint
 }
 
-func New(chroot string, config models.ModelsV1FilesystemLayoutResponse) *Filesystem {
+func New(log *zap.SugaredLogger, chroot string, config models.ModelsV1FilesystemLayoutResponse) *Filesystem {
 	return &Filesystem{
 		config:       config,
 		chroot:       chroot,
 		fstabEntries: fstabEntries{},
 		disk:         Disk{Device: "legacy", Partitions: []Partition{}},
+		log:          log,
 	}
 }
 
@@ -113,17 +115,17 @@ func (f *Filesystem) createPartitions() error {
 			}
 		}
 		if disk.Device != nil {
-			log.Info("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+*disk.Device)
+			f.log.Infow("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+*disk.Device)
 			err := os.ExecuteCommand(command.WIPEFS, "--all", *disk.Device)
 			if err != nil {
-				log.Error("wipe existing partition signatures failed", "error", err)
+				f.log.Errorw("wipe existing partition signatures failed", "error", err)
 				return fmt.Errorf("unable wipe existing partitions on %s %w", *disk.Device, err)
 			}
 			opts = append(opts, *disk.Device)
-			log.Info("sgdisk create partitions", "command", opts)
+			f.log.Infow("sgdisk create partitions", "command", opts)
 			err = os.ExecuteCommand(command.SGDisk, opts...)
 			if err != nil {
-				log.Error("sgdisk creating partitions failed", "error", err)
+				f.log.Errorw("sgdisk creating partitions failed", "error", err)
 				return fmt.Errorf("unable to create partitions on %s %w", *disk.Device, err)
 			}
 		}
@@ -175,17 +177,17 @@ func (f *Filesystem) createRaids() error {
 
 		args = append(args, raid.Devices...)
 
-		log.Info("create mdadm raid", "args", args)
+		f.log.Infow("create mdadm raid", "args", args)
 		err := os.ExecuteCommand(command.MDADM, args...)
 		if err != nil {
-			log.Error("create mdadm raid", "error", err)
+			f.log.Errorw("create mdadm raid", "error", err)
 			return fmt.Errorf("unable to create mdadm raid %s %w", *raid.Arrayname, err)
 		}
 
 		// set sync speed
 		err = gos.WriteFile("/proc/sys/dev/raid/speed_limit_min", []byte("200000000"), 0644)
 		if err != nil {
-			log.Error("unable to set min sync speed, ignoring...", "error", err)
+			f.log.Errorw("unable to set min sync speed, ignoring...", "error", err)
 		}
 	}
 	return nil
@@ -201,7 +203,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		if vg.Name == nil || *vg.Name == "" {
 			continue
 		}
-		if vgExists(*vg.Name) {
+		if vgExists(f.log, *vg.Name) {
 			continue
 		}
 		args := []string{
@@ -217,7 +219,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		pvcount[*vg.Name] = len(vg.Devices)
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
-			log.Error("vgcreate", "error", err)
+			f.log.Errorw("vgcreate", "error", err)
 			return fmt.Errorf("unable to create volume group %s %w", *vg.Name, err)
 		}
 	}
@@ -226,7 +228,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		if lv.Name == nil || *lv.Name == "" || lv.Volumegroup == nil || *lv.Volumegroup == "" {
 			continue
 		}
-		if lvExists(*lv.Volumegroup, *lv.Name) {
+		if lvExists(f.log, *lv.Volumegroup, *lv.Name) {
 			continue
 		}
 		if lv.Size == nil {
@@ -251,7 +253,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 			lvmtype = *lv.Lvmtype
 		}
 		if pvcount[*lv.Volumegroup] < 2 {
-			log.Warn("volumegroup has only 1 pv, only linear is supported", "lv", *lv.Name, "vg", *lv.Volumegroup)
+			f.log.Warnw("volumegroup has only 1 pv, only linear is supported", "lv", *lv.Name, "vg", *lv.Volumegroup)
 			lvmtype = "linear"
 		}
 
@@ -266,10 +268,10 @@ func (f *Filesystem) createLogicalVolumes() error {
 		}
 		args = append(args, *lv.Volumegroup)
 
-		log.Info("lvcreate", "args", args)
+		f.log.Infow("lvcreate", "args", args)
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
-			log.Error("lvcreate", "error", err)
+			f.log.Errorw("lvcreate", "error", err)
 			return fmt.Errorf("unable to create logical volume %s %w", *lv.Name, err)
 		}
 	}
@@ -313,10 +315,10 @@ func (f *Filesystem) createFilesystems() error {
 			return fmt.Errorf("unsupported filesystem format: %q", *fs.Format)
 		}
 		args = append(args, *fs.Device)
-		log.Info("create filesystem", "args", args)
+		f.log.Infow("create filesystem", "args", args)
 		err := os.ExecuteCommand(mkfs, args...)
 		if err != nil {
-			log.Error("create filesystem failed", "device", *fs.Device, "error", err)
+			f.log.Errorw("create filesystem failed", "device", *fs.Device, "error", err)
 			return fmt.Errorf("unable to create filesystem on %s %w", *fs.Device, err)
 		}
 	}
@@ -334,7 +336,7 @@ func (f *Filesystem) mountFilesystems() error {
 	}
 	sort.Slice(fss, func(i, j int) bool { return depth(fss[i].Path) < depth(fss[j].Path) })
 	for _, fs := range fss {
-		path, err := mountFs(f.chroot, fs)
+		path, err := mountFs(f.log, f.chroot, fs)
 		if err != nil {
 			return err
 		}
@@ -417,7 +419,7 @@ func (f *Filesystem) mountSpecialFilesystems() error {
 			return err
 		}
 
-		log.Info("mount", "source", m.source, "target", mountPoint, "fstype", m.fstype, "flags", m.flags, "data", m.data)
+		f.log.Infow("mount", "source", m.source, "target", mountPoint, "fstype", m.fstype, "flags", m.flags, "data", m.data)
 		err := syscall.Mount(m.source, mountPoint, m.fstype, m.flags, m.data)
 		if err != nil {
 			return fmt.Errorf("mounting %s to %s failed %w", m.source, m.target, err)
@@ -429,10 +431,10 @@ func (f *Filesystem) mountSpecialFilesystems() error {
 func (f *Filesystem) umountFilesystems() {
 	for index := len(specialMounts) - 1; index >= 0; index-- {
 		m := filepath.Join(f.chroot, specialMounts[index].target)
-		log.Info("unmounting", "mountpoint", m)
+		f.log.Infow("unmounting", "mountpoint", m)
 		err := syscall.Unmount(m, syscall.MNT_FORCE)
 		if err != nil {
-			log.Error("unable to unmount", "path", m, "error", err)
+			f.log.Errorw("unable to unmount", "path", m, "error", err)
 		}
 	}
 	for index := len(f.mounts) - 1; index >= 0; index-- {
@@ -440,16 +442,16 @@ func (f *Filesystem) umountFilesystems() {
 		if m == "" {
 			continue
 		}
-		log.Info("unmounting", "mountpoint", m)
+		f.log.Infow("unmounting", "mountpoint", m)
 		err := syscall.Unmount(m, syscall.MNT_FORCE)
 		if err != nil {
-			log.Error("unable to unmount", "path", m, "error", err)
+			f.log.Errorw("unable to unmount", "path", m, "error", err)
 		}
 	}
 }
 
 func (f *Filesystem) CreateFSTab() error {
-	return f.fstabEntries.write(f.chroot)
+	return f.fstabEntries.write(f.log, f.chroot)
 }
 
 func (f *Filesystem) createDiskJSON() error {
@@ -468,11 +470,11 @@ func (f *Filesystem) createDiskJSON() error {
 	if err != nil {
 		return fmt.Errorf("unable to marshal to json %w", err)
 	}
-	log.Info("create legacy disk.json", "content", string(j))
+	f.log.Infow("create legacy disk.json", "content", string(j))
 	return gos.WriteFile(destination, j, 0600)
 }
 
-func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {
+func mountFs(log *zap.SugaredLogger, chroot string, fs models.ModelsV1Filesystem) (string, error) {
 	if fs.Format == nil || *fs.Format == "swap" || *fs.Format == "" || *fs.Format == "tmpfs" {
 		return "", nil
 	}
@@ -486,10 +488,10 @@ func mountFs(chroot string, fs models.ModelsV1Filesystem) (string, error) {
 		return "", err
 	}
 	opts := optionSliceToString(fs.Mountoptions, ",")
-	log.Info("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
+	log.Infow("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
 	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
 	if err != nil {
-		log.Error("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
+		log.Errorw("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
 		return "", fmt.Errorf("unable to create filesystem %s on %s %w", *fs.Device, fs.Path, err)
 	}
 	return path, nil
@@ -512,7 +514,7 @@ func optionSliceToString(opts []string, separator string) string {
 }
 
 // write all fstab entries to /etc/fstab inside chroot
-func (fss fstabEntries) write(chroot string) error {
+func (fss fstabEntries) write(log *zap.SugaredLogger, chroot string) error {
 	entries := []string{}
 	for _, fs := range fss {
 		entries = append(entries, fs.string())
@@ -520,7 +522,7 @@ func (fss fstabEntries) write(chroot string) error {
 	fstab := strings.Join(entries, "\n")
 	header := fmt.Sprintf("# created by metal-hammer: %q\n", v.V)
 	content := header + fstab + "\n"
-	log.Info("write fstab", "content", content)
+	log.Infow("write fstab", "content", content)
 	//nolint:gosec
 	return gos.WriteFile(path.Join(chroot, "/etc/fstab"), []byte(content), 0644)
 }
@@ -529,22 +531,22 @@ func (fs fstabEntry) string() string {
 	return fmt.Sprintf("%s %s %s %s %d %d", fs.spec, fs.file, fs.vfsType, strings.Join(fs.mountOpts, ","), fs.freq, fs.passno)
 }
 
-func lvExists(vg string, name string) bool {
+func lvExists(log *zap.SugaredLogger, vg string, name string) bool {
 	//nolint:gosec
 	cmd := exec.Command("lvm", "lvs", vg+"/"+name, "--noheadings", "-o", "lv_name")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Info("unable to list existing volumes", "lv", name, "error", err)
+		log.Infow("unable to list existing volumes", "lv", name, "error", err)
 		return false
 	}
 	return name == strings.TrimSpace(string(out))
 }
 
-func vgExists(vgname string) bool {
+func vgExists(log *zap.SugaredLogger, vgname string) bool {
 	cmd := exec.Command("lvm", "vgs", vgname, "--noheadings", "-o", "vg_name")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Info("unable to list existing volumegroups", "vg", vgname, "error", err)
+		log.Infow("unable to list existing volumegroups", "vg", vgname, "error", err)
 		return false
 	}
 	return vgname == strings.TrimSpace(string(out))

@@ -8,7 +8,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
-	log "github.com/inconshreveable/log15"
+	"go.uber.org/zap"
 )
 
 // LinkType can be Interface or Mac
@@ -60,12 +60,12 @@ type Client struct {
 }
 
 // NewClient create a new lldp client.
-func NewClient(ifi string) (*Client, error) {
+func NewClient(log *zap.SugaredLogger, ifi string) (*Client, error) {
 	iface, err := net.InterfaceByName(ifi)
 	if err != nil {
 		return nil, fmt.Errorf("unable to lookup interface:%s %w", ifi, err)
 	}
-	log.Info("lldp", "listen on interface", iface.Name)
+	log.Infow("lldp", "listen on interface", iface.Name)
 
 	handle, err := pcap.OpenLive(iface.Name, 65536, true, 5*time.Second)
 

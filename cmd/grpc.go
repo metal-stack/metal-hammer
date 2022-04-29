@@ -9,6 +9,7 @@ import (
 
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -18,11 +19,12 @@ type GrpcClient struct {
 	*event.EventEmitter
 	addr     string
 	dialOpts []grpc.DialOption
+	log      *zap.SugaredLogger
 }
 
 // NewGrpcClient fetches the address and certificates from metal-core needed to communicate with metal-api via grpc,
 // and returns a new grpc client that can be used to invoke all provided grpc endpoints.
-func NewGrpcClient(certsClient certs.ClientService, emitter *event.EventEmitter) (*GrpcClient, error) {
+func NewGrpcClient(log *zap.SugaredLogger, certsClient certs.ClientService, emitter *event.EventEmitter) (*GrpcClient, error) {
 	params := certs.NewGrpcClientCertParams()
 	resp, err := certsClient.GrpcClientCert(params)
 	if err != nil {
@@ -54,6 +56,7 @@ func NewGrpcClient(certsClient certs.ClientService, emitter *event.EventEmitter)
 	return &GrpcClient{
 		EventEmitter: emitter,
 		addr:         resp.Payload.Address,
+		log:          log,
 		dialOpts: []grpc.DialOption{
 			grpc.WithKeepaliveParams(kacp),
 			grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),

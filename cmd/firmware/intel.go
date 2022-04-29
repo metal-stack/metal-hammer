@@ -3,12 +3,13 @@ package firmware
 import (
 	"fmt"
 
-	log "github.com/inconshreveable/log15"
+	"go.uber.org/zap"
 )
 
 type intel struct {
 	name           string
 	desiredVersion string
+	log            *zap.SugaredLogger
 }
 
 func (r intel) String() string {
@@ -18,16 +19,16 @@ func (r intel) String() string {
 // firmware update via
 // /intel/nvmupdate64e -u -s
 func (r intel) update() error {
-	output, err := run("/intel/nvmupdate64e", "-u", "-s", "-a", "/intel")
+	output, err := run(r.log, "/intel/nvmupdate64e", "-u", "-s", "-a", "/intel")
 	if err != nil {
 		return fmt.Errorf("unable to update intel firmware %w", err)
 	}
-	log.Info("intel", "updated firware output", output)
+	r.log.Infow("intel", "updated firware output", output)
 	return nil
 }
 
 func (r intel) current() (string, error) {
-	log.Info("not implemented")
+	r.log.Infow("not implemented")
 	return "", nil
 }
 
@@ -36,6 +37,6 @@ func (r intel) desired() string {
 }
 
 func (r intel) updateRequired() bool {
-	log.Info("not implemented")
+	r.log.Infow("not implemented")
 	return true
 }

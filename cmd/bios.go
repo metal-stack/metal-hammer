@@ -5,8 +5,6 @@ import (
 
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
-
-	log "github.com/inconshreveable/log15"
 )
 
 // ConfigureBIOS ensures that UEFI boot is enabled and CSM-support is disabled.
@@ -20,12 +18,12 @@ func (h *Hammer) ConfigureBIOS() error {
 	if err != nil {
 		return err
 	}
-	log.Info("bios", "message", "successfully configured BIOS")
+	h.log.Infow("bios", "message", "successfully configured BIOS")
 
 	if reboot {
 		msg := "BIOS configuration requires a reboot"
 		h.EventEmitter.Emit(event.ProvisioningEventPlannedReboot, msg)
-		log.Info("bios", msg, "reboot in 1 sec")
+		h.log.Infow("bios", msg, "reboot in 1 sec")
 		time.Sleep(1 * time.Second)
 		err = kernel.Reboot()
 		if err != nil {
@@ -47,7 +45,7 @@ func (h *Hammer) EnsureBootOrder(bootloaderID string) error {
 	if err != nil {
 		return err
 	}
-	log.Info("bios", "message", "successfully ensured boot order")
+	h.log.Infow("bios", "message", "successfully ensured boot order")
 
 	return nil
 }
