@@ -27,10 +27,13 @@ func (c *GrpcClient) WaitForAllocation(machineID string) error {
 	defer eventCloser.Close()
 
 	_, err = e.Send(context.Background(), &v1.EventServiceSendRequest{
-		MachineId: machineID,
-		Time:      timestamppb.Now(),
-		Event:     string(event.ProvisioningEventWaiting),
-		Message:   "waiting for allocation",
+		Events: map[string]*v1.MachineProvisioningEvent{
+			machineID: {
+				Time:    timestamppb.Now(),
+				Event:   string(event.ProvisioningEventWaiting),
+				Message: "waiting for allocation",
+			},
+		},
 	})
 	if err != nil {
 		c.log.Errorw("wait unable to send event", "error", err)

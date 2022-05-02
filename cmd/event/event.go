@@ -55,10 +55,13 @@ func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 	eventString := string(eventType)
 	e.log.Infow("event", "event", eventString, "message", message)
 	_, err := e.eventClient.Send(context.Background(), &v1.EventServiceSendRequest{
-		MachineId: e.machineID,
-		Time:      timestamppb.Now(),
-		Event:     eventString,
-		Message:   message,
+		Events: map[string]*v1.MachineProvisioningEvent{
+			e.machineID: {
+				Time:    timestamppb.Now(),
+				Event:   eventString,
+				Message: message,
+			},
+		},
 	})
 	if err != nil {
 		e.log.Errorw("event", "cannot send event", eventType, "error", err)
