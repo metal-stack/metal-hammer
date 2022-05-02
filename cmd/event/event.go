@@ -54,7 +54,7 @@ func NewEventEmitter(log *zap.SugaredLogger, eventClient v1.EventServiceClient, 
 func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 	eventString := string(eventType)
 	e.log.Infow("event", "event", eventString, "message", message)
-	_, err := e.eventClient.Send(context.Background(), &v1.EventServiceSendRequest{
+	s, err := e.eventClient.Send(context.Background(), &v1.EventServiceSendRequest{
 		Events: map[string]*v1.MachineProvisioningEvent{
 			e.machineID: {
 				Time:    timestamppb.Now(),
@@ -65,5 +65,8 @@ func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 	})
 	if err != nil {
 		e.log.Errorw("event", "cannot send event", eventType, "error", err)
+	}
+	if s != nil {
+		e.log.Infow("event", "send", s.Events, "failed", s.Failed)
 	}
 }
