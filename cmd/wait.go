@@ -26,7 +26,10 @@ func (c *GrpcClient) WaitForAllocation(machineID string) error {
 	}
 	defer eventCloser.Close()
 
-	s, err := e.Send(context.Background(), &v1.EventServiceSendRequest{
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	s, err := e.Send(ctx, &v1.EventServiceSendRequest{
 		Events: map[string]*v1.MachineProvisioningEvent{
 			machineID: {
 				Time:    timestamppb.Now(),
