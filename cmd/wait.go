@@ -12,22 +12,14 @@ import (
 
 const defaultWaitTimeOut = 2 * time.Second
 
-func (c *GrpcClient) NewWaitClient() (v1.WaitClient, io.Closer, error) {
-	conn, err := c.newConnection()
-	if err != nil {
-		return nil, nil, err
-	}
-	return v1.NewWaitClient(conn), conn, nil
-}
-
-func (c *GrpcClient) WaitForAllocation(machineID string) error {
+func (c *GrpcClient) WaitForAllocation(e *event.EventEmitter, machineID string) error {
 	client, closer, err := c.NewWaitClient()
 	if err != nil {
 		return err
 	}
 	defer closer.Close()
 
-	c.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
+	e.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
 
 	req := &v1.WaitRequest{
 		MachineID: machineID,
