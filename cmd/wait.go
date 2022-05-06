@@ -13,19 +13,13 @@ import (
 const defaultWaitTimeOut = 2 * time.Second
 
 func (c *GrpcClient) WaitForAllocation(e *event.EventEmitter, machineID string) error {
-	client, closer, err := c.NewWaitClient()
-	if err != nil {
-		return err
-	}
-	defer closer.Close()
-
 	e.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
 
 	req := &v1.WaitRequest{
 		MachineID: machineID,
 	}
 	for {
-		stream, err := client.Wait(context.Background(), req)
+		stream, err := c.Wait().Wait(context.Background(), req)
 		if err != nil {
 			c.log.Errorw("failed waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
 			time.Sleep(defaultWaitTimeOut)
