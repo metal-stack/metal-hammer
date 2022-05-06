@@ -10,14 +10,8 @@ import (
 
 // createBmcSuperuser creates the bmc super user.
 func (h *Hammer) createBmcSuperuser() error {
-	client, closer, err := h.GrpcClient.newSuperUserPasswordClient()
-	if err != nil {
-		return err
-	}
-	defer closer.Close()
-
 	req := &v1.SuperUserPasswordRequest{}
-	resp, err := client.FetchSuperUserPassword(context.Background(), req)
+	resp, err := h.GrpcClient.SuperUserPassword().FetchSuperUserPassword(context.Background(), req)
 	if err != nil {
 		return fmt.Errorf("failed to fetch SuperUser password %w", err)
 	}

@@ -53,14 +53,8 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 		log.Errorw("failed to fetch GRPC certificates", "error", err)
 		return nil, err
 	}
-	eventClient, eventCloser, err := grpcClient.NewEventClient()
-	if err != nil {
-		log.Errorw("failed to create event client", "error", err)
-		return nil, err
-	}
-	defer eventCloser.Close()
 
-	eventEmitter := event.NewEventEmitter(log, eventClient, spec.MachineUUID)
+	eventEmitter := event.NewEventEmitter(log, grpcClient.Event(), spec.MachineUUID)
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, fmt.Sprintf("starting metal-hammer version:%q", v.V))
 

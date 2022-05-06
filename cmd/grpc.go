@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"io"
 	"time"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
@@ -17,9 +16,8 @@ import (
 )
 
 type GrpcClient struct {
-	addr     string
-	dialOpts []grpc.DialOption
-	log      *zap.SugaredLogger
+	log  *zap.SugaredLogger
+	conn grpc.ClientConnInterface
 }
 
 // NewGrpcClient fetches the address and certificates from metal-core needed to communicate with metal-api via grpc,
@@ -53,49 +51,35 @@ func NewGrpcClient(log *zap.SugaredLogger, certsClient certs.ClientService) (*Gr
 		Certificates: []tls.Certificate{clientCert},
 		MinVersion:   tls.VersionTLS12,
 	}
-	return &GrpcClient{
-		addr: resp.Payload.Address,
-		log:  log,
-		dialOpts: []grpc.DialOption{
-			grpc.WithKeepaliveParams(kacp),
-			grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
-			grpc.WithBlock(),
-		},
-	}, nil
-}
 
-func (c *GrpcClient) NewEventClient() (v1.EventServiceClient, io.Closer, error) {
-	conn, err := c.newConnection()
-	if err != nil {
-		return nil, nil, err
+	grpcOpts := []grpc.DialOption{
+		grpc.WithKeepaliveParams(kacp),
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+		grpc.WithBlock(),
 	}
-	return v1.NewEventServiceClient(conn), conn, nil
-}
 
-func (c *GrpcClient) NewWaitClient() (v1.WaitClient, io.Closer, error) {
-	conn, err := c.newConnection()
-	if err != nil {
-		return nil, nil, err
-	}
-	return v1.NewWaitClient(conn), conn, nil
-}
-
-func (c *GrpcClient) newSuperUserPasswordClient() (v1.SuperUserPasswordClient, io.Closer, error) {
-	conn, err := c.newConnection()
-	if err != nil {
-		return nil, nil, err
-	}
-	return v1.NewSuperUserPasswordClient(conn), conn, nil
-}
-
-func (c *GrpcClient) newConnection() (*grpc.ClientConn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, c.addr, c.dialOpts...)
+	conn, err := grpc.DialContext(ctx, resp.Payload.Address, grpcOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return conn, err
+	return &GrpcClient{
+		log:  log,
+		conn: conn,
+	}, nil
+}
+
+func (c *GrpcClient) Event() v1.EventServiceClient {
+	return v1.NewEventServiceClient(c.conn)
+}
+
+func (c *GrpcClient) Wait() v1.WaitClient {
+	return v1.NewWaitClient(c.conn)
+}
+
+func (c *GrpcClient) SuperUserPassword() v1.SuperUserPasswordClient {
+	return v1.NewSuperUserPasswordClient(c.conn)
 }
