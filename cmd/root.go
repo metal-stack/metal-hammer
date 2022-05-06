@@ -243,7 +243,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 			},
 		}
 	} else {
-		err := hammer.GrpcClient.WaitForAllocation(spec.MachineUUID)
+		err := hammer.GrpcClient.WaitForAllocation(eventEmitter, spec.MachineUUID)
 		if err != nil {
 			return eventEmitter, fmt.Errorf("wait for installation %w", err)
 		}
