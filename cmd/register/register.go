@@ -130,7 +130,7 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 			})
 		}
 
-		nic.Neighbor = ns
+		nic.Neighbors = ns
 	}
 
 	hw.Nics = nics
