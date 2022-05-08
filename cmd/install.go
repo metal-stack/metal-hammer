@@ -33,8 +33,6 @@ type InstallerConfig struct {
 	SSHPublicKey string `yaml:"sshpublickey"`
 	// Password is the password for the metal user.
 	Password string `yaml:"password"`
-	// Devmode passes mode of installation.
-	Devmode bool `yaml:"devmode"`
 	// Console specifies where the kernel should connect its console to.
 	Console string `yaml:"console"`
 	// Timestamp is the the timestamp of installer config creation.
@@ -236,7 +234,6 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse) e
 		SSHPublicKey: sshPubkeys,
 		Networks:     alloc.Networks,
 		MachineUUID:  h.Spec.MachineUUID,
-		Devmode:      h.Spec.DevMode,
 		Password:     h.Spec.ConsolePassword,
 		Console:      console,
 		Timestamp:    time.Now().Format(time.RFC3339),

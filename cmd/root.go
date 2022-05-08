@@ -124,7 +124,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 
 	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
 	err = reg.RegisterMachine(hw)
-	if !spec.DevMode && err != nil {
+	if err != nil {
 		return eventEmitter, fmt.Errorf("register %w", err)
 	}
 
