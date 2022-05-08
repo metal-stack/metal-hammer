@@ -18,7 +18,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/metal-stack/go-hal v0.4.0
 	github.com/metal-stack/go-lldpd v0.4.0
-	github.com/metal-stack/metal-api v0.17.0
+	github.com/metal-stack/metal-api v0.17.1-0.20220506125736-520dc1b706ca
 	github.com/metal-stack/metal-lib v0.9.0
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below

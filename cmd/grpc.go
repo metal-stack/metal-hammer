@@ -83,3 +83,7 @@ func (c *GrpcClient) Wait() v1.WaitClient {
 func (c *GrpcClient) SuperUserPassword() v1.SuperUserPasswordClient {
 	return v1.NewSuperUserPasswordClient(c.conn)
 }
+
+func (c *GrpcClient) BootService() v1.BootServiceClient {
+	return v1.NewBootServiceClient(c.conn)
+}

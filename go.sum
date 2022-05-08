@@ -141,8 +141,9 @@ github.com/avast/retry-go v3.0.0+incompatible/go.mod h1:XtSnn+n/sHqQIpZ10K1qAevB
 github.com/avast/retry-go/v4 v4.0.4 h1:38hLf0DsRXh+hOF6HbTni0+5QGTNdw9zbaMD7KAO830=
 github.com/avast/retry-go/v4 v4.0.4/go.mod h1:HqmLvS2VLdStPCGDFjSuZ9pzlTqVRldCI4w2dO4m1Ms=
 github.com/aws/aws-sdk-go v1.15.11/go.mod h1:mFuSZ37Z9YOHbQEwBWztmVzqXrEkub65tZoCYDt7FT0=
-github.com/aws/aws-sdk-go v1.44.3 h1:GA9bJsWeJdwPtcKK9Uq3jfMaPko0ROWzVuqwFM7BBP0=
 github.com/aws/aws-sdk-go v1.44.3/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
+github.com/aws/aws-sdk-go v1.44.7 h1:LpCM8Fpw/L58vgdve6A+UqJr8dzo6Xj7HX7DIIGHg2A=
+github.com/aws/aws-sdk-go v1.44.7/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
 github.com/beevik/ntp v0.3.0 h1:xzVrPrE4ziasFXgBVBZJDP0Wg/KpMwk2KHJ4Ba8GrDw=
 github.com/beevik/ntp v0.3.0/go.mod h1:hIHWr+l3+/clUnF44zdK+CWW7fO8dR5cIylAQ76NRpg=
 github.com/benbjohnson/clock v1.0.3/go.mod h1:bGMdMPoPVvcYyt1gHDf4J2KE153Yf9BuiUKYMaxlTDM=
@@ -516,8 +517,8 @@ github.com/go-openapi/spec v0.19.5/go.mod h1:Hm2Jr4jv8G1ciIAo+frC/Ft+rR2kQDh8JHK
 github.com/go-openapi/spec v0.19.6/go.mod h1:Hm2Jr4jv8G1ciIAo+frC/Ft+rR2kQDh8JHKHb3gWUSk=
 github.com/go-openapi/spec v0.19.8/go.mod h1:Hm2Jr4jv8G1ciIAo+frC/Ft+rR2kQDh8JHKHb3gWUSk=
 github.com/go-openapi/spec v0.20.4/go.mod h1:faYFR1CvsJZ0mNsmsphTMSoRrNV3TEDoAM7FOEWeq8I=
-github.com/go-openapi/spec v0.20.5 h1:skHa8av4VnAtJU5zyAUXrrdK/NDiVX8lchbG+BfcdrE=
-github.com/go-openapi/spec v0.20.5/go.mod h1:QbfOSIVt3/sac+a1wzmKbbcLXm5NdZnyBZYtCijp43o=
+github.com/go-openapi/spec v0.20.6 h1:ich1RQ3WDbfoeTqTAb+5EIxNmpKVJZWBNah9RAT0jIQ=
+github.com/go-openapi/spec v0.20.6/go.mod h1:2OpW+JddWPrpXSCIX8eOx7lZ5iyuWj3RYR6VaaBKcWA=
 github.com/go-openapi/strfmt v0.17.0/go.mod h1:P82hnJI0CXkErkXi8IKjPbNBM6lV6+5pLP5l494TcyU=
 github.com/go-openapi/strfmt v0.18.0/go.mod h1:P82hnJI0CXkErkXi8IKjPbNBM6lV6+5pLP5l494TcyU=
 github.com/go-openapi/strfmt v0.19.0/go.mod h1:+uW+93UVvGGq2qGaZxdDeJqSAqBqBdl+ZPMF/cC8nDY=
@@ -937,8 +938,8 @@ github.com/metal-stack/go-ipam v1.8.5/go.mod h1:JgsddJabu8A7lWD+4MJKqbQhmSA/zhBb
 github.com/metal-stack/go-lldpd v0.4.0 h1:Rq67sqI9+/6aStHHbzddBkiVI9CBofPMA79E/2WbcQ0=
 github.com/metal-stack/go-lldpd v0.4.0/go.mod h1:he62lyNCucPWd415z71pF4WSe5SwyTHcQF6FOjkigPE=
 github.com/metal-stack/masterdata-api v0.8.12/go.mod h1:le/cvZ9nvw9QQ/eVJSrO7rNdwMMuIrQxFalaIcv/GUg=
-github.com/metal-stack/metal-api v0.17.0 h1:Da1qu77HQ4eWaez3YIjBPYD3NIHoZvUi0MucxNWv08U=
-github.com/metal-stack/metal-api v0.17.0/go.mod h1:LH/oEBfEThi0amUDcuLIagj4WndcuJG8tPyUIDx4/uI=
+github.com/metal-stack/metal-api v0.17.1-0.20220506125736-520dc1b706ca h1:0WFEHV4woLdx5TAZRyTmzyUg8ACu72M00n/89f9kkwM=
+github.com/metal-stack/metal-api v0.17.1-0.20220506125736-520dc1b706ca/go.mod h1:xC7ykNCHZAdEYiQjoOyWoUCQ7sv/zop1DtkmW+h4cns=
 github.com/metal-stack/metal-lib v0.9.0 h1:QDTrrxEAZan1KwFFli5JxVyl3XWsjn4uxkcSMbsnUS0=
 github.com/metal-stack/metal-lib v0.9.0/go.mod h1:MTHBa2gLIXfW251AiLeEF64z2LdYHWka9rtIopi8xQw=
 github.com/metal-stack/security v0.6.2/go.mod h1:sZC2Ezs+iAzPG9nqZcLf2qm6eBDxYTAcjSbF8RHaTNM=

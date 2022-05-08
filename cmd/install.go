@@ -40,11 +40,11 @@ type InstallerConfig struct {
 	// Timestamp is the the timestamp of installer config creation.
 	Timestamp string `yaml:"timestamp"`
 	// Nics are the network interfaces of this machine including their neighbors.
-	Nics []*models.ModelsV1MachineNicExtended `yaml:"nics"`
+	Nics []*models.ModelsV1MachineNic `yaml:"nics"`
 }
 
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
+func (h *Hammer) Install(machine *models.ModelsV1MachineResponse) (*kernel.Bootinfo, error) {
 	s := storage.New(h.log, h.ChrootPrefix, *h.FilesystemLayout)
 	err := s.Run()
 	if err != nil {
@@ -63,7 +63,7 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models
 		return nil, err
 	}
 
-	info, err := h.install(h.ChrootPrefix, machine, nics)
+	info, err := h.install(h.ChrootPrefix, machine)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +82,10 @@ func (h *Hammer) Install(machine *models.ModelsV1MachineResponse, nics []*models
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) (*kernel.Bootinfo, error) {
+func (h *Hammer) install(prefix string, machine *models.ModelsV1MachineResponse) (*kernel.Bootinfo, error) {
 	h.log.Infow("install", "image", machine.Allocation.Image.URL)
 
-	err := h.writeInstallerConfig(machine, nics)
+	err := h.writeInstallerConfig(machine)
 	if err != nil {
 		return nil, fmt.Errorf("writing configuration install.yaml failed %w", err)
 	}
@@ -209,7 +209,7 @@ func (h *Hammer) writeUserData(machine *models.ModelsV1MachineResponse) error {
 	return nil
 }
 
-func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) error {
+func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse) error {
 	h.log.Infow("write installation configuration")
 	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -240,7 +240,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, n
 		Password:     h.Spec.ConsolePassword,
 		Console:      console,
 		Timestamp:    time.Now().Format(time.RFC3339),
-		Nics:         nicsWithNeighbors(nics),
+		Nics:         machine.Hardware.Nics,
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
@@ -248,16 +248,4 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse, n
 	}
 
 	return os.WriteFile(destination, yamlContent, 0600)
-}
-
-func nicsWithNeighbors(nics []*models.ModelsV1MachineNicExtended) []*models.ModelsV1MachineNicExtended {
-	result := []*models.ModelsV1MachineNicExtended{}
-	for _, nic := range nics {
-		for _, neigh := range nic.Neighbors {
-			if *neigh.Mac != "" {
-				result = append(result, nic)
-			}
-		}
-	}
-	return result
 }
