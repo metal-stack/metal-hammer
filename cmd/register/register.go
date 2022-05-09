@@ -15,6 +15,7 @@ import (
 	"github.com/metal-stack/go-hal"
 	"github.com/metal-stack/go-hal/pkg/api"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
+	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/vishvananda/netlink"
@@ -23,18 +24,35 @@ import (
 
 // Register the Machine
 type Register struct {
-	MachineUUID string
-	Client      v1.BootServiceClient
-	Network     *network.Network
-	Hal         hal.InBand
-	Log         *zap.SugaredLogger
+	machineUUID string
+	client      v1.BootServiceClient
+	emitter     *event.EventEmitter
+	network     *network.Network
+	inband      hal.InBand
+	log         *zap.SugaredLogger
+}
+
+func New(log *zap.SugaredLogger, machineID string, bootClient v1.BootServiceClient, emitter *event.EventEmitter, network *network.Network, inband hal.InBand) *Register {
+	return &Register{
+		machineUUID: machineID,
+		client:      bootClient,
+		emitter:     emitter,
+		network:     network,
+		inband:      inband,
+		log:         log,
+	}
 }
 
 // RegisterMachine register a machine at the metal-api via metal-core
-func (r *Register) RegisterMachine(req *v1.BootServiceRegisterRequest) error {
+func (r *Register) RegisterMachine() error {
+	r.emitter.Emit(event.ProvisioningEventRegistering, "start registering")
+	req, err := r.readHardwareDetails()
+	if err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := r.Client.Register(ctx, req)
+	resp, err := r.client.Register(ctx, req)
 
 	if err != nil {
 		return fmt.Errorf("unable to register machine:%#v %w", req, err)
@@ -43,12 +61,12 @@ func (r *Register) RegisterMachine(req *v1.BootServiceRegisterRequest) error {
 		return fmt.Errorf("unable to register machine:%#v response payload is nil", req)
 	}
 
-	r.Log.Infow("register machine returned", "response", resp)
+	r.log.Infow("register machine returned", "response", resp)
 	return nil
 }
 
 // ReadHardwareDetails returns the hardware details of the machine
-func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error) {
+func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error) {
 	err := createSyslog()
 	if err != nil {
 		return nil, fmt.Errorf("unable to write kernel boot message to /var/log/syslog %w", err)
@@ -77,7 +95,7 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		_, err := gonet.ParseMAC(mac)
 
 		if err != nil {
-			r.Log.Debugw("skip interface with invalid mac", "interface", name, "mac", mac)
+			r.log.Debugw("skip interface with invalid mac", "interface", name, "mac", mac)
 			continue
 		}
 		// check if after mac validation loopback is still present
@@ -85,14 +103,14 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 			loFound = true
 		}
 		if name == "eth0" {
-			r.Network.Eth0Mac = mac
+			r.network.Eth0Mac = mac
 		}
 
 		nic := &v1.MachineNic{
 			Mac:  mac,
 			Name: name,
 		}
-		r.Log.Infow("register", "nic", name, "mac", mac)
+		r.log.Infow("register", "nic", name, "mac", mac)
 		nics = append(nics, nic)
 	}
 	// add a lo interface if not present
@@ -111,7 +129,7 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	// now attach neighbors, this will wait up to 2*tx-intervall
 	// if during this timeout not all required neighbors where found abort and reboot.
 	for _, nic := range nics {
-		neighbors, err := r.Network.Neighbors(nic.Name)
+		neighbors, err := r.network.Neighbors(nic.Name)
 		if err != nil {
 			return nil, fmt.Errorf("unable to determine neighbors of interface:%s %w", nic.Name, err)
 		}
@@ -121,7 +139,7 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 			if n.Mac == nil || n.Name == nil {
 				continue
 			}
-
+			r.log.Infow("register add neigbor", "nic", n.Name, "mac", n.Mac)
 			ns = append(ns, &v1.MachineNic{
 				Mac:  *n.Mac,
 				Name: *n.Name,
@@ -160,13 +178,13 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	}
 
 	// IPMI
-	ipmi, err := readIPMIDetails(r.Log, r.Network.Eth0Mac, r.Hal)
+	ipmi, err := r.readIPMIDetails()
 	if err != nil {
 		return nil, err
 	}
 
 	// Bios
-	board := r.Hal.Board()
+	board := r.inband.Board()
 	b := board.BIOS
 	if b == nil {
 		return nil, fmt.Errorf("unable to read bios informations from bmc")
@@ -178,13 +196,13 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	}
 
 	request := &v1.BootServiceRegisterRequest{
-		Uuid:     r.MachineUUID,
+		Uuid:     r.machineUUID,
 		Hardware: hardware,
 		Bios:     bios,
 		Ipmi:     ipmi,
 	}
 
-	r.Log.Infow("register", "request", request)
+	r.log.Infow("register", "request", request)
 	return request, nil
 }
 
@@ -207,7 +225,7 @@ func createSyslog() error {
 }
 
 // IPMI configuration and
-func readIPMIDetails(log *zap.SugaredLogger, eth0Mac string, hal hal.InBand) (*v1.MachineIPMI, error) {
+func (r *Register) readIPMIDetails() (*v1.MachineIPMI, error) {
 	var pw string
 	intf := "lanplus"
 	details := &v1.MachineIPMI{
@@ -215,10 +233,10 @@ func readIPMIDetails(log *zap.SugaredLogger, eth0Mac string, hal hal.InBand) (*v
 	}
 	defaultIPMIPort := "623"
 	bmcVersion := "unknown"
-	bmcConn := hal.BMCConnection()
+	bmcConn := r.inband.BMCConnection()
 	if bmcConn.Present() {
-		log.Infow("ipmi details from bmc")
-		board := hal.Board()
+		r.log.Infow("ipmi details from bmc")
+		board := r.inband.Board()
 		bmc := board.BMC
 		if bmc == nil {
 			return nil, fmt.Errorf("unable to read ipmi bmc info configuration")
@@ -252,8 +270,9 @@ func readIPMIDetails(log *zap.SugaredLogger, eth0Mac string, hal hal.InBand) (*v
 		return details, nil
 	}
 
-	log.Infow("ipmi details faked")
-	if len(eth0Mac) == 0 {
+	r.log.Infow("ipmi details faked")
+	eth0Mac := ""
+	if len(r.network.Eth0Mac) == 0 {
 		eth0Mac = "00:00:00:00:00:00"
 	}
 

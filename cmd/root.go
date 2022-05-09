@@ -109,21 +109,9 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	// Set Time from ntp
 	network.NtpDate(log)
 
-	reg := &register.Register{
-		MachineUUID: spec.MachineUUID,
-		Client:      bootService,
-		Network:     n,
-		Hal:         hal,
-		Log:         log,
-	}
+	reg := register.New(log, spec.MachineUUID, bootService, eventEmitter, n, hal)
 
-	hw, err := reg.ReadHardwareDetails()
-	if err != nil {
-		return eventEmitter, fmt.Errorf("unable to read all hardware details %w", err)
-	}
-
-	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
-	err = reg.RegisterMachine(hw)
+	err = reg.RegisterMachine()
 	if err != nil {
 		return eventEmitter, fmt.Errorf("register %w", err)
 	}
