@@ -24,6 +24,7 @@ type Report struct {
 // ReportInstallation will tell metal-core the result of the installation
 func (r *Report) ReportInstallation() error {
 	report := &v1.BootServiceReportRequest{
+		Uuid:            r.MachineUUID,
 		Success:         true,
 		ConsolePassword: r.ConsolePassword,
 		Initrd:          r.Initrd,
