@@ -31,16 +31,16 @@ type Register struct {
 }
 
 // RegisterMachine register a machine at the metal-api via metal-core
-func (r *Register) RegisterMachine(hw *v1.BootServiceRegisterRequest) error {
+func (r *Register) RegisterMachine(req *v1.BootServiceRegisterRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := r.Client.Register(ctx, hw)
+	resp, err := r.Client.Register(ctx, req)
 
 	if err != nil {
-		return fmt.Errorf("unable to register machine:%#v %w", hw, err)
+		return fmt.Errorf("unable to register machine:%#v %w", req, err)
 	}
 	if resp == nil {
-		return fmt.Errorf("unable to register machine:%#v response payload is nil", hw)
+		return fmt.Errorf("unable to register machine:%#v response payload is nil", req)
 	}
 
 	r.Log.Infow("register machine returned", "response", resp)
@@ -176,6 +176,8 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		Vendor:  b.Vendor,
 		Date:    b.Date,
 	}
+
+	res.Hardware = hw
 
 	return res, nil
 }
