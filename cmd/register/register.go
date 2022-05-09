@@ -123,10 +123,14 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		}
 		ns := []*v1.MachineNic{}
 		for i := range neighbors {
+			n := neighbors[i]
+			if n.Mac == nil || n.Name == nil {
+				continue
+			}
 
 			ns = append(ns, &v1.MachineNic{
-				Mac:  *neighbors[i].Mac,
-				Name: *neighbors[i].Name,
+				Mac:  *n.Mac,
+				Name: *n.Name,
 			})
 		}
 
