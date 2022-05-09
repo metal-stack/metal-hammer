@@ -237,7 +237,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse) e
 		Password:     h.Spec.ConsolePassword,
 		Console:      console,
 		Timestamp:    time.Now().Format(time.RFC3339),
-		Nics:         machine.Hardware.Nics,
+		Nics:         onlyNicsWithNeighbors(machine.Hardware.Nics),
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
@@ -245,4 +245,15 @@ func (h *Hammer) writeInstallerConfig(machine *models.ModelsV1MachineResponse) e
 	}
 
 	return os.WriteFile(destination, yamlContent, 0600)
+}
+func onlyNicsWithNeighbors(nics []*models.ModelsV1MachineNic) []*models.ModelsV1MachineNic {
+	result := []*models.ModelsV1MachineNic{}
+	for _, nic := range nics {
+		for _, neigh := range nic.Neighbors {
+			if *neigh.Mac != "" {
+				result = append(result, nic)
+			}
+		}
+	}
+	return result
 }

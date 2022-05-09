@@ -72,7 +72,7 @@
         },
         "nics": {
           "items": {
-            "$ref": "#/definitions/models.V1MachineNicExtended"
+            "$ref": "#/definitions/models.V1MachineNic"
           },
           "type": "array"
         },
@@ -568,36 +568,6 @@
         "nics"
       ]
     },
-    "models.V1MachineHardwareExtended": {
-      "properties": {
-        "cpu_cores": {
-          "format": "int32",
-          "type": "integer"
-        },
-        "disks": {
-          "items": {
-            "$ref": "#/definitions/models.V1MachineBlockDevice"
-          },
-          "type": "array"
-        },
-        "memory": {
-          "format": "int64",
-          "type": "integer"
-        },
-        "nics": {
-          "items": {
-            "$ref": "#/definitions/models.V1MachineNicExtended"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "cpu_cores",
-        "disks",
-        "memory",
-        "nics"
-      ]
-    },
     "models.V1MachineIPMI": {
       "properties": {
         "address": {
@@ -700,24 +670,10 @@
         },
         "name": {
           "type": "string"
-        }
-      },
-      "required": [
-        "mac",
-        "name"
-      ]
-    },
-    "models.V1MachineNicExtended": {
-      "properties": {
-        "mac": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
         },
         "neighbors": {
           "items": {
-            "$ref": "#/definitions/models.V1MachineNicExtended"
+            "$ref": "#/definitions/models.V1MachineNic"
           },
           "type": "array"
         }

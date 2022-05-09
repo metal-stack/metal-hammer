@@ -61,7 +61,7 @@ func (r *Register) RegisterMachine() error {
 		return fmt.Errorf("unable to register machine:%#v response payload is nil", req)
 	}
 
-	r.log.Infow("register machine returned", "response", resp)
+	r.log.Infow("machine registered", "response", resp)
 	return nil
 }
 
