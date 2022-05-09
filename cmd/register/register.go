@@ -53,23 +53,17 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	if err != nil {
 		return nil, fmt.Errorf("unable to write kernel boot message to /var/log/syslog %w", err)
 	}
-
-	res := &v1.BootServiceRegisterRequest{}
-	hw := &v1.MachineHardware{}
-
 	memory, err := ghw.Memory()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system memory %w", err)
 	}
-	hw.Memory = uint64(memory.TotalPhysicalBytes)
-
 	// FIXME can be replaced by runtime.NumCPU()
 	cpu, err := ghw.CPU()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system cpu(s) %w", err)
 	}
-	hw.CpuCores = uint32(cpu.TotalCores)
 
+	// Nics
 	nics := []*v1.MachineNic{}
 	loFound := false
 	links, err := netlink.LinkList()
@@ -133,17 +127,15 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 				Name: *n.Name,
 			})
 		}
-
 		nic.Neighbors = ns
 	}
 
-	hw.Nics = nics
-	res.Uuid = r.MachineUUID
-
+	// Disks
 	blockInfo, err := ghw.Block()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system block devices %w", err)
 	}
+	disks := []*v1.MachineBlockDevice{}
 	for _, disk := range blockInfo.Disks {
 		if strings.HasPrefix(disk.Name, storage.DiskPrefixToIgnore) {
 			continue
@@ -157,29 +149,43 @@ func (r *Register) ReadHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 			Name: diskName,
 			Size: size,
 		}
-		hw.Disks = append(hw.Disks, blockDevice)
+		disks = append(disks, blockDevice)
 	}
 
-	ipmiconfig, err := readIPMIDetails(r.Log, r.Network.Eth0Mac, r.Hal)
+	hardware := &v1.MachineHardware{
+		Memory:   uint64(memory.TotalPhysicalBytes),
+		CpuCores: uint32(cpu.TotalCores),
+		Nics:     nics,
+		Disks:    disks,
+	}
+
+	// IPMI
+	ipmi, err := readIPMIDetails(r.Log, r.Network.Eth0Mac, r.Hal)
 	if err != nil {
 		return nil, err
 	}
-	res.Ipmi = ipmiconfig
 
+	// Bios
 	board := r.Hal.Board()
 	b := board.BIOS
 	if b == nil {
 		return nil, fmt.Errorf("unable to read bios informations from bmc")
 	}
-	res.Bios = &v1.MachineBIOS{
+	bios := &v1.MachineBIOS{
 		Version: b.Version,
 		Vendor:  b.Vendor,
 		Date:    b.Date,
 	}
 
-	res.Hardware = hw
+	request := &v1.BootServiceRegisterRequest{
+		Uuid:     r.MachineUUID,
+		Hardware: hardware,
+		Bios:     bios,
+		Ipmi:     ipmi,
+	}
 
-	return res, nil
+	r.Log.Infow("register", "request", request)
+	return request, nil
 }
 
 // save the content of kernel ringbuffer to /var/log/syslog
