@@ -27,10 +27,13 @@ func (r *Report) ReportInstallation() error {
 		Uuid:            r.MachineUUID,
 		Success:         true,
 		ConsolePassword: r.ConsolePassword,
-		Initrd:          r.Initrd,
-		Cmdline:         r.Cmdline,
-		Kernel:          r.Kernel,
-		BootloaderId:    r.BootloaderID,
+	}
+	report.BootInfo = &v1.BootInfo{
+		// FIXME other fields.
+		Initrd:       r.Initrd,
+		Cmdline:      r.Cmdline,
+		Kernel:       r.Kernel,
+		BootloaderId: r.BootloaderID,
 	}
 	if r.InstallError != nil {
 		message := r.InstallError.Error()

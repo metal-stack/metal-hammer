@@ -15,7 +15,7 @@ require (
 	github.com/jaypipes/ghw v0.9.0
 	github.com/metal-stack/go-hal v0.4.0
 	github.com/metal-stack/go-lldpd v0.4.0
-	github.com/metal-stack/metal-api v0.17.1-0.20220508121835-0e17d3d3d9ba
+	github.com/metal-stack/metal-api v0.17.1-0.20220511060010-7cb35eafa794
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
