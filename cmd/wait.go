@@ -12,7 +12,7 @@ import (
 
 const defaultWaitTimeOut = 2 * time.Second
 
-func (c *GrpcClient) WaitForAllocation(e *event.EventEmitter, machineID string) error {
+func (c *MetalAPIClient) WaitForAllocation(e *event.EventEmitter, machineID string) error {
 	e.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
 
 	req := &v1.WaitRequest{

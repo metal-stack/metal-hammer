@@ -4,18 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
 	"github.com/metal-stack/go-hal"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/register"
 	"github.com/metal-stack/metal-hammer/cmd/report"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
-	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
-	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
-	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
@@ -28,11 +24,10 @@ type Hammer struct {
 	Spec             *Specification
 	log              *zap.SugaredLogger
 	Hal              hal.InBand
-	Client           machine.ClientService
-	GrpcClient       *GrpcClient
+	MetalAPIClient   *MetalAPIClient
 	EventEmitter     *event.EventEmitter
 	LLDPClient       *network.LLDPClient
-	FilesystemLayout *models.ModelsV1FilesystemLayoutResponse
+	FilesystemLayout *models.V1FilesystemLayoutResponse
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress          string
 	Started            time.Time
@@ -43,20 +38,15 @@ type Hammer struct {
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	log.Infow("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
-
-	transport := httptransport.New(spec.MetalCoreURL, "", nil)
-	client := machine.New(transport, strfmt.Default)
-	certsClient := certs.New(transport, strfmt.Default)
-
-	grpcClient, err := NewGrpcClient(log, certsClient)
+	metalAPIClient, err := NewMetalAPIClient(log, spec.MetalCoreURL, "FIXME metalAPIURL")
 	if err != nil {
 		log.Errorw("failed to fetch GRPC certificates", "error", err)
 		return nil, err
 	}
 
-	bootService := grpcClient.BootService()
+	bootService := metalAPIClient.BootService()
 
-	eventEmitter := event.NewEventEmitter(log, grpcClient.Event(), spec.MachineUUID)
+	eventEmitter := event.NewEventEmitter(log, metalAPIClient.Event(), spec.MachineUUID)
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, fmt.Sprintf("starting metal-hammer version:%q", v.V))
 
@@ -67,14 +57,13 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 
 	hammer := &Hammer{
 		Hal:                hal,
-		Client:             client,
 		Spec:               spec,
 		log:                log,
 		IPAddress:          spec.IP,
 		EventEmitter:       eventEmitter,
 		ChrootPrefix:       "/rootfs",
 		OsImageDestination: "/tmp/os.tgz",
-		GrpcClient:         grpcClient,
+		MetalAPIClient:     metalAPIClient,
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
@@ -148,7 +137,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 		return eventEmitter, err
 	}
 
-	err = hammer.GrpcClient.WaitForAllocation(eventEmitter, spec.MachineUUID)
+	err = hammer.MetalAPIClient.WaitForAllocation(eventEmitter, spec.MachineUUID)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
@@ -163,7 +152,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	return eventEmitter, err
 }
 
-func (h *Hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.BootServiceClient, m *models.ModelsV1MachineResponse) error {
+func (h *Hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.BootServiceClient, m *models.V1MachineResponse) error {
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
 	info, err := h.Install(m)

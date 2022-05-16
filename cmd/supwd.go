@@ -11,7 +11,7 @@ import (
 // createBmcSuperuser creates the bmc super user.
 func (h *Hammer) createBmcSuperuser() error {
 	req := &v1.SuperUserPasswordRequest{}
-	resp, err := h.GrpcClient.SuperUserPassword().FetchSuperUserPassword(context.Background(), req)
+	resp, err := h.MetalAPIClient.SuperUserPassword().FetchSuperUserPassword(context.Background(), req)
 	if err != nil {
 		return fmt.Errorf("failed to fetch SuperUser password %w", err)
 	}

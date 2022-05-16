@@ -5,21 +5,19 @@ import (
 	"time"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
-	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
-	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 )
 
 // fetchMachine requests the machine data of given machine ID
-func (h *Hammer) fetchMachine(machineID string) (*models.ModelsV1MachineResponse, error) {
-	params := machine.NewFindMachineParams()
-	params.SetID(machineID)
-	resp, err := h.Client.FindMachine(params)
+func (h *Hammer) fetchMachine(machineID string) (*models.V1MachineResponse, error) {
+
+	resp, err := h.MetalAPIClient.Driver.MachineGet(machineID)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.Payload, nil
+	return resp.Machine, nil
 }
 
 func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped bool) error {
@@ -29,7 +27,7 @@ func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := h.GrpcClient.BootService().AbortReinstall(ctx, &v1.BootServiceAbortReinstallRequest{Uuid: machineID, PrimaryDiskWiped: primaryDiskWiped})
+	resp, err := h.MetalAPIClient.BootService().AbortReinstall(ctx, &v1.BootServiceAbortReinstallRequest{Uuid: machineID, PrimaryDiskWiped: primaryDiskWiped})
 	if err != nil {
 		h.log.Errorw("failed to abort reinstall", "error", err)
 		time.Sleep(5 * time.Second)
