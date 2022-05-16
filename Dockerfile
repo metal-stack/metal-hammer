@@ -1,4 +1,11 @@
 FROM metalstack/builder:latest as builder
+# Install Intel Firmware for e800 based network cards
+ENV ICE_VERSION=1.8.8
+ENV ICE_PKG_VERSION=1.3.28.0
+RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_VERSION}/ice-${ICE_VERSION}.tar.gz/download -o ice.tar.gz \
+ && tar -xf ice.tar.gz ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg \
+ && mkdir -p /lib/firmware/intel/ice/ddp/ \
+ && mv ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg /work/ice.pkg
 
 FROM r.metal-stack.io/metal/supermicro:2.5.2 as sum
 
@@ -29,9 +36,10 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && GO111MODULE=off go install
 WORKDIR /work
-COPY lvmlocal.conf ice.pkg metal.key metal.key.pub passwd varrun Makefile .git /work/
+COPY lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
 COPY --from=sum /usr/bin/sum /work/
 COPY --from=builder /common /common
+COPY --from=builder /work/ice.pkg /work/ice.pkg
 COPY --from=builder /work/bin/metal-hammer /work/bin/
 RUN COMMONDIR=/common make ramdisk
 
