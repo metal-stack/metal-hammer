@@ -5,7 +5,7 @@ ENV ICE_PKG_VERSION=1.3.28.0
 RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_VERSION}/ice-${ICE_VERSION}.tar.gz/download -o ice.tar.gz \
  && tar -xf ice.tar.gz ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg \
  && mkdir -p /lib/firmware/intel/ice/ddp/ \
- && mv ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg /work/ice.pkg \
+ && mv ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg /work/ice.pkg
 
 FROM r.metal-stack.io/metal/supermicro:2.5.2 as sum
 
