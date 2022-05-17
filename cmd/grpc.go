@@ -48,11 +48,13 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient
 	if err != nil {
 		return nil, err
 	}
-
+	log.Infow("grpc", "pixie response", js)
 	var metalConfig pixiecore.MetalConfig
 	if err := json.Unmarshal(js, &metalConfig); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal grpcConfig:%w", err)
 	}
+
+	log.Infow("grpc", "metalconfig", metalConfig)
 
 	clientCert, err := tls.X509KeyPair([]byte(metalConfig.Cert), []byte(metalConfig.Key))
 	if err != nil {
