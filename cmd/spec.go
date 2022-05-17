@@ -10,12 +10,12 @@ import (
 	"go.uber.org/zap"
 )
 
-//Specification defines configuration items of the application
+// Specification defines configuration items of the application
 type Specification struct {
 	// Debug turn on debug log
 	Debug bool
-	// MetalCoreURL is the endpoint URL where the metalcore reside
-	MetalCoreURL string
+	// PixieAPIUrl is the endpoint URL where the pixie reside
+	PixieAPIUrl string
 	// BGPEnabled if set to true real bgp configuration is configured, otherwise dhcp will be used
 	BGPEnabled bool
 	// Cidr of BGP interface in DEV Mode
@@ -45,9 +45,9 @@ func NewSpec(log *zap.SugaredLogger) *Specification {
 		os.Setenv("DEBUG", "1")
 	}
 
-	// METAL_CORE_URL must be in the form http://metal-core:4242
-	if url, ok := envmap["METAL_CORE_ADDRESS"]; ok {
-		spec.MetalCoreURL = url
+	// PIXIE_API_URL must be in the form http://ip-of-pixie:4242
+	if url, ok := envmap["PIXIE_API_URL"]; ok {
+		spec.PixieAPIUrl = url
 	}
 
 	if bgp, ok := envmap["BGP"]; ok {
@@ -65,7 +65,7 @@ func NewSpec(log *zap.SugaredLogger) *Specification {
 func (s *Specification) Log() {
 	s.log.Infow("configuration",
 		"debug", s.Debug,
-		"metalCoreURL", s.MetalCoreURL,
+		"pixieAPIUrl", s.PixieAPIUrl,
 		"bgpenabled", s.BGPEnabled,
 		"cidr", s.Cidr,
 		"machineUUID", s.MachineUUID,

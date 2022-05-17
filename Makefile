@@ -7,7 +7,7 @@ MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../builder)
 CGO_ENABLED := 1
 
-in-docker: clean-local-dirs gofmt test all;
+in-docker: gofmt test all;
 
 include $(COMMONDIR)/Makefile.inc
 
@@ -66,10 +66,6 @@ ramdisk:
 	-o ${INITRD} \
 	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}
-
-clean-local-dirs:
-	rm -rf metal-core
-	mkdir metal-core
 
 vagrant-destroy:
 	vagrant destroy -f

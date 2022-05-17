@@ -21,7 +21,7 @@ type Report struct {
 	Log             *zap.SugaredLogger
 }
 
-// ReportInstallation will tell metal-core the result of the installation
+// ReportInstallation will tell metal-api the result of the installation
 func (r *Report) ReportInstallation() error {
 	report := &v1.BootServiceReportRequest{
 		Uuid:            r.MachineUUID,

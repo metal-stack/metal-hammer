@@ -28,7 +28,7 @@ type MetalAPIClient struct {
 
 // NewMetalAPIClient fetches the address,hmac and certificates from pixie needed to communicate with metal-api,
 // and returns a new client that can be used to invoke all provided grpc and rest endpoints.
-func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL, metalAPIURL string) (*MetalAPIClient, error) {
+func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient, error) {
 	certClient := http.Client{
 		Timeout: 5 * time.Second,
 	}
@@ -49,18 +49,18 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL, metalAPIURL string) (*M
 		return nil, err
 	}
 
-	var grpcConfig pixiecore.GrpcConfig
-	if err := json.Unmarshal(js, &grpcConfig); err != nil {
+	var metalConfig pixiecore.MetalConfig
+	if err := json.Unmarshal(js, &metalConfig); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal grpcConfig:%w", err)
 	}
 
-	clientCert, err := tls.X509KeyPair([]byte(grpcConfig.Cert), []byte(grpcConfig.Key))
+	clientCert, err := tls.X509KeyPair([]byte(metalConfig.Cert), []byte(metalConfig.Key))
 	if err != nil {
 		return nil, err
 	}
 
 	caCertPool := x509.NewCertPool()
-	ok := caCertPool.AppendCertsFromPEM([]byte(grpcConfig.CACert))
+	ok := caCertPool.AppendCertsFromPEM([]byte(metalConfig.CACert))
 	if !ok {
 		return nil, errors.New("bad certificate")
 	}
@@ -86,12 +86,12 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL, metalAPIURL string) (*M
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, grpcConfig.Address, grpcOpts...)
+	conn, err := grpc.DialContext(ctx, metalConfig.GRPCAddress, grpcOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	driver, err := metalgo.NewDriver(metalAPIURL, "", grpcConfig.HMAC)
+	driver, err := metalgo.NewDriver(metalConfig.MetalAPIUrl, "", metalConfig.HMAC)
 	if err != nil {
 		return nil, err
 	}

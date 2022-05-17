@@ -439,8 +439,8 @@ github.com/metal-stack/metal-go v0.17.1-0.20220509142822-ed99c3e88a6d h1:DxAU87H
 github.com/metal-stack/metal-go v0.17.1-0.20220509142822-ed99c3e88a6d/go.mod h1:0xSTbW5EGmNSObEJW2zMvANEA+37Ja6vTCEbyEZN7BI=
 github.com/metal-stack/metal-lib v0.9.0 h1:QDTrrxEAZan1KwFFli5JxVyl3XWsjn4uxkcSMbsnUS0=
 github.com/metal-stack/metal-lib v0.9.0/go.mod h1:MTHBa2gLIXfW251AiLeEF64z2LdYHWka9rtIopi8xQw=
-github.com/metal-stack/pixie v0.1.2-0.20220516150605-cab2954d95fd h1:NhikCqxMvrvk8PiFlBp0h6icliGMPyivtYhKwVYXn50=
-github.com/metal-stack/pixie v0.1.2-0.20220516150605-cab2954d95fd/go.mod h1:FqTh4cvRfSTtr/PJ5WmZBSkOeC6P2SLAAjMV/RFp8nI=
+github.com/metal-stack/pixie v0.1.2-0.20220517074611-af938f6e6bd1 h1:MdFwOiGjT5BitmpWo/4DN9aqggMFbMKuVMUsbmpf6GA=
+github.com/metal-stack/pixie v0.1.2-0.20220517074611-af938f6e6bd1/go.mod h1:FqTh4cvRfSTtr/PJ5WmZBSkOeC6P2SLAAjMV/RFp8nI=
 github.com/metal-stack/security v0.6.2/go.mod h1:sZC2Ezs+iAzPG9nqZcLf2qm6eBDxYTAcjSbF8RHaTNM=
 github.com/metal-stack/security v0.6.4 h1:nCr1Hf2a4qWRCBsNCifPA4Ic4sHfQlrGjxUvksWcRvM=
 github.com/metal-stack/security v0.6.4/go.mod h1:vP9TLOtIETfvqq6FvvYSHCKHrDXomuba2dSV3pS6BO0=

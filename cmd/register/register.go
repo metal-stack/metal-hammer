@@ -43,7 +43,7 @@ func New(log *zap.SugaredLogger, machineID string, bootClient v1.BootServiceClie
 	}
 }
 
-// RegisterMachine register a machine at the metal-api via metal-core
+// RegisterMachine register a machine at the metal-api via metal-api
 func (r *Register) RegisterMachine() error {
 	r.emitter.Emit(event.ProvisioningEventRegistering, "start registering")
 	req, err := r.readHardwareDetails()

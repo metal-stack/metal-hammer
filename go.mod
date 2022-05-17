@@ -12,7 +12,7 @@ require (
 	github.com/metal-stack/go-lldpd v0.4.0
 	github.com/metal-stack/metal-api v0.17.1-0.20220512083020-1730c3b7f102
 	github.com/metal-stack/metal-go v0.17.1-0.20220509142822-ed99c3e88a6d
-	github.com/metal-stack/pixie v0.1.2-0.20220516150605-cab2954d95fd
+	github.com/metal-stack/pixie v0.1.2-0.20220517074611-af938f6e6bd1
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
