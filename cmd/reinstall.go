@@ -33,7 +33,7 @@ func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped
 		time.Sleep(5 * time.Second)
 	}
 
-	if resp != nil {
+	if resp != nil && resp.BootInfo != nil {
 		bootInfo = &kernel.Bootinfo{
 			Initrd:       resp.BootInfo.Initrd,
 			Cmdline:      resp.BootInfo.Cmdline,

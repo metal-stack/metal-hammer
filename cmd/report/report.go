@@ -29,7 +29,6 @@ func (r *Report) ReportInstallation() error {
 		ConsolePassword: r.ConsolePassword,
 	}
 	report.BootInfo = &v1.BootInfo{
-		// FIXME other fields.
 		Initrd:       r.Initrd,
 		Cmdline:      r.Cmdline,
 		Kernel:       r.Kernel,
