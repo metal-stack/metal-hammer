@@ -5,20 +5,8 @@ import (
 	"time"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
-	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 )
-
-// fetchMachine requests the machine data of given machine ID
-func (h *Hammer) fetchMachine(machineID string) (*models.V1MachineResponse, error) {
-
-	resp, err := h.MetalAPIClient.Driver.MachineGet(machineID)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Machine, nil
-}
 
 func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped bool) error {
 	h.log.Errorw("reinstall cancelled => boot into existing OS...", "reason", reason)

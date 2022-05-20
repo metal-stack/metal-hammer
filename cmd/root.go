@@ -105,10 +105,11 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 		return eventEmitter, fmt.Errorf("register %w", err)
 	}
 
-	m, err := hammer.fetchMachine(spec.MachineUUID)
+	resp, err := metalAPIClient.Driver.MachineGet(spec.MachineUUID)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("fetch %w", err)
 	}
+	m := resp.Machine
 	if m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
 		hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 		primaryDiskWiped := false
@@ -141,10 +142,11 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
-	m, err = hammer.fetchMachine(spec.MachineUUID)
+	resp, err = metalAPIClient.Driver.MachineGet(spec.MachineUUID)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
+	m = resp.Machine
 
 	log.Infow("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 	hammer.FilesystemLayout = m.Allocation.Filesystemlayout
