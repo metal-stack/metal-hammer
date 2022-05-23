@@ -237,7 +237,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 		Password:     h.Spec.ConsolePassword,
 		Console:      console,
 		Timestamp:    time.Now().Format(time.RFC3339),
-		Nics:         onlyNicsWithNeighbors(machine.Hardware.Nics),
+		Nics:         h.onlyNicsWithNeighbors(machine.Hardware.Nics),
 	}
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
@@ -246,14 +246,15 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 
 	return os.WriteFile(destination, yamlContent, 0600)
 }
-func onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1MachineNic {
+func (h *Hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1MachineNic {
 	result := []*models.V1MachineNic{}
 	for i := range nics {
 		nic := nics[i]
 		neighs := []*models.V1MachineNic{}
 		for j := range nic.Neighbors {
 			neigh := nic.Neighbors[j]
-			if *neigh.Mac != "" {
+			h.log.Infow("onlyNicWithNeighbors", "nic", nic.Name, "neighbors", neigh)
+			if neigh.Mac != nil || *neigh.Mac != "" {
 				neighs = append(neighs, neigh)
 			}
 		}
