@@ -253,13 +253,14 @@ func (h *Hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1
 		neighs := []*models.V1MachineNic{}
 		for j := range nic.Neighbors {
 			neigh := nic.Neighbors[j]
-			h.log.Infow("onlyNicWithNeighbors", "nic", nic.Name, "neighbors", neigh)
 			if neigh.Mac != nil || *neigh.Mac != "" {
+				h.log.Infow("onlyNicWithNeighbors add", "nic", nic.Name, "neighbors", neigh)
 				neighs = append(neighs, neigh)
 			}
 		}
 		nic.Neighbors = neighs
 		result = append(result, nic)
 	}
+	h.log.Infow("onlyNicWithNeighbors add", "result", result)
 	return result
 }
