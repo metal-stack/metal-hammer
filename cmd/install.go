@@ -247,7 +247,10 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 	return os.WriteFile(destination, yamlContent, 0600)
 }
 func (h *Hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1MachineNic {
-	noMacAddresses := func(neighbors []*models.V1MachineNic) bool {
+	noNeighbors := func(neighbors []*models.V1MachineNic) bool {
+		if len(neighbors) == 0 {
+			return true
+		}
 		for _, n := range neighbors {
 			if n.Mac == nil || *n.Mac == "" {
 				return true
@@ -255,14 +258,11 @@ func (h *Hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1
 		}
 		return false
 	}
-	
+
 	result := []*models.V1MachineNic{}
 	for i := range nics {
 		nic := nics[i]
-		if len(nic.Neighbors) == 0 {
-			continue
-		}
-		if noMacAddresses(nic.Neighbors) {
+		if noNeighbors(nic.Neighbors) {
 			continue
 		}
 		result = append(result, nic)
@@ -270,7 +270,3 @@ func (h *Hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1
 	h.log.Infow("onlyNicWithNeighbors add", "result", result)
 	return result
 }
-
-// 2022-05-24T06:58:13.180Z        info    onlyNicWithNeighbors add        {"nic": "eth4", "neighbors": {"mac":"b8:6a:97:74:00:3c","name":"eth4","neighbors":null}}
-// 2022-05-24T06:58:13.180Z        info    onlyNicWithNeighbors add        {"nic": "eth5", "neighbors": {"mac":"b8:6a:97:73:f8:3c","name":"eth5","neighbors":null}}
-// 2022-05-24T06:58:13.180Z        info    onlyNicWithNeighbors add        {"result": [{"mac":"ac:1f:6b:94:cf:80","name":"eth0","neighbors":[]},{"mac":"ac:1f:6b:94:cf:81","name":"eth1","neighbors":[]},{"mac":"ac:1f:6b:94:cf:82","name":"eth2","neighbors":[]},{"mac":"ac:1f:6b:94:cf:83","name":"eth3","neighbors":[]},{"mac":"ac:1f:6b:7b:77:cc","name":"eth4","neighbors":[{"mac":"b8:6a:97:74:00:3c","name":"eth4","neighbors":null}]},{"mac":"ac:1f:6b:7b:77:cd","name":"eth5","neighbors":[{"mac":"b8:6a:97:73:f8:3c","name":"eth5","neighbors":null}]},{"mac":"00:00:00:00:00:00","name":"lo","neighbors":[]}]}
