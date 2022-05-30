@@ -10,7 +10,7 @@ require (
 	github.com/jaypipes/ghw v0.9.0
 	github.com/metal-stack/go-hal v0.4.0
 	github.com/metal-stack/go-lldpd v0.4.0
-	github.com/metal-stack/metal-api v0.17.1-0.20220512083020-1730c3b7f102
+	github.com/metal-stack/metal-api v0.17.1-0.20220530120519-fd84b28cbf13
 	github.com/metal-stack/metal-go v0.17.1-0.20220509142822-ed99c3e88a6d
 	github.com/metal-stack/pixie v0.1.2-0.20220517074611-af938f6e6bd1
 	github.com/metal-stack/v v1.0.3
@@ -32,8 +32,8 @@ require (
 	github.com/VividCortex/ewma v1.1.1 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
-	github.com/avast/retry-go/v4 v4.0.4 // indirect
-	github.com/aws/aws-sdk-go v1.44.7 // indirect
+	github.com/avast/retry-go/v4 v4.0.5 // indirect
+	github.com/aws/aws-sdk-go v1.44.24 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -84,7 +84,7 @@ require (
 	github.com/metal-stack/metal-lib v0.9.0 // indirect
 	github.com/metal-stack/security v0.6.4 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/mitchellh/mapstructure v1.4.3 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nwaples/rardecode v1.1.2 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -104,14 +104,13 @@ require (
 	go.mongodb.org/mongo-driver v1.9.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 // indirect
-	golang.org/x/net v0.0.0-20220517181318-183a9ca12b87 // indirect
+	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
+	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3 // indirect
+	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99 // indirect
 	howett.net/plist v1.0.0 // indirect
 )
 

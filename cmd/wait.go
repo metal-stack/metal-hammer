@@ -16,7 +16,7 @@ func (c *MetalAPIClient) WaitForAllocation(e *event.EventEmitter, machineID stri
 	e.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
 
 	req := &v1.WaitRequest{
-		MachineID: machineID,
+		MachineId: machineID,
 	}
 	for {
 		stream, err := c.Wait().Wait(context.Background(), req)
