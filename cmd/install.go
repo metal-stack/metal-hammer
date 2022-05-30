@@ -17,7 +17,7 @@ import (
 	img "github.com/metal-stack/metal-hammer/cmd/image"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // InstallerConfig contains configuration items which are
