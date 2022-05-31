@@ -185,7 +185,7 @@ func (f *Filesystem) createRaids() error {
 		}
 
 		// set sync speed
-		err = gos.WriteFile("/proc/sys/dev/raid/speed_limit_min", []byte("200000000"), 0644)
+		err = gos.WriteFile("/proc/sys/dev/raid/speed_limit_min", []byte("200000000"), 0644) // nolint:gosec
 		if err != nil {
 			f.log.Errorw("unable to set min sync speed, ignoring...", "error", err)
 		}
