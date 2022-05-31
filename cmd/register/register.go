@@ -18,6 +18,7 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
+	"github.com/metal-stack/v"
 	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
 )
@@ -198,10 +199,11 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	}
 
 	request := &v1.BootServiceRegisterRequest{
-		Uuid:     r.machineUUID,
-		Hardware: hardware,
-		Bios:     bios,
-		Ipmi:     ipmi,
+		Uuid:               r.machineUUID,
+		Hardware:           hardware,
+		Bios:               bios,
+		Ipmi:               ipmi,
+		MetalHammerVersion: v.Version,
 	}
 
 	r.log.Infow("register", "request", request)
