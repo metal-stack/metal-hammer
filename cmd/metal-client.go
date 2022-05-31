@@ -110,10 +110,6 @@ func (c *MetalAPIClient) Wait() v1.WaitClient {
 	return v1.NewWaitClient(c.conn)
 }
 
-func (c *MetalAPIClient) SuperUserPassword() v1.SuperUserPasswordClient {
-	return v1.NewSuperUserPasswordClient(c.conn)
-}
-
 func (c *MetalAPIClient) BootService() v1.BootServiceClient {
 	return v1.NewBootServiceClient(c.conn)
 }
