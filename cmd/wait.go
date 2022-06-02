@@ -3,11 +3,14 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/metal-stack/metal-hammer/cmd/event"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const defaultWaitTimeOut = 2 * time.Second
@@ -22,6 +25,14 @@ func (c *GrpcClient) WaitForAllocation(e *event.EventEmitter, machineID string) 
 		stream, err := c.Wait().Wait(context.Background(), req)
 		if err != nil {
 			c.log.Errorw("failed waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
+
+			if e, ok := status.FromError(err); ok {
+				switch e.Code() { // nolint:exhaustive
+				case codes.Unimplemented:
+					return fmt.Errorf("metal-api breaking change detected, rebooting: %w", err)
+				}
+			}
+
 			time.Sleep(defaultWaitTimeOut)
 			continue
 		}
