@@ -27,6 +27,7 @@ func (c *GrpcClient) WaitForAllocation(e *event.EventEmitter, machineID string) 
 			c.log.Errorw("failed waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
 
 			if e, ok := status.FromError(err); ok {
+				c.log.Errorw("got error from wait call", "code", e.Code(), "message", e.Message(), "details", e.Details())
 				switch e.Code() { // nolint:exhaustive
 				case codes.Unimplemented:
 					return fmt.Errorf("metal-api breaking change detected, rebooting: %w", err)
