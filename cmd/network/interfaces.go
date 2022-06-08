@@ -116,6 +116,9 @@ func (n *Network) Neighbors(name string) ([]*models.V1MachineNic, error) {
 	neighs := host.neighbors[name]
 	for _, neigh := range neighs {
 		macAddress := neigh.Port.Value
+		if macAddress == "" {
+			macAddress = neigh.Chassis.Value
+		}
 		neighbors = append(neighbors, &models.V1MachineNic{Mac: &macAddress, Name: &name})
 	}
 	return neighbors, nil
