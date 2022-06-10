@@ -275,7 +275,7 @@ func (r *Register) readIPMIDetails() (*v1.MachineIPMI, error) {
 	}
 
 	r.log.Infow("ipmi details faked")
-	eth0Mac := ""
+	eth0Mac := r.network.Eth0Mac
 	if len(r.network.Eth0Mac) == 0 {
 		eth0Mac = "00:00:00:00:00:00"
 	}
