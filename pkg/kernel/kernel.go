@@ -12,7 +12,7 @@ import (
 	"github.com/u-root/u-root/pkg/boot/kexec"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var (

@@ -1,76 +1,89 @@
 package register
 
 import (
+	"context"
 	"fmt"
 	gonet "net"
 	"os"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/jaypipes/ghw"
 	"github.com/metal-stack/go-hal"
 	"github.com/metal-stack/go-hal/pkg/api"
+	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
+	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
-	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
-	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"github.com/metal-stack/v"
 	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
 )
 
 // Register the Machine
 type Register struct {
-	MachineUUID string
-	Client      machine.ClientService
-	Network     *network.Network
-	Hal         hal.InBand
-	Log         *zap.SugaredLogger
+	machineUUID string
+	client      v1.BootServiceClient
+	emitter     *event.EventEmitter
+	network     *network.Network
+	inband      hal.InBand
+	log         *zap.SugaredLogger
 }
 
-// RegisterMachine register a machine at the metal-api via metal-core
-func (r *Register) RegisterMachine(hw *models.DomainMetalHammerRegisterMachineRequest) error {
-	params := machine.NewRegisterParams()
-	params.SetBody(hw)
-	params.ID = hw.UUID
-	resp, err := r.Client.Register(params)
+func New(log *zap.SugaredLogger, machineID string, bootClient v1.BootServiceClient, emitter *event.EventEmitter, network *network.Network, inband hal.InBand) *Register {
+	return &Register{
+		machineUUID: machineID,
+		client:      bootClient,
+		emitter:     emitter,
+		network:     network,
+		inband:      inband,
+		log:         log,
+	}
+}
+
+// RegisterMachine register a machine at the metal-api via metal-api
+func (r *Register) RegisterMachine() error {
+	r.emitter.Emit(event.ProvisioningEventRegistering, "start registering")
+	req, err := r.readHardwareDetails()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	resp, err := r.client.Register(ctx, req)
 
 	if err != nil {
-		return fmt.Errorf("unable to register machine:%#v %w", hw, err)
+		return fmt.Errorf("unable to register machine:%#v %w", req, err)
 	}
 	if resp == nil {
-		return fmt.Errorf("unable to register machine:%#v response payload is nil", hw)
+		return fmt.Errorf("unable to register machine:%#v response payload is nil", req)
 	}
 
-	r.Log.Infow("register machine returned", "response", resp.Payload)
+	r.log.Infow("machine registered", "response", resp)
 	return nil
 }
 
 // ReadHardwareDetails returns the hardware details of the machine
-func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachineRequest, error) {
+func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error) {
 	err := createSyslog()
 	if err != nil {
 		return nil, fmt.Errorf("unable to write kernel boot message to /var/log/syslog %w", err)
 	}
-
-	hw := &models.DomainMetalHammerRegisterMachineRequest{}
-
 	memory, err := ghw.Memory()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system memory %w", err)
 	}
-	hw.Memory = &memory.TotalPhysicalBytes
-
 	// FIXME can be replaced by runtime.NumCPU()
 	cpu, err := ghw.CPU()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system cpu(s) %w", err)
 	}
-	cores := int32(cpu.TotalCores)
-	hw.CPUCores = &cores
 
-	nics := []*models.ModelsV1MachineNicExtended{}
+	// Nics
+	nics := []*v1.MachineNic{}
 	loFound := false
 	links, err := netlink.LinkList()
 	if err != nil {
@@ -83,7 +96,7 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 		_, err := gonet.ParseMAC(mac)
 
 		if err != nil {
-			r.Log.Debugw("skip interface with invalid mac", "interface", name, "mac", mac)
+			r.log.Debugw("skip interface with invalid mac", "interface", name, "mac", mac)
 			continue
 		}
 		// check if after mac validation loopback is still present
@@ -91,14 +104,14 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 			loFound = true
 		}
 		if name == "eth0" {
-			r.Network.Eth0Mac = mac
+			r.network.Eth0Mac = mac
 		}
 
-		nic := &models.ModelsV1MachineNicExtended{
-			Mac:  &mac,
-			Name: &name,
+		nic := &v1.MachineNic{
+			Mac:  mac,
+			Name: name,
 		}
-		r.Log.Infow("register", "nic", name, "mac", mac)
+		r.log.Infow("register", "nic", name, "mac", mac)
 		nics = append(nics, nic)
 	}
 	// add a lo interface if not present
@@ -107,9 +120,9 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	if !loFound {
 		mac := "00:00:00:00:00:00"
 		name := "lo"
-		lo := &models.ModelsV1MachineNicExtended{
-			Mac:  &mac,
-			Name: &name,
+		lo := &v1.MachineNic{
+			Mac:  mac,
+			Name: name,
 		}
 		nics = append(nics, lo)
 	}
@@ -117,54 +130,84 @@ func (r *Register) ReadHardwareDetails() (*models.DomainMetalHammerRegisterMachi
 	// now attach neighbors, this will wait up to 2*tx-intervall
 	// if during this timeout not all required neighbors where found abort and reboot.
 	for _, nic := range nics {
-		neighbors, err := r.Network.Neighbors(*nic.Name)
+		r.log.Infow("register search neigbor for", "nic", nic.Name)
+		neighbors, err := r.network.Neighbors(nic.Name)
 		if err != nil {
-			return nil, fmt.Errorf("unable to determine neighbors of interface:%s %w", *nic.Name, err)
+			return nil, fmt.Errorf("unable to determine neighbors of interface:%s %w", nic.Name, err)
 		}
-		nic.Neighbors = neighbors
+		r.log.Infow("register found neigbor for", "nic", nic.Name, "neighbors", neighbors)
+		ns := []*v1.MachineNic{}
+		for i := range neighbors {
+			n := neighbors[i]
+			if n.Mac == nil || n.Name == nil {
+				continue
+			}
+			r.log.Infow("register add neigbor", "nic", n.Name, "mac", n.Mac)
+			ns = append(ns, &v1.MachineNic{
+				Mac:  *n.Mac,
+				Name: *n.Name,
+			})
+		}
+		nic.Neighbors = ns
 	}
 
-	hw.Nics = nics
-	hw.UUID = r.MachineUUID
-
+	// Disks
 	blockInfo, err := ghw.Block()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system block devices %w", err)
 	}
+	disks := []*v1.MachineBlockDevice{}
 	for _, disk := range blockInfo.Disks {
 		if strings.HasPrefix(disk.Name, storage.DiskPrefixToIgnore) {
 			continue
 		}
-		size := int64(disk.SizeBytes)
+		size := uint64(disk.SizeBytes)
 		diskName := disk.Name
 		if !strings.HasPrefix(diskName, "/dev/") {
 			diskName = fmt.Sprintf("/dev/%s", disk.Name)
 		}
-		blockDevice := &models.ModelsV1MachineBlockDevice{
-			Name: &diskName,
-			Size: &size,
+		blockDevice := &v1.MachineBlockDevice{
+			Name: diskName,
+			Size: size,
 		}
-		hw.Disks = append(hw.Disks, blockDevice)
+		disks = append(disks, blockDevice)
 	}
 
-	ipmiconfig, err := readIPMIDetails(r.Log, r.Network.Eth0Mac, r.Hal)
+	hardware := &v1.MachineHardware{
+		Memory:   uint64(memory.TotalPhysicalBytes),
+		CpuCores: uint32(cpu.TotalCores),
+		Nics:     nics,
+		Disks:    disks,
+	}
+
+	// IPMI
+	ipmi, err := r.readIPMIDetails()
 	if err != nil {
 		return nil, err
 	}
-	hw.Ipmi = ipmiconfig
 
-	board := r.Hal.Board()
+	// Bios
+	board := r.inband.Board()
 	b := board.BIOS
 	if b == nil {
 		return nil, fmt.Errorf("unable to read bios informations from bmc")
 	}
-	hw.Bios = &models.ModelsV1MachineBIOS{
-		Version: &b.Version,
-		Vendor:  &b.Vendor,
-		Date:    &b.Date,
+	bios := &v1.MachineBIOS{
+		Version: b.Version,
+		Vendor:  b.Vendor,
+		Date:    b.Date,
 	}
 
-	return hw, nil
+	request := &v1.BootServiceRegisterRequest{
+		Uuid:               r.machineUUID,
+		Hardware:           hardware,
+		Bios:               bios,
+		Ipmi:               ipmi,
+		MetalHammerVersion: v.Version,
+	}
+
+	r.log.Infow("register", "request", request)
+	return request, nil
 }
 
 // save the content of kernel ringbuffer to /var/log/syslog
@@ -186,18 +229,18 @@ func createSyslog() error {
 }
 
 // IPMI configuration and
-func readIPMIDetails(log *zap.SugaredLogger, eth0Mac string, hal hal.InBand) (*models.ModelsV1MachineIPMI, error) {
+func (r *Register) readIPMIDetails() (*v1.MachineIPMI, error) {
 	var pw string
 	intf := "lanplus"
-	details := &models.ModelsV1MachineIPMI{
-		Interface: &intf,
+	details := &v1.MachineIPMI{
+		Interface: intf,
 	}
 	defaultIPMIPort := "623"
 	bmcVersion := "unknown"
-	bmcConn := hal.BMCConnection()
+	bmcConn := r.inband.BMCConnection()
 	if bmcConn.Present() {
-		log.Infow("ipmi details from bmc")
-		board := hal.Board()
+		r.log.Infow("ipmi details from bmc")
+		board := r.inband.Board()
 		bmc := board.BMC
 		if bmc == nil {
 			return nil, fmt.Errorf("unable to read ipmi bmc info configuration")
@@ -211,28 +254,29 @@ func readIPMIDetails(log *zap.SugaredLogger, eth0Mac string, hal hal.InBand) (*m
 
 		bmcUser := bmcConn.User().Name
 		bmcVersion = bmc.FirmwareRevision
-		fru := models.ModelsV1MachineFru{
-			ChassisPartNumber:   bmc.ChassisPartNumber,
-			ChassisPartSerial:   bmc.ChassisPartSerial,
-			BoardMfg:            bmc.BoardMfg,
-			BoardMfgSerial:      bmc.BoardMfgSerial,
-			BoardPartNumber:     bmc.BoardPartNumber,
-			ProductManufacturer: bmc.ProductManufacturer,
-			ProductPartNumber:   bmc.ProductPartNumber,
-			ProductSerial:       bmc.ProductSerial,
+		fru := &v1.MachineFRU{
+			ChassisPartNumber:   &bmc.ChassisPartNumber,
+			ChassisPartSerial:   &bmc.ChassisPartSerial,
+			BoardMfg:            &bmc.BoardMfg,
+			BoardMfgSerial:      &bmc.BoardMfgSerial,
+			BoardPartNumber:     &bmc.BoardPartNumber,
+			ProductManufacturer: &bmc.ProductManufacturer,
+			ProductPartNumber:   &bmc.ProductPartNumber,
+			ProductSerial:       &bmc.ProductSerial,
 		}
 		bmc.IP = bmc.IP + ":" + defaultIPMIPort
-		details.Address = &bmc.IP
-		details.Mac = &bmc.MAC
-		details.User = &bmcUser
-		details.Password = &pw
-		details.Bmcversion = &bmcVersion
-		details.Fru = &fru
+		details.Address = bmc.IP
+		details.Mac = bmc.MAC
+		details.User = bmcUser
+		details.Password = pw
+		details.BmcVersion = bmcVersion
+		details.Fru = fru
 		return details, nil
 	}
 
-	log.Infow("ipmi details faked")
-	if len(eth0Mac) == 0 {
+	r.log.Infow("ipmi details faked")
+	eth0Mac := ""
+	if len(r.network.Eth0Mac) == 0 {
 		eth0Mac = "00:00:00:00:00:00"
 	}
 
@@ -249,10 +293,10 @@ func readIPMIDetails(log *zap.SugaredLogger, eth0Mac string, hal hal.InBand) (*m
 	bmcMAC := "00:00:00:00:00:00"
 	pw = "vagrant"
 	user := "vagrant"
-	details.Address = &bmcIP
-	details.Mac = &bmcMAC
-	details.User = &user
-	details.Password = &pw
-	details.Bmcversion = &bmcVersion
+	details.Address = bmcIP
+	details.Mac = bmcMAC
+	details.User = user
+	details.Password = pw
+	details.BmcVersion = bmcVersion
 	return details, nil
 }

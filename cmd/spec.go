@@ -10,24 +10,12 @@ import (
 	"go.uber.org/zap"
 )
 
-//Specification defines configuration items of the application
+// Specification defines configuration items of the application
 type Specification struct {
 	// Debug turn on debug log
 	Debug bool
-	// MetalCoreURL is the endpoint URL where the metalcore reside
-	MetalCoreURL string
-	// ImageURL if given grabs a fixed OS image to install, only suitable in DevMode
-	ImageURL string
-	// ImageID if given defines the image.ID which normally comes from a allocation
-	// can be something like ubuntu-18.04, alpine-3.9 or "default"
-	// only suitable in DevMode
-	ImageID string
-	// SizeID if given defines the size.ID which normally comes from a allocation
-	// can be something like v1-small-x86
-	// only suitable in DevMode
-	SizeID string
-	// DevMode turn on devmode which prevents failing in some situations
-	DevMode bool
+	// PixieAPIUrl is the endpoint URL where the pixie reside
+	PixieAPIUrl string
 	// BGPEnabled if set to true real bgp configuration is configured, otherwise dhcp will be used
 	BGPEnabled bool
 	// Cidr of BGP interface in DEV Mode
@@ -57,29 +45,9 @@ func NewSpec(log *zap.SugaredLogger) *Specification {
 		os.Setenv("DEBUG", "1")
 	}
 
-	// METAL_CORE_URL must be in the form http://metal-core:4242
-	if url, ok := envmap["METAL_CORE_ADDRESS"]; ok {
-		spec.MetalCoreURL = url
-	}
-
-	if i, ok := envmap["IMAGE_URL"]; ok {
-		spec.ImageURL = i
-		spec.DevMode = true
-	}
-
-	if i, ok := envmap["IMAGE_ID"]; ok {
-		spec.ImageID = i
-		spec.DevMode = true
-	}
-
-	if s, ok := envmap["SIZE_ID"]; ok {
-		spec.SizeID = s
-		spec.DevMode = true
-	}
-
-	if c, ok := envmap["CIDR"]; ok {
-		spec.Cidr = c
-		spec.DevMode = true
+	// PIXIE_API_URL must be in the form http://ip-of-pixie:4242
+	if url, ok := envmap["PIXIE_API_URL"]; ok {
+		spec.PixieAPIUrl = url
 	}
 
 	if bgp, ok := envmap["BGP"]; ok {
@@ -97,11 +65,7 @@ func NewSpec(log *zap.SugaredLogger) *Specification {
 func (s *Specification) Log() {
 	s.log.Infow("configuration",
 		"debug", s.Debug,
-		"metalCoreURL", s.MetalCoreURL,
-		"imageURL", s.ImageURL,
-		"imageID", s.ImageID,
-		"sizeID", s.SizeID,
-		"devmode", s.DevMode,
+		"pixieAPIUrl", s.PixieAPIUrl,
 		"bgpenabled", s.BGPEnabled,
 		"cidr", s.Cidr,
 		"machineUUID", s.MachineUUID,

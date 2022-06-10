@@ -3,7 +3,6 @@ vendor
 .idea
 .vscode
 .vagrant
-metal-core
 metal-hammer
 metal-hammer-kernel.md5
 metal-hammer.tar

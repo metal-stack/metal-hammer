@@ -11,7 +11,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/metal-stack/metal-hammer/metal-core/models"
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
@@ -19,7 +19,7 @@ import (
 )
 
 type Filesystem struct {
-	config models.ModelsV1FilesystemLayoutResponse
+	config models.V1FilesystemLayoutResponse
 	// chroot defines the root of the mounts
 	chroot string
 	// mounts are collected to be able to umount all in reverse order
@@ -43,7 +43,7 @@ type fstabEntry struct {
 	passno    uint
 }
 
-func New(log *zap.SugaredLogger, chroot string, config models.ModelsV1FilesystemLayoutResponse) *Filesystem {
+func New(log *zap.SugaredLogger, chroot string, config models.V1FilesystemLayoutResponse) *Filesystem {
 	return &Filesystem{
 		config:       config,
 		chroot:       chroot,
@@ -185,7 +185,7 @@ func (f *Filesystem) createRaids() error {
 		}
 
 		// set sync speed
-		err = gos.WriteFile("/proc/sys/dev/raid/speed_limit_min", []byte("200000000"), 0644)
+		err = gos.WriteFile("/proc/sys/dev/raid/speed_limit_min", []byte("200000000"), 0644) // nolint:gosec
 		if err != nil {
 			f.log.Errorw("unable to set min sync speed, ignoring...", "error", err)
 		}
@@ -327,7 +327,7 @@ func (f *Filesystem) createFilesystems() error {
 }
 
 func (f *Filesystem) mountFilesystems() error {
-	fss := []models.ModelsV1Filesystem{}
+	fss := []models.V1Filesystem{}
 	for _, fs := range f.config.Filesystems {
 		if fs.Path == "" {
 			continue
@@ -474,7 +474,7 @@ func (f *Filesystem) createDiskJSON() error {
 	return gos.WriteFile(destination, j, 0600)
 }
 
-func mountFs(log *zap.SugaredLogger, chroot string, fs models.ModelsV1Filesystem) (string, error) {
+func mountFs(log *zap.SugaredLogger, chroot string, fs models.V1Filesystem) (string, error) {
 	if fs.Format == nil || *fs.Format == "swap" || *fs.Format == "" || *fs.Format == "tmpfs" {
 		return "", nil
 	}

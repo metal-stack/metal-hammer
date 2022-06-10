@@ -4,8 +4,6 @@ Triggering an OS reinstallation starts by calling the **metal-api** REST endpoin
 
 **metal-api** marks the machine to get reinstalled by setting `allocation.Reinstall = true`. It then informs **metal-core** via NSQ about the desired reinstallation by sending the machine command `REINSTALL` event with the machine ID.
 
-**metal-core** simply queries the IPMI details of the machine, set the boot order to PXE and power resets the machine.
-
 **metal-hammer** reboots in PXE mode, brings all interfaces up, read the hardware details - and therewith creates a new password for the `metal` user - and registers the machine, just as usual.
 
 It then fetches the machine data from **metal-api** and evaluates the `allocation.Reinstall` flag. If it's `false` it continues as usual, i.e. wiping all disks, etc. If it's `true`, which is the case in this scenario, it skips the usual process and first checks if there is an `allocation.BootInfo` struct given, which contains data of the currently given OS, i.e  the current `imageID`, `primaryDisk`, `osPartition`, `initrd`, `cmdline`, `kernel` and `bootloaderID` parameters.  

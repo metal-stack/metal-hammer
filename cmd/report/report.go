@@ -1,15 +1,16 @@
 package report
 
 import (
+	"context"
 	"fmt"
+	"time"
 
-	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
-	"github.com/metal-stack/metal-hammer/metal-core/models"
+	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"go.uber.org/zap"
 )
 
 type Report struct {
-	Client          machine.ClientService
+	Client          v1.BootServiceClient
 	ConsolePassword string
 	MachineUUID     string
 	InstallError    error
@@ -20,26 +21,28 @@ type Report struct {
 	Log             *zap.SugaredLogger
 }
 
-// ReportInstallation will tell metal-core the result of the installation
+// ReportInstallation will tell metal-api the result of the installation
 func (r *Report) ReportInstallation() error {
-	report := &models.DomainReport{
+	report := &v1.BootServiceReportRequest{
+		Uuid:            r.MachineUUID,
 		Success:         true,
-		ConsolePassword: &r.ConsolePassword,
-		Initrd:          &r.Initrd,
-		Cmdline:         &r.Cmdline,
-		Kernel:          &r.Kernel,
-		Bootloaderid:    &r.BootloaderID,
+		ConsolePassword: r.ConsolePassword,
+	}
+	report.BootInfo = &v1.BootInfo{
+		Initrd:       r.Initrd,
+		Cmdline:      r.Cmdline,
+		Kernel:       r.Kernel,
+		BootloaderId: r.BootloaderID,
 	}
 	if r.InstallError != nil {
 		message := r.InstallError.Error()
 		report.Success = false
-		report.Message = &message
+		report.Message = message
 	}
 
-	params := machine.NewReportParams()
-	params.SetBody(report)
-	params.ID = r.MachineUUID
-	_, err := r.Client.Report(params)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := r.Client.Report(ctx, report)
 	if err != nil {
 		r.Log.Errorw("report", "error", err)
 		return fmt.Errorf("unable to report image installation %w", err)

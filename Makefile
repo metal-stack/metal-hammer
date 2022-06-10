@@ -7,11 +7,11 @@ MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../builder)
 CGO_ENABLED := 1
 
-in-docker: clean-local-dirs generate-client gofmt test all;
+in-docker: gofmt test all;
 
 include $(COMMONDIR)/Makefile.inc
 
-release:: generate-client gofmt test all ;
+release:: gofmt test all ;
 
 .PHONY: clean
 clean::
@@ -66,15 +66,6 @@ ramdisk:
 	-o ${INITRD} \
 	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}
-
-clean-local-dirs:
-	rm -rf metal-core
-	mkdir metal-core
-
-# 'swaggergenerate' generates swagger client with SWAGGERSPEC="swagger.json" SWAGGERTARGET="./".
-generate-client: SWAGGERSPEC="metal-core.json"
-generate-client: SWAGGERTARGET="metal-core"
-generate-client: clean-local-dirs swaggergenerate
 
 vagrant-destroy:
 	vagrant destroy -f

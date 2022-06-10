@@ -4,21 +4,17 @@ import (
 	"fmt"
 	"time"
 
-	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
 	"github.com/metal-stack/go-hal"
+	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
+	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/register"
 	"github.com/metal-stack/metal-hammer/cmd/report"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
-	"github.com/metal-stack/metal-hammer/metal-core/client/certs"
-	"github.com/metal-stack/metal-hammer/metal-core/client/machine"
-	"github.com/metal-stack/metal-hammer/metal-core/models"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
-	mn "github.com/metal-stack/metal-lib/pkg/net"
 	"github.com/metal-stack/v"
 	"go.uber.org/zap"
 )
@@ -28,11 +24,10 @@ type Hammer struct {
 	Spec             *Specification
 	log              *zap.SugaredLogger
 	Hal              hal.InBand
-	Client           machine.ClientService
-	GrpcClient       *GrpcClient
+	MetalAPIClient   *MetalAPIClient
 	EventEmitter     *event.EventEmitter
 	LLDPClient       *network.LLDPClient
-	FilesystemLayout *models.ModelsV1FilesystemLayoutResponse
+	FilesystemLayout *models.V1FilesystemLayoutResponse
 	// IPAddress is the ip of the eth0 interface during installation
 	IPAddress          string
 	Started            time.Time
@@ -43,18 +38,15 @@ type Hammer struct {
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	log.Infow("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
-
-	transport := httptransport.New(spec.MetalCoreURL, "", nil)
-	client := machine.New(transport, strfmt.Default)
-	certsClient := certs.New(transport, strfmt.Default)
-
-	grpcClient, err := NewGrpcClient(log, certsClient)
+	metalAPIClient, err := NewMetalAPIClient(log, spec.PixieAPIUrl)
 	if err != nil {
 		log.Errorw("failed to fetch GRPC certificates", "error", err)
 		return nil, err
 	}
 
-	eventEmitter := event.NewEventEmitter(log, grpcClient.Event(), spec.MachineUUID)
+	bootService := metalAPIClient.BootService()
+
+	eventEmitter := event.NewEventEmitter(log, metalAPIClient.Event(), spec.MachineUUID)
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, fmt.Sprintf("starting metal-hammer version:%q", v.V))
 
@@ -65,14 +57,13 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 
 	hammer := &Hammer{
 		Hal:                hal,
-		Client:             client,
 		Spec:               spec,
 		log:                log,
 		IPAddress:          spec.IP,
 		EventEmitter:       eventEmitter,
 		ChrootPrefix:       "/rootfs",
 		OsImageDestination: "/tmp/os.tgz",
-		GrpcClient:         grpcClient,
+		MetalAPIClient:     metalAPIClient,
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
@@ -107,29 +98,18 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	// Set Time from ntp
 	network.NtpDate(log)
 
-	reg := &register.Register{
-		MachineUUID: spec.MachineUUID,
-		Client:      client,
-		Network:     n,
-		Hal:         hal,
-		Log:         log,
-	}
+	reg := register.New(log, spec.MachineUUID, bootService, eventEmitter, n, hal)
 
-	hw, err := reg.ReadHardwareDetails()
+	err = reg.RegisterMachine()
 	if err != nil {
-		return eventEmitter, fmt.Errorf("unable to read all hardware details %w", err)
-	}
-
-	eventEmitter.Emit(event.ProvisioningEventRegistering, "start registering")
-	err = reg.RegisterMachine(hw)
-	if !spec.DevMode && err != nil {
 		return eventEmitter, fmt.Errorf("register %w", err)
 	}
 
-	m, err := hammer.fetchMachine(spec.MachineUUID)
+	resp, err := metalAPIClient.Driver.MachineGet(spec.MachineUUID)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("fetch %w", err)
 	}
+	m := resp.Machine
 	if m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
 		hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 		primaryDiskWiped := false
@@ -137,7 +117,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 			err = fmt.Errorf("no image specified")
 		} else {
 			log.Infow("perform reinstall", "machineID", *m.ID, "imageID", *m.Allocation.Image.ID)
-			err = hammer.installImage(eventEmitter, m, hw.Nics)
+			err = hammer.installImage(eventEmitter, bootService, m)
 			primaryDiskWiped = true
 		}
 		if err != nil {
@@ -158,105 +138,26 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 		return eventEmitter, err
 	}
 
-	// Ensure we can run without metal-core, given IMAGE_URL is configured as kernel cmdline
-	if spec.DevMode {
-		eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for installation")
-
-		cidr := "10.0.1.2"
-		if spec.Cidr != "" {
-			cidr = spec.Cidr
-		}
-
-		if !spec.BGPEnabled {
-			cidr = "dhcp"
-		}
-		asn := int64(4200000001)
-		underlay := mn.Underlay
-		privatePrimaryUnshared := mn.PrivatePrimaryUnshared
-		boolTrue := true
-		boolFalse := false
-		vrf0 := int64(0)
-		vrf1 := int64(4200000001)
-		hostname := "devmode"
-		sshkeys := []string{"not a valid ssh public key, can be specified during machine create.", "second public key"}
-		m = &models.ModelsV1MachineResponse{
-			Allocation: &models.ModelsV1MachineAllocation{
-				Image: &models.ModelsV1ImageResponse{
-					URL: spec.ImageURL,
-					ID:  &spec.ImageID,
-				},
-				Hostname:   &hostname,
-				SSHPubKeys: sshkeys,
-				Networks: []*models.ModelsV1MachineNetwork{
-					{
-						Ips:                 []string{cidr},
-						Asn:                 &asn,
-						Private:             &boolTrue,
-						Underlay:            &boolFalse,
-						Networktype:         &privatePrimaryUnshared,
-						Destinationprefixes: []string{"0.0.0.0/0"},
-						Vrf:                 &vrf1,
-						Nat:                 &boolFalse,
-					},
-					{
-						Ips:                 []string{"1.2.3.4"},
-						Asn:                 &asn,
-						Private:             &boolFalse,
-						Underlay:            &boolTrue,
-						Networktype:         &underlay,
-						Destinationprefixes: []string{"2.3.4.5/24"},
-						Vrf:                 &vrf0,
-						Nat:                 &boolTrue,
-					},
-				},
-			},
-			Size: &models.ModelsV1SizeResponse{
-				ID: &spec.SizeID,
-			},
-		}
-		mac1 := "00:00:00:00:01:01"
-		mac2 := "00:00:00:00:01:02"
-		mac3 := "00:00:00:00:01:03"
-		name1 := "eth0"
-		name2 := "eth1"
-		hw = &models.DomainMetalHammerRegisterMachineRequest{
-			Nics: []*models.ModelsV1MachineNicExtended{
-				{
-					Mac:  &mac1,
-					Name: &name1,
-					Neighbors: []*models.ModelsV1MachineNicExtended{
-						{
-							Mac: &mac3,
-						},
-					},
-				},
-				{
-					Mac:  &mac2,
-					Name: &name2,
-				},
-			},
-		}
-	} else {
-		err := hammer.GrpcClient.WaitForAllocation(eventEmitter, spec.MachineUUID)
-		if err != nil {
-			return eventEmitter, fmt.Errorf("wait for installation %w", err)
-		}
-		m, err = hammer.fetchMachine(spec.MachineUUID)
-		if err != nil {
-			return eventEmitter, fmt.Errorf("wait for installation %w", err)
-		}
+	err = hammer.MetalAPIClient.WaitForAllocation(eventEmitter, spec.MachineUUID)
+	if err != nil {
+		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
+	resp, err = metalAPIClient.Driver.MachineGet(spec.MachineUUID)
+	if err != nil {
+		return eventEmitter, fmt.Errorf("wait for installation %w", err)
+	}
+	m = resp.Machine
 
 	log.Infow("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 	hammer.FilesystemLayout = m.Allocation.Filesystemlayout
-	err = hammer.installImage(eventEmitter, m, hw.Nics)
+	err = hammer.installImage(eventEmitter, bootService, m)
 	return eventEmitter, err
 }
 
-func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.ModelsV1MachineResponse, nics []*models.ModelsV1MachineNicExtended) error {
+func (h *Hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.BootServiceClient, m *models.V1MachineResponse) error {
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
-	info, err := h.Install(m, nics)
+	info, err := h.Install(m)
 
 	// FIXME, must not return here.
 	if err != nil {
@@ -266,7 +167,7 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, m *models.Models
 	// FIXME OSPartition and PrimaryDisk are not used anymore, remove from model in metal-api
 	rep := &report.Report{
 		MachineUUID:     h.Spec.MachineUUID,
-		Client:          h.Client,
+		Client:          bootService,
 		ConsolePassword: h.Spec.ConsolePassword,
 		Initrd:          info.Initrd,
 		Cmdline:         info.Cmdline,
