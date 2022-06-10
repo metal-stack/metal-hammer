@@ -89,7 +89,6 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient
 	if err != nil {
 		return nil, err
 	}
-	// FIXME set to Metal-View
 	driver, err := metalgo.NewDriver(metalConfig.MetalAPIUrl, "", metalConfig.HMAC, metalgo.AuthType("Metal-View"))
 	if err != nil {
 		return nil, err
