@@ -6,6 +6,7 @@ import (
 
 	"github.com/metal-stack/go-hal"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
+	"github.com/metal-stack/metal-go/api/client/machine"
 	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
@@ -105,11 +106,11 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 		return eventEmitter, fmt.Errorf("register %w", err)
 	}
 
-	resp, err := metalAPIClient.Driver.MachineGet(spec.MachineUUID)
+	resp, err := metalAPIClient.Driver.Machine().FindMachine(machine.NewFindMachineParams().WithID(spec.MachineUUID), nil)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("fetch %w", err)
 	}
-	m := resp.Machine
+	m := resp.Payload
 	if m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
 		hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 		primaryDiskWiped := false
@@ -142,11 +143,11 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
-	resp, err = metalAPIClient.Driver.MachineGet(spec.MachineUUID)
+	resp, err = metalAPIClient.Driver.Machine().FindMachine(machine.NewFindMachineParams().WithID(spec.MachineUUID), nil)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
-	m = resp.Machine
+	m = resp.Payload
 
 	log.Infow("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 	hammer.FilesystemLayout = m.Allocation.Filesystemlayout

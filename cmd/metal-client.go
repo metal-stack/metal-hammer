@@ -23,7 +23,7 @@ import (
 type MetalAPIClient struct {
 	log    *zap.SugaredLogger
 	conn   grpc.ClientConnInterface
-	Driver *metalgo.Driver
+	Driver metalgo.Client
 }
 
 // NewMetalAPIClient fetches the address,hmac and certificates from pixie needed to communicate with metal-api,
@@ -89,8 +89,8 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Migrate to metalgo.Client
-	_, driver, err := metalgo.NewDriver(metalConfig.MetalAPIUrl, "", metalConfig.HMAC, metalgo.AuthType("Metal-View"))
+
+	driver, _, err := metalgo.NewDriver(metalConfig.MetalAPIUrl, "", metalConfig.HMAC, metalgo.AuthType("Metal-View"))
 	if err != nil {
 		return nil, err
 	}
