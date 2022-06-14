@@ -18,11 +18,11 @@ const defaultWaitTimeOut = 2 * time.Second
 func (c *MetalAPIClient) WaitForAllocation(e *event.EventEmitter, machineID string) error {
 	e.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
 
-	req := &v1.WaitRequest{
+	req := &v1.BootServiceWaitRequest{
 		MachineId: machineID,
 	}
 	for {
-		stream, err := c.Wait().Wait(context.Background(), req)
+		stream, err := c.BootService().Wait(context.Background(), req)
 		if err != nil {
 			c.log.Errorw("failed waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
 

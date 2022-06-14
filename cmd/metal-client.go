@@ -23,7 +23,7 @@ import (
 type MetalAPIClient struct {
 	log    *zap.SugaredLogger
 	conn   grpc.ClientConnInterface
-	Driver *metalgo.Driver
+	Driver metalgo.Client
 }
 
 // NewMetalAPIClient fetches the address,hmac and certificates from pixie needed to communicate with metal-api,
@@ -89,7 +89,8 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient
 	if err != nil {
 		return nil, err
 	}
-	driver, err := metalgo.NewDriver(metalConfig.MetalAPIUrl, "", metalConfig.HMAC, metalgo.AuthType("Metal-View"))
+
+	driver, _, err := metalgo.NewDriver(metalConfig.MetalAPIUrl, "", metalConfig.HMAC, metalgo.AuthType("Metal-View"))
 	if err != nil {
 		return nil, err
 	}
@@ -103,10 +104,6 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient
 
 func (c *MetalAPIClient) Event() v1.EventServiceClient {
 	return v1.NewEventServiceClient(c.conn)
-}
-
-func (c *MetalAPIClient) Wait() v1.WaitClient {
-	return v1.NewWaitClient(c.conn)
 }
 
 func (c *MetalAPIClient) BootService() v1.BootServiceClient {
