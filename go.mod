@@ -10,8 +10,8 @@ require (
 	github.com/jaypipes/ghw v0.9.0
 	github.com/metal-stack/go-hal v0.4.0
 	github.com/metal-stack/go-lldpd v0.4.0
-	github.com/metal-stack/metal-api v0.18.0
-	github.com/metal-stack/metal-go v0.18.0
+	github.com/metal-stack/metal-api v0.18.2-0.20220614120753-dd5f53417b42
+	github.com/metal-stack/metal-go v0.18.1
 	github.com/metal-stack/pixie v0.2.0
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below

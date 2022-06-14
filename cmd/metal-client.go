@@ -89,7 +89,8 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient
 	if err != nil {
 		return nil, err
 	}
-	driver, err := metalgo.NewDriver(metalConfig.MetalAPIUrl, "", metalConfig.HMAC, metalgo.AuthType("Metal-View"))
+	// TODO: Migrate to metalgo.Client
+	_, driver, err := metalgo.NewDriver(metalConfig.MetalAPIUrl, "", metalConfig.HMAC, metalgo.AuthType("Metal-View"))
 	if err != nil {
 		return nil, err
 	}
@@ -103,10 +104,6 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient
 
 func (c *MetalAPIClient) Event() v1.EventServiceClient {
 	return v1.NewEventServiceClient(c.conn)
-}
-
-func (c *MetalAPIClient) Wait() v1.WaitClient {
-	return v1.NewWaitClient(c.conn)
 }
 
 func (c *MetalAPIClient) BootService() v1.BootServiceClient {
