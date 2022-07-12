@@ -10,8 +10,8 @@ require (
 	github.com/jaypipes/ghw v0.9.0
 	github.com/metal-stack/go-hal v0.4.2
 	github.com/metal-stack/go-lldpd v0.4.0
-	github.com/metal-stack/metal-api v0.19.0
-	github.com/metal-stack/metal-go v0.19.0
+	github.com/metal-stack/metal-api v0.19.4-0.20220908140345-4a811c9acf8b
+	github.com/metal-stack/metal-go v0.19.4-0.20220908140519-eacd4f6866f9
 	github.com/metal-stack/pixie v0.2.0
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
@@ -19,10 +19,10 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.15
 	github.com/u-root/u-root v0.9.0
 	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
-	go.uber.org/zap v1.22.0
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	go.uber.org/zap v1.23.0
+	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -51,9 +51,9 @@ require (
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/loads v0.21.1 // indirect
 	github.com/go-openapi/runtime v0.24.1 // indirect
-	github.com/go-openapi/spec v0.20.6 // indirect
+	github.com/go-openapi/spec v0.20.7 // indirect
 	github.com/go-openapi/strfmt v0.21.3 // indirect
-	github.com/go-openapi/swag v0.22.0 // indirect
+	github.com/go-openapi/swag v0.22.1 // indirect
 	github.com/go-openapi/validate v0.22.0 // indirect
 	github.com/goccy/go-json v0.9.10 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
@@ -75,8 +75,8 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 // indirect
-	github.com/metal-stack/masterdata-api v0.8.12 // indirect
-	github.com/metal-stack/metal-lib v0.10.0 // indirect
+	github.com/metal-stack/masterdata-api v0.8.13 // indirect
+	github.com/metal-stack/metal-lib v0.11.0 // indirect
 	github.com/metal-stack/security v0.6.5 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -86,10 +86,10 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pin/tftp v0.0.0-20210809155059-0161c5dd2e96 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_golang v1.12.2 // indirect
+	github.com/prometheus/client_golang v1.13.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.35.0 // indirect
-	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/prometheus/common v0.37.0 // indirect
+	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sethvargo/go-password v0.2.0 // indirect
 	github.com/stmcginnis/gofish v0.13.0 // indirect
@@ -99,12 +99,12 @@ require (
 	go.mongodb.org/mongo-driver v1.10.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
+	golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d // indirect
 	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
 	golang.org/x/oauth2 v0.0.0-20220808172628-8227340efae7 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220812140447-cec7f5303424 // indirect
+	google.golang.org/genproto v0.0.0-20220815135757-37a418bb8959 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.0 // indirect

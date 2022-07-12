@@ -39,6 +39,8 @@ type InstallerConfig struct {
 	Timestamp string `yaml:"timestamp"`
 	// Nics are the network interfaces of this machine including their neighbors.
 	Nics []*models.V1MachineNic `yaml:"nics"`
+	// VPN is the config for connecting machine to VPN
+	VPN *models.V1MachineVPN `yaml:"vpn"`
 }
 
 // Install a given image to the disk by using genuinetools/img
@@ -238,7 +240,9 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 		Console:      console,
 		Timestamp:    time.Now().Format(time.RFC3339),
 		Nics:         h.onlyNicsWithNeighbors(machine.Hardware.Nics),
+		VPN:          alloc.Vpn,
 	}
+
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
 		return err
