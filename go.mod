@@ -17,11 +17,11 @@ require (
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/pierrec/lz4/v4 v4.1.14
-	github.com/u-root/u-root v0.8.0
+	github.com/u-root/u-root v0.9.0
 	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
 	go.uber.org/zap v1.21.0
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68
+	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.1
