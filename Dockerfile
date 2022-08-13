@@ -1,7 +1,7 @@
 FROM metalstack/builder:latest as builder
 # Install Intel Firmware for e800 based network cards
-ENV ICE_VERSION=1.8.8
-ENV ICE_PKG_VERSION=1.3.28.0
+ENV ICE_VERSION=1.9.11
+ENV ICE_PKG_VERSION=1.3.30.0
 RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_VERSION}/ice-${ICE_VERSION}.tar.gz/download -o ice.tar.gz \
  && tar -xf ice.tar.gz ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg \
  && mkdir -p /lib/firmware/intel/ice/ddp/ \
