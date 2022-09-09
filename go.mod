@@ -10,7 +10,7 @@ require (
 	github.com/jaypipes/ghw v0.9.0
 	github.com/metal-stack/go-hal v0.4.2
 	github.com/metal-stack/go-lldpd v0.4.0
-	github.com/metal-stack/metal-api v0.19.4-0.20220908140345-4a811c9acf8b
+	github.com/metal-stack/metal-api v0.20.0
 	github.com/metal-stack/metal-go v0.20.0
 	github.com/metal-stack/pixie v0.2.0
 	github.com/metal-stack/v v1.0.3
@@ -36,7 +36,7 @@ require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/coreos/go-oidc/v3 v3.2.0 // indirect
+	github.com/coreos/go-oidc/v3 v3.3.0 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -99,12 +99,12 @@ require (
 	go.mongodb.org/mongo-driver v1.10.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d // indirect
-	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
-	golang.org/x/oauth2 v0.0.0-20220808172628-8227340efae7 // indirect
+	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
+	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b // indirect
+	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220815135757-37a418bb8959 // indirect
+	google.golang.org/genproto v0.0.0-20220902135211-223410557253 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.0 // indirect
