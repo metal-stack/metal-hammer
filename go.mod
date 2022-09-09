@@ -11,7 +11,7 @@ require (
 	github.com/metal-stack/go-hal v0.4.2
 	github.com/metal-stack/go-lldpd v0.4.0
 	github.com/metal-stack/metal-api v0.19.4-0.20220908140345-4a811c9acf8b
-	github.com/metal-stack/metal-go v0.19.4-0.20220908140519-eacd4f6866f9
+	github.com/metal-stack/metal-go v0.20.0
 	github.com/metal-stack/pixie v0.2.0
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
