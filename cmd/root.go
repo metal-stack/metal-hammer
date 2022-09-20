@@ -68,8 +68,8 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
-	go kernel.AutoReboot(log, 3*24*time.Hour, 24*time.Hour, func() {
-		eventEmitter.Emit(event.ProvisioningEventPlannedReboot, "autoreboot after 24h")
+	go kernel.AutoReboot(log, 10*time.Minute, 1*time.Minute, func() {
+		eventEmitter.Emit(event.ProvisioningEventPlannedReboot, "autoreboot after 10m")
 	})
 
 	hammer.Spec.ConsolePassword = password.Generate(16)
