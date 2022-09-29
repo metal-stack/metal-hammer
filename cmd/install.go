@@ -41,6 +41,8 @@ type InstallerConfig struct {
 	Nics []*models.V1MachineNic `yaml:"nics"`
 	// VPN is the config for connecting machine to VPN
 	VPN *models.V1MachineVPN `yaml:"vpn"`
+	// Role is either firewall or machine
+	Role string `yaml:"role"`
 }
 
 // Install a given image to the disk by using genuinetools/img
@@ -241,6 +243,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 		Timestamp:    time.Now().Format(time.RFC3339),
 		Nics:         h.onlyNicsWithNeighbors(machine.Hardware.Nics),
 		VPN:          alloc.Vpn,
+		Role:         *alloc.Role,
 	}
 
 	yamlContent, err := yaml.Marshal(y)
