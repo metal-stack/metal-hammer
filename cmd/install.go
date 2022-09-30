@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/metal-stack/metal-hammer/cmd/utils"
+	"github.com/metal-stack/metal-hammer/pkg/api"
 
 	"github.com/metal-stack/metal-go/api/models"
 	img "github.com/metal-stack/metal-hammer/cmd/image"
@@ -20,33 +21,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// InstallerConfig contains configuration items which are
-// consumed by the install.sh of the individual target OS.
-type InstallerConfig struct {
-	// Hostname of the machine
-	Hostname string `yaml:"hostname"`
-	// Networks all networks connected to this machine
-	Networks []*models.V1MachineNetwork `yaml:"networks"`
-	// MachineUUID is the unique UUID for this machine, usually the board serial.
-	MachineUUID string `yaml:"machineuuid"`
-	// SSHPublicKey of the user
-	SSHPublicKey string `yaml:"sshpublickey"`
-	// Password is the password for the metal user.
-	Password string `yaml:"password"`
-	// Console specifies where the kernel should connect its console to.
-	Console string `yaml:"console"`
-	// Timestamp is the the timestamp of installer config creation.
-	Timestamp string `yaml:"timestamp"`
-	// Nics are the network interfaces of this machine including their neighbors.
-	Nics []*models.V1MachineNic `yaml:"nics"`
-	// VPN is the config for connecting machine to VPN
-	VPN *models.V1MachineVPN `yaml:"vpn"`
-	// Role is either firewall or machine
-	Role string `yaml:"role"`
-}
-
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(machine *models.V1MachineResponse) (*kernel.Bootinfo, error) {
+func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, error) {
 	s := storage.New(h.log, h.ChrootPrefix, *h.FilesystemLayout)
 	err := s.Run()
 	if err != nil {
@@ -84,7 +60,7 @@ func (h *Hammer) Install(machine *models.V1MachineResponse) (*kernel.Bootinfo, e
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.V1MachineResponse) (*kernel.Bootinfo, error) {
+func (h *Hammer) install(prefix string, machine *models.V1MachineResponse) (*api.Bootinfo, error) {
 	h.log.Infow("install", "image", machine.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(machine)
@@ -233,7 +209,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 		console = "ttyS0"
 	}
 
-	y := &InstallerConfig{
+	y := &api.InstallerConfig{
 		Hostname:     *alloc.Hostname,
 		SSHPublicKey: sshPubkeys,
 		Networks:     alloc.Networks,

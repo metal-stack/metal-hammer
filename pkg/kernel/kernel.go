@@ -9,6 +9,8 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/metal-stack/metal-hammer/pkg/api"
+
 	"github.com/u-root/u-root/pkg/boot/kexec"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -20,24 +22,15 @@ var (
 	sysfirmware = "/sys/firmware/efi"
 )
 
-// Bootinfo is written by the installer in the target os to tell us
-// which kernel, initrd and cmdline must be used for kexec
-type Bootinfo struct {
-	Initrd       string `yaml:"initrd"`
-	Cmdline      string `yaml:"cmdline"`
-	Kernel       string `yaml:"kernel"`
-	BootloaderID string `yaml:"bootloader_id"`
-}
-
 // ReadBootinfo read boot-info.yaml which was written by the OS install.sh
 // to get all information required to do kexec.
-func ReadBootinfo(file string) (*Bootinfo, error) {
+func ReadBootinfo(file string) (*api.Bootinfo, error) {
 	bi, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("could not read boot-info.yaml %w", err)
 	}
 
-	info := &Bootinfo{}
+	info := &api.Bootinfo{}
 	err = yaml.Unmarshal(bi, info)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal boot-info.yaml %w", err)
@@ -66,7 +59,7 @@ func ParseCmdline() (map[string]string, error) {
 }
 
 // RunKexec boot into the new kernel given in Bootinfo
-func RunKexec(info *Bootinfo) error {
+func RunKexec(info *api.Bootinfo) error {
 	if info != nil {
 		kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
 		if err != nil {

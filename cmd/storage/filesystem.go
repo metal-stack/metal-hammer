@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/metal-stack/metal-go/api/models"
+	"github.com/metal-stack/metal-hammer/pkg/api"
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
@@ -27,7 +28,7 @@ type Filesystem struct {
 	fstabEntries fstabEntries
 	// disk is the legacy disk.json representatio
 	// TODO remove once old images are gone
-	disk Disk
+	disk api.Disk
 	log  *zap.SugaredLogger
 }
 
@@ -48,7 +49,7 @@ func New(log *zap.SugaredLogger, chroot string, config models.V1FilesystemLayout
 		config:       config,
 		chroot:       chroot,
 		fstabEntries: fstabEntries{},
-		disk:         Disk{Device: "legacy", Partitions: []Partition{}},
+		disk:         api.Disk{Device: "legacy", Partitions: []api.Partition{}},
 		log:          log,
 	}
 }
@@ -376,7 +377,7 @@ func (f *Filesystem) mountFilesystems() error {
 		// create legacy disk.json
 		switch fs.Label {
 		case "root", "efi", "varlib":
-			part := Partition{
+			part := api.Partition{
 				Label:      fs.Label,
 				Filesystem: *fs.Format,
 				Properties: map[string]string{"UUID": properties["UUID"]},
