@@ -209,6 +209,11 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 		console = "ttyS0"
 	}
 
+	raidEnabled := false
+	if alloc != nil && alloc.Filesystemlayout != nil && len(alloc.Filesystemlayout.Raid) > 0 {
+		raidEnabled = true
+	}
+
 	y := &api.InstallerConfig{
 		Hostname:     *alloc.Hostname,
 		SSHPublicKey: sshPubkeys,
@@ -220,6 +225,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 		Nics:         h.onlyNicsWithNeighbors(machine.Hardware.Nics),
 		VPN:          alloc.Vpn,
 		Role:         *alloc.Role,
+		RaidEnabled:  raidEnabled,
 	}
 
 	yamlContent, err := yaml.Marshal(y)

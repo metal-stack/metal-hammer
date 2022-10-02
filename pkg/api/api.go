@@ -34,6 +34,8 @@ type InstallerConfig struct {
 	VPN *models.V1MachineVPN `yaml:"vpn"`
 	// Role is either firewall or machine
 	Role string `yaml:"role"`
+	// RaidEnabled is set to true if any raid devices are specified
+	RaidEnabled bool `yaml:"raidenabled"`
 }
 
 // FIXME legacy structs remove once old images are gone
