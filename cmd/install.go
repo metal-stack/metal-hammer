@@ -78,12 +78,17 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse) (*api
 		return nil, err
 	}
 
-	h.log.Infow("running /install.sh on", "prefix", prefix)
+	installBinary := "/install.sh"
+	if fileExists(path.Join(prefix, "install-go")) {
+		installBinary = "/install-go"
+	}
+
+	h.log.Infow("running install", "binary", installBinary, "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: %s error %w", prefix, err)
 	}
-	cmd := exec.Command("/install.sh")
+	cmd := exec.Command(installBinary)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	// these syscalls are required to execute the command in a chroot env.
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -95,18 +100,18 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse) (*api
 		Chroot: prefix,
 	}
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("running install.sh in chroot failed %w", err)
+		return nil, fmt.Errorf("running %q in chroot failed %w", installBinary, err)
 	}
 
 	err = os.Chdir("/")
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: / error %w", err)
 	}
-	h.log.Infow("finish running install.sh")
+	h.log.Infof("finish running %q", installBinary)
 
-	err = os.Remove(path.Join(prefix, "install.sh"))
+	err = os.Remove(path.Join(prefix, installBinary))
 	if err != nil {
-		h.log.Warnw("unable to remove install.sh, ignoring...", "error")
+		h.log.Warnw("unable to remove, ignoring", "binary", installBinary, "error", err)
 	}
 
 	info, err := kernel.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
@@ -148,12 +153,12 @@ func (h *Hammer) writeLVMLocalConf() error {
 	dstlvm := path.Join(h.ChrootPrefix, "/etc/lvm")
 	dstlvmlocal := path.Join(h.ChrootPrefix, srclvmlocal)
 
-	_, err := os.Stat(srclvmlocal)
+	_, err := os.Stat(srclvmlocal) // FIXME use fileExists below
 	if os.IsNotExist(err) {
 		h.log.Infow("src lvmlocal.conf not present, not creating lvmlocal.conf")
 		return nil
 	}
-	_, err = os.Stat(dstlvm)
+	_, err = os.Stat(dstlvm) // FIXME use fileExists below
 	if os.IsNotExist(err) {
 		h.log.Infow("dst /etc/lvm not present, not creating lvmlocal.conf")
 		return nil
@@ -258,4 +263,12 @@ func (h *Hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1
 	}
 	h.log.Infow("onlyNicWithNeighbors add", "result", result)
 	return result
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
