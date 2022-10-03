@@ -28,8 +28,9 @@ type Filesystem struct {
 	fstabEntries fstabEntries
 	// disk is the legacy disk.json representatio
 	// TODO remove once old images are gone
-	disk api.Disk
-	log  *zap.SugaredLogger
+	disk     api.Disk
+	log      *zap.SugaredLogger
+	RootUUID string
 }
 
 type fstabEntries []fstabEntry
@@ -377,6 +378,10 @@ func (f *Filesystem) mountFilesystems() error {
 		// create legacy disk.json
 		switch fs.Label {
 		case "root", "efi", "varlib":
+			partUUID := properties["UUID"]
+			if fs.Label == "root" {
+				f.RootUUID = partUUID
+			}
 			part := api.Partition{
 				Label:      fs.Label,
 				Filesystem: *fs.Format,

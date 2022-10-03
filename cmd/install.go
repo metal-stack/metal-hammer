@@ -41,7 +41,7 @@ func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 		return nil, err
 	}
 
-	info, err := h.install(h.ChrootPrefix, machine)
+	info, err := h.install(h.ChrootPrefix, machine, s.RootUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -60,10 +60,10 @@ func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.V1MachineResponse) (*api.Bootinfo, error) {
+func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*api.Bootinfo, error) {
 	h.log.Infow("install", "image", machine.Allocation.Image.URL)
 
-	err := h.writeInstallerConfig(machine)
+	err := h.writeInstallerConfig(machine, rootUUID)
 	if err != nil {
 		return nil, fmt.Errorf("writing configuration install.yaml failed %w", err)
 	}
@@ -192,7 +192,7 @@ func (h *Hammer) writeUserData(machine *models.V1MachineResponse) error {
 	return nil
 }
 
-func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
+func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUiD string) error {
 	h.log.Infow("write installation configuration")
 	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -231,6 +231,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 		VPN:          alloc.Vpn,
 		Role:         *alloc.Role,
 		RaidEnabled:  raidEnabled,
+		RootUUID:     rootUUiD,
 	}
 
 	yamlContent, err := yaml.Marshal(y)

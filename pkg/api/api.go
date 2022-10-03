@@ -36,6 +36,8 @@ type InstallerConfig struct {
 	Role string `yaml:"role"`
 	// RaidEnabled is set to true if any raid devices are specified
 	RaidEnabled bool `yaml:"raidenabled"`
+	// RootUUID is the fs uuid if the root fs
+	RootUUID string
 }
 
 // FIXME legacy structs remove once old images are gone
