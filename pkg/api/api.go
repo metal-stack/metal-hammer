@@ -12,7 +12,7 @@ type Bootinfo struct {
 }
 
 // InstallerConfig contains configuration items which are
-// consumed by the install.sh of the individual target OS.
+// consumed by the install.sh / install-go of the individual target OS.
 type InstallerConfig struct {
 	// Hostname of the machine
 	Hostname string `yaml:"hostname"`
