@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/metal-stack/metal-hammer/cmd/utils"
+	"github.com/metal-stack/metal-hammer/pkg/api"
 
 	"github.com/metal-stack/metal-go/api/models"
 	img "github.com/metal-stack/metal-hammer/cmd/image"
@@ -20,31 +21,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// InstallerConfig contains configuration items which are
-// consumed by the install.sh of the individual target OS.
-type InstallerConfig struct {
-	// Hostname of the machine
-	Hostname string `yaml:"hostname"`
-	// Networks all networks connected to this machine
-	Networks []*models.V1MachineNetwork `yaml:"networks"`
-	// MachineUUID is the unique UUID for this machine, usually the board serial.
-	MachineUUID string `yaml:"machineuuid"`
-	// SSHPublicKey of the user
-	SSHPublicKey string `yaml:"sshpublickey"`
-	// Password is the password for the metal user.
-	Password string `yaml:"password"`
-	// Console specifies where the kernel should connect its console to.
-	Console string `yaml:"console"`
-	// Timestamp is the the timestamp of installer config creation.
-	Timestamp string `yaml:"timestamp"`
-	// Nics are the network interfaces of this machine including their neighbors.
-	Nics []*models.V1MachineNic `yaml:"nics"`
-	// VPN is the config for connecting machine to VPN
-	VPN *models.V1MachineVPN `yaml:"vpn"`
-}
-
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(machine *models.V1MachineResponse) (*kernel.Bootinfo, error) {
+func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, error) {
 	s := storage.New(h.log, h.ChrootPrefix, *h.FilesystemLayout)
 	err := s.Run()
 	if err != nil {
@@ -63,7 +41,7 @@ func (h *Hammer) Install(machine *models.V1MachineResponse) (*kernel.Bootinfo, e
 		return nil, err
 	}
 
-	info, err := h.install(h.ChrootPrefix, machine)
+	info, err := h.install(h.ChrootPrefix, machine, s.RootUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +60,10 @@ func (h *Hammer) Install(machine *models.V1MachineResponse) (*kernel.Bootinfo, e
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.V1MachineResponse) (*kernel.Bootinfo, error) {
+func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*api.Bootinfo, error) {
 	h.log.Infow("install", "image", machine.Allocation.Image.URL)
 
-	err := h.writeInstallerConfig(machine)
+	err := h.writeInstallerConfig(machine, rootUUID)
 	if err != nil {
 		return nil, fmt.Errorf("writing configuration install.yaml failed %w", err)
 	}
@@ -100,12 +78,17 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse) (*ker
 		return nil, err
 	}
 
-	h.log.Infow("running /install.sh on", "prefix", prefix)
+	installBinary := "/install.sh"
+	if fileExists(path.Join(prefix, "install-go")) {
+		installBinary = "/install-go"
+	}
+
+	h.log.Infow("running install", "binary", installBinary, "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: %s error %w", prefix, err)
 	}
-	cmd := exec.Command("/install.sh")
+	cmd := exec.Command(installBinary)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	// these syscalls are required to execute the command in a chroot env.
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -117,18 +100,18 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse) (*ker
 		Chroot: prefix,
 	}
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("running install.sh in chroot failed %w", err)
+		return nil, fmt.Errorf("running %q in chroot failed %w", installBinary, err)
 	}
 
 	err = os.Chdir("/")
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: / error %w", err)
 	}
-	h.log.Infow("finish running install.sh")
+	h.log.Infof("finish running %q", installBinary)
 
-	err = os.Remove(path.Join(prefix, "install.sh"))
+	err = os.Remove(path.Join(prefix, installBinary))
 	if err != nil {
-		h.log.Warnw("unable to remove install.sh, ignoring...", "error")
+		h.log.Warnw("unable to remove, ignoring", "binary", installBinary, "error", err)
 	}
 
 	info, err := kernel.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
@@ -170,12 +153,12 @@ func (h *Hammer) writeLVMLocalConf() error {
 	dstlvm := path.Join(h.ChrootPrefix, "/etc/lvm")
 	dstlvmlocal := path.Join(h.ChrootPrefix, srclvmlocal)
 
-	_, err := os.Stat(srclvmlocal)
+	_, err := os.Stat(srclvmlocal) // FIXME use fileExists below
 	if os.IsNotExist(err) {
 		h.log.Infow("src lvmlocal.conf not present, not creating lvmlocal.conf")
 		return nil
 	}
-	_, err = os.Stat(dstlvm)
+	_, err = os.Stat(dstlvm) // FIXME use fileExists below
 	if os.IsNotExist(err) {
 		h.log.Infow("dst /etc/lvm not present, not creating lvmlocal.conf")
 		return nil
@@ -209,7 +192,7 @@ func (h *Hammer) writeUserData(machine *models.V1MachineResponse) error {
 	return nil
 }
 
-func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
+func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUiD string) error {
 	h.log.Infow("write installation configuration")
 	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -231,7 +214,12 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 		console = "ttyS0"
 	}
 
-	y := &InstallerConfig{
+	raidEnabled := false
+	if alloc != nil && alloc.Filesystemlayout != nil && len(alloc.Filesystemlayout.Raid) > 0 {
+		raidEnabled = true
+	}
+
+	y := &api.InstallerConfig{
 		Hostname:     *alloc.Hostname,
 		SSHPublicKey: sshPubkeys,
 		Networks:     alloc.Networks,
@@ -241,6 +229,9 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse) error {
 		Timestamp:    time.Now().Format(time.RFC3339),
 		Nics:         h.onlyNicsWithNeighbors(machine.Hardware.Nics),
 		VPN:          alloc.Vpn,
+		Role:         *alloc.Role,
+		RaidEnabled:  raidEnabled,
+		RootUUID:     rootUUiD,
 	}
 
 	yamlContent, err := yaml.Marshal(y)
@@ -273,4 +264,12 @@ func (h *Hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1
 	}
 	h.log.Infow("onlyNicWithNeighbors add", "result", result)
 	return result
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

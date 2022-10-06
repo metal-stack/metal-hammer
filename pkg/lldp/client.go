@@ -88,6 +88,7 @@ func (l *Client) Close() {
 }
 
 // Neighbors search on a interface for neighbors announced via lldp
+//
 //nolint:exhaustive
 func (l *Client) Neighbors(neighChan chan Neighbor) {
 	for {
