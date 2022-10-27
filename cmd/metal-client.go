@@ -13,7 +13,7 @@ import (
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	metalgo "github.com/metal-stack/metal-go"
-	"github.com/metal-stack/pixie/pixiecore"
+	pixieapi "github.com/metal-stack/pixie/api"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -48,7 +48,7 @@ func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient
 	if err != nil {
 		return nil, err
 	}
-	var metalConfig pixiecore.MetalConfig
+	var metalConfig pixieapi.MetalConfig
 	if err := json.Unmarshal(js, &metalConfig); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal grpcConfig:%w", err)
 	}
