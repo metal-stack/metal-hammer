@@ -9,8 +9,8 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
 
 FROM r.metal-stack.io/metal/supermicro:2.5.2 as sum
 
-FROM golang:1.14-buster as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=v0.7.0
+FROM golang:1.17-bullseye as initrd-builder
+ENV UROOT_GIT_SHA_OR_TAG=v0.10.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	curl \
@@ -29,13 +29,11 @@ RUN apt-get update \
 	pciutils \
 	strace \
 	util-linux
-RUN mkdir -p ${GOPATH}/src/github.com/u-root \
- && cd ${GOPATH}/src/github.com/u-root \
- && git clone https://github.com/u-root/u-root \
+WORKDIR /work
+RUN git clone https://github.com/u-root/u-root \
  && cd u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
- && GO111MODULE=off go install
-WORKDIR /work
+ && go install
 COPY lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
 COPY --from=sum /usr/bin/sum /work/
 COPY --from=builder /common /common

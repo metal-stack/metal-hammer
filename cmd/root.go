@@ -68,7 +68,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
-	go kernel.AutoReboot(log, 3*24*time.Hour, 24*time.Hour, func() {
+	go kernel.AutoReboot(log, 1*24*time.Hour, 24*time.Hour, func() {
 		eventEmitter.Emit(event.ProvisioningEventPlannedReboot, "autoreboot after 24h")
 	})
 

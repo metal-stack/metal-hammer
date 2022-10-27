@@ -27,7 +27,7 @@ initrd: ${INITRD_COMPRESSED}
 # place all binaries in the same directory (/sbin) which is in the PATH of root.
 .PHONY: ramdisk
 ramdisk:
-	GO111MODULE=off u-root \
+	u-root -uroot-source /work/u-root \
 		-format=cpio -build=bb \
 		-defaultsh=/bin/bash \
 		-files="bin/metal-hammer:bbin/uinit" \
