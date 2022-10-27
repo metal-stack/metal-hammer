@@ -145,7 +145,7 @@ func (d *Disks) isRotational(deviceName string) bool {
 	result := true
 	if err != nil {
 		// defensive guess, fall back to hdd if unknown
-		d.log.Warnw("wipe", "unable to detect if disk is rotational", "disk", deviceName, "error", err)
+		d.log.Warnw("unable to detect if disk is rotational", "disk", deviceName, "error", err)
 		return true
 	}
 	if strings.Contains(string(rotational), "0") {

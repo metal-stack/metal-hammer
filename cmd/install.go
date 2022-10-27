@@ -127,7 +127,7 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	tmp := "/tmp"
 	_, err = utils.Copy(path.Join(prefix, info.Kernel), path.Join(tmp, filepath.Base(info.Kernel)))
 	if err != nil {
-		h.log.Errorw("install", "could not copy kernel", "error", err)
+		h.log.Errorw("could not copy kernel", "error", err)
 		return info, err
 	}
 	info.Kernel = path.Join(tmp, filepath.Base(info.Kernel))
@@ -138,7 +138,7 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 
 	_, err = utils.Copy(path.Join(prefix, info.Initrd), path.Join(tmp, filepath.Base(info.Initrd)))
 	if err != nil {
-		h.log.Errorw("install", "could not copy initrd", "error", err)
+		h.log.Errorw("could not copy initrd", "error", err)
 		return info, err
 	}
 	info.Initrd = path.Join(tmp, filepath.Base(info.Initrd))
