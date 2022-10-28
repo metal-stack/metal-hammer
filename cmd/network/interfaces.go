@@ -2,12 +2,12 @@ package network
 
 import (
 	"fmt"
+	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"net"
 	"strings"
 	"time"
 
 	"github.com/metal-stack/go-lldpd/pkg/lldp"
-	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/v"
 	"go.uber.org/zap"
 
@@ -95,9 +95,7 @@ func linkSetUp(name string) error {
 }
 
 // Neighbors of a interface, detected via ip neighbor detection
-func (n *Network) Neighbors(name string) ([]*models.V1MachineNic, error) {
-	neighbors := make([]*models.V1MachineNic, 0)
-
+func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error) {
 	host := n.LLDPClient.Host
 
 	for !host.done {
@@ -116,12 +114,17 @@ func (n *Network) Neighbors(name string) ([]*models.V1MachineNic, error) {
 	neighs := host.neighbors[name]
 	for _, neigh := range neighs {
 		macAddress := neigh.Port.Value
-		neighbors = append(neighbors, &models.V1MachineNic{Mac: &macAddress, Name: &name})
+		n.Log.Infow("register add neigbor", "nic", name, "mac", macAddress)
+		neighbors = append(neighbors, &v1.MachineNic{
+			Mac:      macAddress,
+			Name:     name,
+			Hostname: neigh.Name,
+		})
 	}
 	return neighbors, nil
 }
 
-// InternalIP returns the first ipv4 ip of a eth* interface.
+// InternalIP returns the first ipv4 ip of an eth* interface.
 func InternalIP() string {
 	for _, name := range Interfaces() {
 		if !strings.HasPrefix(name, "eth") {

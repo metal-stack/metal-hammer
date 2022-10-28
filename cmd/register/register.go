@@ -136,19 +136,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 			return nil, fmt.Errorf("unable to determine neighbors of interface:%s %w", nic.Name, err)
 		}
 		r.log.Infow("register found neigbor for", "nic", nic.Name, "neighbors", neighbors)
-		ns := []*v1.MachineNic{}
-		for i := range neighbors {
-			n := neighbors[i]
-			if n.Mac == nil || n.Name == nil {
-				continue
-			}
-			r.log.Infow("register add neigbor", "nic", n.Name, "mac", n.Mac)
-			ns = append(ns, &v1.MachineNic{
-				Mac:  *n.Mac,
-				Name: *n.Name,
-			})
-		}
-		nic.Neighbors = ns
+		nic.Neighbors = neighbors
 	}
 
 	// Disks
