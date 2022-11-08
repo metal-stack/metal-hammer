@@ -113,12 +113,13 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 
 	neighs := host.neighbors[name]
 	for _, neigh := range neighs {
-		macAddress := neigh.Port.Value
-		n.Log.Infow("register add neigbor", "nic", name, "mac", macAddress)
+		identifier := neigh.Port.Value
+		n.Log.Infow("register add neigbor", "nic", name, "identifier", identifier)
 		neighbors = append(neighbors, &v1.MachineNic{
-			Mac:      macAddress,
-			Name:     name,
-			Hostname: neigh.Name,
+			Mac:        identifier,
+			Identifier: identifier,
+			Name:       name,
+			Hostname:   neigh.Name,
 		})
 	}
 	return neighbors, nil
