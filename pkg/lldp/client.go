@@ -90,7 +90,7 @@ func (l *Client) Close() {
 // Neighbors search on a interface for neighbors announced via lldp
 //
 //nolint:exhaustive
-func (l *Client) Neighbors(neighChan chan Neighbor) {
+func (l *Client) Neighbors(neighChan chan Neighbor, logger *zap.SugaredLogger) {
 	for {
 		for packet := range l.Source.Packets() {
 			switch packet.LinkLayer().LayerType() {
@@ -105,6 +105,7 @@ func (l *Client) Neighbors(neighChan chan Neighbor) {
 						port := Port{}
 						var chassismac net.HardwareAddr
 						var portmac net.HardwareAddr
+						logger.Infow("lldp parsing", "lldp", lldp)
 						switch lldp.PortID.Subtype {
 						case layers.LLDPPortIDSubtypeMACAddr:
 							portmac = lldp.PortID.ID
@@ -113,6 +114,8 @@ func (l *Client) Neighbors(neighChan chan Neighbor) {
 						case layers.LLDPPortIDSubtypeIfaceName:
 							port.Type = Interface
 							port.Value = string(lldp.PortID.ID)
+						default:
+							logger.Infow("lldp parsing", "PortID subtype", lldp.PortID.Subtype)
 						}
 						switch lldp.ChassisID.Subtype {
 						case layers.LLDPChassisIDSubTypeMACAddr:

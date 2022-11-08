@@ -66,7 +66,7 @@ func (l *LLDPClient) Start() {
 			l.log.Errorw("lldp", "unable to start client on", ifi, "error", err)
 			continue
 		}
-		go lldpcli.Neighbors(neighChan)
+		go lldpcli.Neighbors(neighChan, l.log)
 	}
 
 	for detectedNeighbor := range neighChan {
@@ -113,7 +113,7 @@ func (l *LLDPClient) requirementsMet() bool {
 		return false
 	}
 	// Then check if 2 distinct Chassis neighbors where found
-	// and every port type of a interface on the switch is set to mac
+	// and every port type of interface on the switch is set to mac
 	neighMap := make(map[string]string)
 	for iface, neighs := range l.Host.neighbors {
 		for _, neigh := range neighs {
