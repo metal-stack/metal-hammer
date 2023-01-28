@@ -3,7 +3,10 @@ package event
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
+
+	"github.com/metal-stack/metal-hammer/pkg/kernel"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"go.uber.org/zap"
@@ -30,16 +33,20 @@ const (
 )
 
 type EventEmitter struct {
-	log         *zap.SugaredLogger
-	eventClient v1.EventServiceClient
-	machineID   string
+	log                  *zap.SugaredLogger
+	eventClient          v1.EventServiceClient
+	machineID            string
+	consecutiveErrors    atomic.Uint32
+	maxConsecutiveErrors uint32
 }
 
-func NewEventEmitter(log *zap.SugaredLogger, eventClient v1.EventServiceClient, machineID string) *EventEmitter {
+func NewEventEmitter(log *zap.SugaredLogger, eventClient v1.EventServiceClient, machineID string, maxErrors uint32) *EventEmitter {
 	emitter := &EventEmitter{
-		eventClient: eventClient,
-		machineID:   machineID,
-		log:         log,
+		eventClient:          eventClient,
+		machineID:            machineID,
+		log:                  log,
+		consecutiveErrors:    atomic.Uint32{},
+		maxConsecutiveErrors: maxErrors,
 	}
 
 	ticker := time.NewTicker(1 * time.Minute)
@@ -66,9 +73,17 @@ func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 		},
 	})
 	if err != nil {
-		e.log.Errorw("event", "cannot send event", eventType, "error", err)
+		e.log.Errorw("event", "cannot send event", eventType, "errorCount", e.consecutiveErrors.Load(), "error", err)
+		e.consecutiveErrors.Add(1)
+		if e.consecutiveErrors.Load() > e.maxConsecutiveErrors {
+			err = kernel.Reboot()
+			if err != nil {
+				e.log.Errorw("event, unable to reboot because of too many consecutive errors", "error", err)
+			}
+		}
 	}
 	if s != nil {
 		e.log.Infow("event", "send", s.Events, "failed", s.Failed)
+		e.consecutiveErrors.Store(0)
 	}
 }
