@@ -60,7 +60,7 @@ func NewEventEmitter(log *zap.SugaredLogger, eventClient v1.EventServiceClient, 
 
 func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 	eventString := string(eventType)
-	e.log.Infow("event", "event", eventString, "message", message)
+	e.log.Infow("event", "event", eventString, "message", message, "errorCount", e.consecutiveErrors.Load())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	s, err := e.eventClient.Send(ctx, &v1.EventServiceSendRequest{
