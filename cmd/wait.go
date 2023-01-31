@@ -21,12 +21,10 @@ const (
 
 func (c *MetalAPIClient) WaitForAllocation(e *event.EventEmitter, machineID string) error {
 	e.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
-
-	consecutiveErrors := 0
-
 	req := &v1.BootServiceWaitRequest{
 		MachineId: machineID,
 	}
+	consecutiveErrors := 0
 	for {
 		stream, err := c.BootService().Wait(context.Background(), req)
 		if err != nil {
