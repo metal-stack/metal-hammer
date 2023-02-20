@@ -7,8 +7,6 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
  && mkdir -p /lib/firmware/intel/ice/ddp/ \
  && mv ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg /work/ice.pkg
 
-FROM r.metal-stack.io/metal/supermicro:2.5.2 as sum
-
 FROM golang:1.14-buster as initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v0.7.0
 RUN apt-get update \
@@ -37,7 +35,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && GO111MODULE=off go install
 WORKDIR /work
 COPY lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
-COPY --from=sum /usr/bin/sum /work/
+COPY --from=r.metal-stack.io/metal/supermicro:2.5.2 /usr/bin/sum /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/ice.pkg /work/ice.pkg
 COPY --from=builder /work/bin/metal-hammer /work/bin/
