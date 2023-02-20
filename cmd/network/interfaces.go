@@ -2,10 +2,11 @@ package network
 
 import (
 	"fmt"
-	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"net"
 	"strings"
 	"time"
+
+	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 
 	"github.com/metal-stack/go-lldpd/pkg/lldp"
 	"github.com/metal-stack/v"
@@ -114,9 +115,13 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 	neighs := host.neighbors[name]
 	for _, neigh := range neighs {
 		identifier := neigh.Port.Value
-		n.Log.Infow("register add neigbor", "nic", name, "identifier", identifier)
+		mac := ""
+		if m, err := net.ParseMAC(identifier); err == nil {
+			mac = m.String()
+		}
+		n.Log.Infow("register add neighbor", "nic", name, "identifier", identifier)
 		neighbors = append(neighbors, &v1.MachineNic{
-			Mac:        identifier,
+			Mac:        mac,
 			Identifier: identifier,
 			Name:       name,
 			Hostname:   neigh.Name,
