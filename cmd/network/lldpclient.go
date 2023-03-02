@@ -112,12 +112,12 @@ func (l *LLDPClient) requirementsMet() bool {
 	if len(l.Host.neighbors) < l.Host.minimumInterfaces {
 		return false
 	}
-	// Then check if 2 distinct Chassis neighbors where found
-	// and every port type of a interface on the switch is set to mac
+
+	// Then check if 2 distinct Chassis neighbors were found
 	neighMap := make(map[string]string)
 	for iface, neighs := range l.Host.neighbors {
 		for _, neigh := range neighs {
-			if neigh.Chassis.Type == lldp.Mac && neigh.Port.Type == lldp.Mac {
+			if neigh.Chassis.Type == lldp.Mac && (neigh.Port.Type == lldp.Mac || neigh.Port.Type == lldp.Local) {
 				neighMap[neigh.Chassis.Value] = iface
 			}
 		}

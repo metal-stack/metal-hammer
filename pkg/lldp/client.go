@@ -19,6 +19,8 @@ var (
 	Interface LinkType = "Interface"
 	// Mac LinkType
 	Mac LinkType = "Mac"
+	// Local LinkType
+	Local LinkType = "Local"
 )
 
 // Chassis of a lldp Neighbor
@@ -112,6 +114,9 @@ func (l *Client) Neighbors(neighChan chan Neighbor) {
 							port.Value = portmac.String()
 						case layers.LLDPPortIDSubtypeIfaceName:
 							port.Type = Interface
+							port.Value = string(lldp.PortID.ID)
+						case layers.LLDPPortIDSubtypeLocal:
+							port.Type = Local
 							port.Value = string(lldp.PortID.ID)
 						}
 						switch lldp.ChassisID.Subtype {

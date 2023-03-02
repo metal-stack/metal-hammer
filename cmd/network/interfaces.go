@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
+	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
+
 	"github.com/metal-stack/go-lldpd/pkg/lldp"
-	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/v"
 	"go.uber.org/zap"
 
@@ -95,9 +96,7 @@ func linkSetUp(name string) error {
 }
 
 // Neighbors of a interface, detected via ip neighbor detection
-func (n *Network) Neighbors(name string) ([]*models.V1MachineNic, error) {
-	neighbors := make([]*models.V1MachineNic, 0)
-
+func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error) {
 	host := n.LLDPClient.Host
 
 	for !host.done {
@@ -115,13 +114,26 @@ func (n *Network) Neighbors(name string) ([]*models.V1MachineNic, error) {
 
 	neighs := host.neighbors[name]
 	for _, neigh := range neighs {
-		macAddress := neigh.Port.Value
-		neighbors = append(neighbors, &models.V1MachineNic{Mac: &macAddress, Name: &name})
+		identifier := neigh.Port.Value
+		// this breaks old metal-images because they still rely on the mac address field
+		// do not add this:
+		//
+		// mac := ""
+		// if m, err := net.ParseMAC(identifier); err == nil {
+		// 	mac = m.String()
+		// }
+		n.Log.Infow("register add neighbor", "nic", name, "identifier", identifier)
+		neighbors = append(neighbors, &v1.MachineNic{
+			Mac:        identifier,
+			Identifier: identifier,
+			Name:       name,
+			Hostname:   neigh.Name,
+		})
 	}
 	return neighbors, nil
 }
 
-// InternalIP returns the first ipv4 ip of a eth* interface.
+// InternalIP returns the first ipv4 ip of an eth* interface.
 func InternalIP() string {
 	for _, name := range Interfaces() {
 		if !strings.HasPrefix(name, "eth") {
