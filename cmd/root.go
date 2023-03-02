@@ -47,7 +47,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 
 	bootService := metalAPIClient.BootService()
 
-	eventEmitter := event.NewEventEmitter(log, metalAPIClient.Event(), spec.MachineUUID)
+	eventEmitter := event.NewEventEmitter(log, metalAPIClient.Event(), spec.MachineUUID, 20)
 
 	eventEmitter.Emit(event.ProvisioningEventPreparing, fmt.Sprintf("starting metal-hammer version:%q", v.V))
 

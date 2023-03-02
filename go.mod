@@ -8,7 +8,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.3.0
 	github.com/jaypipes/ghw v0.9.0
-	github.com/metal-stack/go-hal v0.4.2
+	github.com/metal-stack/go-hal v0.4.3
 	github.com/metal-stack/go-lldpd v0.4.2
 	github.com/metal-stack/metal-api v0.22.2
 	github.com/metal-stack/metal-go v0.21.4
