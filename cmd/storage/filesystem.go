@@ -521,15 +521,16 @@ func depth(path string) uint {
 // The command mount does not pass the mount options
 // unbindable, runbindable, private, rprivate, slave, rslave, shared, rshared, auto, noauto, comment, x-*, loop, offset and sizelimit
 // to the mount.<suffix> helpers. All other options are used in a comma-separated list as an argument to the -o option.
+// defaults is special and always set.
 var impossibleMountOptions = []string{
-	"unbindable", "runbindable", "private", "rprivate", "slave", "rslave", "shared", "rshared", "auto", "noauto", "comment", "loop", "offset", "sizelimit",
+	"defaults", "unbindable", "runbindable", "private", "rprivate", "slave", "rslave", "shared", "rshared", "auto", "noauto", "comment", "loop", "offset", "sizelimit",
 }
 
 func optionSliceToString(opts []string, separator string) string {
 	var mountOpts []string
 	for _, o := range opts {
 		option := string(o)
-		if slices.Contains(impossibleMountOptions, option) || strings.HasPrefix(option, "x-") || option == "defaults" {
+		if slices.Contains(impossibleMountOptions, option) || strings.HasPrefix(option, "x-") {
 			continue
 		}
 		mountOpts = append(mountOpts, option)
