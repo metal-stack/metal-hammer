@@ -524,12 +524,12 @@ var impossibleMountOptions = []string{
 
 func optionSliceToString(opts []string, separator string) string {
 	var mountOpts []string
-	for i, o := range opts {
+	for _, o := range opts {
 		option := string(o)
 		if slices.Contains(impossibleMountOptions, option) || strings.HasPrefix(option, "x-") {
 			continue
 		}
-		mountOpts[i] = option
+		mountOpts = append(mountOpts, option)
 	}
 	return strings.Join(mountOpts, separator)
 }
