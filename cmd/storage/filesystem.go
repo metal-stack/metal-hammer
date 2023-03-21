@@ -495,10 +495,8 @@ func mountFs(log *zap.SugaredLogger, chroot string, fs models.V1Filesystem) (str
 		return "", err
 	}
 	opts := optionSliceToString(fs.Mountoptions, ",")
-	args := mountArgumentsFromOptions(fs.Mountoptions)
-	log.Infow("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts, "args", args)
-	mountArgs := append(args, "-o", opts, "-t", *fs.Format, *fs.Device, path)
-	err := os.ExecuteCommand("mount", mountArgs...)
+	log.Infow("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
+	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
 	if err != nil {
 		log.Errorw("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
 		return "", fmt.Errorf("unable to create filesystem %s on %s %w", *fs.Device, fs.Path, err)
@@ -532,17 +530,6 @@ func optionSliceToString(opts []string, separator string) string {
 		mountOpts = append(mountOpts, option)
 	}
 	return strings.Join(mountOpts, separator)
-}
-
-func mountArgumentsFromOptions(opts []string) []string {
-	var mountArgs []string
-	for _, o := range opts {
-		option := string(o)
-		if slices.Contains(impossibleMountOptions, option) || strings.HasPrefix(option, "x-") {
-			mountArgs = append(mountArgs, "--make-"+option)
-		}
-	}
-	return mountArgs
 }
 
 // write all fstab entries to /etc/fstab inside chroot
