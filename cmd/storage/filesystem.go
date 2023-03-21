@@ -499,7 +499,7 @@ func mountFs(log *zap.SugaredLogger, chroot string, fs models.V1Filesystem) (str
 	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
 	if err != nil {
 		log.Errorw("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
-		return "", fmt.Errorf("unable to mount filesystem %s on %s %w", *fs.Device, fs.Path, err)
+		return "", fmt.Errorf("unable to mount filesystem %s on %s opts:%v error:%w", *fs.Device, fs.Path, opts, err)
 	}
 	return path, nil
 }
