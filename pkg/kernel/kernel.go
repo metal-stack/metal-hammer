@@ -45,13 +45,13 @@ func ParseCmdline() (map[string]string, error) {
 		return nil, fmt.Errorf("unable to read %s %w", cmdLine, err)
 	}
 
-	cmdLineValues := strings.Split(string(cmdLine), " ")
+	cmdLineValues := strings.Fields(string(cmdLine))
 	envmap := make(map[string]string)
 	for _, v := range cmdLineValues {
-		keyValue := strings.Split(v, "=")
-		if len(keyValue) == 2 {
-			key := strings.TrimSpace(keyValue[0])
-			value := strings.TrimSpace(keyValue[1])
+		key, value, found := strings.Cut(v, "=")
+		if found {
+			key := strings.TrimSpace(key)
+			value := strings.TrimSpace(value)
 			envmap[key] = value
 		}
 	}

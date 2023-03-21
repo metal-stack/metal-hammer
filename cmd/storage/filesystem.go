@@ -17,6 +17,7 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 )
 
 type Filesystem struct {
@@ -494,8 +495,10 @@ func mountFs(log *zap.SugaredLogger, chroot string, fs models.V1Filesystem) (str
 		return "", err
 	}
 	opts := optionSliceToString(fs.Mountoptions, ",")
-	log.Infow("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
-	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
+	args := mountArgumentsFromOptions(fs.Mountoptions)
+	log.Infow("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts, "args", args)
+	mountArgs := append(args, "-o", opts, "-t", *fs.Format, *fs.Device, path)
+	err := os.ExecuteCommand("mount", mountArgs...)
 	if err != nil {
 		log.Errorw("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
 		return "", fmt.Errorf("unable to create filesystem %s on %s %w", *fs.Device, fs.Path, err)
@@ -511,12 +514,35 @@ func depth(path string) uint {
 	return count
 }
 
+// from man mount:
+// The command mount does not pass the mount options
+// unbindable, runbindable, private, rprivate, slave, rslave, shared, rshared, auto, noauto, comment, x-*, loop, offset and sizelimit
+// to the mount.<suffix> helpers. All other options are used in a comma-separated list as an argument to the -o option.
+var impossibleMountOptions = []string{
+	"unbindable", "runbindable", "private", "rprivate", "slave", "rslave", "shared", "rshared", "auto", "noauto", "comment", "loop", "offset", "sizelimit",
+}
+
 func optionSliceToString(opts []string, separator string) string {
-	mountOpts := make([]string, len(opts))
+	var mountOpts []string
 	for i, o := range opts {
-		mountOpts[i] = string(o)
+		option := string(o)
+		if slices.Contains(impossibleMountOptions, option) || strings.HasPrefix(option, "x-") {
+			continue
+		}
+		mountOpts[i] = option
 	}
 	return strings.Join(mountOpts, separator)
+}
+
+func mountArgumentsFromOptions(opts []string) []string {
+	var mountArgs []string
+	for _, o := range opts {
+		option := string(o)
+		if slices.Contains(impossibleMountOptions, option) || strings.HasPrefix(option, "x-") {
+			mountArgs = append(mountArgs, "--make-"+option)
+		}
+	}
+	return mountArgs
 }
 
 // write all fstab entries to /etc/fstab inside chroot

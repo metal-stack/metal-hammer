@@ -32,11 +32,11 @@ func FetchBlockIDProperties(partitionDevice string) (map[string]string, error) {
 
 	props := make(map[string]string)
 	for _, line := range strings.Split(string(out), "\n") {
-		keyValue := strings.Split(line, "=")
-		if len(keyValue) != 2 {
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
 			continue
 		}
-		props[keyValue[0]] = keyValue[1]
+		props[key] = value
 	}
 	return props, nil
 }
