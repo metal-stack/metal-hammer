@@ -496,7 +496,12 @@ func mountFs(log *zap.SugaredLogger, chroot string, fs models.V1Filesystem) (str
 	}
 	opts := optionSliceToString(fs.Mountoptions, ",")
 	log.Infow("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
-	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
+	var args []string
+	if len(opts) > 0 {
+		args = append(args, "-o", opts)
+	}
+	args = append(args, "-t", *fs.Format, *fs.Device, path)
+	err := os.ExecuteCommand("mount", args...)
 	if err != nil {
 		log.Errorw("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
 		return "", fmt.Errorf("unable to mount filesystem %s on %s opts:%v error:%w", *fs.Device, fs.Path, opts, err)
@@ -524,7 +529,7 @@ func optionSliceToString(opts []string, separator string) string {
 	var mountOpts []string
 	for _, o := range opts {
 		option := string(o)
-		if slices.Contains(impossibleMountOptions, option) || strings.HasPrefix(option, "x-") {
+		if slices.Contains(impossibleMountOptions, option) || strings.HasPrefix(option, "x-") || option == "defaults" {
 			continue
 		}
 		mountOpts = append(mountOpts, option)
