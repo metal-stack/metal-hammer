@@ -17,6 +17,7 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 )
 
 type Filesystem struct {
@@ -495,10 +496,15 @@ func mountFs(log *zap.SugaredLogger, chroot string, fs models.V1Filesystem) (str
 	}
 	opts := optionSliceToString(fs.Mountoptions, ",")
 	log.Infow("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
-	err := os.ExecuteCommand("mount", "-o", opts, "-t", *fs.Format, *fs.Device, path)
+	var args []string
+	if len(opts) > 0 {
+		args = append(args, "-o", opts)
+	}
+	args = append(args, "-t", *fs.Format, *fs.Device, path)
+	err := os.ExecuteCommand("mount", args...)
 	if err != nil {
 		log.Errorw("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
-		return "", fmt.Errorf("unable to create filesystem %s on %s %w", *fs.Device, fs.Path, err)
+		return "", fmt.Errorf("unable to mount filesystem %s on %s opts:%v error:%w", *fs.Device, fs.Path, opts, err)
 	}
 	return path, nil
 }
@@ -511,10 +517,23 @@ func depth(path string) uint {
 	return count
 }
 
+// from man mount:
+// The command mount does not pass the mount options
+// unbindable, runbindable, private, rprivate, slave, rslave, shared, rshared, auto, noauto, comment, x-*, loop, offset and sizelimit
+// to the mount.<suffix> helpers. All other options are used in a comma-separated list as an argument to the -o option.
+// defaults is special and always set.
+var impossibleMountOptions = []string{
+	"defaults", "unbindable", "runbindable", "private", "rprivate", "slave", "rslave", "shared", "rshared", "auto", "noauto", "comment", "loop", "offset", "sizelimit",
+}
+
 func optionSliceToString(opts []string, separator string) string {
-	mountOpts := make([]string, len(opts))
-	for i, o := range opts {
-		mountOpts[i] = string(o)
+	var mountOpts []string
+	for _, o := range opts {
+		option := string(o)
+		if slices.Contains(impossibleMountOptions, option) || strings.HasPrefix(option, "x-") {
+			continue
+		}
+		mountOpts = append(mountOpts, option)
 	}
 	return strings.Join(mountOpts, separator)
 }
