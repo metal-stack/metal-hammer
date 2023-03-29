@@ -31,6 +31,7 @@ ramdisk:
 		-format=cpio -build=bb \
 		-defaultsh=/bin/bash \
 		-files="bin/metal-hammer:bbin/uinit" \
+		-files="/etc:etc" \
 		-files="/etc/resolv.conf:etc/resolv.conf" \
 		-files="/etc/localtime:etc/localtime" \
 		-files="/bin/bash:bin/bash" \
