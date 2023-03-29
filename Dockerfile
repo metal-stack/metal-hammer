@@ -11,6 +11,7 @@ FROM golang:1.20-bullseye as initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v0.11.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
+	ca-certificates \
 	curl \
 	dosfstools \
 	e2fsprogs \
