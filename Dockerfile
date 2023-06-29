@@ -35,7 +35,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && GO111MODULE=off go install
 WORKDIR /work
 COPY lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
-COPY --from=r.metal-stack.io/metal/supermicro:2.10.0 /usr/bin/sum /work/
+COPY --from=r.metal-stack.io/metal/supermicro:2.11.0 /usr/bin/sum /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/ice.pkg /work/ice.pkg
 COPY --from=builder /work/bin/metal-hammer /work/bin/
