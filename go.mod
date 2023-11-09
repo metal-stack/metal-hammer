@@ -10,8 +10,8 @@ require (
 	github.com/jaypipes/ghw v0.12.0
 	github.com/metal-stack/go-hal v0.4.4
 	github.com/metal-stack/go-lldpd v0.4.4
-	github.com/metal-stack/metal-api v0.24.3
-	github.com/metal-stack/metal-go v0.24.3
+	github.com/metal-stack/metal-api v0.24.5
+	github.com/metal-stack/metal-go v0.24.5
 	github.com/metal-stack/pixie v0.2.5
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
@@ -20,9 +20,9 @@ require (
 	github.com/u-root/u-root v0.11.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	go.uber.org/zap v1.26.0
-	golang.org/x/sync v0.4.0
-	golang.org/x/sys v0.13.0
-	google.golang.org/grpc v1.58.3
+	golang.org/x/sync v0.5.0
+	golang.org/x/sys v0.14.0
+	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -36,10 +36,10 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/avast/retry-go/v4 v4.5.0 // indirect
 	github.com/coreos/go-oidc/v3 v3.6.0 // indirect
-	github.com/creack/pty v1.1.18 // indirect
+	github.com/creack/pty v1.1.20 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
-	github.com/fatih/color v1.15.0 // indirect
+	github.com/fatih/color v1.16.0 // indirect
 	github.com/frankban/quicktest v1.14.6 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gliderlabs/ssh v0.3.5 // indirect
@@ -61,7 +61,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/jaypipes/pcidb v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
@@ -72,7 +72,7 @@ require (
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 // indirect
@@ -96,12 +96,12 @@ require (
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/oauth2 v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/oauth2 v0.14.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231012201019-e917dd12ba7a // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.0 // indirect
 )
