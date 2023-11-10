@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"slices"
+	"golang.org/x/exp/slices"
 	"sort"
 	"strings"
 	"syscall"
