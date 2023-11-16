@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"golang.org/x/exp/slices"
 	"sort"
 	"strings"
 	"syscall"
@@ -17,7 +18,6 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
 	"go.uber.org/zap"
-	"golang.org/x/exp/slices"
 )
 
 type Filesystem struct {
