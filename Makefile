@@ -66,6 +66,7 @@ ramdisk:
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 		-files="sum:sbin/sum" \
+		-files="enterprise-numbers.txt:/usr/share/misc/enterprise-numbers.txt" \
 	-o ${INITRD} \
 	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}
