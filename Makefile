@@ -6,6 +6,7 @@ INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
 COMMONDIR := $(or ${COMMONDIR},../builder)
 CGO_ENABLED := 1
+# export CGO_LDFLAGS := "-lsystemd" "-lpcap" "-ldbus-1"
 
 in-docker: gofmt test all;
 
