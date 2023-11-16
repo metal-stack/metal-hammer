@@ -87,9 +87,11 @@ func updateResolvConf() error {
 	symlink := "/etc/resolv.conf"
 	target := "/proc/net/pnp"
 
-	err := os.Remove(symlink)
-	if err != nil {
-		return err
+	if _, err := os.Stat(symlink); !os.IsNotExist(err) {
+		err := os.Remove(symlink)
+		if err != nil {
+			return err
+		}
 	}
 
 	return os.Symlink(target, symlink)
