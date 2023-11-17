@@ -33,6 +33,8 @@ ramdisk:
 		-defaultsh=/bin/bash \
 		-files="bin/metal-hammer:bbin/uinit" \
 		-files="/etc:etc" \
+		-files="/etc/ssl:etc/ssl" \
+		-files="/etc/ssl/certs:etc/ssl/certs" \
 		-files="/etc/resolv.conf:etc/resolv.conf" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/etc/localtime:etc/localtime" \
