@@ -42,9 +42,9 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && GO111MODULE=off go install
 WORKDIR /work
-RUN mkdir -p /work/etc/lvm /work/etc/ssl/certs /work/lib/firmware/intel/ice/ddp/ /work/var/run
+RUN mkdir -p /work/etc/lvm /work/etc/ssl/certs /work/lib/firmware/intel/ice/ddp/ /work/var/run \
+ && cp /usr/share/zoneinfo/Etc/UTC /work/etc/localtime
 COPY enterprise-numbers.txt lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
-COPY /usr/share/zoneinfo/Etc/UTC /work/etc/localtime
 COPY --from=r.metal-stack.io/metal/supermicro:2.12.0 /usr/bin/sum /work/
 COPY --from=builder /common /common
 COPY --from=builder /work/ice.pkg /work/ice.pkg
