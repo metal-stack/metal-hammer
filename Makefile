@@ -34,8 +34,8 @@ ramdisk:
 		-files="bin/metal-hammer:bbin/uinit" \
 		-files="/etc:etc" \
 		-files="/etc/resolv.conf:etc/resolv.conf" \
+		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/etc/localtime:etc/localtime" \
-		-files="/etc/ssl/certs:etc/ssl/certs" \
 		-files="/bin/bash:bin/bash" \
 		-files="/sbin/blkid:sbin/blkid" \
 		-files="/sbin/ethtool:sbin/ethtool" \
