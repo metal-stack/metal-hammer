@@ -31,11 +31,11 @@ ramdisk:
 	GO111MODULE=off u-root \
 		-format=cpio -build=bb \
 		-defaultsh=/bin/bash \
+		-base="/etc" \
 		-files="bin/metal-hammer:bbin/uinit" \
 		-files="/etc:etc" \
 		-files="/etc/ssl:etc/ssl" \
 		-files="/etc/ssl/certs:etc/ssl/certs" \
-		-files="/etc/resolv.conf:etc/resolv.conf" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/etc/localtime:etc/localtime" \
 		-files="/bin/bash:bin/bash" \
@@ -61,7 +61,6 @@ ramdisk:
 		-files="/sbin/mdmon:sbin/mdmon" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/sbin/wipefs:sbin/wipefs" \
-		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/lib/x86_64-linux-gnu/libnss_files.so.2:lib/libnss_files.so.2" \
 		-files="passwd:etc/passwd" \
 		-files="varrun:var/run/keep" \
