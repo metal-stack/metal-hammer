@@ -31,11 +31,7 @@ ramdisk:
 	GO111MODULE=off u-root \
 		-format=cpio -build=bb \
 		-defaultsh=/bin/bash \
-		-base="/etc" \
 		-files="bin/metal-hammer:bbin/uinit" \
-		-files="/etc:etc" \
-		-files="/etc/ssl:etc/ssl" \
-		-files="/etc/ssl/certs:etc/ssl/certs" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/etc/localtime:etc/localtime" \
 		-files="/bin/bash:bin/bash" \
@@ -68,7 +64,7 @@ ramdisk:
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 		-files="sum:sbin/sum" \
-		-files="enterprise-numbers.txt:/usr/share/misc/enterprise-numbers.txt" \
+		-files="enterprise-numbers.txt:usr/share/misc/enterprise-numbers.txt" \
 	-o ${INITRD} \
 	&& ${COMPRESSOR} ${COMPRESSOR_ARGS} ${INITRD} ${INITRD_COMPRESSED} \
 	&& rm -f ${INITRD}

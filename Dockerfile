@@ -42,6 +42,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && GO111MODULE=off go install
 WORKDIR /work
+RUN mkdir -p /work/etc/lvm /work/etc/ssl/certs /work/lib/firmware/intel/ice/ddp/ /work/var/run
 COPY enterprise-numbers.txt lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
 COPY --from=r.metal-stack.io/metal/supermicro:2.12.0 /usr/bin/sum /work/
 COPY --from=builder /common /common
