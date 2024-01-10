@@ -165,7 +165,6 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.B
 		return fmt.Errorf("install %w ", err)
 	}
 
-	// FIXME OSPartition and PrimaryDisk are not used anymore, remove from model in metal-api
 	rep := &report.Report{
 		MachineUUID:     h.Spec.MachineUUID,
 		Client:          bootService,

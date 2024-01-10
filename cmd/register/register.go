@@ -127,7 +127,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		nics = append(nics, lo)
 	}
 
-	// now attach neighbors, this will wait up to 2*tx-intervall
+	// now attach neighbors, this will wait up to 2*tx-interval
 	// if during this timeout not all required neighbors where found abort and reboot.
 	for _, nic := range nics {
 		r.log.Infow("register search neighbor for", "nic", nic.Name)
@@ -198,7 +198,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	return request, nil
 }
 
-// save the content of kernel ringbuffer to /var/log/syslog
+// save the content of kernel ring buffer to /var/log/syslog
 // by calling the appropriate syscall.
 // Only required if Memory is gathered by ghw.Memory()
 // FIXME consider different implementation

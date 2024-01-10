@@ -7,10 +7,11 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"golang.org/x/exp/slices"
 	"sort"
 	"strings"
 	"syscall"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/pkg/api"
