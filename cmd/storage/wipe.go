@@ -124,7 +124,7 @@ func isNVMeDisk(device string) bool {
 }
 
 // Secure erase is done via:
-// nvme-cli --format --ses=1 /dev/nvme0n1
+// nvme-cli --format --force --ses=1 /dev/nvme0n1
 // see: https://github.com/linux-nvme/nvme-cli/blob/master/Documentation/nvme-format.txt
 //
 // TODO: configure qemu to map a disk with the nvme format:
@@ -132,7 +132,7 @@ func isNVMeDisk(device string) bool {
 // https://github.com/arunar/nvmeqemu
 func (d *Disks) secureEraseNVMe(device string) error {
 	d.log.Infow("wipe", "disk", device, "message", "start very fast deleting of existing data")
-	err := os.ExecuteCommand(command.NVME, "--format", "--ses=1", device)
+	err := os.ExecuteCommand(command.NVME, "--format", "--force", "--ses=1", device)
 	if err != nil {
 		return fmt.Errorf("unable to secure erase nvme disk %s %w", device, err)
 	}

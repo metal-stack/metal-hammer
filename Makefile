@@ -32,6 +32,7 @@ ramdisk:
 		-format=cpio -build=bb \
 		-defaultsh=/bin/bash \
 		-files="bin/metal-hammer:bbin/uinit" \
+		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/etc/localtime:etc/localtime" \
 		-files="/bin/bash:bin/bash" \
 		-files="/sbin/blkid:sbin/blkid" \
@@ -56,8 +57,8 @@ ramdisk:
 		-files="/sbin/mdmon:sbin/mdmon" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/sbin/wipefs:sbin/wipefs" \
-		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
-		-files="/usr/lib/x86_64-linux-gnu/libnss_files.so:lib/libnss_files.so.2" \
+		-files="/lib/x86_64-linux-gnu/libnss_files-2.31.so:lib/x86_64-linux-gnu/libnss_files-2.31.so" \
+		-files="/lib/x86_64-linux-gnu/libnss_files.so.2:lib/x86_64-linux-gnu/libnss_files.so.2" \
 		-files="passwd:etc/passwd" \
 		-files="varrun:var/run/keep" \
 		-files="ice.pkg:lib/firmware/intel/ice/ddp/ice.pkg" \

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"syscall"
 	"time"
 
 	"github.com/metal-stack/v"
@@ -23,7 +24,13 @@ func main() {
 		panic("cmd args are not supported")
 	}
 
-	err := updateResolvConf()
+	err := syscall.Unmount("/etc", syscall.MNT_FORCE)
+	if err != nil {
+		fmt.Printf("unable to umount /etc, which is overmounted with tmpfs %s", err)
+		os.Exit(1)
+	}
+
+	err = updateResolvConf()
 	if err != nil {
 		fmt.Printf("error updating resolv.conf %s", err)
 		os.Exit(1)
@@ -87,9 +94,11 @@ func updateResolvConf() error {
 	symlink := "/etc/resolv.conf"
 	target := "/proc/net/pnp"
 
-	err := os.Remove(symlink)
-	if err != nil {
-		return err
+	if _, err := os.Stat(symlink); !os.IsNotExist(err) {
+		err := os.Remove(symlink)
+		if err != nil {
+			return err
+		}
 	}
 
 	return os.Symlink(target, symlink)

@@ -11,10 +11,12 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
  && mkdir -p /lib/firmware/intel/ice/ddp/ \
  && mv ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg /work/ice.pkg
 
-FROM golang:1.14-buster as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=v0.7.0
+# ipmitool from bookworm is broken and returns with error on most commands
+FROM golang:1.20-bullseye as initrd-builder
+ENV UROOT_GIT_SHA_OR_TAG=v0.11.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
+	ca-certificates \
 	curl \
 	dosfstools \
 	e2fsprogs \
@@ -30,7 +32,9 @@ RUN apt-get update \
 	nvme-cli \
 	pciutils \
 	strace \
-	util-linux
+	util-linux \
+ # this is required, otherwise uroot complains that these files already exist
+ && rm -f /etc/passwd /etc/lvm/lvmlocal.conf
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \
@@ -38,6 +42,8 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && GO111MODULE=off go install
 WORKDIR /work
+RUN mkdir -p /work/etc/lvm /work/etc/ssl/certs /work/lib/firmware/intel/ice/ddp/ /work/var/run \
+ && cp /usr/share/zoneinfo/Etc/UTC /work/etc/localtime
 COPY lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
 COPY --from=r.metal-stack.io/metal/supermicro:2.12.0 /usr/bin/sum /work/
 COPY --from=builder /common /common
