@@ -30,7 +30,11 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+replace (
+	// TODO can be removed with go-1.21
+	github.com/metal-stack/security => github.com/metal-stack/security v0.6.7
+	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+)
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
@@ -67,11 +71,11 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/jaypipes/pcidb v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
+	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
-	github.com/lestrrat-go/httprc v1.0.4 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/jwx/v2 v2.0.19 // indirect
+	github.com/lestrrat-go/jwx v1.2.26 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -89,7 +93,6 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sethvargo/go-password v0.2.0 // indirect
 	github.com/stmcginnis/gofish v0.15.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect

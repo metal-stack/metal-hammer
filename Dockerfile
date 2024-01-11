@@ -40,7 +40,7 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \
  && cd u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
- && GO111MODULE=off go install
+ && go install
 WORKDIR /work
 RUN mkdir -p /work/etc/lvm /work/etc/ssl/certs /work/lib/firmware/intel/ice/ddp/ /work/var/run \
  && cp /usr/share/zoneinfo/Etc/UTC /work/etc/localtime
