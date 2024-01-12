@@ -1,7 +1,12 @@
-FROM golang:1.21-bookworm as builder
+FROM golang:1.21-alpine as builder
 
-RUN apt-get update \
- && apt-get -y install --no-install-recommends \
+RUN apk add \
+	binutils \
+	curl \
+	gcc \
+	git \
+	make \
+	musl-dev \
     libpcap-dev
 WORKDIR /work
 COPY . .
