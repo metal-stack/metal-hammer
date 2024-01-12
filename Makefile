@@ -58,6 +58,7 @@ ${INITRD_COMPRESSED}:
 initrd: ${INITRD_COMPRESSED}
 
 # place all binaries in the same directory (/sbin) which is in the PATH of root.
+# keep them alphabetically sorted
 .PHONY: ramdisk
 ramdisk:
 	GO111MODULE=off u-root \
