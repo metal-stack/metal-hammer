@@ -1,8 +1,11 @@
-# FIXME this points to the last go-1.20 image of the builder, 
-# go-1.21 can't be used actually because bookworm mangled libsystemd-dev which breaks the build
-# and go-1.21 is not available with bullseye.
-# maybe we should switch away from depending on the builder image
-FROM metalstack/builder@sha256:d2050a3bef9bbd9d9ea769a71a4a70b9ff4b24c537d29d5870b83fc652bb67f8 as builder
+FROM golang:1.21-bookworm as builder
+
+RUN apt-get update \
+ && apt-get -y install --no-install-recommends \
+    libpcap-dev
+WORKDIR /work
+COPY . .
+RUN make all
 # Install Intel Firmware for e800 based network cards
 ENV ICE_VERSION=1.13.7
 ENV ICE_PKG_VERSION=1.3.35.0
@@ -46,10 +49,9 @@ RUN mkdir -p /work/etc/lvm /work/etc/ssl/certs /work/lib/firmware/intel/ice/ddp/
  && cp /usr/share/zoneinfo/Etc/UTC /work/etc/localtime
 COPY lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
 COPY --from=r.metal-stack.io/metal/supermicro:2.13.0 /usr/bin/sum /work/
-COPY --from=builder /common /common
 COPY --from=builder /work/ice.pkg /work/ice.pkg
 COPY --from=builder /work/bin/metal-hammer /work/bin/
-RUN COMMONDIR=/common make ramdisk
+RUN make ramdisk
 
 FROM scratch
 COPY --from=builder /work/bin/metal-hammer /

@@ -1,18 +1,49 @@
+.ONESHELL:
+SHA := $(shell git rev-parse --short=8 HEAD)
+GITVERSION := $(shell git describe --long --all)
+BUILDDATE := $(shell date --iso-8601=seconds)
+VERSION := $(or ${VERSION},$(shell git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD || git rev-parse --short HEAD))
+CGO_ENABLED := $(or ${CGO_ENABLED},0)
+GO := go
+GOSRC = $(shell find . -not \( -path vendor -prune \) -type f -name '*.go')
+
 BINARY := metal-hammer
 INITRD := ${BINARY}-initrd.img
 COMPRESSOR := lz4
 COMPRESSOR_ARGS := -f -l
 INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
-COMMONDIR := $(or ${COMMONDIR},../builder)
 CGO_ENABLED := 1
 # export CGO_LDFLAGS := "-lsystemd" "-lpcap" "-ldbus-1"
 
-in-docker: gofmt test all;
 
-include $(COMMONDIR)/Makefile.inc
+.PHONY: all
+all:: bin/$(BINARY);
 
-release:: gofmt test all ;
+in-docker: all;
+
+ifeq ($(CGO_ENABLED),1)
+	LINKMODE := -linkmode external -extldflags '-static -s -w'
+endif
+
+LINKMODE := $(LINKMODE) \
+		 -X 'github.com/metal-stack/v.Version=$(VERSION)' \
+		 -X 'github.com/metal-stack/v.Revision=$(GITVERSION)' \
+		 -X 'github.com/metal-stack/v.GitSHA1=$(SHA)' \
+		 -X 'github.com/metal-stack/v.BuildDate=$(BUILDDATE)'
+
+bin/$(BINARY): test $(GOSRC)
+	$(info CGO_ENABLED="$(CGO_ENABLED)")
+	$(GO) build \
+		-tags netgo \
+		-ldflags \
+		"$(LINKMODE)" \
+		-o bin/$(BINARY) \
+		$(MAINMODULE)
+
+.PHONY: test
+test:
+	CGO_ENABLED=1 $(GO) test -cover ./...
 
 .PHONY: clean
 clean::
