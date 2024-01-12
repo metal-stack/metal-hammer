@@ -61,7 +61,7 @@ func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
 func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*api.Bootinfo, error) {
-	h.log.Infow("install", "image", machine.Allocation.Image.URL)
+	h.log.Info("install", "image", machine.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(machine, rootUUID)
 	if err != nil {
@@ -83,7 +83,7 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		installBinary = "/install-go"
 	}
 
-	h.log.Infow("running install", "binary", installBinary, "prefix", prefix)
+	h.log.Info("running install", "binary", installBinary, "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: %s error %w", prefix, err)
@@ -107,11 +107,11 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: / error %w", err)
 	}
-	h.log.Infof("finish running %q", installBinary)
+	h.log.Info("finish running", "binary", installBinary)
 
 	err = os.Remove(path.Join(prefix, installBinary))
 	if err != nil {
-		h.log.Warnw("unable to remove, ignoring", "binary", installBinary, "error", err)
+		h.log.Warn("unable to remove, ignoring", "binary", installBinary, "error", err)
 	}
 
 	info, err := kernel.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
@@ -127,7 +127,7 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	tmp := "/tmp"
 	_, err = utils.Copy(path.Join(prefix, info.Kernel), path.Join(tmp, filepath.Base(info.Kernel)))
 	if err != nil {
-		h.log.Errorw("could not copy kernel", "error", err)
+		h.log.Error("could not copy kernel", "error", err)
 		return info, err
 	}
 	info.Kernel = path.Join(tmp, filepath.Base(info.Kernel))
@@ -138,7 +138,7 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 
 	_, err = utils.Copy(path.Join(prefix, info.Initrd), path.Join(tmp, filepath.Base(info.Initrd)))
 	if err != nil {
-		h.log.Errorw("could not copy initrd", "error", err)
+		h.log.Error("could not copy initrd", "error", err)
 		return info, err
 	}
 	info.Initrd = path.Join(tmp, filepath.Base(info.Initrd))
@@ -155,12 +155,12 @@ func (h *Hammer) writeLVMLocalConf() error {
 
 	_, err := os.Stat(srclvmlocal) // FIXME use fileExists below
 	if os.IsNotExist(err) {
-		h.log.Infow("src lvmlocal.conf not present, not creating lvmlocal.conf")
+		h.log.Info("src lvmlocal.conf not present, not creating lvmlocal.conf")
 		return nil
 	}
 	_, err = os.Stat(dstlvm) // FIXME use fileExists below
 	if os.IsNotExist(err) {
-		h.log.Infow("dst /etc/lvm not present, not creating lvmlocal.conf")
+		h.log.Info("dst /etc/lvm not present, not creating lvmlocal.conf")
 		return nil
 	}
 
@@ -184,7 +184,7 @@ func (h *Hammer) writeUserData(machine *models.V1MachineResponse) error {
 	if base64UserData != "" {
 		userdata, err := base64.StdEncoding.DecodeString(base64UserData)
 		if err != nil {
-			h.log.Infow("install", "base64 decode of userdata failed, using plain text", err)
+			h.log.Info("install", "base64 decode of userdata failed, using plain text", err)
 			userdata = []byte(base64UserData)
 		}
 		return os.WriteFile(destination, userdata, 0600)
@@ -193,7 +193,7 @@ func (h *Hammer) writeUserData(machine *models.V1MachineResponse) error {
 }
 
 func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUiD string) error {
-	h.log.Infow("write installation configuration")
+	h.log.Info("write installation configuration")
 	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
@@ -262,7 +262,7 @@ func (h *Hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1
 		}
 		result = append(result, nic)
 	}
-	h.log.Infow("onlyNicWithNeighbors add", "result", result)
+	h.log.Info("onlyNicWithNeighbors add", "result", result)
 	return result
 }
 

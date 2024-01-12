@@ -1,11 +1,10 @@
 package image
 
 import (
+	"log/slog"
 	"os"
 	"os/exec"
 	"testing"
-
-	"go.uber.org/zap/zaptest"
 )
 
 func TestCheckMD5(t *testing.T) {
@@ -35,7 +34,7 @@ func TestCheckMD5(t *testing.T) {
 	defer os.Remove(testfile)
 	defer os.Remove(testfileMD5)
 
-	matches, err := NewImage(zaptest.NewLogger(t).Sugar()).checkMD5(testfile, testfileMD5)
+	matches, err := NewImage(slog.Default()).checkMD5(testfile, testfileMD5)
 	if err != nil {
 		t.Error(err)
 	}

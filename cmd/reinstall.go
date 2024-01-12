@@ -10,7 +10,7 @@ import (
 )
 
 func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped bool) error {
-	h.log.Errorw("reinstall cancelled => boot into existing OS...", "reason", reason)
+	h.log.Error("reinstall cancelled => boot into existing OS...", "reason", reason)
 
 	var bootInfo *kernelapi.Bootinfo
 
@@ -18,7 +18,7 @@ func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped
 	defer cancel()
 	resp, err := h.MetalAPIClient.BootService().AbortReinstall(ctx, &v1.BootServiceAbortReinstallRequest{Uuid: machineID, PrimaryDiskWiped: primaryDiskWiped})
 	if err != nil {
-		h.log.Errorw("failed to abort reinstall", "error", err)
+		h.log.Error("failed to abort reinstall", "error", err)
 		time.Sleep(5 * time.Second)
 	}
 

@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"strings"
 	"time"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/metal-stack/go-lldpd/pkg/lldp"
 	"github.com/metal-stack/v"
-	"go.uber.org/zap"
 
 	"github.com/vishvananda/netlink"
 )
@@ -22,7 +22,7 @@ type Network struct {
 	MachineUUID string
 	LLDPClient  *LLDPClient
 	Eth0Mac     string // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
-	Log         *zap.SugaredLogger
+	Log         *slog.Logger
 }
 
 // We expect to have storage and MTU of 9000 supports efficient transmission.
@@ -102,7 +102,7 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 	for !host.done {
 		actualNeigh := len(host.neighbors)
 		minimumNeigh := host.minimumNeighbors
-		n.Log.Infow("waiting for lldp neighbors", "interface", name, "actual", actualNeigh, "minimum", minimumNeigh)
+		n.Log.Info("waiting for lldp neighbors", "interface", name, "actual", actualNeigh, "minimum", minimumNeigh)
 		time.Sleep(1 * time.Second)
 
 		duration := time.Since(host.start)
@@ -110,7 +110,7 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 			return nil, fmt.Errorf("not all neighbor requirements where met within: %s, exiting", host.timeout)
 		}
 	}
-	n.Log.Infow("all lldp pdu's received", "interface", name)
+	n.Log.Info("all lldp pdu's received", "interface", name)
 
 	neighs := host.neighbors[name]
 	for _, neigh := range neighs {
@@ -122,7 +122,7 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 		// if m, err := net.ParseMAC(identifier); err == nil {
 		// 	mac = m.String()
 		// }
-		n.Log.Infow("register add neighbor", "nic", name, "identifier", identifier)
+		n.Log.Info("register add neighbor", "nic", name, "identifier", identifier)
 		neighbors = append(neighbors, &v1.MachineNic{
 			Mac:        identifier,
 			Identifier: identifier,

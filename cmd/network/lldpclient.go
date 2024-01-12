@@ -1,17 +1,17 @@
 package network
 
 import (
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/metal-stack/metal-hammer/pkg/lldp"
-	"go.uber.org/zap"
 )
 
 // LLDPClient act as a small wrapper about low level lldp primitives.
 type LLDPClient struct {
 	Host *Host
-	log  *zap.SugaredLogger
+	log  *slog.Logger
 }
 
 // Host collects lldp neighbor information's.
@@ -37,7 +37,7 @@ const (
 )
 
 // NewLLDPClient create a lldp client.
-func NewLLDPClient(log *zap.SugaredLogger, interfaces []string, minimumInterfaces, minimumNeighbors int, timeout time.Duration) *LLDPClient {
+func NewLLDPClient(log *slog.Logger, interfaces []string, minimumInterfaces, minimumNeighbors int, timeout time.Duration) *LLDPClient {
 	if timeout == 0 {
 		timeout = LLDPTxIntervalTimeout
 	}
@@ -58,25 +58,25 @@ func NewLLDPClient(log *zap.SugaredLogger, interfaces []string, minimumInterface
 
 // Start starts lldpd for neighbor discovery.
 func (l *LLDPClient) Start() {
-	l.log.Infow("lldp start discovery")
+	l.log.Info("lldp start discovery")
 	neighChan := make(chan lldp.Neighbor)
 	for _, ifi := range l.Host.interfaces {
 		lldpcli, err := lldp.NewClient(l.log, ifi)
 		if err != nil {
-			l.log.Errorw("lldp", "unable to start client on", ifi, "error", err)
+			l.log.Error("lldp", "unable to start client on", ifi, "error", err)
 			continue
 		}
 		go lldpcli.Neighbors(neighChan)
 	}
 
 	for detectedNeighbor := range neighChan {
-		l.log.Debugw("lldp", "detectedNeighbor", detectedNeighbor)
+		l.log.Debug("lldp", "detectedNeighbor", detectedNeighbor)
 		if l.neighborKnown(detectedNeighbor) {
 			continue
 		}
 
 		l.addNeighbor(detectedNeighbor)
-		l.log.Infow("lldp", "neighbors", l.Host.neighbors)
+		l.log.Info("lldp", "neighbors", l.Host.neighbors)
 	}
 }
 

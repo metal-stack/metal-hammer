@@ -2,16 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"syscall"
 	"time"
 
 	"github.com/metal-stack/v"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/metal-stack/go-hal/connect"
-	halzap "github.com/metal-stack/go-hal/pkg/logger/zap"
+	"github.com/metal-stack/go-hal/pkg/logger"
 	"github.com/metal-stack/metal-hammer/cmd"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
@@ -36,31 +35,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	log := initLog(true)
+	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{})
+	log := slog.New(jsonHandler)
 
 	// Reboot if metal-hammer crashes after 60sec.
 	go kernel.Watchdog(log)
 
-	hal, err := connect.InBand(halzap.New(log))
+	hal, err := connect.InBand(logger.New())
 	if err != nil {
-		log.Errorw("unable to detect hardware", "error", err)
+		log.Error("unable to detect hardware", "error", err)
 		os.Exit(1)
 	}
 
 	uuid, err := hal.UUID()
 	if err != nil {
-		log.Errorw("unable to get uuid hardware", "error", err)
+		log.Error("unable to get uuid hardware", "error", err)
 		os.Exit(1)
 	}
 
 	ip := network.InternalIP()
 	err = cmd.StartSSHD(log, ip)
 	if err != nil {
-		log.Errorw("sshd error", "error", err)
+		log.Error("sshd error", "error", err)
 		os.Exit(1)
 	}
 
-	log.Infow("metal-hammer", "version", v.V, "hal", hal.Describe())
+	log.Info("metal-hammer", "version", v.V, "hal", hal.Describe())
 
 	spec := cmd.NewSpec(log)
 	spec.MachineUUID = uuid.String()
@@ -73,12 +73,12 @@ func main() {
 	emitter, err := cmd.Run(log, spec, hal)
 	if err != nil {
 		wait := 5 * time.Second
-		log.Errorw("metal-hammer failed", "rebooting in", wait, "error", err)
+		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
 		emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
 		time.Sleep(wait)
 		err := kernel.Reboot()
 		if err != nil {
-			log.Errorw("metal-hammer reboot failed", "error", err)
+			log.Error("metal-hammer reboot failed", "error", err)
 			emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
 		}
 	}
@@ -102,23 +102,4 @@ func updateResolvConf() error {
 	}
 
 	return os.Symlink(target, symlink)
-}
-
-func initLog(d bool) *zap.SugaredLogger {
-	pe := zap.NewProductionEncoderConfig()
-	pe.EncodeLevel = zapcore.LowercaseColorLevelEncoder
-	pe.EncodeTime = zapcore.ISO8601TimeEncoder
-	consoleEncoder := zapcore.NewConsoleEncoder(pe)
-
-	level := zap.InfoLevel
-	if d {
-		level = zap.DebugLevel
-	}
-
-	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level),
-	)
-
-	l := zap.New(core)
-	return l.Sugar()
 }

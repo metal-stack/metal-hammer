@@ -3,22 +3,21 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	gos "os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"syscall"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/pkg/api"
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
-	"go.uber.org/zap"
 )
 
 type Filesystem struct {
@@ -31,7 +30,7 @@ type Filesystem struct {
 	// disk is the legacy disk.json representatio
 	// TODO remove once old images are gone
 	disk     api.Disk
-	log      *zap.SugaredLogger
+	log      *slog.Logger
 	RootUUID string
 }
 
@@ -47,7 +46,7 @@ type fstabEntry struct {
 	passno    uint
 }
 
-func New(log *zap.SugaredLogger, chroot string, config models.V1FilesystemLayoutResponse) *Filesystem {
+func New(log *slog.Logger, chroot string, config models.V1FilesystemLayoutResponse) *Filesystem {
 	return &Filesystem{
 		config:       config,
 		chroot:       chroot,
@@ -119,17 +118,17 @@ func (f *Filesystem) createPartitions() error {
 			}
 		}
 		if disk.Device != nil {
-			f.log.Infow("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+*disk.Device)
+			f.log.Info("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+*disk.Device)
 			err := os.ExecuteCommand(command.WIPEFS, "--all", *disk.Device)
 			if err != nil {
-				f.log.Errorw("wipe existing partition signatures failed", "error", err)
+				f.log.Error("wipe existing partition signatures failed", "error", err)
 				return fmt.Errorf("unable wipe existing partitions on %s %w", *disk.Device, err)
 			}
 			opts = append(opts, *disk.Device)
-			f.log.Infow("sgdisk create partitions", "command", opts)
+			f.log.Info("sgdisk create partitions", "command", opts)
 			err = os.ExecuteCommand(command.SGDisk, opts...)
 			if err != nil {
-				f.log.Errorw("sgdisk creating partitions failed", "error", err)
+				f.log.Error("sgdisk creating partitions failed", "error", err)
 				return fmt.Errorf("unable to create partitions on %s %w", *disk.Device, err)
 			}
 		}
@@ -181,17 +180,17 @@ func (f *Filesystem) createRaids() error {
 
 		args = append(args, raid.Devices...)
 
-		f.log.Infow("create mdadm raid", "args", args)
+		f.log.Info("create mdadm raid", "args", args)
 		err := os.ExecuteCommand(command.MDADM, args...)
 		if err != nil {
-			f.log.Errorw("create mdadm raid", "error", err)
+			f.log.Error("create mdadm raid", "error", err)
 			return fmt.Errorf("unable to create mdadm raid %s %w", *raid.Arrayname, err)
 		}
 
 		// set sync speed
 		err = gos.WriteFile("/proc/sys/dev/raid/speed_limit_min", []byte("200000000"), 0644) // nolint:gosec
 		if err != nil {
-			f.log.Errorw("unable to set min sync speed, ignoring...", "error", err)
+			f.log.Error("unable to set min sync speed, ignoring...", "error", err)
 		}
 	}
 	return nil
@@ -223,7 +222,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		pvcount[*vg.Name] = len(vg.Devices)
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
-			f.log.Errorw("vgcreate", "error", err)
+			f.log.Error("vgcreate", "error", err)
 			return fmt.Errorf("unable to create volume group %s %w", *vg.Name, err)
 		}
 	}
@@ -257,7 +256,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 			lvmtype = *lv.Lvmtype
 		}
 		if pvcount[*lv.Volumegroup] < 2 {
-			f.log.Warnw("volumegroup has only 1 pv, only linear is supported", "lv", *lv.Name, "vg", *lv.Volumegroup)
+			f.log.Warn("volumegroup has only 1 pv, only linear is supported", "lv", *lv.Name, "vg", *lv.Volumegroup)
 			lvmtype = "linear"
 		}
 
@@ -272,10 +271,10 @@ func (f *Filesystem) createLogicalVolumes() error {
 		}
 		args = append(args, *lv.Volumegroup)
 
-		f.log.Infow("lvcreate", "args", args)
+		f.log.Info("lvcreate", "args", args)
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
-			f.log.Errorw("lvcreate", "error", err)
+			f.log.Error("lvcreate", "error", err)
 			return fmt.Errorf("unable to create logical volume %s %w", *lv.Name, err)
 		}
 	}
@@ -319,10 +318,10 @@ func (f *Filesystem) createFilesystems() error {
 			return fmt.Errorf("unsupported filesystem format: %q", *fs.Format)
 		}
 		args = append(args, *fs.Device)
-		f.log.Infow("create filesystem", "args", args)
+		f.log.Info("create filesystem", "args", args)
 		err := os.ExecuteCommand(mkfs, args...)
 		if err != nil {
-			f.log.Errorw("create filesystem failed", "device", *fs.Device, "error", err)
+			f.log.Error("create filesystem failed", "device", *fs.Device, "error", err)
 			return fmt.Errorf("unable to create filesystem on %s %w", *fs.Device, err)
 		}
 	}
@@ -427,7 +426,7 @@ func (f *Filesystem) mountSpecialFilesystems() error {
 			return err
 		}
 
-		f.log.Infow("mount", "source", m.source, "target", mountPoint, "fstype", m.fstype, "flags", m.flags, "data", m.data)
+		f.log.Info("mount", "source", m.source, "target", mountPoint, "fstype", m.fstype, "flags", m.flags, "data", m.data)
 		err := syscall.Mount(m.source, mountPoint, m.fstype, m.flags, m.data)
 		if err != nil {
 			return fmt.Errorf("mounting %s to %s failed %w", m.source, m.target, err)
@@ -439,10 +438,10 @@ func (f *Filesystem) mountSpecialFilesystems() error {
 func (f *Filesystem) umountFilesystems() {
 	for index := len(specialMounts) - 1; index >= 0; index-- {
 		m := filepath.Join(f.chroot, specialMounts[index].target)
-		f.log.Infow("unmounting", "mountpoint", m)
+		f.log.Info("unmounting", "mountpoint", m)
 		err := syscall.Unmount(m, syscall.MNT_FORCE)
 		if err != nil {
-			f.log.Errorw("unable to unmount", "path", m, "error", err)
+			f.log.Error("unable to unmount", "path", m, "error", err)
 		}
 	}
 	for index := len(f.mounts) - 1; index >= 0; index-- {
@@ -450,10 +449,10 @@ func (f *Filesystem) umountFilesystems() {
 		if m == "" {
 			continue
 		}
-		f.log.Infow("unmounting", "mountpoint", m)
+		f.log.Info("unmounting", "mountpoint", m)
 		err := syscall.Unmount(m, syscall.MNT_FORCE)
 		if err != nil {
-			f.log.Errorw("unable to unmount", "path", m, "error", err)
+			f.log.Error("unable to unmount", "path", m, "error", err)
 		}
 	}
 }
@@ -478,11 +477,11 @@ func (f *Filesystem) createDiskJSON() error {
 	if err != nil {
 		return fmt.Errorf("unable to marshal to json %w", err)
 	}
-	f.log.Infow("create legacy disk.json", "content", string(j))
+	f.log.Info("create legacy disk.json", "content", string(j))
 	return gos.WriteFile(destination, j, 0600)
 }
 
-func mountFs(log *zap.SugaredLogger, chroot string, fs models.V1Filesystem) (string, error) {
+func mountFs(log *slog.Logger, chroot string, fs models.V1Filesystem) (string, error) {
 	if fs.Format == nil || *fs.Format == "swap" || *fs.Format == "" || *fs.Format == "tmpfs" {
 		return "", nil
 	}
@@ -496,7 +495,7 @@ func mountFs(log *zap.SugaredLogger, chroot string, fs models.V1Filesystem) (str
 		return "", err
 	}
 	opts := optionSliceToString(fs.Mountoptions, ",")
-	log.Infow("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
+	log.Info("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
 	var args []string
 	if len(opts) > 0 {
 		args = append(args, "-o", opts)
@@ -504,7 +503,7 @@ func mountFs(log *zap.SugaredLogger, chroot string, fs models.V1Filesystem) (str
 	args = append(args, "-t", *fs.Format, *fs.Device, path)
 	err := os.ExecuteCommand("mount", args...)
 	if err != nil {
-		log.Errorw("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
+		log.Error("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
 		return "", fmt.Errorf("unable to mount filesystem %s on %s opts:%v error:%w", *fs.Device, fs.Path, opts, err)
 	}
 	return path, nil
@@ -540,7 +539,7 @@ func optionSliceToString(opts []string, separator string) string {
 }
 
 // write all fstab entries to /etc/fstab inside chroot
-func (fss fstabEntries) write(log *zap.SugaredLogger, chroot string) error {
+func (fss fstabEntries) write(log *slog.Logger, chroot string) error {
 	entries := []string{}
 	for _, fs := range fss {
 		entries = append(entries, fs.string())
@@ -548,7 +547,7 @@ func (fss fstabEntries) write(log *zap.SugaredLogger, chroot string) error {
 	fstab := strings.Join(entries, "\n")
 	header := fmt.Sprintf("# created by metal-hammer: %q\n", v.V)
 	content := header + fstab + "\n"
-	log.Infow("write fstab", "content", content)
+	log.Info("write fstab", "content", content)
 	//nolint:gosec
 	return gos.WriteFile(path.Join(chroot, "/etc/fstab"), []byte(content), 0644)
 }
@@ -557,22 +556,22 @@ func (fs fstabEntry) string() string {
 	return fmt.Sprintf("%s %s %s %s %d %d", fs.spec, fs.file, fs.vfsType, strings.Join(fs.mountOpts, ","), fs.freq, fs.passno)
 }
 
-func lvExists(log *zap.SugaredLogger, vg string, name string) bool {
+func lvExists(log *slog.Logger, vg string, name string) bool {
 	//nolint:gosec
 	cmd := exec.Command("lvm", "lvs", vg+"/"+name, "--noheadings", "-o", "lv_name")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Infow("unable to list existing volumes", "lv", name, "error", err)
+		log.Info("unable to list existing volumes", "lv", name, "error", err)
 		return false
 	}
 	return name == strings.TrimSpace(string(out))
 }
 
-func vgExists(log *zap.SugaredLogger, vgname string) bool {
+func vgExists(log *slog.Logger, vgname string) bool {
 	cmd := exec.Command("lvm", "vgs", vgname, "--noheadings", "-o", "vg_name")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Infow("unable to list existing volumegroups", "vg", vgname, "error", err)
+		log.Info("unable to list existing volumegroups", "vg", vgname, "error", err)
 		return false
 	}
 	return vgname == strings.TrimSpace(string(out))

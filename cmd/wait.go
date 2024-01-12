@@ -24,7 +24,7 @@ func (c *MetalAPIClient) WaitForAllocation(e *event.EventEmitter, machineID stri
 	for {
 		stream, err := c.BootService().Wait(context.Background(), req)
 		if err != nil {
-			c.log.Errorw("failed waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
+			c.log.Error("failed waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
 
 			time.Sleep(defaultWaitTimeOut)
 			continue
@@ -33,26 +33,26 @@ func (c *MetalAPIClient) WaitForAllocation(e *event.EventEmitter, machineID stri
 		for {
 			_, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
-				c.log.Infow("machine has been requested for allocation", "machineID", machineID)
+				c.log.Info("machine has been requested for allocation", "machineID", machineID)
 				return nil
 			}
 
 			if err != nil {
 				if e, ok := status.FromError(err); ok {
-					c.log.Errorw("got error from wait call", "code", e.Code(), "message", e.Message(), "details", e.Details())
+					c.log.Error("got error from wait call", "code", e.Code(), "message", e.Message(), "details", e.Details())
 					switch e.Code() { // nolint:exhaustive
 					case codes.Unimplemented:
 						return fmt.Errorf("metal-api breaking change detected, rebooting: %w", err)
 					}
 				}
 
-				c.log.Errorw("failed stream receiving during waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
+				c.log.Error("failed stream receiving during waiting for allocation", "retry after", defaultWaitTimeOut, "error", err)
 
 				time.Sleep(defaultWaitTimeOut)
 				break
 			}
 
-			c.log.Infow("wait for allocation...", "machineID", machineID)
+			c.log.Info("wait for allocation...", "machineID", machineID)
 		}
 	}
 }

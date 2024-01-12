@@ -8,11 +8,11 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.5.0
 	github.com/jaypipes/ghw v0.12.0
+	// TODO go-hal still uses zap logging internally
 	github.com/metal-stack/go-hal v0.4.4
-	// update requires to switch to slog which requires go 1.21
-	github.com/metal-stack/go-lldpd v0.4.4
-	github.com/metal-stack/metal-api v0.26.1
-	github.com/metal-stack/metal-go v0.26.1
+	github.com/metal-stack/go-lldpd v0.4.6
+	github.com/metal-stack/metal-api v0.26.2
+	github.com/metal-stack/metal-go v0.26.2
 	github.com/metal-stack/pixie v0.3.0
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
@@ -20,9 +20,6 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.21
 	github.com/u-root/u-root v0.12.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
-	go.uber.org/zap v1.26.0
-	// TODO remove once we really migrated the build to 1.21
-	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc
 	golang.org/x/sync v0.6.0
 	golang.org/x/sys v0.16.0
 	google.golang.org/grpc v1.60.1
@@ -30,11 +27,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace (
-	// TODO can be removed with go-1.21
-	github.com/metal-stack/security => github.com/metal-stack/security v0.6.7
-	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
-)
+replace github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
@@ -71,11 +64,11 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/jaypipes/pcidb v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
+	github.com/lestrrat-go/httprc v1.0.4 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/jwx v1.2.26 // indirect
+	github.com/lestrrat-go/jwx/v2 v2.0.19 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -93,6 +86,7 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sethvargo/go-password v0.2.0 // indirect
 	github.com/stmcginnis/gofish v0.15.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
@@ -103,6 +97,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect

@@ -3,10 +3,10 @@ package event
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -30,12 +30,12 @@ const (
 )
 
 type EventEmitter struct {
-	log         *zap.SugaredLogger
+	log         *slog.Logger
 	eventClient v1.EventServiceClient
 	machineID   string
 }
 
-func NewEventEmitter(log *zap.SugaredLogger, eventClient v1.EventServiceClient, machineID string) *EventEmitter {
+func NewEventEmitter(log *slog.Logger, eventClient v1.EventServiceClient, machineID string) *EventEmitter {
 	emitter := &EventEmitter{
 		eventClient: eventClient,
 		machineID:   machineID,
@@ -53,7 +53,7 @@ func NewEventEmitter(log *zap.SugaredLogger, eventClient v1.EventServiceClient, 
 
 func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 	eventString := string(eventType)
-	e.log.Infow("event", "event", eventString, "message", message)
+	e.log.Info("event", "event", eventString, "message", message)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	s, err := e.eventClient.Send(ctx, &v1.EventServiceSendRequest{
@@ -66,9 +66,9 @@ func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
 		},
 	})
 	if err != nil {
-		e.log.Errorw("event", "cannot send event", eventType, "error", err)
+		e.log.Error("event", "cannot send event", eventType, "error", err)
 	}
 	if s != nil {
-		e.log.Infow("event", "send", s.Events, "failed", s.Failed)
+		e.log.Info("event", "send", s.Events, "failed", s.Failed)
 	}
 }

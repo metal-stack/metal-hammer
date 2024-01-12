@@ -40,6 +40,7 @@ bin/$(BINARY): test $(GOSRC)
 		"$(LINKMODE)" \
 		-o bin/$(BINARY) \
 		$(MAINMODULE)
+	strip bin/$(BINARY)
 
 .PHONY: test
 test:

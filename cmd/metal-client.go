@@ -8,27 +8,27 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	metalgo "github.com/metal-stack/metal-go"
 	pixiecore "github.com/metal-stack/pixie/api"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 )
 
 type MetalAPIClient struct {
-	log    *zap.SugaredLogger
+	log    *slog.Logger
 	conn   grpc.ClientConnInterface
 	Driver metalgo.Client
 }
 
 // NewMetalAPIClient fetches the address,hmac and certificates from pixie needed to communicate with metal-api,
 // and returns a new client that can be used to invoke all provided grpc and rest endpoints.
-func NewMetalAPIClient(log *zap.SugaredLogger, pixieURL string) (*MetalAPIClient, error) {
+func NewMetalAPIClient(log *slog.Logger, pixieURL string) (*MetalAPIClient, error) {
 	certClient := http.Client{
 		Timeout: 5 * time.Second,
 	}

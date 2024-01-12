@@ -2,10 +2,9 @@ package network
 
 import (
 	"fmt"
+	"log/slog"
 	"syscall"
 	"time"
-
-	"go.uber.org/zap"
 
 	"github.com/beevik/ntp"
 )
@@ -20,13 +19,13 @@ var (
 	}
 )
 
-func getTime(log *zap.SugaredLogger, servers []string) (t time.Time, err error) {
+func getTime(log *slog.Logger, servers []string) (t time.Time, err error) {
 	for _, s := range servers {
-		log.Debugw("ntpdate", "getting time from", s)
+		log.Debug("ntpdate", "getting time from", s)
 		if t, err = ntp.Time(s); err == nil {
 			// Right now we return on the first valid time.
 			// We can implement better heuristics here.
-			log.Debugw("ntpdate", "got time", t)
+			log.Debug("ntpdate", "got time", t)
 			return t, nil
 		}
 	}
@@ -35,14 +34,14 @@ func getTime(log *zap.SugaredLogger, servers []string) (t time.Time, err error) 
 }
 
 // NtpDate set the system time to the time comming from a ntp source
-func NtpDate(log *zap.SugaredLogger) {
+func NtpDate(log *slog.Logger) {
 	t, err := getTime(log, ntpServers)
 	if err != nil {
-		log.Errorw("ntpdate", "unable to get time", err)
+		log.Error("ntpdate", "unable to get time", err)
 	}
 
 	tv := syscall.NsecToTimeval(t.UnixNano())
 	if err = syscall.Settimeofday(&tv); err != nil {
-		log.Errorw("ntpdate", "unable to set system time", err)
+		log.Error("ntpdate", "unable to set system time", err)
 	}
 }
