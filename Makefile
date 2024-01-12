@@ -3,7 +3,6 @@ SHA := $(shell git rev-parse --short=8 HEAD)
 GITVERSION := $(shell git describe --long --all)
 BUILDDATE := $(shell date --iso-8601=seconds)
 VERSION := $(or ${VERSION},$(shell git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD || git rev-parse --short HEAD))
-CGO_ENABLED := $(or ${CGO_ENABLED},0)
 GO := go
 GOSRC = $(shell find . -not \( -path vendor -prune \) -type f -name '*.go')
 
@@ -22,11 +21,7 @@ all:: bin/$(BINARY);
 
 in-docker: all;
 
-ifeq ($(CGO_ENABLED),1)
-	LINKMODE := -linkmode external -extldflags '-static -s -w'
-endif
-
-LINKMODE := $(LINKMODE) \
+LINKMODE := -linkmode external -extldflags '-static -s -w' \
 		 -X 'github.com/metal-stack/v.Version=$(VERSION)' \
 		 -X 'github.com/metal-stack/v.Revision=$(GITVERSION)' \
 		 -X 'github.com/metal-stack/v.GitSHA1=$(SHA)' \
