@@ -2,6 +2,7 @@ FROM golang:1.21-alpine as builder
 
 RUN apk add \
 	binutils \
+	coreutils \
 	curl \
 	gcc \
 	git \
