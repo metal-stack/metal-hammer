@@ -43,7 +43,7 @@ func main() {
 	// Reboot if metal-hammer crashes after 60sec.
 	go kernel.Watchdog(log)
 
-	hal, err := connect.InBand(logger.New())
+	hal, err := connect.InBand(logger.NewSlog(log))
 	if err != nil {
 		log.Error("unable to detect hardware", "error", err)
 		os.Exit(1)
