@@ -8,7 +8,7 @@ RUN apk add \
 	git \
 	make \
 	musl-dev \
-    libpcap-dev
+	libpcap-dev
 WORKDIR /work
 COPY . .
 RUN make all
