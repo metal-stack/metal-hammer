@@ -76,12 +76,16 @@ func main() {
 	if err != nil {
 		wait := 5 * time.Second
 		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
-		emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
+		if emitter != nil {
+			emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
+		}
 		time.Sleep(wait)
 		err := kernel.Reboot()
 		if err != nil {
 			log.Error("metal-hammer reboot failed", "error", err)
-			emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
+			if emitter != nil {
+				emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
+			}
 		}
 	}
 }
