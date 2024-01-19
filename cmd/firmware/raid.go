@@ -1,13 +1,11 @@
 package firmware
 
-import (
-	"go.uber.org/zap"
-)
+import "log/slog"
 
 type raidcontroller struct {
 	name           string
 	desiredVersion string
-	log            *zap.SugaredLogger
+	log            *slog.Logger
 }
 
 func (r raidcontroller) String() string {

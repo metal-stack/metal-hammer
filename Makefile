@@ -1,18 +1,44 @@
+SHA := $(shell git rev-parse --short=8 HEAD)
+GITVERSION := $(shell git describe --long --all)
+BUILDDATE := $(shell date --iso-8601=seconds)
+VERSION := $(or ${VERSION},$(shell git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD || git rev-parse --short HEAD))
+GO := go
+GOSRC = $(shell find . -not \( -path vendor -prune \) -type f -name '*.go')
+
 BINARY := metal-hammer
 INITRD := ${BINARY}-initrd.img
 COMPRESSOR := lz4
 COMPRESSOR_ARGS := -f -l
 INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
-COMMONDIR := $(or ${COMMONDIR},../builder)
 CGO_ENABLED := 1
 # export CGO_LDFLAGS := "-lsystemd" "-lpcap" "-ldbus-1"
 
-in-docker: gofmt test all;
 
-include $(COMMONDIR)/Makefile.inc
+.PHONY: all
+all:: bin/$(BINARY);
 
-release:: gofmt test all ;
+in-docker: all;
+
+LINKMODE := -linkmode external -extldflags '-static -s -w' \
+		 -X 'github.com/metal-stack/v.Version=$(VERSION)' \
+		 -X 'github.com/metal-stack/v.Revision=$(GITVERSION)' \
+		 -X 'github.com/metal-stack/v.GitSHA1=$(SHA)' \
+		 -X 'github.com/metal-stack/v.BuildDate=$(BUILDDATE)'
+
+bin/$(BINARY): test $(GOSRC)
+	$(info CGO_ENABLED="$(CGO_ENABLED)")
+	$(GO) build \
+		-tags netgo \
+		-ldflags \
+		"$(LINKMODE)" \
+		-o bin/$(BINARY) \
+		$(MAINMODULE)
+	strip bin/$(BINARY)
+
+.PHONY: test
+test:
+	CGO_ENABLED=1 $(GO) test -cover ./...
 
 .PHONY: clean
 clean::
@@ -26,39 +52,40 @@ ${INITRD_COMPRESSED}:
 initrd: ${INITRD_COMPRESSED}
 
 # place all binaries in the same directory (/sbin) which is in the PATH of root.
+# keep them alphabetically sorted
 .PHONY: ramdisk
 ramdisk:
 	GO111MODULE=off u-root \
 		-format=cpio -build=bb \
 		-defaultsh=/bin/bash \
 		-files="bin/metal-hammer:bbin/uinit" \
-		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
-		-files="/etc/localtime:etc/localtime" \
 		-files="/bin/bash:bin/bash" \
-		-files="/sbin/blkid:sbin/blkid" \
-		-files="/sbin/ethtool:sbin/ethtool" \
-		-files="/usr/bin/lspci:bin/lspci" \
-		-files="/usr/bin/strace:bin/strace" \
-		-files="/usr/share/misc/pci.ids:usr/share/misc/pci.ids" \
 		-files="/bin/netstat:bin/netstat" \
-		-files="/sbin/hdparm:sbin/hdparm" \
-		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
-		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
-		-files="/sbin/mkfs.ext3:sbin/mkfs.ext3" \
-		-files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
-		-files="/sbin/mke2fs:sbin/mke2fs" \
-		-files="/sbin/mkswap:sbin/mkswap" \
-		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
-		-files="/usr/sbin/nvme:sbin/nvme" \
-		-files="/sbin/lvm:sbin/lvm" \
+		-files="/etc/localtime:etc/localtime" \
 		-files="/etc/lvm/lvm.conf:etc/lvm/lvm.conf" \
-		-files="lvmlocal.conf:etc/lvm/lvmlocal.conf" \
-		-files="/sbin/mdadm:sbin/mdadm" \
-		-files="/sbin/mdmon:sbin/mdmon" \
-		-files="/sbin/sgdisk:sbin/sgdisk" \
-		-files="/sbin/wipefs:sbin/wipefs" \
+		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
 		-files="/lib/x86_64-linux-gnu/libnss_files-2.31.so:lib/x86_64-linux-gnu/libnss_files-2.31.so" \
 		-files="/lib/x86_64-linux-gnu/libnss_files.so.2:lib/x86_64-linux-gnu/libnss_files.so.2" \
+		-files="/sbin/blkid:sbin/blkid" \
+		-files="/sbin/ethtool:sbin/ethtool" \
+		-files="/sbin/hdparm:sbin/hdparm" \
+		-files="/sbin/lvm:sbin/lvm" \
+		-files="/sbin/mdadm:sbin/mdadm" \
+		-files="/sbin/mdmon:sbin/mdmon" \
+		-files="/sbin/mke2fs:sbin/mke2fs" \
+		-files="/sbin/mkfs.ext3:sbin/mkfs.ext3" \
+		-files="/sbin/mkfs.ext4:sbin/mkfs.ext4" \
+		-files="/sbin/mkfs.fat:sbin/mkfs.fat" \
+		-files="/sbin/mkfs.vfat:sbin/mkfs.vfat" \
+		-files="/sbin/mkswap:sbin/mkswap" \
+		-files="/sbin/sgdisk:sbin/sgdisk" \
+		-files="/sbin/wipefs:sbin/wipefs" \
+		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
+		-files="/usr/bin/lspci:bin/lspci" \
+		-files="/usr/bin/strace:bin/strace" \
+		-files="/usr/sbin/nvme:sbin/nvme" \
+		-files="/usr/share/misc/pci.ids:usr/share/misc/pci.ids" \
+		-files="lvmlocal.conf:etc/lvm/lvmlocal.conf" \
 		-files="passwd:etc/passwd" \
 		-files="varrun:var/run/keep" \
 		-files="ice.pkg:lib/firmware/intel/ice/ddp/ice.pkg" \
@@ -94,3 +121,16 @@ qemu-up:
           BGP=1" \
 		-kernel metal-kernel \
 		-initrd metal-hammer-initrd.img.lz4
+
+start:
+	# sudo setcap cap_net_admin+ep ~/bin/cloud-hypervisor
+	# /usr/src/linux-headers-6.5.0-9/scripts/extract-vmlinux metal-kernel-6.6.2 > vmlinux
+	cloud-hypervisor \
+		--kernel ./vmlinux \
+		--console off \
+		--serial tty \
+		--initramfs=metal-hammer-initrd.img.lz4 \
+		--cmdline "console=ttyS0" \
+		--cpus boot=4 \
+		--memory size=1024M \
+		--net "tap=,mac=,ip=,mask="

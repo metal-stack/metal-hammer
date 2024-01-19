@@ -1,11 +1,11 @@
 package cmd
 
 import (
+	"log/slog"
 	"reflect"
 	"testing"
 
 	"github.com/metal-stack/metal-go/api/models"
-	"go.uber.org/zap/zaptest"
 )
 
 func TestHammer_onlyNicsWithNeighbors(t *testing.T) {
@@ -46,7 +46,7 @@ func TestHammer_onlyNicsWithNeighbors(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			h := &Hammer{
-				log: zaptest.NewLogger(t).Sugar(),
+				log: slog.Default(),
 			}
 			if got := h.onlyNicsWithNeighbors(tt.nics); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Hammer.onlyNicsWithNeighbors() = %v, want %v", got, tt.want)

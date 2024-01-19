@@ -3,6 +3,7 @@ package register
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	gonet "net"
 	"os"
 	"strconv"
@@ -20,7 +21,6 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/v"
 	"github.com/vishvananda/netlink"
-	"go.uber.org/zap"
 )
 
 // Register the Machine
@@ -30,10 +30,10 @@ type Register struct {
 	emitter     *event.EventEmitter
 	network     *network.Network
 	inband      hal.InBand
-	log         *zap.SugaredLogger
+	log         *slog.Logger
 }
 
-func New(log *zap.SugaredLogger, machineID string, bootClient v1.BootServiceClient, emitter *event.EventEmitter, network *network.Network, inband hal.InBand) *Register {
+func New(log *slog.Logger, machineID string, bootClient v1.BootServiceClient, emitter *event.EventEmitter, network *network.Network, inband hal.InBand) *Register {
 	return &Register{
 		machineUUID: machineID,
 		client:      bootClient,
@@ -62,7 +62,7 @@ func (r *Register) RegisterMachine() error {
 		return fmt.Errorf("unable to register machine:%#v response payload is nil", req)
 	}
 
-	r.log.Infow("machine registered", "response", resp)
+	r.log.Info("machine registered", "response", resp)
 	return nil
 }
 
@@ -96,7 +96,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		_, err := gonet.ParseMAC(mac)
 
 		if err != nil {
-			r.log.Debugw("skip interface with invalid mac", "interface", name, "mac", mac)
+			r.log.Debug("skip interface with invalid mac", "interface", name, "mac", mac)
 			continue
 		}
 		// check if after mac validation loopback is still present
@@ -111,7 +111,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 			Mac:  mac,
 			Name: name,
 		}
-		r.log.Infow("register", "nic", name, "mac", mac)
+		r.log.Info("register", "nic", name, "mac", mac)
 		nics = append(nics, nic)
 	}
 	// add a lo interface if not present
@@ -127,15 +127,15 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		nics = append(nics, lo)
 	}
 
-	// now attach neighbors, this will wait up to 2*tx-intervall
+	// now attach neighbors, this will wait up to 2*tx-interval
 	// if during this timeout not all required neighbors where found abort and reboot.
 	for _, nic := range nics {
-		r.log.Infow("register search neighbor for", "nic", nic.Name)
+		r.log.Info("register search neighbor for", "nic", nic.Name)
 		neighbors, err := r.network.Neighbors(nic.Name)
 		if err != nil {
 			return nil, fmt.Errorf("unable to determine neighbors of interface:%s %w", nic.Name, err)
 		}
-		r.log.Infow("register found neighbor for", "nic", nic.Name, "neighbors", neighbors)
+		r.log.Info("register found neighbor for", "nic", nic.Name, "neighbors", neighbors)
 		nic.Neighbors = neighbors
 	}
 
@@ -194,11 +194,11 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		MetalHammerVersion: v.Version,
 	}
 
-	r.log.Infow("register", "request", request)
+	r.log.Info("register", "request", request)
 	return request, nil
 }
 
-// save the content of kernel ringbuffer to /var/log/syslog
+// save the content of kernel ring buffer to /var/log/syslog
 // by calling the appropriate syscall.
 // Only required if Memory is gathered by ghw.Memory()
 // FIXME consider different implementation
@@ -227,7 +227,7 @@ func (r *Register) readIPMIDetails() (*v1.MachineIPMI, error) {
 	bmcVersion := "unknown"
 	bmcConn := r.inband.BMCConnection()
 	if bmcConn.Present() {
-		r.log.Infow("ipmi details from bmc")
+		r.log.Info("ipmi details from bmc")
 		board := r.inband.Board()
 		bmc := board.BMC
 		if bmc == nil {
@@ -262,7 +262,7 @@ func (r *Register) readIPMIDetails() (*v1.MachineIPMI, error) {
 		return details, nil
 	}
 
-	r.log.Infow("ipmi details faked")
+	r.log.Info("ipmi details faked")
 	eth0Mac := r.network.Eth0Mac
 	if len(r.network.Eth0Mac) == 0 {
 		eth0Mac = "00:00:00:00:00:00"

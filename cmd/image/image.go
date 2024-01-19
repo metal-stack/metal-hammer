@@ -2,11 +2,11 @@ package image
 
 import (
 	"fmt"
+	"log/slog"
 
 	pb "github.com/cheggaaa/pb/v3"
 	"github.com/mholt/archiver"
 	lz4 "github.com/pierrec/lz4/v4"
-	"go.uber.org/zap"
 
 	//nolint:gosec
 	"crypto/md5"
@@ -18,16 +18,16 @@ import (
 )
 
 type Image struct {
-	log *zap.SugaredLogger
+	log *slog.Logger
 }
 
-func NewImage(log *zap.SugaredLogger) *Image {
+func NewImage(log *slog.Logger) *Image {
 	return &Image{log: log}
 }
 
 // Pull a image from s3
 func (i *Image) Pull(image, destination string) error {
-	i.log.Infow("pull image", "image", image)
+	i.log.Info("pull image", "image", image)
 	md5destination := destination + ".md5"
 	md5file := image + ".md5"
 	err := i.download(image, destination)
@@ -39,19 +39,19 @@ func (i *Image) Pull(image, destination string) error {
 	if err != nil {
 		return fmt.Errorf("unable to pull md5 %s %w", md5file, err)
 	}
-	i.log.Infow("check md5")
+	i.log.Info("check md5")
 	matches, err := i.checkMD5(destination, md5destination)
 	if err != nil || !matches {
 		return fmt.Errorf("md5sum mismatch")
 	}
 
-	i.log.Infow("pull image done", "image", image)
+	i.log.Info("pull image done", "image", image)
 	return nil
 }
 
 // Burn a image pulling a tarball and unpack to a specific directory
 func (i *Image) Burn(prefix, image, source string) error {
-	i.log.Infow("burn image", "image", image)
+	i.log.Info("burn image", "image", image)
 	begin := time.Now()
 
 	file, err := os.Open(source)
@@ -71,7 +71,7 @@ func (i *Image) Burn(prefix, image, source string) error {
 	}
 
 	lz4Reader := lz4.NewReader(file)
-	i.log.Infow("lz4", "size", lz4Reader.Size())
+	i.log.Info("lz4", "size", lz4Reader.Size())
 	creader := io.NopCloser(lz4Reader)
 	// wild guess for lz4 compression ratio
 	// lz4 is a stream format and therefore the
@@ -95,10 +95,10 @@ func (i *Image) Burn(prefix, image, source string) error {
 
 	err = os.Remove(source)
 	if err != nil {
-		i.log.Warnw("burn image unable to remove image source", "error", err)
+		i.log.Warn("burn image unable to remove image source", "error", err)
 	}
 
-	i.log.Infow("burn took", "duration", time.Since(begin))
+	i.log.Info("burn took", "duration", time.Since(begin))
 	return nil
 }
 
@@ -125,7 +125,7 @@ func (i *Image) checkMD5(file, md5file string) (bool, error) {
 		return false, fmt.Errorf("unable to calculate md5sum of file: %s %w", file, err)
 	}
 	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
-	i.log.Infow("check md5", "source md5", sourceMD5, "expected md5", expectedMD5)
+	i.log.Info("check md5", "source md5", sourceMD5, "expected md5", expectedMD5)
 	if sourceMD5 != expectedMD5 {
 		return false, fmt.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
 	}
@@ -136,7 +136,7 @@ func (i *Image) checkMD5(file, md5file string) (bool, error) {
 // It's efficient because it will write as it downloads
 // and not load the whole file into memory.
 func (i *Image) download(source, dest string) error {
-	i.log.Infow("download", "from", source, "to", dest)
+	i.log.Info("download", "from", source, "to", dest)
 	out, err := os.Create(dest)
 	if err != nil {
 		return fmt.Errorf("unable to create destination %s %w", dest, err)

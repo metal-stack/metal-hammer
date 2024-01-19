@@ -3,10 +3,10 @@ package report
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
-	"go.uber.org/zap"
 )
 
 type Report struct {
@@ -18,7 +18,7 @@ type Report struct {
 	Cmdline         string
 	Kernel          string
 	BootloaderID    string
-	Log             *zap.SugaredLogger
+	Log             *slog.Logger
 }
 
 // ReportInstallation will tell metal-api the result of the installation
@@ -44,9 +44,9 @@ func (r *Report) ReportInstallation() error {
 	defer cancel()
 	_, err := r.Client.Report(ctx, report)
 	if err != nil {
-		r.Log.Errorw("report", "error", err)
+		r.Log.Error("report", "error", err)
 		return fmt.Errorf("unable to report image installation %w", err)
 	}
-	r.Log.Infow("report image installation was successful")
+	r.Log.Info("report image installation was successful")
 	return nil
 }

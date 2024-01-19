@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/metal-stack/go-hal"
@@ -17,13 +18,12 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/metal-hammer/pkg/password"
 	"github.com/metal-stack/v"
-	"go.uber.org/zap"
 )
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
 	Spec             *Specification
-	log              *zap.SugaredLogger
+	log              *slog.Logger
 	Hal              hal.InBand
 	MetalAPIClient   *MetalAPIClient
 	EventEmitter     *event.EventEmitter
@@ -37,11 +37,11 @@ type Hammer struct {
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
-func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
-	log.Infow("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
+func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
+	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
 	metalAPIClient, err := NewMetalAPIClient(log, spec.PixieAPIUrl)
 	if err != nil {
-		log.Errorw("failed to fetch GRPC certificates", "error", err)
+		log.Error("failed to fetch GRPC certificates", "error", err)
 		return nil, err
 	}
 
@@ -76,7 +76,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 
 	err = hammer.createBmcSuperuser()
 	if err != nil {
-		log.Errorw("failed to update bmc superuser password", "error", err)
+		log.Error("failed to update bmc superuser password", "error", err)
 		return eventEmitter, err
 	}
 
@@ -117,12 +117,12 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 		if m.Allocation.Image == nil || m.Allocation.Image.ID == nil {
 			err = fmt.Errorf("no image specified")
 		} else {
-			log.Infow("perform reinstall", "machineID", *m.ID, "imageID", *m.Allocation.Image.ID)
+			log.Info("perform reinstall", "machineID", *m.ID, "imageID", *m.Allocation.Image.ID)
 			err = hammer.installImage(eventEmitter, bootService, m)
 			primaryDiskWiped = true
 		}
 		if err != nil {
-			log.Errorw("reinstall failed", "error", err)
+			log.Error("reinstall failed", "error", err)
 			err = hammer.abortReinstall(err, *m.ID, primaryDiskWiped)
 		}
 		return eventEmitter, err
@@ -135,7 +135,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 
 	err = hammer.ConfigureBIOS()
 	if err != nil {
-		log.Errorw("failed to configure BIOS", "error", err)
+		log.Error("failed to configure BIOS", "error", err)
 		return eventEmitter, err
 	}
 
@@ -149,7 +149,7 @@ func Run(log *zap.SugaredLogger, spec *Specification, hal hal.InBand) (*event.Ev
 	}
 	m = resp.Payload
 
-	log.Infow("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
+	log.Info("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
 	hammer.FilesystemLayout = m.Allocation.Filesystemlayout
 	err = hammer.installImage(eventEmitter, bootService, m)
 	return eventEmitter, err
@@ -165,7 +165,6 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.B
 		return fmt.Errorf("install %w ", err)
 	}
 
-	// FIXME OSPartition and PrimaryDisk are not used anymore, remove from model in metal-api
 	rep := &report.Report{
 		MachineUUID:     h.Spec.MachineUUID,
 		Client:          bootService,
@@ -183,7 +182,7 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.B
 		return err
 	}
 
-	h.log.Infow("installation", "took", time.Since(installationStart))
+	h.log.Info("installation", "took", time.Since(installationStart))
 	eventEmitter.Emit(event.ProvisioningEventBootingNewKernel, "booting into distro kernel")
 	return kernel.RunKexec(info)
 }

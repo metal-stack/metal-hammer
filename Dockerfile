@@ -1,11 +1,20 @@
-# FIXME this points to the last go-1.20 image of the builder, 
-# go-1.21 cant be used actually because bookworm mangled libsystemd-dev which breaks the build
-# and go-1.21 is not available with bullseye.
-# maybe we should switch away from depending on the builder image
-FROM metalstack/builder@sha256:d2050a3bef9bbd9d9ea769a71a4a70b9ff4b24c537d29d5870b83fc652bb67f8 as builder
+FROM golang:1.21-alpine as builder
+
+RUN apk add \
+	binutils \
+	coreutils \
+	curl \
+	gcc \
+	git \
+	make \
+	musl-dev \
+	libpcap-dev
+WORKDIR /work
+COPY . .
+RUN make all
 # Install Intel Firmware for e800 based network cards
-ENV ICE_VERSION=1.9.11
-ENV ICE_PKG_VERSION=1.3.30.0
+ENV ICE_VERSION=1.13.7
+ENV ICE_PKG_VERSION=1.3.35.0
 RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_VERSION}/ice-${ICE_VERSION}.tar.gz/download -o ice.tar.gz \
  && tar -xf ice.tar.gz ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg \
  && mkdir -p /lib/firmware/intel/ice/ddp/ \
@@ -13,7 +22,7 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
 
 # ipmitool from bookworm is broken and returns with error on most commands
 FROM golang:1.20-bullseye as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=v0.11.0
+ENV UROOT_GIT_SHA_OR_TAG=v0.12.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	ca-certificates \
@@ -40,16 +49,15 @@ RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \
  && cd u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
- && GO111MODULE=off go install
+ && go install
 WORKDIR /work
 RUN mkdir -p /work/etc/lvm /work/etc/ssl/certs /work/lib/firmware/intel/ice/ddp/ /work/var/run \
  && cp /usr/share/zoneinfo/Etc/UTC /work/etc/localtime
 COPY lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
-COPY --from=r.metal-stack.io/metal/supermicro:2.12.0 /usr/bin/sum /work/
-COPY --from=builder /common /common
+COPY --from=r.metal-stack.io/metal/supermicro:2.13.0 /usr/bin/sum /work/
 COPY --from=builder /work/ice.pkg /work/ice.pkg
 COPY --from=builder /work/bin/metal-hammer /work/bin/
-RUN COMMONDIR=/common make ramdisk
+RUN make ramdisk
 
 FROM scratch
 COPY --from=builder /work/bin/metal-hammer /

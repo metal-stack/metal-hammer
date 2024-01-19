@@ -3,6 +3,7 @@ package kernel
 import (
 	"crypto/rand"
 	"fmt"
+	"log/slog"
 	"math/big"
 	"os"
 	"strings"
@@ -12,7 +13,6 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/api"
 
 	"github.com/u-root/u-root/pkg/boot/kexec"
-	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v3"
 )
@@ -108,46 +108,46 @@ func Firmware() string {
 
 // Watchdog periodically pings kernel software watchdog.
 // from https://github.com/gokrazy/gokrazy
-func Watchdog(log *zap.SugaredLogger) {
+func Watchdog(log *slog.Logger) {
 	f, err := os.OpenFile("/dev/watchdog", os.O_WRONLY, 0)
 	if err != nil {
-		log.Errorw("watchdog", "disabling hardware watchdog, as it could not be opened.", err)
+		log.Error("watchdog", "disabling hardware watchdog, as it could not be opened.", err)
 		return
 	}
 	defer f.Close()
 	// timeout in seconds after which a reboot will be triggered if no write to /dev/watchdog was made.
 	timeout := uint32(60)
 	if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_SETTIMEOUT, uintptr(unsafe.Pointer(&timeout))); errno != 0 {
-		log.Errorw("watchdog", "set timeout failed", errno)
+		log.Error("watchdog", "set timeout failed", errno)
 	}
 
 	for {
 		if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_KEEPALIVE, 0); errno != 0 {
-			log.Errorw("watchdog", "hardware watchdog ping failed", errno)
+			log.Error("watchdog", "hardware watchdog ping failed", errno)
 		}
 		time.Sleep(10 * time.Second)
 	}
 }
 
 // AutoReboot will start a timer and reboot after given duration a random variation spread is added
-func AutoReboot(log *zap.SugaredLogger, after, spread time.Duration, callback func()) {
-	log.Infow("autoreboot set to", "after", after, "spread", spread)
+func AutoReboot(log *slog.Logger, after, spread time.Duration, callback func()) {
+	log.Info("autoreboot set to", "after", after, "spread", spread)
 	spreadMinutes, err := rand.Int(rand.Reader, big.NewInt(int64(spread.Minutes())))
 	if err != nil {
-		log.Warnw("autoreboot", "unable to calculate spread, disable spread", err)
+		log.Warn("autoreboot", "unable to calculate spread, disable spread", err)
 		spread = time.Duration(0)
 	}
 	spread = time.Minute * time.Duration(spreadMinutes.Int64())
 	after = after + spread
 
-	log.Infow("autoreboot with spread", "after", after)
+	log.Info("autoreboot with spread", "after", after)
 	rebootTimer := time.NewTimer(after)
 	<-rebootTimer.C
-	log.Infow("autoreboot", "timeout reached", "rebooting in 10sec")
+	log.Info("autoreboot", "timeout reached", "rebooting in 10sec")
 	callback()
 	time.Sleep(10 * time.Second)
 	err = Reboot()
 	if err != nil {
-		log.Errorw("autoreboot", "unable to reboot, error", err)
+		log.Error("autoreboot", "unable to reboot, error", err)
 	}
 }

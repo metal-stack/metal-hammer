@@ -3,6 +3,7 @@ package network
 import (
 	"bufio"
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -12,7 +13,6 @@ import (
 	"path/filepath"
 
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
-	"go.uber.org/zap"
 )
 
 // EthtoolCommand to gather ethernet informations
@@ -21,14 +21,14 @@ const ethtoolCommand = command.Ethtool
 // Ethtool to query/set ethernet interfaces
 type Ethtool struct {
 	command string
-	log     *zap.SugaredLogger
+	log     *slog.Logger
 }
 
 // NewEthtool create a new Ethtool with the default command
-func NewEthtool(log *zap.SugaredLogger) *Ethtool {
+func NewEthtool(log *slog.Logger) *Ethtool {
 	err := syscall.Mount("debugfs", "/sys/kernel/debug", "debugfs", 0, "")
 	if err != nil {
-		log.Warnw("ethtool", "mounting debugfs failed", err)
+		log.Warn("ethtool", "mounting debugfs failed", err)
 	}
 	return &Ethtool{command: ethtoolCommand, log: log}
 }
@@ -42,7 +42,7 @@ func (e *Ethtool) Run(args ...string) (string, error) {
 	cmd := exec.Command(path, args...)
 	output, err := cmd.Output()
 
-	e.log.Debugw("run", "command", e.command, "args", args, "output", string(output), "error", err)
+	e.log.Debug("run", "command", e.command, "args", args, "output", string(output), "error", err)
 	return string(output), err
 }
 
@@ -54,12 +54,12 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 
 	output, err := e.Run("--show-priv-flags", ifi)
 	if err != nil {
-		e.log.Infow("ethtool", "interface", ifi, "msg", "no priv-flags or disable-fw-lldp not present, try disable via debugfs")
+		e.log.Info("ethtool", "interface", ifi, "msg", "no priv-flags or disable-fw-lldp not present, try disable via debugfs")
 		e.stopFirmwareLLDP()
 		return
 	}
 
-	e.log.Debugw("ethtool", "show-priv-flags", output)
+	e.log.Debug("ethtool", "show-priv-flags", output)
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	fwLLDP := ""
 	for scanner.Scan() {
@@ -73,17 +73,17 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 	}
 
 	if fwLLDP != "" {
-		e.log.Infow("ethtool", "interface", ifi, "disable-fw-lldp is set to", fwLLDP)
+		e.log.Info("ethtool", "interface", ifi, "disable-fw-lldp is set to", fwLLDP)
 	}
 
 	if fwLLDP == "off" {
 		_, err := e.Run("--set-priv-flags", ifi, "disable-fw-lldp", "on")
 		if err != nil {
-			e.log.Errorw("ethtool", "interface", ifi, "error disabling fw-lldp try to stop it", err)
+			e.log.Error("ethtool", "interface", ifi, "error disabling fw-lldp try to stop it", err)
 			e.stopFirmwareLLDP()
 			return
 		}
-		e.log.Infow("ethtool", "interface", ifi, "fw-lldp", "disabled")
+		e.log.Info("ethtool", "interface", ifi, "fw-lldp", "disabled")
 	}
 }
 
@@ -96,25 +96,25 @@ var buggyIntelNicDriverNames = []string{"i40e"}
 // or a loop over all directories in /sys/kernel/debug/i40e/*/command
 func (e *Ethtool) stopFirmwareLLDP() {
 	for _, driver := range buggyIntelNicDriverNames {
-		e.log.Infow("ethtool", "stopFirmwareLLDP for driver", driver)
+		e.log.Info("ethtool", "stopFirmwareLLDP for driver", driver)
 		debugFSPath := path.Join("/sys/kernel/debug", driver)
 		err := filepath.Walk(debugFSPath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				e.log.Warnw("ethtool", "stopFirmwareLLDP in path", path, "error", err)
+				e.log.Warn("ethtool", "stopFirmwareLLDP in path", path, "error", err)
 				return err
 			}
 			if !info.IsDir() && info.Name() == "command" {
-				e.log.Infow("ethtool", "stopFirmwareLLDP found command", path)
+				e.log.Info("ethtool", "stopFirmwareLLDP found command", path)
 				stopCommand := []byte("lldp stop")
 				err := os.WriteFile(path, stopCommand, os.ModePerm)
 				if err != nil {
-					e.log.Errorw("ethtool", "stopFirmwareLLDP stop lldp > command", path, "error", err)
+					e.log.Error("ethtool", "stopFirmwareLLDP stop lldp > command", path, "error", err)
 				}
 			}
 			return nil
 		})
 		if err != nil {
-			e.log.Errorw("ethtool", "stopFirmwareLLDP unable to walk through debugfs", debugFSPath, "error", err)
+			e.log.Error("ethtool", "stopFirmwareLLDP unable to walk through debugfs", debugFSPath, "error", err)
 		}
 	}
 }

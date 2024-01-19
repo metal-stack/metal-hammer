@@ -1,13 +1,13 @@
 package cmd
 
 import (
+	"log/slog"
 	"strconv"
 	"strings"
 
 	"os"
 
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
-	"go.uber.org/zap"
 )
 
 // Specification defines configuration items of the application
@@ -27,16 +27,16 @@ type Specification struct {
 	// IP of this instance
 	IP string
 
-	log *zap.SugaredLogger
+	log *slog.Logger
 }
 
 // NewSpec fills Specification with configuration made by kernel commandline
-func NewSpec(log *zap.SugaredLogger) *Specification {
+func NewSpec(log *slog.Logger) *Specification {
 	spec := &Specification{}
 	// Grab metal-hammer configuration from kernel commandline
 	envmap, err := kernel.ParseCmdline()
 	if err != nil {
-		log.Errorw("parse cmdline", "error", err)
+		log.Error("parse cmdline", "error", err)
 		os.Exit(1)
 	}
 
@@ -63,7 +63,7 @@ func NewSpec(log *zap.SugaredLogger) *Specification {
 
 // Log print configuration options
 func (s *Specification) Log() {
-	s.log.Infow("configuration",
+	s.log.Info("configuration",
 		"debug", s.Debug,
 		"pixieAPIUrl", s.PixieAPIUrl,
 		"bgpenabled", s.BGPEnabled,

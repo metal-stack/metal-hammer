@@ -3,7 +3,7 @@
 # Intentionally added to download metal-hammer-kernel.
 set -e
 
-KERNEL=https://github.com/metal-stack/kernel/releases/download/5.10.28-55/metal-kernel
+KERNEL=https://github.com/metal-stack/kernel/releases/download/6.1.62-128/metal-kernel
 
 dirty() {
     curl \
