@@ -1,4 +1,3 @@
-.ONESHELL:
 SHA := $(shell git rev-parse --short=8 HEAD)
 GITVERSION := $(shell git describe --long --all)
 BUILDDATE := $(shell date --iso-8601=seconds)
