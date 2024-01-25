@@ -70,6 +70,13 @@ func main() {
 
 	spec.Log()
 
+	loggerWithRemote, err := cmd.AddRemoteLoggerFrom(spec.PixieAPIUrl, jsonHandler)
+	if err != nil {
+		log.Error("unable to add remote logging", "error", err)
+	} else {
+		log = loggerWithRemote
+	}
+
 	// FIXME set loglevel from spec.Debug
 
 	emitter, err := cmd.Run(log, spec, hal)

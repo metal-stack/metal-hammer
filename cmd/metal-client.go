@@ -4,17 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"log/slog"
-	"net/http"
 	"time"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	metalgo "github.com/metal-stack/metal-go"
-	pixiecore "github.com/metal-stack/pixie/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -29,28 +24,9 @@ type MetalAPIClient struct {
 // NewMetalAPIClient fetches the address,hmac and certificates from pixie needed to communicate with metal-api,
 // and returns a new client that can be used to invoke all provided grpc and rest endpoints.
 func NewMetalAPIClient(log *slog.Logger, pixieURL string) (*MetalAPIClient, error) {
-	certClient := http.Client{
-		Timeout: 5 * time.Second,
-	}
-	ctx, httpcancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer httpcancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pixieURL, nil)
+	metalConfig, err := fetchConfig(pixieURL)
 	if err != nil {
 		return nil, err
-	}
-	resp, err := certClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	js, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	var metalConfig pixiecore.MetalConfig
-	if err := json.Unmarshal(js, &metalConfig); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal grpcConfig:%w", err)
 	}
 
 	clientCert, err := tls.X509KeyPair([]byte(metalConfig.Cert), []byte(metalConfig.Key))
