@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/grafana/loki-client-go/loki"
+	"github.com/metal-stack/pixie/api"
 	promconfig "github.com/prometheus/common/config"
 	slogloki "github.com/samber/slog-loki/v3"
 	slogmulti "github.com/samber/slog-multi"
@@ -16,6 +17,10 @@ func AddRemoteLoggerFrom(pixieURL string, handler slog.Handler) (*slog.Logger, e
 		return nil, err
 	}
 	if metalConfig.Logging == nil {
+		return slog.New(handler), nil
+	}
+	if metalConfig.Logging.Type != api.LogTypeLoki {
+		slog.New(handler).Error("unsupported remote logging type, ignoring", "type", metalConfig.Logging.Type)
 		return slog.New(handler), nil
 	}
 
