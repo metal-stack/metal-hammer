@@ -23,11 +23,19 @@ func AddRemoteLoggerFrom(pixieURL string, handler slog.Handler) (*slog.Logger, e
 		slog.New(handler).Error("unsupported remote logging type, ignoring", "type", metalConfig.Logging.Type)
 		return slog.New(handler), nil
 	}
-
 	httpClient := promconfig.DefaultHTTPClientConfig
-	httpClient.BasicAuth = &promconfig.BasicAuth{
-		Username: metalConfig.Logging.User,
-		Password: promconfig.Secret(metalConfig.Logging.Password),
+	if metalConfig.Logging.BasicAuth != nil {
+		httpClient.BasicAuth = &promconfig.BasicAuth{
+			Username: metalConfig.Logging.BasicAuth.User,
+			Password: promconfig.Secret(metalConfig.Logging.BasicAuth.Password),
+		}
+	}
+	if metalConfig.Logging.CertificateAuth != nil {
+		httpClient.TLSConfig = promconfig.TLSConfig{
+			Cert:               metalConfig.Logging.CertificateAuth.Cert,
+			Key:                promconfig.Secret(metalConfig.Logging.CertificateAuth.Key),
+			InsecureSkipVerify: metalConfig.Logging.CertificateAuth.InsecureSkipVerify,
+		}
 	}
 
 	config, _ := loki.NewDefaultConfig(metalConfig.Logging.Endpoint)

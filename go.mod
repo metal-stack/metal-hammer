@@ -4,16 +4,16 @@ go 1.21
 
 require (
 	github.com/beevik/ntp v1.3.1
-	github.com/cheggaaa/pb/v3 v3.1.4
+	github.com/cheggaaa/pb/v3 v3.1.5
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20230116142646-e7494d0ef70c
 	github.com/jaypipes/ghw v0.12.0
 	github.com/metal-stack/go-hal v0.5.0
 	github.com/metal-stack/go-lldpd v0.4.6
-	github.com/metal-stack/metal-api v0.26.2
-	github.com/metal-stack/metal-go v0.26.2
-	github.com/metal-stack/pixie v0.3.1-0.20240125071454-7d4cf7254237
+	github.com/metal-stack/metal-api v0.26.3
+	github.com/metal-stack/metal-go v0.26.3
+	github.com/metal-stack/pixie v0.3.1-0.20240201124704-d6767c4e0abd
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -125,7 +125,7 @@ require (
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.1 // indirect
 )
