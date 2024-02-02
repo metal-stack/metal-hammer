@@ -62,14 +62,17 @@ func AddRemoteHandler(spec *Specification, handler slog.Handler) (slog.Handler, 
 }
 
 func jsonFormattingMiddleware(ctx context.Context, record slog.Record, next func(context.Context, slog.Record) error) error {
-	attrs := map[string]string{"msg": record.Message, "level": record.Level.String(), "time": record.Time.Local().String()}
+	attrs := map[string]string{"msg": record.Message, "level": record.Level.String(), "time": record.Time.String()}
 
 	record.Attrs(func(attr slog.Attr) bool {
 		attrs[attr.Key] = attr.Value.String()
 		return true
 	})
 
-	r, _ := json.Marshal(attrs)
+	r, err := json.Marshal(attrs)
+	if err != nil {
+		return fmt.Errorf("unable to marshal log attributes %w", err)
+	}
 	record = slog.NewRecord(record.Time, record.Level, string(r), record.PC)
 	return next(ctx, record)
 }
