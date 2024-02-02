@@ -76,7 +76,7 @@ func main() {
 		log.Error("unable to add remote logging", "error", err)
 	} else {
 		log = loggerWithRemote
-		log.Info("remote logging enabled", "machineUUID", spec.MachineUUID)
+		log.Info("remote logging enabled", "machineUUID", spec.MachineUUID, "url", spec.MetalConfig.Logging.Endpoint)
 	}
 
 	// FIXME set loglevel from spec.Debug
