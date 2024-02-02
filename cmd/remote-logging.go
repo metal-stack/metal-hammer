@@ -42,16 +42,23 @@ func AddRemoteLoggerFrom(pixieURL string, handler slog.Handler, machineID string
 	if err != nil {
 		return nil, fmt.Errorf("unable to create loki default config %w", err)
 	}
-	config.EncodeJson = true
+	// config.EncodeJson = true
 	config.Client = httpClient
 	client, err := loki.New(config)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create loki client %w", err)
 	}
 
-	lokiHandler := slogloki.Option{Level: slog.LevelDebug, Client: client}.NewLokiHandler()
+	lokiHandler := slogloki.Option{
+		Level:  slog.LevelDebug,
+		Client: client}.NewLokiHandler().WithAttrs(
+		[]slog.Attr{
+			slog.Any("component", "metal-hammer"),
+			slog.Any("machineID", machineID),
+		},
+	)
 
-	logger := slog.New(slogmulti.Fanout(lokiHandler, handler)).With("component", "metal-hammer", "machineID", machineID)
+	logger := slog.New(slogmulti.Fanout(lokiHandler, handler))
 
 	logger.Debug("remote logging to loki", "url", metalConfig.Logging.Endpoint, "config", metalConfig.Logging)
 

@@ -38,7 +38,7 @@ func main() {
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
-	log := slog.New(jsonHandler).With("component", "metal-hammer")
+	log := slog.New(jsonHandler)
 
 	// Reboot if metal-hammer crashes after 60sec.
 	go kernel.Watchdog(log)
