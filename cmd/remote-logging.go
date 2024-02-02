@@ -56,5 +56,8 @@ func AddRemoteLoggerFrom(pixieURL string, handler slog.Handler, machineID string
 	lokiHandler := slogloki.Option{Level: slog.LevelDebug, Client: client}.NewLokiHandler()
 
 	logger := slog.New(slogmulti.Fanout(lokiHandler, handler))
+
+	logger.Debug("remote logging to loki", "url", metalConfig.Logging.Endpoint, "config", metalConfig.Logging)
+
 	return logger, nil
 }
