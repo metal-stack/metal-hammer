@@ -23,8 +23,12 @@ type MetalAPIClient struct {
 
 // NewMetalAPIClient fetches the address,hmac and certificates from pixie needed to communicate with metal-api,
 // and returns a new client that can be used to invoke all provided grpc and rest endpoints.
-func NewMetalAPIClient(log *slog.Logger, spec *Specification) (*MetalAPIClient, error) {
-	metalConfig := spec.MetalConfig
+func NewMetalAPIClient(log *slog.Logger, pixieURL string) (*MetalAPIClient, error) {
+	metalConfig, err := fetchConfig(pixieURL)
+	if err != nil {
+		return nil, err
+	}
+
 	clientCert, err := tls.X509KeyPair([]byte(metalConfig.Cert), []byte(metalConfig.Key))
 	if err != nil {
 		return nil, err

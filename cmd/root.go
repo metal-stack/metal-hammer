@@ -39,7 +39,7 @@ type Hammer struct {
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
-	metalAPIClient, err := NewMetalAPIClient(log, spec)
+	metalAPIClient, err := NewMetalAPIClient(log, spec.PixieAPIUrl)
 	if err != nil {
 		log.Error("failed to fetch GRPC certificates", "error", err)
 		return nil, err

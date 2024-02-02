@@ -13,8 +13,11 @@ import (
 	slogmulti "github.com/samber/slog-multi"
 )
 
-func AddRemoteLoggerFrom(spec *Specification, handler slog.Handler) (*slog.Logger, error) {
-	metalConfig := spec.MetalConfig
+func AddRemoteLoggerFrom(pixieURL string, handler slog.Handler, machineID string) (*slog.Logger, error) {
+	metalConfig, err := fetchConfig(pixieURL)
+	if err != nil {
+		return nil, err
+	}
 	if metalConfig.Logging == nil {
 		return slog.New(handler), nil
 	}
@@ -53,7 +56,7 @@ func AddRemoteLoggerFrom(spec *Specification, handler slog.Handler) (*slog.Logge
 		Client: client}.NewLokiHandler().WithAttrs(
 		[]slog.Attr{
 			{Key: "component", Value: slog.StringValue("metal-hammer")},
-			{Key: "machineID", Value: slog.StringValue(spec.MachineUUID)},
+			{Key: "machineID", Value: slog.StringValue(machineID)},
 		},
 	)
 	mdw := slogmulti.NewHandleInlineMiddleware(jsonFormattingMiddleware)
