@@ -54,6 +54,7 @@ func main() {
 		log.Error("unable to get uuid hardware", "error", err)
 		os.Exit(1)
 	}
+	log = log.With("machineID", uuid.String())
 
 	ip := network.InternalIP()
 	err = cmd.StartSSHD(log, ip)
