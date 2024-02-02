@@ -58,7 +58,7 @@ func AddRemoteLoggerFrom(spec *Specification, handler slog.Handler) (*slog.Logge
 	)
 	mdw := slogmulti.NewHandleInlineMiddleware(jsonFormattingMiddleware)
 	logger := slog.New(slogmulti.Fanout(slogmulti.Pipe(mdw).Handler(lokiHandler), handler))
-	logger.Debug("remote logging to loki", "url", metalConfig.Logging.Endpoint)
+	logger.Info("remote logging to loki", "url", metalConfig.Logging.Endpoint, "machineID", spec.MachineUUID)
 	return logger, nil
 }
 
