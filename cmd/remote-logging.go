@@ -14,10 +14,7 @@ import (
 )
 
 func AddRemoteHandler(spec *Specification, handler slog.Handler) (slog.Handler, error) {
-	metalConfig, err := fetchConfig(spec.PixieAPIUrl)
-	if err != nil {
-		return nil, err
-	}
+	metalConfig := spec.MetalConfig
 	if metalConfig.Logging == nil || metalConfig.Logging.Endpoint == "" {
 		return handler, nil
 	}
