@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 
@@ -53,14 +55,25 @@ func AddRemoteLoggerFrom(pixieURL string, handler slog.Handler, machineID string
 		Level:  slog.LevelDebug,
 		Client: client}.NewLokiHandler().WithAttrs(
 		[]slog.Attr{
-			slog.Any("component", "metal-hammer"),
-			slog.Any("machineID", machineID),
+			{Key: "component", Value: slog.StringValue("metal-hammer")},
+			{Key: "machineID", Value: slog.StringValue(machineID)},
 		},
 	)
-
-	logger := slog.New(slogmulti.Fanout(lokiHandler, handler))
-
-	logger.Debug("remote logging to loki", "url", metalConfig.Logging.Endpoint, "config", metalConfig.Logging)
-
+	mdw := slogmulti.NewHandleInlineMiddleware(jsonFormattingMiddleware)
+	logger := slog.New(slogmulti.Fanout(slogmulti.Pipe(mdw).Handler(lokiHandler), handler))
+	logger.Debug("remote logging to loki", "url", metalConfig.Logging.Endpoint)
 	return logger, nil
+}
+
+func jsonFormattingMiddleware(ctx context.Context, record slog.Record, next func(context.Context, slog.Record) error) error {
+	attrs := map[string]string{"msg": record.Message, "level": record.Level.String(), "time": record.Time.Local().String()}
+
+	record.Attrs(func(attr slog.Attr) bool {
+		attrs[attr.Key] = attr.Value.String()
+		return true
+	})
+
+	r, _ := json.Marshal(attrs)
+	record = slog.NewRecord(record.Time, record.Level, string(r), record.PC)
+	return next(ctx, record)
 }
