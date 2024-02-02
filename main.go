@@ -74,6 +74,7 @@ func main() {
 	if err != nil {
 		log.Error("unable to add remote logging", "error", err)
 	} else {
+		log.Info("remote logging enabled")
 		log = loggerWithRemote
 	}
 
