@@ -38,7 +38,7 @@ func main() {
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
-	log := slog.New(jsonHandler)
+	log := slog.New(jsonHandler).With("component", "metal-hammer")
 
 	// Reboot if metal-hammer crashes after 60sec.
 	go kernel.Watchdog(log)
@@ -74,8 +74,8 @@ func main() {
 	if err != nil {
 		log.Error("unable to add remote logging", "error", err)
 	} else {
-		log.Info("remote logging enabled")
 		log = loggerWithRemote
+		log.Info("remote logging enabled")
 	}
 
 	// FIXME set loglevel from spec.Debug

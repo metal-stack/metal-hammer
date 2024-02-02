@@ -5,10 +5,8 @@ import (
 	"log/slog"
 
 	"github.com/grafana/loki-client-go/loki"
-	"github.com/grafana/loki-client-go/pkg/labelutil"
 	"github.com/metal-stack/pixie/api"
 	promconfig "github.com/prometheus/common/config"
-	"github.com/prometheus/common/model"
 	slogloki "github.com/samber/slog-loki/v3"
 	slogmulti "github.com/samber/slog-multi"
 )
@@ -41,12 +39,6 @@ func AddRemoteLoggerFrom(pixieURL string, handler slog.Handler, machineID string
 	}
 
 	config, _ := loki.NewDefaultConfig(metalConfig.Logging.Endpoint)
-	config.ExternalLabels = labelutil.LabelSet{
-		LabelSet: model.LabelSet{
-			"component": "metal-hammer",
-			"machineID": model.LabelValue(machineID),
-		},
-	}
 	config.Client = httpClient
 	client, err := loki.New(config)
 	if err != nil {
