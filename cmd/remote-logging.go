@@ -13,17 +13,17 @@ import (
 	slogmulti "github.com/samber/slog-multi"
 )
 
-func AddRemoteLoggerFrom(pixieURL string, handler slog.Handler, machineID string) (*slog.Logger, error) {
-	metalConfig, err := fetchConfig(pixieURL)
+func AddRemoteHandler(spec *Specification, handler slog.Handler) (slog.Handler, error) {
+	metalConfig, err := fetchConfig(spec.PixieAPIUrl)
 	if err != nil {
 		return nil, err
 	}
-	if metalConfig.Logging == nil {
-		return slog.New(handler), nil
+	if metalConfig.Logging == nil || metalConfig.Logging.Endpoint == "" {
+		return handler, nil
 	}
 	if metalConfig.Logging.Type != api.LogTypeLoki {
 		slog.New(handler).Error("unsupported remote logging type, ignoring", "type", metalConfig.Logging.Type)
-		return slog.New(handler), nil
+		return handler, nil
 	}
 	httpClient := promconfig.DefaultHTTPClientConfig
 	if metalConfig.Logging.BasicAuth != nil {
@@ -56,13 +56,12 @@ func AddRemoteLoggerFrom(pixieURL string, handler slog.Handler, machineID string
 		Client: client}.NewLokiHandler().WithAttrs(
 		[]slog.Attr{
 			{Key: "component", Value: slog.StringValue("metal-hammer")},
-			{Key: "machineID", Value: slog.StringValue(machineID)},
+			{Key: "machineID", Value: slog.StringValue(spec.MachineUUID)},
 		},
 	)
 	mdw := slogmulti.NewHandleInlineMiddleware(jsonFormattingMiddleware)
-	logger := slog.New(slogmulti.Fanout(slogmulti.Pipe(mdw).Handler(lokiHandler), handler))
-	logger.Debug("remote logging to loki", "url", metalConfig.Logging.Endpoint)
-	return logger, nil
+	combinedHandler := slogmulti.Fanout(slogmulti.Pipe(mdw).Handler(lokiHandler), handler)
+	return combinedHandler, nil
 }
 
 func jsonFormattingMiddleware(ctx context.Context, record slog.Record, next func(context.Context, slog.Record) error) error {
