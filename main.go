@@ -63,7 +63,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("metal-hammer", "version", v.V, "hal", hal.Describe())
+	log.Info("starting", "version", v.V.String(), "hal", hal.Describe())
 
 	spec := cmd.NewSpec(log)
 	spec.MachineUUID = uuid.String()
