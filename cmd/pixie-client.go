@@ -11,7 +11,7 @@ import (
 	pixiecore "github.com/metal-stack/pixie/api"
 )
 
-func fetchConfig(pixieURL string) (*pixiecore.MetalConfig, error) {
+func fetchMetalConfig(pixieURL string) (*pixiecore.MetalConfig, error) {
 	certClient := http.Client{
 		Timeout: 5 * time.Second,
 	}

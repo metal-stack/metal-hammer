@@ -71,7 +71,7 @@ func main() {
 
 	spec.Log()
 
-	loggerWithRemote, err := cmd.AddRemoteLoggerFrom(spec.PixieAPIUrl, jsonHandler, spec.MachineUUID)
+	loggerWithRemote, err := cmd.AddRemoteLoggerFrom(spec, jsonHandler)
 	if err != nil {
 		log.Error("unable to add remote logging", "error", err)
 	} else {

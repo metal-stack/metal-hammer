@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
+	pixiecore "github.com/metal-stack/pixie/api"
 )
 
 // Specification defines configuration items of the application
@@ -26,6 +27,8 @@ type Specification struct {
 	MachineUUID string
 	// IP of this instance
 	IP string
+
+	MetalConfig *pixiecore.MetalConfig
 
 	log *slog.Logger
 }
@@ -49,6 +52,14 @@ func NewSpec(log *slog.Logger) *Specification {
 	if url, ok := envmap["PIXIE_API_URL"]; ok {
 		spec.PixieAPIUrl = url
 	}
+
+	metalConfig, err := fetchMetalConfig(spec.PixieAPIUrl)
+	if err != nil {
+		log.Error("unable to fetch configuration from pixiecore", "error", err)
+		os.Exit(1)
+	}
+
+	spec.MetalConfig = metalConfig
 
 	if bgp, ok := envmap["BGP"]; ok {
 		enabled, err := strconv.ParseBool(bgp)
