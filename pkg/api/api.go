@@ -38,6 +38,8 @@ type InstallerConfig struct {
 	RaidEnabled bool `yaml:"raidenabled"`
 	// RootUUID is the fs uuid if the root fs
 	RootUUID string `yaml:"root_uuid"`
+	// FirewallRules if not empty firewall rules to enforce
+	FirewallRules *models.V1FirewallRules `yaml:"firewall_rules"`
 }
 
 // FIXME legacy structs remove once old images are gone
