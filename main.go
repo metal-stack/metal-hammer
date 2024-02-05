@@ -54,6 +54,7 @@ func main() {
 		log.Error("unable to get uuid hardware", "error", err)
 		os.Exit(1)
 	}
+	log = log.With("machineID", uuid.String())
 
 	ip := network.InternalIP()
 	err = cmd.StartSSHD(log, ip)
@@ -62,13 +63,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("metal-hammer", "version", v.V, "hal", hal.Describe())
+	log.Info("starting", "version", v.V.String(), "hal", hal.Describe())
 
 	spec := cmd.NewSpec(log)
 	spec.MachineUUID = uuid.String()
 	spec.IP = ip
 
 	spec.Log()
+
+	withRemoteHandler, err := cmd.AddRemoteHandler(spec, jsonHandler)
+	if err != nil {
+		log.Error("unable to add remote logging", "error", err)
+	} else {
+		log = slog.New(withRemoteHandler).With("machineID", uuid.String())
+		log.Info("remote logging enabled")
+	}
 
 	// FIXME set loglevel from spec.Debug
 

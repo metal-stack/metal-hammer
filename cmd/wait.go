@@ -52,7 +52,7 @@ func (c *MetalAPIClient) WaitForAllocation(e *event.EventEmitter, machineID stri
 				break
 			}
 
-			c.log.Info("wait for allocation...", "machineID", machineID)
+			c.log.Info("wait for allocation...")
 		}
 	}
 }
