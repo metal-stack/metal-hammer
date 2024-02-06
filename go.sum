@@ -915,8 +915,8 @@ github.com/metal-stack/go-lldpd v0.4.6 h1:+BiPYbAWaAggev/m5iVw/bMBHEYR3Mhh5Lx8hc
 github.com/metal-stack/go-lldpd v0.4.6/go.mod h1:aCVI7lCka0uRo6dkrh2ET97WBpN7M5yZqK8NX0vGpho=
 github.com/metal-stack/metal-api v0.26.3 h1:aZq8eMTeWjf4NsdH56QwNsjkOfKZ5tVoxl4c7k1FoB4=
 github.com/metal-stack/metal-api v0.26.3/go.mod h1:rk/w+hoKJ9/BmZRuw+eoUxa6O7BWyDVvbBYFtZOea/Q=
-github.com/metal-stack/metal-go v0.26.4-0.20240205143010-a7bd0546fc24 h1:QRHVH2IssD1/MKPUK8H2cHw99qnDhPQ5y29RqN9P+3A=
-github.com/metal-stack/metal-go v0.26.4-0.20240205143010-a7bd0546fc24/go.mod h1:Iw4xnzbtcn3qz7YaK0ekCAcLZUyz5E7e0ZCvJ5pX0gU=
+github.com/metal-stack/metal-go v0.26.4-0.20240206074344-b77cd93ebe4d h1:NLtlZH5kRo6D3eQibEAgXINzafQvZzxNuP5rKl461yM=
+github.com/metal-stack/metal-go v0.26.4-0.20240206074344-b77cd93ebe4d/go.mod h1:Iw4xnzbtcn3qz7YaK0ekCAcLZUyz5E7e0ZCvJ5pX0gU=
 github.com/metal-stack/metal-lib v0.14.4 h1:vm2868vcua6khoyWL7d0to8Hq5RayrjMse0FZTyWEec=
 github.com/metal-stack/metal-lib v0.14.4/go.mod h1:Z3PAh8dkyWC4B19fXsu6EYwXXee0Lk9JZbjoHPLbDbc=
 github.com/metal-stack/pixie v0.3.1-0.20240201124704-d6767c4e0abd h1:ZVfUtCoL+Z46THbDOV+s/6bU7dvshhqFFL/2EwuSOF8=
