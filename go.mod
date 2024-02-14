@@ -1,6 +1,6 @@
 module github.com/metal-stack/metal-hammer
 
-go 1.21
+go 1.22
 
 require (
 	github.com/beevik/ntp v1.3.1
@@ -12,8 +12,8 @@ require (
 	github.com/metal-stack/go-hal v0.5.0
 	github.com/metal-stack/go-lldpd v0.4.6
 	github.com/metal-stack/metal-api v0.26.3
-	github.com/metal-stack/metal-go v0.26.4-0.20240206074344-b77cd93ebe4d
-	github.com/metal-stack/pixie v0.3.1-0.20240201124704-d6767c4e0abd
+	github.com/metal-stack/metal-go v0.26.4-0.20240213145736-fe197bb1f4fa
+	github.com/metal-stack/pixie v0.3.2
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -24,8 +24,8 @@ require (
 	github.com/u-root/u-root v0.12.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	golang.org/x/sync v0.6.0
-	golang.org/x/sys v0.16.0
-	google.golang.org/grpc v1.61.0
+	golang.org/x/sys v0.17.0
+	google.golang.org/grpc v1.61.1
 	google.golang.org/protobuf v1.32.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -90,7 +90,7 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 // indirect
 	github.com/metal-stack/metal-lib v0.14.4 // indirect
-	github.com/metal-stack/security v0.7.1 // indirect
+	github.com/metal-stack/security v0.7.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -105,7 +105,7 @@ require (
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/prometheus/prometheus v0.49.1 // indirect
-	github.com/rivo/uniseg v0.4.6 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/samber/lo v1.39.0 // indirect
 	github.com/samber/slog-common v0.15.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
@@ -115,17 +115,17 @@ require (
 	github.com/vishvananda/netns v0.0.4 // indirect
 	github.com/vmware/goipmi v0.0.0-20181114221114-2333cd82d702 // indirect
 	go.mongodb.org/mongo-driver v1.13.1 // indirect
-	go.opentelemetry.io/otel v1.22.0 // indirect
-	go.opentelemetry.io/otel/metric v1.22.0 // indirect
-	go.opentelemetry.io/otel/trace v1.22.0 // indirect
+	go.opentelemetry.io/otel v1.23.1 // indirect
+	go.opentelemetry.io/otel/metric v1.23.1 // indirect
+	go.opentelemetry.io/otel/trace v1.23.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
-	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/oauth2 v0.16.0 // indirect
+	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a // indirect
+	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/oauth2 v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240213162025-012b6fc9bca9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.1 // indirect
 )
