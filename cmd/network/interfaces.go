@@ -127,7 +127,7 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 		neighbors = append(neighbors, &v1.MachineNic{
 			Mac:        identifier,
 			Identifier: identifier,
-			Name:       neigh.Interface,
+			Name:       neigh.PortDescription,
 			Hostname:   neigh.Name,
 		})
 	}
