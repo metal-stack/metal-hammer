@@ -140,7 +140,7 @@ func AutoReboot(log *slog.Logger, after, spread time.Duration, callback func()) 
 	spread = time.Minute * time.Duration(spreadMinutes.Int64())
 	after = after + spread
 
-	log.Info("autoreboot with spread", "after", after)
+	log.Info("autoreboot with spread", "after", after.String())
 	rebootTimer := time.NewTimer(after)
 	<-rebootTimer.C
 	log.Info("autoreboot", "timeout reached", "rebooting in 10sec")
