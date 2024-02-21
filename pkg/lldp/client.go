@@ -37,11 +37,12 @@ type Port struct {
 
 // Neighbor is the direct ethernet neighbor
 type Neighbor struct {
-	Name        string
-	Description string
-	Interface   string
-	Chassis     Chassis
-	Port        Port
+	Name            string
+	Description     string
+	PortDescription string
+	Interface       string
+	Chassis         Chassis
+	Port            Port
 }
 
 func (c Chassis) String() string {
@@ -134,6 +135,7 @@ func (l *Client) Neighbors(neighChan chan Neighbor) {
 						lldpi := layer.(*layers.LinkLayerDiscoveryInfo)
 						neigh.Name = lldpi.SysName
 						neigh.Description = lldpi.SysDescription
+						neigh.PortDescription = lldpi.PortDescription
 						neigh.Interface = l.Interface.Name
 						neighChan <- neigh
 					}
