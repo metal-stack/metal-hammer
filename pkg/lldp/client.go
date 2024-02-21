@@ -134,7 +134,7 @@ func (l *Client) Neighbors(neighChan chan Neighbor) {
 						lldpi := layer.(*layers.LinkLayerDiscoveryInfo)
 						neigh.Name = lldpi.SysName
 						neigh.Description = lldpi.SysDescription
-						neigh.Interface = l.Interface.Name
+						neigh.Interface = lldpi.PortDescription
 						neighChan <- neigh
 					}
 				}
