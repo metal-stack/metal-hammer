@@ -10,7 +10,7 @@ require (
 	github.com/grafana/loki-client-go v0.0.0-20230116142646-e7494d0ef70c
 	github.com/jaypipes/ghw v0.12.0
 	github.com/metal-stack/go-hal v0.5.1
-	github.com/metal-stack/go-lldpd v0.4.7-0.20240221103016-4d982ba11ae6
+	github.com/metal-stack/go-lldpd v0.4.7
 	github.com/metal-stack/metal-api v0.28.0
 	github.com/metal-stack/metal-go v0.28.0
 	github.com/metal-stack/pixie v0.3.2
