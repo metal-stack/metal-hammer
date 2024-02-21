@@ -115,6 +115,7 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 	neighs := host.neighbors[name]
 	for _, neigh := range neighs {
 		identifier := neigh.Port.Value
+
 		// this breaks old metal-images because they still rely on the mac address field
 		// do not add this:
 		//
@@ -122,11 +123,11 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 		// if m, err := net.ParseMAC(identifier); err == nil {
 		// 	mac = m.String()
 		// }
-		n.Log.Info("register add neighbor", "nic", name, "identifier", identifier)
+		n.Log.Info("register add neighbor", "nic", name, "neigh interface", neigh.Interface, "identifier", identifier)
 		neighbors = append(neighbors, &v1.MachineNic{
 			Mac:        identifier,
 			Identifier: identifier,
-			Name:       name,
+			Name:       neigh.Interface,
 			Hostname:   neigh.Name,
 		})
 	}
