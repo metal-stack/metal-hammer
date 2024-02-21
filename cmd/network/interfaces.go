@@ -123,7 +123,7 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 		// if m, err := net.ParseMAC(identifier); err == nil {
 		// 	mac = m.String()
 		// }
-		n.Log.Info("register add neighbor", "nic", name, "neigh interface", neigh.Interface, "identifier", identifier)
+		n.Log.Info("register add neighbor", "nic", name, "switch port", neigh.PortDescription, "identifier", identifier)
 		neighbors = append(neighbors, &v1.MachineNic{
 			Mac:        identifier,
 			Identifier: identifier,
