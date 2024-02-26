@@ -82,6 +82,15 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		return nil, fmt.Errorf("unable to get system cpu(s) %w", err)
 	}
 
+	gpu, err := ghw.GPU()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get system gpu(s) %w", err)
+	}
+
+	for _, g := range gpu.GraphicsCards {
+		r.log.Debug("found gpu", "gpu", g.String(), "deviceinfo", g.DeviceInfo, "address", g.Address)
+	}
+
 	// Nics
 	nics := []*v1.MachineNic{}
 	loFound := false
