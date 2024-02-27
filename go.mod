@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20230116142646-e7494d0ef70c
 	github.com/jaypipes/ghw v0.12.0
-	github.com/metal-stack/go-hal v0.5.1
+	github.com/metal-stack/go-hal v0.5.2-0.20240227070830-4f20c146f788
 	github.com/metal-stack/go-lldpd v0.4.7
 	github.com/metal-stack/metal-api v0.28.0
 	github.com/metal-stack/metal-go v0.28.0
@@ -104,7 +104,7 @@ require (
 	github.com/prometheus/client_golang v1.18.0 // indirect
 	github.com/prometheus/client_model v0.6.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/prometheus/prometheus v0.50.0 // indirect
+	github.com/prometheus/prometheus v0.50.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/samber/lo v1.39.0 // indirect
 	github.com/samber/slog-common v0.15.0 // indirect
@@ -120,7 +120,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/crypto v0.20.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/oauth2 v0.17.0 // indirect
