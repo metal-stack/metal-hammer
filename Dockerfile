@@ -46,7 +46,7 @@ RUN apt-get update \
  && rm -f /etc/passwd /etc/lvm/lvmlocal.conf
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
- && git clone https://github.com/majst0/u-root \
+ && git clone https://github.com/majst01/u-root \
  && cd u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && go install
