@@ -30,7 +30,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+replace (
+	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20240318113318-316dfb85dfa5
+)
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect

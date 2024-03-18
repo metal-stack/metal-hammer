@@ -22,7 +22,7 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
 
 # ipmitool from bookworm is broken and returns with error on most commands
 FROM golang:1.22-bullseye as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=v0.13.1
+ENV UROOT_GIT_SHA_OR_TAG=update-pci-ids
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	ca-certificates \
@@ -46,7 +46,7 @@ RUN apt-get update \
  && rm -f /etc/passwd /etc/lvm/lvmlocal.conf
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
- && git clone https://github.com/u-root/u-root \
+ && git clone https://github.com/majst0/u-root \
  && cd u-root \
  && git checkout ${UROOT_GIT_SHA_OR_TAG} \
  && go install
