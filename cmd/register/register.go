@@ -86,7 +86,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 
 	// 0000:bd:00.0: DisplayVGA: NVIDIA Corporation AD102GL [RTX 6000 Ada Generation]
 
-	gpus, err := detectGPUs()
+	gpus, err := r.detectGPUs()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system gpu(s) %w", err)
 	}
@@ -211,14 +211,14 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	return request, nil
 }
 
-func detectGPUs() (pci.Devices, error) {
-	r, err := pci.NewBusReader("*")
+func (r *Register) detectGPUs() (pci.Devices, error) {
+	pciReader, err := pci.NewBusReader("*")
 	if err != nil {
 		return nil, err
 	}
 
 	var devices pci.Devices
-	if devices, err = r.Read(); err != nil {
+	if devices, err = pciReader.Read(); err != nil {
 		return nil, err
 	}
 
@@ -226,8 +226,9 @@ func detectGPUs() (pci.Devices, error) {
 
 	var result pci.Devices
 	for _, device := range devices {
-		// 0000:bd:00.0: DisplayVGA: NVIDIA Corporation AD102GL [RTX 6000 Ada Generation]
 
+		// 0000:bd:00.0: DisplayVGA: NVIDIA Corporation AD102GL [RTX 6000 Ada Generation]
+		r.log.Info("detect gpus", "vendor", device.VendorName, "device", device.DeviceName)
 		if !strings.Contains(strings.ToLower(device.VendorName), "nvidia") {
 			continue
 		}
