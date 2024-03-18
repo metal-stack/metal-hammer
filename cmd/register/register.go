@@ -83,6 +83,15 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		return nil, fmt.Errorf("unable to get system cpu(s) %w", err)
 	}
 	r.log.Info("cpu", "processors", cpu.String())
+	var metalCPUs []*v1.MachineCPU
+	for _, cpu := range cpu.Processors {
+		metalCPUs = append(metalCPUs, &v1.MachineCPU{
+			Vendor:  cpu.Vendor,
+			Model:   cpu.Model,
+			Cores:   cpu.NumCores,
+			Threads: cpu.NumThreads,
+		})
+	}
 
 	// 0000:bd:00.0: DisplayVGA: NVIDIA Corporation AD102GL [RTX 6000 Ada Generation]
 
@@ -91,8 +100,13 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		return nil, fmt.Errorf("unable to get system gpu(s) %w", err)
 	}
 
+	var metalGPUs []*v1.MachineGPU
 	for _, g := range gpus {
 		r.log.Info("found gpu", "gpu", g.String())
+		metalGPUs = append(metalGPUs, &v1.MachineGPU{
+			Vendor: g.VendorName,
+			Model:  g.DeviceName,
+		})
 	}
 
 	// Nics
@@ -179,6 +193,8 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		CpuCores: uint32(cpu.TotalCores),
 		Nics:     nics,
 		Disks:    disks,
+		Cpus:     metalCPUs,
+		Gpus:     metalGPUs,
 	}
 
 	// IPMI
