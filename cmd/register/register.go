@@ -226,15 +226,14 @@ func (r *Register) detectGPUs() (pci.Devices, error) {
 
 	var result pci.Devices
 	for _, device := range devices {
-
-		// 0000:bd:00.0: DisplayVGA: NVIDIA Corporation AD102GL [RTX 6000 Ada Generation]
-		r.log.Info("detect gpus", "vendor", device.VendorName, "device", device.DeviceName)
+		// "vendor":"NVIDIA Corporation","device":"AD102GL [RTX 6000 Ada Generation]"}
 		if !strings.Contains(strings.ToLower(device.VendorName), "nvidia") {
 			continue
 		}
 
 		if strings.Contains(strings.ToLower(device.DeviceName), "rtx") {
-			devices = append(devices, device)
+			r.log.Info("add gpu", "vendor", device.VendorName, "device", device.DeviceName)
+			result = append(result, device)
 		}
 	}
 
