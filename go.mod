@@ -12,13 +12,13 @@ require (
 	github.com/metal-stack/go-hal v0.5.2
 	github.com/metal-stack/go-lldpd v0.4.7
 	github.com/metal-stack/metal-api v0.28.2-0.20240319082832-bdc302de00b8
-	github.com/metal-stack/metal-go v0.28.1
+	github.com/metal-stack/metal-go v0.28.2
 	github.com/metal-stack/pixie v0.3.2
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/pierrec/lz4/v4 v4.1.21
-	github.com/prometheus/common v0.50.0
+	github.com/prometheus/common v0.51.1
 	github.com/samber/slog-loki/v3 v3.2.2
 	github.com/samber/slog-multi v1.0.2
 	github.com/u-root/u-root v0.14.0
@@ -32,7 +32,8 @@ require (
 
 replace (
 	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
-	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20240318113318-316dfb85dfa5
+	// This is main with my pci-ids PR merged, remove once v0.14.1 is released
+	github.com/u-root/u-root => github.com/u-root/u-root v0.14.1-0.20240326203528-0d741dd84444
 )
 
 require (
@@ -92,7 +93,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 // indirect
-	github.com/metal-stack/metal-lib v0.15.1 // indirect
+	github.com/metal-stack/metal-lib v0.16.0 // indirect
 	github.com/metal-stack/security v0.8.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -124,12 +125,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/exp v0.0.0-20240318143956-a85f2c67cd81 // indirect
+	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
 	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.1 // indirect
 )
