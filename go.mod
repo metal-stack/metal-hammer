@@ -17,6 +17,7 @@ require (
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
+	github.com/moby/sys/mountinfo v0.7.1
 	github.com/pierrec/lz4/v4 v4.1.21
 	github.com/prometheus/common v0.51.1
 	github.com/samber/slog-loki/v3 v3.2.2
