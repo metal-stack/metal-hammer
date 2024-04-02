@@ -26,7 +26,7 @@ func main() {
 	err := syscall.Unmount("/etc", syscall.MNT_FORCE)
 	if err != nil {
 		fmt.Printf("unable to umount /etc, which is overmounted with tmpfs %s", err)
-		os.Exit(1)
+		// os.Exit(1) // FIXME enable again
 	}
 
 	err = updateResolvConf()
