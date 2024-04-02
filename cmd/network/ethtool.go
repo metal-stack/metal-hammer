@@ -15,7 +15,7 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 )
 
-// EthtoolCommand to gather ethernet informations
+// EthtoolCommand to gather ethernet information
 const ethtoolCommand = command.Ethtool
 
 // Ethtool to query/set ethernet interfaces
@@ -89,7 +89,7 @@ func (e *Ethtool) disableFirmwareLLDP(ifi string) {
 
 var buggyIntelNicDriverNames = []string{"i40e"}
 
-// stopFirmwareLLDP stop Firmeware LLDP not persistent over reboots, only during runtime.
+// stopFirmwareLLDP stop Firmware LLDP not persistent over reboots, only during runtime.
 // mount -t debugfs none /sys/kernel/debug
 // echo lldp stop > /sys/kernel/debug/i40e/0000:01:00.2/command
 // where <0000:01:00.2> is the pci address of the ethernet nic, this can be inspected by lspci,

@@ -207,7 +207,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	board := r.inband.Board()
 	b := board.BIOS
 	if b == nil {
-		return nil, fmt.Errorf("unable to read bios informations from bmc")
+		return nil, fmt.Errorf("unable to read bios information from bmc")
 	}
 	bios := &v1.MachineBIOS{
 		Version: b.Version,

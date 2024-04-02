@@ -9,10 +9,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20230116142646-e7494d0ef70c
 	github.com/jaypipes/ghw v0.12.0
-	github.com/metal-stack/go-hal v0.5.2
+	github.com/metal-stack/go-hal v0.5.3-0.20240328071240-5aafa89c768c
 	github.com/metal-stack/go-lldpd v0.4.7
 	github.com/metal-stack/metal-api v0.28.2-0.20240319082832-bdc302de00b8
-	github.com/metal-stack/metal-go v0.28.2
+	github.com/metal-stack/metal-go v0.28.3
 	github.com/metal-stack/pixie v0.3.2
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
@@ -46,7 +46,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/coreos/go-oidc/v3 v3.10.0 // indirect
 	github.com/creack/pty v1.1.21 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.16.0 // indirect
@@ -93,7 +93,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 // indirect
-	github.com/metal-stack/metal-lib v0.16.0 // indirect
+	github.com/metal-stack/metal-lib v0.16.1 // indirect
 	github.com/metal-stack/security v0.8.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -108,7 +108,7 @@ require (
 	github.com/prometheus/client_golang v1.19.0 // indirect
 	github.com/prometheus/client_model v0.6.0 // indirect
 	github.com/prometheus/procfs v0.13.0 // indirect
-	github.com/prometheus/prometheus v0.51.0 // indirect
+	github.com/prometheus/prometheus v0.51.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/samber/lo v1.39.0 // indirect
 	github.com/samber/slog-common v0.15.0 // indirect
@@ -130,7 +130,7 @@ require (
 	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.1 // indirect
 )

@@ -61,7 +61,7 @@ func (f *Firmware) Update() {
 	}
 }
 
-// Run execute a comand with arguments, returns output and error
+// Run execute a command with arguments, returns output and error
 func run(log *slog.Logger, command string, args ...string) (string, error) {
 	path, err := exec.LookPath(command)
 	if err != nil {

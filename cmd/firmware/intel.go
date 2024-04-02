@@ -22,7 +22,7 @@ func (r intel) update() error {
 	if err != nil {
 		return fmt.Errorf("unable to update intel firmware %w", err)
 	}
-	r.log.Info("intel", "updated firware output", output)
+	r.log.Info("intel", "updated firmware output", output)
 	return nil
 }
 
