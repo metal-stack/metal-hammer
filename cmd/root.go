@@ -106,7 +106,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		return eventEmitter, fmt.Errorf("register %w", err)
 	}
 
-	resp, err := metalAPIClient.Driver.Machine().FindMachine(machine.NewFindMachineParams().WithID(spec.MachineUUID), nil)
+	resp, err := metalAPIClient.Machine().FindMachine(machine.NewFindMachineParams().WithID(spec.MachineUUID), nil)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("fetch %w", err)
 	}
@@ -143,7 +143,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
-	resp, err = metalAPIClient.Driver.Machine().FindMachine(machine.NewFindMachineParams().WithID(spec.MachineUUID), nil)
+	resp, err = metalAPIClient.Machine().FindMachine(machine.NewFindMachineParams().WithID(spec.MachineUUID), nil)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}

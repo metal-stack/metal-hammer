@@ -16,7 +16,7 @@ func (h *Hammer) createBmcSuperuser() error {
 		return fmt.Errorf("failed to fetch SuperUser password %w", err)
 	}
 
-	if resp.FeatureDisabled {
+	if resp.GetFeatureDisabled() {
 		h.log.Info("creation of superuser disabled")
 		return nil
 	}

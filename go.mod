@@ -9,10 +9,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20230116142646-e7494d0ef70c
 	github.com/jaypipes/ghw v0.12.0
-	github.com/metal-stack/go-hal v0.5.3-0.20240328071240-5aafa89c768c
+	github.com/metal-stack/go-hal v0.5.3
 	github.com/metal-stack/go-lldpd v0.4.7
-	github.com/metal-stack/metal-api v0.28.2-0.20240319082832-bdc302de00b8
-	github.com/metal-stack/metal-go v0.28.3
+	github.com/metal-stack/metal-api v0.28.5-0.20240403094725-20bcbd64cbe0
+	github.com/metal-stack/metal-go v0.28.4
 	github.com/metal-stack/pixie v0.3.2
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
@@ -94,7 +94,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 // indirect
-	github.com/metal-stack/metal-lib v0.16.1 // indirect
+	github.com/metal-stack/metal-lib v0.16.2 // indirect
 	github.com/metal-stack/security v0.8.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
