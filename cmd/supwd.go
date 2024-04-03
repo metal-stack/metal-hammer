@@ -17,6 +17,7 @@ func (h *Hammer) createBmcSuperuser() error {
 	}
 
 	if resp.FeatureDisabled {
+		h.log.Info("creation of superuser disabled")
 		return nil
 	}
 
