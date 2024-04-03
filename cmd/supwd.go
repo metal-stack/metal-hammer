@@ -21,10 +21,15 @@ func (h *Hammer) createBmcSuperuser() error {
 	}
 
 	bmcConn := h.Hal.BMCConnection()
+
+	h.log.Info("create superuser", "user", bmcConn.SuperUser().Name)
+
 	err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, resp.SuperUserPassword)
 	if err != nil {
 		return fmt.Errorf("failed to create bmc superuser: %s %w", bmcConn.SuperUser().Name, err)
 	}
+
+	h.log.Info("superuser created")
 
 	return nil
 }
