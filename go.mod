@@ -19,14 +19,14 @@ require (
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/moby/sys/mountinfo v0.7.1
 	github.com/pierrec/lz4/v4 v4.1.21
-	github.com/prometheus/common v0.51.1
+	github.com/prometheus/common v0.52.2
 	github.com/samber/slog-loki/v3 v3.2.2
 	github.com/samber/slog-multi v1.0.2
 	github.com/u-root/u-root v0.14.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	golang.org/x/sync v0.6.0
 	golang.org/x/sys v0.18.0
-	google.golang.org/grpc v1.62.1
+	google.golang.org/grpc v1.63.0
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -107,7 +107,7 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.19.0 // indirect
-	github.com/prometheus/client_model v0.6.0 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/procfs v0.13.0 // indirect
 	github.com/prometheus/prometheus v0.51.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -117,7 +117,7 @@ require (
 	github.com/sethvargo/go-password v0.2.0 // indirect
 	github.com/stmcginnis/gofish v0.15.0 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
-	github.com/ulikunitz/xz v0.5.11 // indirect
+	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
 	github.com/vmware/goipmi v0.0.0-20181114221114-2333cd82d702 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
@@ -127,7 +127,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
-	golang.org/x/net v0.22.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
