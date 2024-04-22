@@ -11,7 +11,7 @@ require (
 	github.com/jaypipes/ghw v0.12.0
 	github.com/metal-stack/go-hal v0.5.3
 	github.com/metal-stack/go-lldpd v0.4.7
-	github.com/metal-stack/metal-api v0.28.5-0.20240403094725-20bcbd64cbe0
+	github.com/metal-stack/metal-api v0.28.5-0.20240403113738-85fbe5776f76
 	github.com/metal-stack/metal-go v0.28.4
 	github.com/metal-stack/pixie v0.3.2
 	github.com/metal-stack/v v1.0.3
