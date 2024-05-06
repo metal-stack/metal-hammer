@@ -11,8 +11,8 @@ require (
 	github.com/jaypipes/ghw v0.12.0
 	github.com/metal-stack/go-hal v0.5.3
 	github.com/metal-stack/go-lldpd v0.4.7
-	github.com/metal-stack/metal-api v0.28.5-0.20240403113738-85fbe5776f76
-	github.com/metal-stack/metal-go v0.28.4
+	github.com/metal-stack/metal-api v0.29.0
+	github.com/metal-stack/metal-go v0.29.0
 	github.com/metal-stack/pixie v0.3.2
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
@@ -27,7 +27,7 @@ require (
 	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.19.0
 	google.golang.org/grpc v1.63.2
-	google.golang.org/protobuf v1.33.0
+	google.golang.org/protobuf v1.34.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
