@@ -13,8 +13,8 @@ If only the `imageID` is given it tries to guess the primary disk of the old OS.
 After wiping the primary disk the reinstall procedure continues with the usual installation process up from the `installImage` method that eventually ends with the `finalizeAllocation` call, which now includes the previous mentioned `BootInfo` parameters.
 
 **metal-core** passes-through the request to **metal-api**, sets the boot order to HD and power cycles the machine again, which in turn boots the new OS.
- 
-**metal-api** removes the `allocation.Reinstall` mark and stores the `BootInfo` details together with the newly installed `imageID` in the `allcation.MachineSetup` struct.
+
+**metal-api** removes the `allocation.Reinstall` mark and stores the `BootInfo` details together with the newly installed `imageID` in the `allocation.MachineSetup` struct.
 
 This was the happy-path. But of course, things can go wrong. If for any reason the reinstallation process fails, we are potentially in one of the following two states: Either the primary disk has been wiped already (and therewith the existing OS) or not. In both cases **metal-hammer** calls **metal-core** via the `/machine/abort-reinstall/<id>` endpoint delivering the bool value `primaryDiskWiped` that indicates the actual state.  
 If **metal-core** fails to respond or the OS has already been wiped the machine reboots. Otherwise it gets the `BootInfo` of the previous installed OS stored in the DS and reboots with these details into the existing OS, just as nothing had happened at all.  

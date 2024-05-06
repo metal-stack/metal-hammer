@@ -15,30 +15,38 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
+	"github.com/moby/sys/mountinfo"
 )
 
 func main() {
+	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})
+	log := slog.New(jsonHandler)
+
 	fmt.Print(cmd.HammerBanner)
 	if len(os.Args) > 1 {
 		panic("cmd args are not supported")
 	}
 
-	err := syscall.Unmount("/etc", syscall.MNT_FORCE)
+	mounted, err := mountinfo.Mounted("/etc")
 	if err != nil {
-		fmt.Printf("unable to umount /etc, which is overmounted with tmpfs %s", err)
+		log.Error("unable to check if /etc is a mountpoint", "error", err)
 		os.Exit(1)
+	}
+	if mounted {
+		err := syscall.Unmount("/etc", syscall.MNT_FORCE)
+		if err != nil {
+			log.Error("unable to umount /etc, which is overmounted with tmpfs", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	err = updateResolvConf()
 	if err != nil {
-		fmt.Printf("error updating resolv.conf %s", err)
+		log.Error("error updating resolv.conf", "error", err)
 		os.Exit(1)
 	}
-
-	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})
-	log := slog.New(jsonHandler)
 
 	// Reboot if metal-hammer crashes after 60sec.
 	go kernel.Watchdog(log)

@@ -20,6 +20,7 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/v"
+	"github.com/u-root/u-root/pkg/pci"
 	"github.com/vishvananda/netlink"
 )
 
@@ -80,6 +81,32 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	cpu, err := ghw.CPU()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system cpu(s) %w", err)
+	}
+	r.log.Info("cpu", "processors", cpu.String())
+	var metalCPUs []*v1.MachineCPU
+	for _, cpu := range cpu.Processors {
+		metalCPUs = append(metalCPUs, &v1.MachineCPU{
+			Vendor:  cpu.Vendor,
+			Model:   cpu.Model,
+			Cores:   cpu.NumCores,
+			Threads: cpu.NumThreads,
+		})
+	}
+
+	// 0000:bd:00.0: DisplayVGA: NVIDIA Corporation AD102GL [RTX 6000 Ada Generation]
+
+	gpus, err := r.detectGPUs()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get system gpu(s) %w", err)
+	}
+
+	var metalGPUs []*v1.MachineGPU
+	for _, g := range gpus {
+		r.log.Info("found gpu", "gpu", g.String())
+		metalGPUs = append(metalGPUs, &v1.MachineGPU{
+			Vendor: g.VendorName,
+			Model:  g.DeviceName,
+		})
 	}
 
 	// Nics
@@ -166,6 +193,8 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		CpuCores: uint32(cpu.TotalCores),
 		Nics:     nics,
 		Disks:    disks,
+		Cpus:     metalCPUs,
+		Gpus:     metalGPUs,
 	}
 
 	// IPMI
@@ -178,7 +207,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	board := r.inband.Board()
 	b := board.BIOS
 	if b == nil {
-		return nil, fmt.Errorf("unable to read bios informations from bmc")
+		return nil, fmt.Errorf("unable to read bios information from bmc")
 	}
 	bios := &v1.MachineBIOS{
 		Version: b.Version,
@@ -196,6 +225,36 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 
 	r.log.Info("register", "request", request)
 	return request, nil
+}
+
+func (r *Register) detectGPUs() (pci.Devices, error) {
+	pciReader, err := pci.NewBusReader("*")
+	if err != nil {
+		return nil, err
+	}
+
+	var devices pci.Devices
+	if devices, err = pciReader.Read(); err != nil {
+		return nil, err
+	}
+
+	devices.SetVendorDeviceName()
+
+	var result pci.Devices
+	for _, device := range devices {
+		// "vendor":"NVIDIA Corporation","device":"AD102GL [RTX 6000 Ada Generation]"}
+		if !strings.Contains(strings.ToLower(device.VendorName), "nvidia") {
+			continue
+		}
+
+		// TODO if new models must be supported, this code must be refactored
+		if strings.Contains(strings.ToLower(device.DeviceName), "rtx") {
+			r.log.Info("add gpu", "vendor", device.VendorName, "device", device.DeviceName)
+			result = append(result, device)
+		}
+	}
+
+	return result, nil
 }
 
 // save the content of kernel ring buffer to /var/log/syslog

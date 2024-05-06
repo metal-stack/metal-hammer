@@ -22,7 +22,7 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
 
 # ipmitool from bookworm is broken and returns with error on most commands
 FROM golang:1.22-bullseye as initrd-builder
-ENV UROOT_GIT_SHA_OR_TAG=v0.13.0
+ENV UROOT_GIT_SHA_OR_TAG=v0.14.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
 	ca-certificates \

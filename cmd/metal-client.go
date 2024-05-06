@@ -10,6 +10,7 @@ import (
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	metalgo "github.com/metal-stack/metal-go"
+	"github.com/metal-stack/metal-go/api/client/machine"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -18,7 +19,7 @@ import (
 type MetalAPIClient struct {
 	log    *slog.Logger
 	conn   grpc.ClientConnInterface
-	Driver metalgo.Client
+	driver metalgo.Client
 }
 
 // NewMetalAPIClient fetches the address,hmac and certificates from pixie needed to communicate with metal-api,
@@ -71,10 +72,12 @@ func NewMetalAPIClient(log *slog.Logger, spec *Specification) (*MetalAPIClient, 
 	return &MetalAPIClient{
 		log:    log,
 		conn:   conn,
-		Driver: driver,
+		driver: driver,
 	}, nil
 }
-
+func (c *MetalAPIClient) Machine() machine.ClientService {
+	return c.driver.Machine()
+}
 func (c *MetalAPIClient) Event() v1.EventServiceClient {
 	return v1.NewEventServiceClient(c.conn)
 }

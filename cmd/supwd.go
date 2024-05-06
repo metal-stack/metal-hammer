@@ -16,15 +16,21 @@ func (h *Hammer) createBmcSuperuser() error {
 		return fmt.Errorf("failed to fetch SuperUser password %w", err)
 	}
 
-	if resp.FeatureDisabled {
+	if resp.SuperUserPassword == "" {
+		h.log.Warn("creation of superuser disabled because password is empty")
 		return nil
 	}
 
 	bmcConn := h.Hal.BMCConnection()
+
 	err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, resp.SuperUserPassword)
 	if err != nil {
-		return fmt.Errorf("failed to create bmc superuser: %s %w", bmcConn.SuperUser().Name, err)
+		// FIXME: this happens always after the first creation on X12 and newer boards
+		// return fmt.Errorf("failed to create bmc superuser: %s %w", bmcConn.SuperUser().Name, err)
+		h.log.Error("failed to create bmc superuser", "user", bmcConn.SuperUser().Name, "error", err)
+		return nil
 	}
 
+	h.log.Info("created superuser", "user", bmcConn.SuperUser().Name)
 	return nil
 }

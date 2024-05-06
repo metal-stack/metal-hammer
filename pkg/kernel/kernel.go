@@ -107,6 +107,13 @@ func Firmware() string {
 
 // Watchdog periodically pings kernel software watchdog.
 // from https://github.com/gokrazy/gokrazy
+// FIXME replace with the u-root implementation
+//
+//	wd, err := watchdog.Open(watchdog.Dev)
+//	while running {
+//	    wd.KeepAlive()
+//	}
+//	wd.MagicClose()
 func Watchdog(log *slog.Logger) {
 	f, err := os.OpenFile("/dev/watchdog", os.O_WRONLY, 0)
 	if err != nil {
