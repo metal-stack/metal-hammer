@@ -7,11 +7,11 @@ import (
 	"os"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/metal-stack/metal-hammer/pkg/api"
 
 	"github.com/u-root/u-root/pkg/boot/kexec"
+	"github.com/u-root/u-root/pkg/watchdog"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v3"
 )
@@ -106,30 +106,17 @@ func Firmware() string {
 }
 
 // Watchdog periodically pings kernel software watchdog.
-// from https://github.com/gokrazy/gokrazy
-// FIXME replace with the u-root implementation
-//
-//	wd, err := watchdog.Open(watchdog.Dev)
-//	while running {
-//	    wd.KeepAlive()
-//	}
-//	wd.MagicClose()
 func Watchdog(log *slog.Logger) {
-	f, err := os.OpenFile("/dev/watchdog", os.O_WRONLY, 0)
+	wd, err := watchdog.Open(watchdog.Dev)
 	if err != nil {
 		log.Error("watchdog", "disabling hardware watchdog, as it could not be opened.", err)
 		return
 	}
-	defer f.Close()
-	// timeout in seconds after which a reboot will be triggered if no write to /dev/watchdog was made.
-	timeout := uint32(60)
-	if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_SETTIMEOUT, uintptr(unsafe.Pointer(&timeout))); errno != 0 {
-		log.Error("watchdog", "set timeout failed", errno)
-	}
+	defer wd.MagicClose()
 
 	for {
-		if _, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), unix.WDIOC_KEEPALIVE, 0); errno != 0 {
-			log.Error("watchdog", "hardware watchdog ping failed", errno)
+		if err := wd.KeepAlive(); err != nil {
+			log.Error("watchdog", "keepalive failed", err)
 		}
 		time.Sleep(10 * time.Second)
 	}
