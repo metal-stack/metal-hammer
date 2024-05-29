@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -53,13 +52,9 @@ func NewMetalAPIClient(log *slog.Logger, spec *Specification) (*MetalAPIClient, 
 	grpcOpts := []grpc.DialOption{
 		grpc.WithKeepaliveParams(kacp),
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
-		grpc.WithBlock(),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	conn, err := grpc.DialContext(ctx, metalConfig.GRPCAddress, grpcOpts...)
+	conn, err := grpc.NewClient(metalConfig.GRPCAddress, grpcOpts...)
 	if err != nil {
 		return nil, err
 	}
