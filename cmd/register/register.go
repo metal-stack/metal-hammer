@@ -189,12 +189,11 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	}
 
 	hardware := &v1.MachineHardware{
-		Memory:   uint64(memory.TotalPhysicalBytes),
-		CpuCores: uint32(cpu.TotalCores),
-		Nics:     nics,
-		Disks:    disks,
-		Cpus:     metalCPUs,
-		Gpus:     metalGPUs,
+		Memory: uint64(memory.TotalPhysicalBytes),
+		Nics:   nics,
+		Disks:  disks,
+		Cpus:   metalCPUs,
+		Gpus:   metalGPUs,
 	}
 
 	// IPMI
