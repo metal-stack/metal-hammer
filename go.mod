@@ -3,7 +3,7 @@ module github.com/metal-stack/metal-hammer
 go 1.22
 
 require (
-	github.com/beevik/ntp v1.4.2
+	github.com/beevik/ntp v1.4.3
 	github.com/cheggaaa/pb/v3 v3.1.5
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
