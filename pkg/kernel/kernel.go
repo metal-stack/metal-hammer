@@ -125,7 +125,7 @@ func Watchdog(log *slog.Logger) {
 // AutoReboot will start a timer and reboot after given duration a random variation spread is added
 func AutoReboot(log *slog.Logger, after, spread time.Duration, callback func()) {
 	log.Info("autoreboot set to", "after", after.String(), "spread", spread.String())
-	spreadMinutes := rand.N(spread)
+	spreadMinutes := rand.N(spread) // nolint:gosec
 	after = after + spreadMinutes
 
 	log.Info("autoreboot with spread", "after", after.String())

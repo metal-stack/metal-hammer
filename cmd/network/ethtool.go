@@ -106,7 +106,7 @@ func (e *Ethtool) stopFirmwareLLDP() {
 			if !info.IsDir() && info.Name() == "command" {
 				e.log.Info("ethtool", "stopFirmwareLLDP found command", path)
 				stopCommand := []byte("lldp stop")
-				err := os.WriteFile(path, stopCommand, os.ModePerm)
+				err := os.WriteFile(path, stopCommand, os.ModePerm) // nolint:gosec
 				if err != nil {
 					e.log.Error("ethtool", "stopFirmwareLLDP stop lldp > command", path, "error", err)
 				}

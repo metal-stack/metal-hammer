@@ -63,7 +63,7 @@ func TestFirmware(t *testing.T) {
 }
 
 func writeCmdline(content string) error {
-	err := os.WriteFile(cmdline, []byte(content), os.ModePerm)
+	err := os.WriteFile(cmdline, []byte(content), os.ModePerm) // nolint:gosec
 	if err != nil {
 		return fmt.Errorf("unable to write test cmdline")
 	}
