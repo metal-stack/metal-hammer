@@ -16,7 +16,7 @@ func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := h.MetalAPIClient.BootService().AbortReinstall(ctx, &v1.BootServiceAbortReinstallRequest{Uuid: machineID, PrimaryDiskWiped: primaryDiskWiped})
+	resp, err := h.metalAPIClient.BootService().AbortReinstall(ctx, &v1.BootServiceAbortReinstallRequest{Uuid: machineID, PrimaryDiskWiped: primaryDiskWiped})
 	if err != nil {
 		h.log.Error("failed to abort reinstall", "error", err)
 		time.Sleep(5 * time.Second)

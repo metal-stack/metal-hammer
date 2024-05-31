@@ -22,18 +22,15 @@ import (
 
 // Hammer is the machine which forms a bare metal to a working server
 type Hammer struct {
-	Spec             *Specification
 	log              *slog.Logger
-	Hal              hal.InBand
-	MetalAPIClient   *MetalAPIClient
-	EventEmitter     *event.EventEmitter
-	LLDPClient       *network.LLDPClient
-	FilesystemLayout *models.V1FilesystemLayoutResponse
+	spec             *Specification
+	hal              hal.InBand
+	metalAPIClient   *MetalAPIClient
+	eventEmitter     *event.EventEmitter
+	filesystemLayout *models.V1FilesystemLayoutResponse
 	// IPAddress is the ip of the eth0 interface during installation
-	IPAddress          string
-	Started            time.Time
-	ChrootPrefix       string
-	OsImageDestination string
+	chrootPrefix       string
+	osImageDestination string
 }
 
 // Run orchestrates the whole register/wipe/format/burn and reboot process
@@ -57,13 +54,13 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 	}
 
 	hammer := &Hammer{
-		Hal:                hal,
-		Spec:               spec,
+		hal:                hal,
+		spec:               spec,
 		log:                log,
-		IPAddress:          spec.IP,
-		EventEmitter:       eventEmitter,
-		ChrootPrefix:       "/rootfs",
-		OsImageDestination: "/tmp/os.tgz",
+		eventEmitter:       eventEmitter,
+		chrootPrefix:       "/rootfs",
+		osImageDestination: "/tmp/os.tgz",
+		metalAPIClient:     metalAPIClient,
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
@@ -71,7 +68,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		eventEmitter.Emit(event.ProvisioningEventPlannedReboot, "autoreboot after 24h")
 	})
 
-	hammer.Spec.ConsolePassword = password.Generate(16)
+	hammer.spec.ConsolePassword = password.Generate(16)
 
 	err = hammer.createBmcSuperuser()
 	if err != nil {
@@ -111,7 +108,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 	}
 	m := resp.Payload
 	if m != nil && m.Allocation != nil && m.Allocation.Reinstall != nil && *m.Allocation.Reinstall {
-		hammer.FilesystemLayout = m.Allocation.Filesystemlayout
+		hammer.filesystemLayout = m.Allocation.Filesystemlayout
 		primaryDiskWiped := false
 		if m.Allocation.Image == nil || m.Allocation.Image.ID == nil {
 			err = fmt.Errorf("no image specified")
@@ -149,7 +146,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 	m = resp.Payload
 
 	log.Info("perform install", "machineID", m.ID, "imageID", *m.Allocation.Image.ID)
-	hammer.FilesystemLayout = m.Allocation.Filesystemlayout
+	hammer.filesystemLayout = m.Allocation.Filesystemlayout
 	err = hammer.installImage(eventEmitter, bootService, m)
 	return eventEmitter, err
 }
@@ -165,9 +162,9 @@ func (h *Hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.B
 	}
 
 	rep := &report.Report{
-		MachineUUID:     h.Spec.MachineUUID,
+		MachineUUID:     h.spec.MachineUUID,
 		Client:          bootService,
-		ConsolePassword: h.Spec.ConsolePassword,
+		ConsolePassword: h.spec.ConsolePassword,
 		Initrd:          info.Initrd,
 		Cmdline:         info.Cmdline,
 		Kernel:          info.Kernel,

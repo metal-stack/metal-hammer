@@ -10,11 +10,11 @@ import (
 // ConfigureBIOS ensures that UEFI boot is enabled and CSM-support is disabled.
 // It then reboots the machine.
 func (h *Hammer) ConfigureBIOS() error {
-	if h.Hal.Board().VM {
+	if h.hal.Board().VM {
 		return nil
 	}
 
-	reboot, err := h.Hal.ConfigureBIOS()
+	reboot, err := h.hal.ConfigureBIOS()
 	if err != nil {
 		return err
 	}
@@ -22,7 +22,7 @@ func (h *Hammer) ConfigureBIOS() error {
 
 	if reboot {
 		msg := "BIOS configuration requires a reboot"
-		h.EventEmitter.Emit(event.ProvisioningEventPlannedReboot, msg)
+		h.eventEmitter.Emit(event.ProvisioningEventPlannedReboot, msg)
 		h.log.Info("bios", msg, "reboot in 1 sec")
 		time.Sleep(1 * time.Second)
 		err = kernel.Reboot()
@@ -37,11 +37,11 @@ func (h *Hammer) ConfigureBIOS() error {
 // EnsureBootOrder ensures that the BIOS boot order is properly set,
 // i.e. first boot from OS image and then PXE boot
 func (h *Hammer) EnsureBootOrder(bootloaderID string) error {
-	if h.Hal.Board().VM {
+	if h.hal.Board().VM {
 		return nil
 	}
 
-	err := h.Hal.EnsureBootOrder(bootloaderID)
+	err := h.hal.EnsureBootOrder(bootloaderID)
 	if err != nil {
 		return err
 	}

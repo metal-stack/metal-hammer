@@ -23,7 +23,7 @@ import (
 
 // Install a given image to the disk by using genuinetools/img
 func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, error) {
-	s := storage.New(h.log, h.ChrootPrefix, *h.FilesystemLayout)
+	s := storage.New(h.log, h.chrootPrefix, *h.filesystemLayout)
 	err := s.Run()
 	if err != nil {
 		return nil, err
@@ -31,17 +31,17 @@ func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 
 	image := machine.Allocation.Image.URL
 
-	err = img.NewImage(h.log).Pull(image, h.OsImageDestination)
+	err = img.NewImage(h.log).Pull(image, h.osImageDestination)
 	if err != nil {
 		return nil, err
 	}
 
-	err = img.NewImage(h.log).Burn(h.ChrootPrefix, image, h.OsImageDestination)
+	err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
 	if err != nil {
 		return nil, err
 	}
 
-	info, err := h.install(h.ChrootPrefix, machine, s.RootUUID)
+	info, err := h.install(h.chrootPrefix, machine, s.RootUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -150,8 +150,8 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 // will only be written if lvm is installed in the target image
 func (h *Hammer) writeLVMLocalConf() error {
 	srclvmlocal := "/etc/lvm/lvmlocal.conf"
-	dstlvm := path.Join(h.ChrootPrefix, "/etc/lvm")
-	dstlvmlocal := path.Join(h.ChrootPrefix, srclvmlocal)
+	dstlvm := path.Join(h.chrootPrefix, "/etc/lvm")
+	dstlvmlocal := path.Join(h.chrootPrefix, srclvmlocal)
 
 	_, err := os.Stat(srclvmlocal) // FIXME use fileExists below
 	if os.IsNotExist(err) {
@@ -177,7 +177,7 @@ func (h *Hammer) writeLVMLocalConf() error {
 }
 
 func (h *Hammer) writeUserData(machine *models.V1MachineResponse) error {
-	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
+	configdir := path.Join(h.chrootPrefix, "etc", "metal")
 	destination := path.Join(configdir, "userdata")
 
 	base64UserData := machine.Allocation.UserData
@@ -194,7 +194,7 @@ func (h *Hammer) writeUserData(machine *models.V1MachineResponse) error {
 
 func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUiD string) error {
 	h.log.Info("write installation configuration")
-	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
+	configdir := path.Join(h.chrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
 		return fmt.Errorf("mkdir of %s target os failed %w", configdir, err)
@@ -223,8 +223,8 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		Hostname:      *alloc.Hostname,
 		SSHPublicKey:  sshPubkeys,
 		Networks:      alloc.Networks,
-		MachineUUID:   h.Spec.MachineUUID,
-		Password:      h.Spec.ConsolePassword,
+		MachineUUID:   h.spec.MachineUUID,
+		Password:      h.spec.ConsolePassword,
 		Console:       console,
 		Timestamp:     time.Now().Format(time.RFC3339),
 		Nics:          h.onlyNicsWithNeighbors(machine.Hardware.Nics),
