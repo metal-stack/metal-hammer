@@ -22,8 +22,8 @@ import (
 )
 
 // Install a given image to the disk by using genuinetools/img
-func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, error) {
-	s := storage.New(h.log, h.ChrootPrefix, *h.FilesystemLayout)
+func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, error) {
+	s := storage.New(h.log, h.chrootPrefix, *h.filesystemLayout)
 	err := s.Run()
 	if err != nil {
 		return nil, err
@@ -31,17 +31,17 @@ func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 
 	image := machine.Allocation.Image.URL
 
-	err = img.NewImage(h.log).Pull(image, h.OsImageDestination)
+	err = img.NewImage(h.log).Pull(image, h.osImageDestination)
 	if err != nil {
 		return nil, err
 	}
 
-	err = img.NewImage(h.log).Burn(h.ChrootPrefix, image, h.OsImageDestination)
+	err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
 	if err != nil {
 		return nil, err
 	}
 
-	info, err := h.install(h.ChrootPrefix, machine, s.RootUUID)
+	info, err := h.install(h.chrootPrefix, machine, s.RootUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (h *Hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*api.Bootinfo, error) {
+func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*api.Bootinfo, error) {
 	h.log.Info("install", "image", machine.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(machine, rootUUID)
@@ -148,10 +148,10 @@ func (h *Hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 
 // writeLVMLocalConf to make lvm more compatible with os without udevd
 // will only be written if lvm is installed in the target image
-func (h *Hammer) writeLVMLocalConf() error {
+func (h *hammer) writeLVMLocalConf() error {
 	srclvmlocal := "/etc/lvm/lvmlocal.conf"
-	dstlvm := path.Join(h.ChrootPrefix, "/etc/lvm")
-	dstlvmlocal := path.Join(h.ChrootPrefix, srclvmlocal)
+	dstlvm := path.Join(h.chrootPrefix, "/etc/lvm")
+	dstlvmlocal := path.Join(h.chrootPrefix, srclvmlocal)
 
 	_, err := os.Stat(srclvmlocal) // FIXME use fileExists below
 	if os.IsNotExist(err) {
@@ -176,8 +176,8 @@ func (h *Hammer) writeLVMLocalConf() error {
 	return nil
 }
 
-func (h *Hammer) writeUserData(machine *models.V1MachineResponse) error {
-	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
+func (h *hammer) writeUserData(machine *models.V1MachineResponse) error {
+	configdir := path.Join(h.chrootPrefix, "etc", "metal")
 	destination := path.Join(configdir, "userdata")
 
 	base64UserData := machine.Allocation.UserData
@@ -192,9 +192,9 @@ func (h *Hammer) writeUserData(machine *models.V1MachineResponse) error {
 	return nil
 }
 
-func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUiD string) error {
+func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUiD string) error {
 	h.log.Info("write installation configuration")
-	configdir := path.Join(h.ChrootPrefix, "etc", "metal")
+	configdir := path.Join(h.chrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
 		return fmt.Errorf("mkdir of %s target os failed %w", configdir, err)
@@ -223,8 +223,8 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		Hostname:      *alloc.Hostname,
 		SSHPublicKey:  sshPubkeys,
 		Networks:      alloc.Networks,
-		MachineUUID:   h.Spec.MachineUUID,
-		Password:      h.Spec.ConsolePassword,
+		MachineUUID:   h.spec.MachineUUID,
+		Password:      h.spec.ConsolePassword,
 		Console:       console,
 		Timestamp:     time.Now().Format(time.RFC3339),
 		Nics:          h.onlyNicsWithNeighbors(machine.Hardware.Nics),
@@ -242,7 +242,7 @@ func (h *Hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 
 	return os.WriteFile(destination, yamlContent, 0600)
 }
-func (h *Hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1MachineNic {
+func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1MachineNic {
 	noNeighbors := func(neighbors []*models.V1MachineNic) bool {
 		if len(neighbors) == 0 {
 			return true

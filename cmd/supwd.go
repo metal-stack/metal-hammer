@@ -9,9 +9,9 @@ import (
 )
 
 // createBmcSuperuser creates the bmc super user.
-func (h *Hammer) createBmcSuperuser() error {
+func (h *hammer) createBmcSuperuser() error {
 	req := &v1.BootServiceSuperUserPasswordRequest{}
-	resp, err := h.MetalAPIClient.BootService().SuperUserPassword(context.Background(), req)
+	resp, err := h.metalAPIClient.BootService().SuperUserPassword(context.Background(), req)
 	if err != nil {
 		return fmt.Errorf("failed to fetch SuperUser password %w", err)
 	}
@@ -21,7 +21,7 @@ func (h *Hammer) createBmcSuperuser() error {
 		return nil
 	}
 
-	bmcConn := h.Hal.BMCConnection()
+	bmcConn := h.hal.BMCConnection()
 
 	err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, resp.SuperUserPassword)
 	if err != nil {
