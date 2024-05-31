@@ -64,7 +64,6 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		EventEmitter:       eventEmitter,
 		ChrootPrefix:       "/rootfs",
 		OsImageDestination: "/tmp/os.tgz",
-		MetalAPIClient:     metalAPIClient,
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
@@ -139,7 +138,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		return eventEmitter, err
 	}
 
-	err = hammer.MetalAPIClient.WaitForAllocation(eventEmitter, spec.MachineUUID)
+	err = metalAPIClient.WaitForAllocation(eventEmitter, spec.MachineUUID)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
