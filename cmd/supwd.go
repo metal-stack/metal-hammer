@@ -9,7 +9,7 @@ import (
 )
 
 // createBmcSuperuser creates the bmc super user.
-func (h *Hammer) createBmcSuperuser() error {
+func (h *hammer) createBmcSuperuser() error {
 	req := &v1.BootServiceSuperUserPasswordRequest{}
 	resp, err := h.metalAPIClient.BootService().SuperUserPassword(context.Background(), req)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 )
 
-func (h *Hammer) abortReinstall(reason error, machineID string, primaryDiskWiped bool) error {
+func (h *hammer) abortReinstall(reason error, machineID string, primaryDiskWiped bool) error {
 	h.log.Error("reinstall cancelled => boot into existing OS...", "reason", reason)
 
 	var bootInfo *kernelapi.Bootinfo

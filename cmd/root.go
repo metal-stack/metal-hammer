@@ -20,8 +20,8 @@ import (
 	"github.com/metal-stack/v"
 )
 
-// Hammer is the machine which forms a bare metal to a working server
-type Hammer struct {
+// hammer is the machine which forms a bare metal to a working server
+type hammer struct {
 	log              *slog.Logger
 	spec             *Specification
 	hal              hal.InBand
@@ -53,7 +53,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		return eventEmitter, err
 	}
 
-	hammer := &Hammer{
+	hammer := &hammer{
 		hal:                hal,
 		spec:               spec,
 		log:                log,
@@ -151,7 +151,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 	return eventEmitter, err
 }
 
-func (h *Hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.BootServiceClient, m *models.V1MachineResponse) error {
+func (h *hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.BootServiceClient, m *models.V1MachineResponse) error {
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
 	info, err := h.Install(m)

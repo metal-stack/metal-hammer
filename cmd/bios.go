@@ -9,7 +9,7 @@ import (
 
 // ConfigureBIOS ensures that UEFI boot is enabled and CSM-support is disabled.
 // It then reboots the machine.
-func (h *Hammer) ConfigureBIOS() error {
+func (h *hammer) ConfigureBIOS() error {
 	if h.hal.Board().VM {
 		return nil
 	}
@@ -36,7 +36,7 @@ func (h *Hammer) ConfigureBIOS() error {
 
 // EnsureBootOrder ensures that the BIOS boot order is properly set,
 // i.e. first boot from OS image and then PXE boot
-func (h *Hammer) EnsureBootOrder(bootloaderID string) error {
+func (h *hammer) EnsureBootOrder(bootloaderID string) error {
 	if h.hal.Board().VM {
 		return nil
 	}
