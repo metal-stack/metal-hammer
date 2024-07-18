@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/grafana/loki-client-go/loki"
 	"github.com/metal-stack/pixie/api"
@@ -43,8 +44,12 @@ func AddRemoteHandler(spec *Specification, handler slog.Handler) (slog.Handler, 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create loki default config %w", err)
 	}
-	// config.EncodeJson = true
+
 	config.Client = httpClient
+	config.BackoffConfig.MinBackoff = 100 * time.Millisecond
+	config.BackoffConfig.MaxBackoff = 1 * time.Second
+	config.BackoffConfig.MaxRetries = 1
+
 	client, err := loki.New(config)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create loki client %w", err)
