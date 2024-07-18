@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
 
 	"github.com/grafana/loki-client-go/loki"
 	"github.com/metal-stack/pixie/api"
@@ -56,8 +58,19 @@ func AddRemoteHandler(spec *Specification, handler slog.Handler) (slog.Handler, 
 			{Key: "machineID", Value: slog.StringValue(spec.MachineUUID)},
 		},
 	)
+
 	mdw := slogmulti.NewHandleInlineMiddleware(jsonFormattingMiddleware)
-	combinedHandler := slogmulti.Fanout(slogmulti.Pipe(mdw).Handler(lokiHandler), handler)
+
+	// it is important that the loki handler does not block the metal-hammer under any circumstances
+	// therefore we just throw away messages on error and solely rely on the default stdout logger
+	// in case of backend unavailability
+	failoverHandler := slogmulti.Failover()(
+		slogmulti.Pipe(mdw).Handler(lokiHandler),
+		newDropHandler(os.Stdout),
+	)
+
+	combinedHandler := slogmulti.Fanout(failoverHandler, handler)
+
 	return combinedHandler, nil
 }
 
@@ -75,4 +88,31 @@ func jsonFormattingMiddleware(ctx context.Context, record slog.Record, next func
 	}
 	record = slog.NewRecord(record.Time, record.Level, string(r), record.PC)
 	return next(ctx, record)
+}
+
+type dropHandler struct {
+	w io.Writer
+}
+
+func newDropHandler(writer io.Writer) slog.Handler {
+	return &dropHandler{
+		w: writer,
+	}
+}
+
+func (h *dropHandler) Enabled(_ context.Context, level slog.Level) bool {
+	return true
+}
+
+func (h *dropHandler) Handle(ctx context.Context, record slog.Record) error {
+	fmt.Fprintf(h.w, "dropped record %s", record.Message)
+	return nil
+}
+
+func (h *dropHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return h
+}
+
+func (h *dropHandler) WithGroup(name string) slog.Handler {
+	return h
 }
