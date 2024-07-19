@@ -157,7 +157,7 @@ func (f *Filesystem) createRaids() error {
 			"--create", *raid.Arrayname,
 			"--force",
 			"--run",
-			"--homehost", path.Base(*raid.Arrayname),
+			"--homehost", "any",
 			"--level", level,
 			"--raid-devices", fmt.Sprintf("%d", int32(len(raid.Devices))-spares),
 		}
