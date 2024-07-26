@@ -43,6 +43,7 @@ func AddRemoteHandler(spec *Specification, handler slog.Handler) (slog.Handler, 
 		return nil, fmt.Errorf("unable to create loki default config %w", err)
 	}
 
+	// config.EncodeJson = true
 	config.Client = httpClient
 	// we need to set small timeout here otherwise loki can block hammer execution
 	config.BackoffConfig.MinBackoff = 100 * time.Millisecond
