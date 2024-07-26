@@ -179,6 +179,11 @@ func (h *hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.B
 	}
 
 	h.log.Info("installation", "took", time.Since(installationStart))
+
+	// this can be useful for metal-images os debugging
+	// h.log.Info("waiting 10 sec to enable os debugging")
+	// time.Sleep(10 * time.Second)
+
 	eventEmitter.Emit(event.ProvisioningEventBootingNewKernel, "booting into distro kernel")
 	return kernel.RunKexec(info)
 }

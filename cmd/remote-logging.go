@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/grafana/loki-client-go/loki"
 	"github.com/metal-stack/pixie/api"
@@ -41,23 +42,32 @@ func AddRemoteHandler(spec *Specification, handler slog.Handler) (slog.Handler, 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create loki default config %w", err)
 	}
+
 	// config.EncodeJson = true
 	config.Client = httpClient
+	// we need to set small timeout here otherwise loki can block hammer execution
+	config.BackoffConfig.MinBackoff = 100 * time.Millisecond
+	config.BackoffConfig.MaxBackoff = 1 * time.Second
+	config.BackoffConfig.MaxRetries = 1
+
 	client, err := loki.New(config)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create loki client %w", err)
 	}
 
-	lokiHandler := slogloki.Option{
-		Level:  slog.LevelDebug,
-		Client: client}.NewLokiHandler().WithAttrs(
-		[]slog.Attr{
-			{Key: "component", Value: slog.StringValue("metal-hammer")},
-			{Key: "machineID", Value: slog.StringValue(spec.MachineUUID)},
-		},
+	var (
+		lokiHandler = slogloki.Option{
+			Level:  slog.LevelDebug,
+			Client: client}.NewLokiHandler().WithAttrs(
+			[]slog.Attr{
+				{Key: "component", Value: slog.StringValue("metal-hammer")},
+				{Key: "machineID", Value: slog.StringValue(spec.MachineUUID)},
+			},
+		)
+		mdw             = slogmulti.NewHandleInlineMiddleware(jsonFormattingMiddleware)
+		combinedHandler = slogmulti.Fanout(slogmulti.Pipe(mdw).Handler(lokiHandler), handler)
 	)
-	mdw := slogmulti.NewHandleInlineMiddleware(jsonFormattingMiddleware)
-	combinedHandler := slogmulti.Fanout(slogmulti.Pipe(mdw).Handler(lokiHandler), handler)
+
 	return combinedHandler, nil
 }
 
