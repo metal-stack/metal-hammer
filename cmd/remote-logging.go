@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/grafana/loki-client-go/loki"
@@ -46,6 +45,7 @@ func AddRemoteHandler(spec *Specification, handler slog.Handler) (slog.Handler, 
 	}
 
 	config.Client = httpClient
+	// we need to set small timeout here otherwise loki can block hammer execution
 	config.BackoffConfig.MinBackoff = 100 * time.Millisecond
 	config.BackoffConfig.MaxBackoff = 1 * time.Second
 	config.BackoffConfig.MaxRetries = 1
@@ -55,26 +55,18 @@ func AddRemoteHandler(spec *Specification, handler slog.Handler) (slog.Handler, 
 		return nil, fmt.Errorf("unable to create loki client %w", err)
 	}
 
-	lokiHandler := slogloki.Option{
-		Level:  slog.LevelDebug,
-		Client: client}.NewLokiHandler().WithAttrs(
-		[]slog.Attr{
-			{Key: "component", Value: slog.StringValue("metal-hammer")},
-			{Key: "machineID", Value: slog.StringValue(spec.MachineUUID)},
-		},
+	var (
+		lokiHandler = slogloki.Option{
+			Level:  slog.LevelDebug,
+			Client: client}.NewLokiHandler().WithAttrs(
+			[]slog.Attr{
+				{Key: "component", Value: slog.StringValue("metal-hammer")},
+				{Key: "machineID", Value: slog.StringValue(spec.MachineUUID)},
+			},
+		)
+		mdw             = slogmulti.NewHandleInlineMiddleware(jsonFormattingMiddleware)
+		combinedHandler = slogmulti.Fanout(slogmulti.Pipe(mdw).Handler(lokiHandler), handler)
 	)
-
-	mdw := slogmulti.NewHandleInlineMiddleware(jsonFormattingMiddleware)
-
-	// it is important that the loki handler does not block the metal-hammer under any circumstances
-	// therefore we just throw away messages on error and solely rely on the default stdout logger
-	// in case of backend unavailability
-	failoverHandler := slogmulti.Failover()(
-		slogmulti.Pipe(mdw).Handler(lokiHandler),
-		newDropHandler(os.Stdout),
-	)
-
-	combinedHandler := slogmulti.Fanout(failoverHandler, handler)
 
 	return combinedHandler, nil
 }
