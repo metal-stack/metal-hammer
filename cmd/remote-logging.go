@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log/slog"
 	"time"
 
@@ -85,31 +84,4 @@ func jsonFormattingMiddleware(ctx context.Context, record slog.Record, next func
 	}
 	record = slog.NewRecord(record.Time, record.Level, string(r), record.PC)
 	return next(ctx, record)
-}
-
-type dropHandler struct {
-	w io.Writer
-}
-
-func newDropHandler(writer io.Writer) slog.Handler {
-	return &dropHandler{
-		w: writer,
-	}
-}
-
-func (h *dropHandler) Enabled(_ context.Context, level slog.Level) bool {
-	return true
-}
-
-func (h *dropHandler) Handle(ctx context.Context, record slog.Record) error {
-	fmt.Fprintf(h.w, "dropped record %s", record.Message)
-	return nil
-}
-
-func (h *dropHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return h
-}
-
-func (h *dropHandler) WithGroup(name string) slog.Handler {
-	return h
 }
