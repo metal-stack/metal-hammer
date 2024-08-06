@@ -8,7 +8,7 @@ import (
 
 	"github.com/metal-stack/go-hal"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
-	v1helper "github.com/metal-stack/metal-api/pkg/api/v1/helper"
+	apigrpc "github.com/metal-stack/metal-api/pkg/grpc"
 	"github.com/metal-stack/metal-go/api/client/machine"
 	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/cmd/event"
@@ -141,7 +141,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 
 	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
 
-	err = v1helper.WaitForAllocation(context.Background(), log, metalAPIClient.BootService(), spec.MachineUUID, defaultWaitTimeOut)
+	err = apigrpc.WaitForAllocation(context.Background(), log, metalAPIClient.BootService(), spec.MachineUUID, defaultWaitTimeOut)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
