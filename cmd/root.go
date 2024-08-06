@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/metal-stack/go-hal"
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
+	v1helper "github.com/metal-stack/metal-api/pkg/api/v1/helper"
 	"github.com/metal-stack/metal-go/api/client/machine"
 	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/cmd/event"
@@ -19,6 +21,8 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/password"
 	"github.com/metal-stack/v"
 )
+
+const defaultWaitTimeOut = 2 * time.Second
 
 // hammer is the machine which forms a bare metal to a working server
 type hammer struct {
@@ -135,10 +139,13 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		return eventEmitter, err
 	}
 
-	err = metalAPIClient.WaitForAllocation(eventEmitter, spec.MachineUUID)
+	eventEmitter.Emit(event.ProvisioningEventWaiting, "waiting for allocation")
+
+	err = v1helper.WaitForAllocation(context.Background(), log, metalAPIClient.BootService(), spec.MachineUUID, defaultWaitTimeOut)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
+
 	resp, err = metalAPIClient.Machine().FindMachine(machine.NewFindMachineParams().WithID(spec.MachineUUID), nil)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
