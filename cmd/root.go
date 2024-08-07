@@ -22,7 +22,7 @@ import (
 	"github.com/metal-stack/v"
 )
 
-const defaultWaitTimeOut = 2 * time.Second
+const defaultWaitTimeOut = 3 * time.Second
 
 // hammer is the machine which forms a bare metal to a working server
 type hammer struct {
