@@ -159,7 +159,7 @@ func (f *Filesystem) createRaids() error {
 			"--run",
 			"--homehost", "any",
 			"--level", level,
-			"--raid-devices", fmt.Sprintf("%d", int32(len(raid.Devices))-spares),
+			"--raid-devices", fmt.Sprintf("%d", len(raid.Devices)-int(spares)),
 		}
 
 		switch level {
