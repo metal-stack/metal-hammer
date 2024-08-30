@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine as builder
+FROM golang:1.23-alpine as builder
 
 RUN apk add \
 	binutils \
@@ -21,7 +21,7 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
  && mv ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg /work/ice.pkg
 
 # ipmitool from bookworm is broken and returns with error on most commands
-FROM golang:1.22-bullseye as initrd-builder
+FROM golang:1.23-bullseye as initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v0.14.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -54,7 +54,7 @@ WORKDIR /work
 RUN mkdir -p /work/etc/lvm /work/etc/ssl/certs /work/lib/firmware/intel/ice/ddp/ /work/var/run \
  && cp /usr/share/zoneinfo/Etc/UTC /work/etc/localtime
 COPY lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
-COPY --from=r.metal-stack.io/metal/supermicro:2.13.0 /usr/bin/sum /work/
+COPY --from=r.metal-stack.io/metal/supermicro:2.14.0 /usr/bin/sum /work/
 COPY --from=builder /work/ice.pkg /work/ice.pkg
 COPY --from=builder /work/bin/metal-hammer /work/bin/
 RUN make ramdisk
