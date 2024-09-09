@@ -5,27 +5,33 @@ go 1.23
 require (
 	github.com/beevik/ntp v1.4.3
 	github.com/cheggaaa/pb/v3 v3.1.5
+	github.com/flatcar/ignition v0.36.2
+	github.com/google/go-cmp v0.6.0
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20230116142646-e7494d0ef70c
-	github.com/jaypipes/ghw v0.12.0
+	github.com/jaypipes/ghw v0.13.0
 	github.com/metal-stack/go-hal v0.5.3
 	github.com/metal-stack/go-lldpd v0.4.7
-	github.com/metal-stack/metal-api v0.33.0
+	github.com/metal-stack/metal-api v0.34.0
 	github.com/metal-stack/metal-go v0.34.0
-	github.com/metal-stack/pixie v0.3.2
+	github.com/metal-stack/metal-lib v0.18.1
+	github.com/metal-stack/metal-networker v0.45.2
+	github.com/metal-stack/pixie v0.3.3
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/pierrec/lz4/v4 v4.1.21
-	github.com/prometheus/common v0.57.0
+	github.com/prometheus/common v0.59.1
 	github.com/samber/slog-loki/v3 v3.5.0
 	github.com/samber/slog-multi v1.2.1
+	github.com/spf13/afero v1.11.0
+	github.com/stretchr/testify v1.9.0
 	github.com/u-root/u-root v0.14.0
 	github.com/vishvananda/netlink v1.3.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/sys v0.24.0
+	golang.org/x/sys v0.25.0
 	google.golang.org/grpc v1.66.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
@@ -35,15 +41,6 @@ replace (
 	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
 	// This is main with my pci-ids PR merged, remove once v0.14.1 is released
 	github.com/u-root/u-root => github.com/u-root/u-root v0.14.1-0.20240326203528-0d741dd84444
-)
-
-require (
-	github.com/flatcar/ignition v0.36.2
-	github.com/google/go-cmp v0.6.0
-	github.com/metal-stack/metal-lib v0.18.1
-	github.com/metal-stack/metal-networker v0.45.2
-	github.com/spf13/afero v1.11.0
-	github.com/stretchr/testify v1.9.0
 )
 
 require (
@@ -57,7 +54,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/coreos/go-oidc/v3 v3.11.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
-	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e // indirect
+	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/creack/pty v1.1.23 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -66,7 +63,6 @@ require (
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/frankban/quicktest v1.14.6 // indirect
-	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gliderlabs/ssh v0.3.7 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
 	github.com/go-kit/kit v0.13.0 // indirect
@@ -121,7 +117,7 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.20.2 // indirect
+	github.com/prometheus/client_golang v1.20.3 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/prometheus v0.54.1 // indirect
@@ -142,13 +138,13 @@ require (
 	go.opentelemetry.io/otel/metric v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	go4.org v0.0.0-20160314031811-03efcb870d84 // indirect
-	golang.org/x/crypto v0.26.0 // indirect
-	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948 // indirect
-	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/oauth2 v0.22.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240827150818-7e3bb234dfed // indirect
+	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
+	golang.org/x/crypto v0.27.0 // indirect
+	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
+	golang.org/x/net v0.29.0 // indirect
+	golang.org/x/oauth2 v0.23.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.1 // indirect
