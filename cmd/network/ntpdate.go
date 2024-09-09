@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ntpServers = []string{
+	defaultNtpServers = []string{
 		"0.de.pool.ntp.org",
 		"1.de.pool.ntp.org",
 		"2.de.pool.ntp.org",
@@ -34,8 +34,16 @@ func getTime(log *slog.Logger, servers []string) (t time.Time, err error) {
 }
 
 // NtpDate set the system time to the time coming from a ntp source
-func NtpDate(log *slog.Logger) {
-	t, err := getTime(log, ntpServers)
+func NtpDate(log *slog.Logger, ntpServers []string) {
+	var t time.Time
+	var err error
+
+	if ntpServers != nil {
+		t, err = getTime(log, ntpServers)
+	} else {
+		t, err = getTime(log, defaultNtpServers)
+	}
+
 	if err != nil {
 		log.Error("ntpdate", "unable to get time", err)
 	}
