@@ -3,7 +3,7 @@
 Hammer is used to boot a bare metal server via PXE together with the Metal Stack kernel. Hammer is a initrd which runs a small golang binary as init process. This does the following actions:
 
 - Ensures all interfaces are up
-- Check if the server was booted in UEFI, if not modify the bios tu uefi and reboots
+- Check if the server was booted in UEFI, if not modify the bios to uefi and reboots
 - Wipes as existing disks by either:
   - run secure erase if possible by using the mechanism in modern disks, this is true for most SSD´s and NVME disks.
   - If not possible run mkfs.ext4 --discard on the disks.
