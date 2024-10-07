@@ -87,7 +87,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/loki/pkg/push v0.0.0-20240912152814-63e84b476a9a // indirect
+	github.com/grafana/loki/pkg/push v0.0.0-20241004191050-c2f38e18c6b8 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/jaypipes/pcidb v1.0.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

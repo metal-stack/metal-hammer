@@ -13,7 +13,7 @@ WORKDIR /work
 COPY . .
 RUN make all
 # Install Intel Firmware for e800 based network cards
-ENV ICE_VERSION=1.14.9
+ENV ICE_VERSION=1.14.13
 ENV ICE_PKG_VERSION=1.3.36.0
 RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_VERSION}/ice-${ICE_VERSION}.tar.gz/download -o ice.tar.gz \
  && tar -xf ice.tar.gz ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg \
