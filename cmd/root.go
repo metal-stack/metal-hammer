@@ -97,7 +97,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 	}
 
 	// Set Time from ntp
-	network.NtpDate(log)
+	network.NtpDate(log, spec.MetalConfig.NTPServers)
 
 	reg := register.New(log, spec.MachineUUID, bootService, eventEmitter, n, hal)
 
