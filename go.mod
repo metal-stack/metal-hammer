@@ -11,9 +11,9 @@ require (
 	github.com/jaypipes/ghw v0.12.0
 	github.com/metal-stack/go-hal v0.5.5
 	github.com/metal-stack/go-lldpd v0.4.8
-	github.com/metal-stack/metal-api v0.37.1
+	github.com/metal-stack/metal-api v0.37.3-0.20241010063016-58c6457e00ba
 	github.com/metal-stack/metal-go v0.37.1
-	github.com/metal-stack/pixie v0.3.4
+	github.com/metal-stack/pixie v0.3.5-0.20241010063858-83bb4a8acd64
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -27,7 +27,7 @@ require (
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.26.0
 	google.golang.org/grpc v1.67.1
-	google.golang.org/protobuf v1.34.2
+	google.golang.org/protobuf v1.35.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -95,7 +95,7 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 // indirect
 	github.com/metal-stack/metal-lib v0.18.3 // indirect
-	github.com/metal-stack/security v0.8.1 // indirect
+	github.com/metal-stack/security v0.8.3 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -131,7 +131,7 @@ require (
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240930140551-af27646dc61f // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241007155032-5fefd90f89a9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.1 // indirect
 )
