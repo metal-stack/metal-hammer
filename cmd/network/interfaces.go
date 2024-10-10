@@ -17,16 +17,18 @@ import (
 
 // Network provides networking operations.
 type Network struct {
-	IPAddress   string
-	Started     time.Time
-	MachineUUID string
-	LLDPClient  *LLDPClient
-	Eth0Mac     string // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
-	Log         *slog.Logger
+	IPAddress         string
+	Started           time.Time
+	MachineUUID       string
+	LLDPClient        *LLDPClient
+	Eth0Mac           string // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
+	Log               *slog.Logger
+	MinimumInterfaces int32
+	MinimumNeighbors  int32
 }
 
 // We expect to have storage and MTU of 9000 supports efficient transmission.
-// In our clos topology MTU 9000 (non vxlan)/9216 (vxlan) is status quo.
+// In our switch topology MTU 9000 (non vxlan)/9216 (vxlan) is status quo.
 const MTU = 9000
 
 // UpAllInterfaces set all available eth* interfaces up
@@ -62,7 +64,7 @@ func (n *Network) UpAllInterfaces() error {
 		lldpd.Start()
 	}
 
-	lc := NewLLDPClient(n.Log, interfaces, 2, 2, 0)
+	lc := NewLLDPClient(n.Log, interfaces, n.MinimumInterfaces, n.MinimumNeighbors, 0)
 	n.LLDPClient = lc
 	go lc.Start()
 
