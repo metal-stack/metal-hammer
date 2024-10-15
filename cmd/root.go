@@ -99,7 +99,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 	// Set Time from ntp
 	network.NtpDate(log, spec.MetalConfig.NTPServers)
 
-	reg := register.New(log, spec.MachineUUID, bootService, eventEmitter, n, hal)
+	reg := register.New(log, spec.MachineUUID, spec.MetalConfig.Partition, bootService, eventEmitter, n, hal)
 
 	err = reg.RegisterMachine()
 	if err != nil {
