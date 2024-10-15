@@ -247,7 +247,7 @@ func (r *Register) detectGPUs() (pci.Devices, error) {
 		}
 		r.log.Info("add gpu", "vendor", device.VendorName, "device", device.DeviceName, "classname", device.ClassName)
 
-		if strings.ToLower(device.ClassName) != "display" {
+		if !strings.Contains(strings.ToLower(device.ClassName), "display") {
 			continue
 		}
 		result = append(result, device)
