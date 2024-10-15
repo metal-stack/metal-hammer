@@ -22,8 +22,8 @@ type Host struct {
 	start             time.Time
 	done              bool
 	timeout           time.Duration
-	minimumInterfaces int
-	minimumNeighbors  int
+	minimumInterfaces int32
+	minimumNeighbors  int32
 }
 
 const (
@@ -37,7 +37,7 @@ const (
 )
 
 // NewLLDPClient create a lldp client.
-func NewLLDPClient(log *slog.Logger, interfaces []string, minimumInterfaces, minimumNeighbors int, timeout time.Duration) *LLDPClient {
+func NewLLDPClient(log *slog.Logger, interfaces []string, minimumInterfaces, minimumNeighbors int32, timeout time.Duration) *LLDPClient {
 	if timeout == 0 {
 		timeout = LLDPTxIntervalTimeout
 	}
@@ -109,7 +109,7 @@ func (l *LLDPClient) requirementsMet() bool {
 	if l.Host.minimumInterfaces == 0 && l.Host.minimumNeighbors == 0 {
 		return true
 	}
-	if len(l.Host.neighbors) < l.Host.minimumInterfaces {
+	if int32(len(l.Host.neighbors)) < l.Host.minimumInterfaces {
 		return false
 	}
 
@@ -123,5 +123,5 @@ func (l *LLDPClient) requirementsMet() bool {
 		}
 	}
 	// Requirements are met if we found at least 2 distinct chassis mac's
-	return len(neighMap) >= l.Host.minimumNeighbors
+	return int32(len(neighMap)) >= l.Host.minimumNeighbors
 }

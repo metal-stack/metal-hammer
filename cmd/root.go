@@ -80,11 +80,32 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		return eventEmitter, err
 	}
 
+	bootResp, err := bootService.Boot(context.Background(), &v1.BootServiceBootRequest{PartitionId: spec.MetalConfig.Partition})
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		minimumInterfaces = int32(2)
+		minimumNeighbors  = int32(2)
+	)
+
+	if bootResp.NetworkRequirements != nil {
+		if bootResp.NetworkRequirements.MinimumInterfaces != nil {
+			minimumInterfaces = bootResp.GetNetworkRequirements().GetMinimumInterfaces()
+		}
+		if bootResp.NetworkRequirements.MinimumNeighbors != nil {
+			minimumNeighbors = bootResp.GetNetworkRequirements().GetMinimumNeighbors()
+		}
+	}
+
 	n := &network.Network{
-		MachineUUID: spec.MachineUUID,
-		IPAddress:   spec.IP,
-		Started:     time.Now(),
-		Log:         log,
+		MachineUUID:       spec.MachineUUID,
+		IPAddress:         spec.IP,
+		Started:           time.Now(),
+		Log:               log,
+		MinimumInterfaces: minimumInterfaces,
+		MinimumNeighbors:  minimumNeighbors,
 	}
 
 	// TODO: Does not work yet, needs to be done manually
