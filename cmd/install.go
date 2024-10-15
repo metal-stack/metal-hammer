@@ -4,13 +4,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
+	"github.com/metal-stack/metal-hammer/cmd/install"
 	"github.com/metal-stack/metal-hammer/cmd/utils"
 	"github.com/metal-stack/metal-hammer/pkg/api"
 
@@ -41,7 +40,7 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 		return nil, err
 	}
 
-	info, err := h.install(h.chrootPrefix, machine, s.RootUUID)
+	info, err := h.installOS(h.chrootPrefix, machine, s.RootUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,9 +57,9 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 	return info, nil
 }
 
-// install will execute /install.sh in the pulled docker image which was extracted onto disk
+// install will install the OS of the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*api.Bootinfo, error) {
+func (h *hammer) installOS(prefix string, machine *models.V1MachineResponse, rootUUID string) (*api.Bootinfo, error) {
 	h.log.Info("install", "image", machine.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(machine, rootUUID)
@@ -78,41 +77,22 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		return nil, err
 	}
 
-	installBinary := "/install.sh"
-	if fileExists(path.Join(prefix, "install-go")) {
-		installBinary = "/install-go"
-	}
-
-	h.log.Info("running install", "binary", installBinary, "prefix", prefix)
+	h.log.Info("running install", "prefix", prefix)
 	err = os.Chdir(prefix)
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: %s error %w", prefix, err)
 	}
-	cmd := exec.Command(installBinary)
-	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
-	// these syscalls are required to execute the command in a chroot env.
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Credential: &syscall.Credential{
-			Uid:    uint32(0),
-			Gid:    uint32(0),
-			Groups: []uint32{0},
-		},
-		Chroot: prefix,
-	}
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("running %q in chroot failed %w", installBinary, err)
+
+	err = install.Run()
+	if err != nil {
+		return nil, fmt.Errorf("unable to install, error %w", err)
 	}
 
 	err = os.Chdir("/")
 	if err != nil {
 		return nil, fmt.Errorf("unable to chdir to: / error %w", err)
 	}
-	h.log.Info("finish running", "binary", installBinary)
-
-	err = os.Remove(path.Join(prefix, installBinary))
-	if err != nil {
-		h.log.Warn("unable to remove, ignoring", "binary", installBinary, "error", err)
-	}
+	h.log.Info("finish installing OS")
 
 	info, err := kernel.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
 	if err != nil {
