@@ -248,12 +248,12 @@ func (r *Register) detectGPUs() (pci.Devices, error) {
 		if !strings.Contains(strings.ToLower(device.VendorName), "nvidia") {
 			continue
 		}
+		r.log.Info("add gpu", "vendor", device.VendorName, "device", device.DeviceName, "classname", device.ClassName)
 
-		// TODO if new models must be supported, this code must be refactored
-		if strings.Contains(strings.ToLower(device.DeviceName), "rtx") {
-			r.log.Info("add gpu", "vendor", device.VendorName, "device", device.DeviceName)
-			result = append(result, device)
+		if !strings.Contains(strings.ToLower(device.ClassName), "display") {
+			continue
 		}
+		result = append(result, device)
 	}
 
 	return result, nil
