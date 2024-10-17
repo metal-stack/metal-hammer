@@ -1,17 +1,17 @@
 module github.com/metal-stack/metal-hammer
 
-go 1.23
+go 1.23.0
 
 require (
 	github.com/beevik/ntp v1.4.3
 	github.com/cheggaaa/pb/v3 v3.1.5
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
-	github.com/grafana/loki-client-go v0.0.0-20230116142646-e7494d0ef70c
+	github.com/grafana/loki-client-go v0.0.0-20240913122146-e119d400c3a5
 	github.com/jaypipes/ghw v0.12.0
-	github.com/metal-stack/go-hal v0.5.3
-	github.com/metal-stack/go-lldpd v0.4.7
-	github.com/metal-stack/metal-api v0.34.0
+	github.com/metal-stack/go-hal v0.5.5
+	github.com/metal-stack/go-lldpd v0.4.8
+	github.com/metal-stack/metal-api v0.37.1
 	github.com/metal-stack/metal-go v0.37.2-0.20241017122234-aba7451bd663
 	github.com/metal-stack/pixie v0.3.4
 	github.com/metal-stack/v v1.0.3
@@ -19,14 +19,14 @@ require (
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/pierrec/lz4/v4 v4.1.21
-	github.com/prometheus/common v0.59.1
+	github.com/prometheus/common v0.60.0
 	github.com/samber/slog-loki/v3 v3.5.0
-	github.com/samber/slog-multi v1.2.1
+	github.com/samber/slog-multi v1.2.3
 	github.com/u-root/u-root v0.14.0
 	github.com/vishvananda/netlink v1.3.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/sys v0.25.0
-	google.golang.org/grpc v1.66.0
+	golang.org/x/sys v0.26.0
+	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -76,6 +76,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
+	github.com/grafana/loki/pkg/push v0.0.0-20240912152814-63e84b476a9a // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/jaypipes/pcidb v1.0.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -93,7 +94,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 // indirect
-	github.com/metal-stack/metal-lib v0.18.1 // indirect
+	github.com/metal-stack/metal-lib v0.18.3 // indirect
 	github.com/metal-stack/security v0.8.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -106,7 +107,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_golang v1.20.3 // indirect
+	github.com/prometheus/client_golang v1.20.4 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/prometheus v0.54.1 // indirect
@@ -120,17 +121,17 @@ require (
 	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
 	github.com/vmware/goipmi v0.0.0-20181114221114-2333cd82d702 // indirect
-	go.mongodb.org/mongo-driver v1.16.1 // indirect
-	go.opentelemetry.io/otel v1.29.0 // indirect
-	go.opentelemetry.io/otel/metric v1.29.0 // indirect
-	go.opentelemetry.io/otel/trace v1.29.0 // indirect
+	go.mongodb.org/mongo-driver v1.17.1 // indirect
+	go.opentelemetry.io/otel v1.30.0 // indirect
+	go.opentelemetry.io/otel/metric v1.30.0 // indirect
+	go.opentelemetry.io/otel/trace v1.30.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.27.0 // indirect
-	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
-	golang.org/x/net v0.29.0 // indirect
-	golang.org/x/oauth2 v0.22.0 // indirect
-	golang.org/x/text v0.18.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
+	golang.org/x/exp v0.0.0-20241004190924-225e2abe05e6 // indirect
+	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/oauth2 v0.23.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240930140551-af27646dc61f // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.1 // indirect
 )
