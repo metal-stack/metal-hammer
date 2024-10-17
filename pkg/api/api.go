@@ -41,9 +41,9 @@ type InstallerConfig struct {
 	// FirewallRules if not empty firewall rules to enforce
 	FirewallRules *models.V1FirewallRules `yaml:"firewall_rules"`
 	// DNSServers for the machine
-	DNSServers []string `yaml:"dns_servers"`
+	DNSServers []*models.MetalDNSServer `yaml:"dns_servers"`
 	// NTPServers for the machine
-	NTPServers []string `yaml:"ntp_servers"`
+	NTPServers []*models.MetalNTPServer `yaml:"ntp_servers"`
 }
 
 // FIXME legacy structs remove once old images are gone
