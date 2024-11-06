@@ -40,6 +40,8 @@ type InstallerConfig struct {
 	RootUUID string `yaml:"root_uuid"`
 	// FirewallRules if not empty firewall rules to enforce
 	FirewallRules *models.V1FirewallRules `yaml:"firewall_rules"`
+	// FirewallDistance is used by the firewall-controller only not by machines
+	FirewallDistance uint8 `yaml:"firewall_distance"`
 }
 
 // FIXME legacy structs remove once old images are gone
