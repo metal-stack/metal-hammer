@@ -233,6 +233,8 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		RaidEnabled:   raidEnabled,
 		RootUUID:      rootUUiD,
 		FirewallRules: alloc.FirewallRules,
+		DNSServers:    alloc.DNSServers,
+		NTPServers:    alloc.NtpServers,
 	}
 
 	yamlContent, err := yaml.Marshal(y)

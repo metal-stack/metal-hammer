@@ -40,6 +40,10 @@ type InstallerConfig struct {
 	RootUUID string `yaml:"root_uuid"`
 	// FirewallRules if not empty firewall rules to enforce
 	FirewallRules *models.V1FirewallRules `yaml:"firewall_rules"`
+	// DNSServers for the machine
+	DNSServers []*models.V1DNSServer `yaml:"dns_servers"`
+	// NTPServers for the machine
+	NTPServers []*models.V1NTPServer `yaml:"ntp_servers"`
 }
 
 // FIXME legacy structs remove once old images are gone
