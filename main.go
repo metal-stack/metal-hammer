@@ -74,6 +74,10 @@ func main() {
 	log.Info("starting", "version", v.V.String(), "hal", hal.Describe())
 
 	spec := cmd.NewSpec(log)
+
+	// Set Time from ntp
+	network.NtpDate(log, spec.MetalConfig.NTPServers)
+
 	spec.MachineUUID = uuid.String()
 	spec.IP = ip
 
