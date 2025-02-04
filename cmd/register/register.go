@@ -191,7 +191,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	}
 
 	hardware := &v1.MachineHardware{
-		Memory: uint64(memory.TotalPhysicalBytes),
+		Memory: uint64(memory.TotalPhysicalBytes), // nolint:gosec
 		Nics:   nics,
 		Disks:  disks,
 		Cpus:   metalCPUs,
