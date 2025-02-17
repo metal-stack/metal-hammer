@@ -75,7 +75,7 @@ func main() {
 
 	spec := cmd.NewSpec(log)
 
-	// Set Time from ntp
+	// Synchronize time using NTP
 	network.NtpDate(log, spec.MetalConfig.NTPServers)
 
 	spec.MachineUUID = uuid.String()
