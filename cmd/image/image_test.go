@@ -43,3 +43,36 @@ func TestCheckMD5(t *testing.T) {
 	}
 
 }
+
+func TestCheckSHA512(t *testing.T) {
+	testfile := "/tmp/testsha512"
+	testfileSHA512 := "/tmp/testsha512.sha512sum"
+	content := []byte("This is testcontent")
+	err := os.WriteFile(testfile, content, os.ModePerm) // nolint:gosec
+	if err != nil {
+		t.Error(err)
+	}
+	cmd := exec.Command("sha512sum", testfile)
+	sha512Content, err := cmd.Output()
+	if err != nil {
+		t.Error(err)
+	}
+	sha512, err := os.Create(testfileSHA512)
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = sha512.Write(sha512Content)
+	if err != nil {
+		t.Error(err)
+	}
+	sha512.Close()
+	defer os.Remove(testfile)
+	defer os.Remove(testfileSHA512)
+	matches, err := NewImage(slog.Default()).checksha512(testfile, testfileSHA512)
+	if err != nil {
+		t.Error(err)
+	}
+	if !matches {
+		t.Error("expected sha512 matches, but didn't")
+	}
+}
