@@ -56,13 +56,13 @@ func (i *Image) Pull(image, destination string) error {
 		if err != nil {
 			return fmt.Errorf("unable to pull hash file %s %w", md5file, err)
 		}
-		matches, err := i.checkHash(md5file, md5destination, HashMD5)
+		matches, err := i.checkHash(destination, md5destination, HashMD5)
 		if err != nil || !matches {
 			return fmt.Errorf("md5 mismatch, matches: %v with error: %w", matches, err)
 		}
 	} else {
 		i.log.Info("check sha512")
-		matches, err := i.checkHash(sha512file, sha512destination, HashSHA512)
+		matches, err := i.checkHash(destination, sha512destination, HashSHA512)
 		if err != nil || !matches {
 			return fmt.Errorf("sha512 mismatch, matches: %v with error: %w", matches, err)
 		}
