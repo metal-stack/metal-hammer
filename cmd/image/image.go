@@ -2,8 +2,8 @@ package image
 
 import (
 	"crypto/sha512"
-	"errors"
 	"fmt"
+	"hash"
 	"log/slog"
 
 	pb "github.com/cheggaaa/pb/v3"
@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	MD5       = ".md5"
-	SHA512sum = ".sha512sum"
+	HashMD5    = "md5"
+	HashSHA512 = "sha512"
 )
 
 type Image struct {
@@ -32,18 +32,51 @@ func NewImage(log *slog.Logger) *Image {
 	return &Image{log: log}
 }
 
+// Pull a image from s3
 func (i *Image) Pull(image, destination string) error {
+	var (
+		sha512destination = destination + ".sha512sum"
+		sha512file        = image + ".sha512sum"
+		md5destination    = destination + ".md5"
+		md5file           = image + ".md5"
+	)
+
 	i.log.Info("pull image", "image", image)
 	err := i.download(image, destination)
 	if err != nil {
 		return fmt.Errorf("unable to pull image %s %w", image, err)
 	}
-	err = i.verifyChecksumFile(image, destination)
+
+	err = i.downloadHashFile(sha512file, sha512destination)
 	if err != nil {
-		return fmt.Errorf("unable to verify checksum file for image %s %w", image, err)
+		i.log.Info("unable to process sha512 file, trying with md5", "error", err)
+		err = i.downloadHashFile(image, destination)
+		if err != nil {
+			return fmt.Errorf("unable to process md5 file %w", err)
+		} else {
+			matches, err := i.checkHash(md5file, md5destination, HashMD5)
+			if err != nil || !matches {
+				return fmt.Errorf("sha512 mismatch")
+			}
+		}
+	} else {
+		i.log.Info("check sha512")
+		matches, err := i.checkHash(sha512file, sha512destination, HashSHA512)
+		if err != nil || !matches {
+			return fmt.Errorf("sha512 mismatch")
+		}
 	}
 
 	i.log.Info("pull image done", "image", image)
+	return nil
+}
+
+func (i *Image) downloadHashFile(file, destination string) error {
+	err := i.download(file, destination)
+	defer os.Remove(destination)
+	if err != nil {
+		return fmt.Errorf("unable to pull hash file %s %w", file, err)
+	}
 	return nil
 }
 
@@ -100,16 +133,16 @@ func (i *Image) Burn(prefix, image, source string) error {
 	return nil
 }
 
-// checkMD5 check the md5 signature of file with the md5sum given in the md5file.
-// the content of the md5file must be in the form:
-// <md5sum> filename
-// this is the same format as create by the "md5sum" unix command
-func (i *Image) checkMD5(file, md5file string) (bool, error) {
-	md5fileContent, err := os.ReadFile(md5file)
+// checkHash check the sha512 or md5 signature of file with the sha512sum or md5sum given in the file.
+// the content of the file must be in the form:
+// <sha512sum | md5sum> filename
+// this is the same format as create by the "sha512 | md5sum" unix command
+func (i *Image) checkHash(file, hashfile, hashType string) (bool, error) {
+	hashfileContent, err := os.ReadFile(hashfile)
 	if err != nil {
-		return false, fmt.Errorf("unable to read md5sum file %s %w", md5file, err)
+		return false, fmt.Errorf("unable to read hash file %s %w", hashfile, err)
 	}
-	expectedMD5 := strings.Split(string(md5fileContent), " ")[0]
+	expectedHash := strings.Split(string(hashfileContent), " ")[0]
 
 	f, err := os.Open(file)
 	if err != nil {
@@ -117,44 +150,25 @@ func (i *Image) checkMD5(file, md5file string) (bool, error) {
 	}
 	defer f.Close()
 
-	//nolint:gosec
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return false, fmt.Errorf("unable to calculate md5sum of file: %s %w", file, err)
+	var h hash.Hash
+	switch hashType {
+	case HashSHA512:
+		h = sha512.New()
+	case HashMD5:
+		h = md5.New()
+	default:
+		return false, fmt.Errorf("unsupported hash type: %s", hashType)
 	}
-	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
-	i.log.Info("check md5", "source md5", sourceMD5, "expected md5", expectedMD5)
-	if sourceMD5 != expectedMD5 {
-		return false, fmt.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
+
+	if _, err := io.Copy(h, f); err != nil {
+		return false, fmt.Errorf("unable to calculate %s of file: %s %w", hashType, file, err)
+	}
+	sourceHash := fmt.Sprintf("%x", h.Sum(nil))
+	i.log.Info("check hash", "source hash", sourceHash, "expected hash", expectedHash)
+	if sourceHash != expectedHash {
+		return false, fmt.Errorf("source %s:%s expected %s:%s", hashType, sourceHash, hashType, expectedHash)
 	}
 	return true, nil
-}
-
-func (i *Image) checksha512(file, sha512file string) (bool, error) {
-	sha512fileContent, err := os.ReadFile(sha512file)
-	if err != nil {
-		return false, fmt.Errorf("unable to read sha512sum file %s %w", sha512file, err)
-	}
-	expectedsha512 := strings.Split(string(sha512fileContent), " ")[0]
-
-	f, err := os.Open(file)
-	if err != nil {
-		return false, fmt.Errorf("unable to read file: %s %w", file, err)
-	}
-	defer f.Close()
-
-	//nolint:gosec
-	h := sha512.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return false, fmt.Errorf("unable to calculate sha512 of file: %s %w", file, err)
-	}
-	sourcesha512 := fmt.Sprintf("%x", h.Sum(nil))
-	i.log.Info("check sha512", "source sha512", sourcesha512, "expected sha512", expectedsha512)
-	if sourcesha512 != expectedsha512 {
-		return false, fmt.Errorf("source sha512:%s expected sha512:%s", sourcesha512, expectedsha512)
-	}
-	return true, nil
-
 }
 
 // downloadFile will download from a source url to a local file dest.
@@ -195,58 +209,4 @@ func (i *Image) download(source, dest string) error {
 	}
 
 	return nil
-}
-
-// verifyChecksumFile checks for the existence of .md5 and .sha512sum files
-func (i *Image) verifyChecksumFile(image, destination string) error {
-	var (
-		matches bool
-		err     error
-	)
-
-	hash := getHash(image)
-	hashFile := image + hash
-
-	hashDestination := destination + hash
-	err = i.download(hashFile, hashDestination)
-	defer os.Remove(hashDestination)
-	if err != nil {
-		return fmt.Errorf("unable to pull %s %s %w", hash, hashFile, err)
-	}
-	i.log.Info("check", "hash", hash)
-	switch hash {
-	case SHA512sum:
-		matches, err = i.checksha512(hashFile, hashDestination)
-	case MD5:
-		matches, err = i.checkMD5(hashFile, hashDestination)
-	default:
-		return fmt.Errorf("no checksum file found for %s", image)
-	}
-	if err != nil || !matches {
-		return fmt.Errorf("hash mismatch")
-	}
-	return nil
-}
-
-func getHash(image string) string {
-	hashFiles := map[string]string{
-		SHA512sum: image + SHA512sum,
-		MD5:       image + MD5,
-	}
-
-	for hashType, filePath := range hashFiles {
-		if fileExists(filePath) {
-			return hashType
-		}
-	}
-
-	return ""
-}
-
-// fileExists checks if a file exists at the given path
-func fileExists(path string) bool {
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return false
-	}
-	return true
 }

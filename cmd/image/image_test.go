@@ -34,7 +34,7 @@ func TestCheckMD5(t *testing.T) {
 	defer os.Remove(testfile)
 	defer os.Remove(testfileMD5)
 
-	matches, err := NewImage(slog.Default()).checkMD5(testfile, testfileMD5)
+	matches, err := NewImage(slog.Default()).checkHash(testfile, testfileMD5, HashMD5)
 	if err != nil {
 		t.Error(err)
 	}
@@ -68,7 +68,7 @@ func TestCheckSHA512(t *testing.T) {
 	sha512.Close()
 	defer os.Remove(testfile)
 	defer os.Remove(testfileSHA512)
-	matches, err := NewImage(slog.Default()).checksha512(testfile, testfileSHA512)
+	matches, err := NewImage(slog.Default()).checkHash(testfile, testfileSHA512, HashSHA512)
 	if err != nil {
 		t.Error(err)
 	}
