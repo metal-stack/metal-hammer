@@ -47,36 +47,28 @@ func (i *Image) Pull(image, destination string) error {
 		return fmt.Errorf("unable to pull image %s %w", image, err)
 	}
 
-	err = i.downloadHashFile(sha512file, sha512destination)
+	err = i.download(sha512file, sha512destination)
+	defer os.Remove(destination)
 	if err != nil {
 		i.log.Info("unable to process sha512 file, trying with md5", "error", err)
-		err = i.downloadHashFile(md5file, md5destination)
+		err = i.download(md5file, md5destination)
+		defer os.Remove(destination)
 		if err != nil {
-			return fmt.Errorf("unable to process md5 file %w", err)
-		} else {
-			matches, err := i.checkHash(md5file, md5destination, HashMD5)
-			if err != nil || !matches {
-				return fmt.Errorf("md5 mismatch")
-			}
+			return fmt.Errorf("unable to pull hash file %s %w", md5file, err)
+		}
+		matches, err := i.checkHash(md5file, md5destination, HashMD5)
+		if err != nil || !matches {
+			return fmt.Errorf("md5 mismatch, matches: %v with error: %w", matches, err)
 		}
 	} else {
 		i.log.Info("check sha512")
 		matches, err := i.checkHash(sha512file, sha512destination, HashSHA512)
 		if err != nil || !matches {
-			return fmt.Errorf("sha512 mismatch")
+			return fmt.Errorf("sha512 mismatch, matches: %v with error: %w", matches, err)
 		}
 	}
 
 	i.log.Info("pull image done", "image", image)
-	return nil
-}
-
-func (i *Image) downloadHashFile(file, destination string) error {
-	err := i.download(file, destination)
-	defer os.Remove(destination)
-	if err != nil {
-		return fmt.Errorf("unable to pull hash file %s %w", file, err)
-	}
 	return nil
 }
 
