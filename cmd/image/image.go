@@ -50,13 +50,13 @@ func (i *Image) Pull(image, destination string) error {
 	err = i.downloadHashFile(sha512file, sha512destination)
 	if err != nil {
 		i.log.Info("unable to process sha512 file, trying with md5", "error", err)
-		err = i.downloadHashFile(image, destination)
+		err = i.downloadHashFile(md5file, md5destination)
 		if err != nil {
 			return fmt.Errorf("unable to process md5 file %w", err)
 		} else {
 			matches, err := i.checkHash(md5file, md5destination, HashMD5)
 			if err != nil || !matches {
-				return fmt.Errorf("sha512 mismatch")
+				return fmt.Errorf("md5 mismatch")
 			}
 		}
 	} else {
