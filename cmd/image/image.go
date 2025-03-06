@@ -48,11 +48,11 @@ func (i *Image) Pull(image, destination string) error {
 	}
 
 	err = i.download(sha512file, sha512destination)
-	defer os.Remove(destination)
+	defer os.Remove(sha512destination)
 	if err != nil {
 		i.log.Info("unable to process sha512 file, trying with md5", "error", err)
 		err = i.download(md5file, md5destination)
-		defer os.Remove(destination)
+		defer os.Remove(md5destination)
 		if err != nil {
 			return fmt.Errorf("unable to pull hash file %s %w", md5file, err)
 		}
