@@ -7,6 +7,10 @@ on:
 
 env:
   GCS_BUCKET: images.metal-pod.io
+  IMG: metal-hammer-initrd.img
+  IMG_TAR: metal-hammer.tar
+  IMG_LZ4: ${{ env.IMG }}.lz4
+  IMG_LZ4_MD5: ${{ env.IMG_LZ4 }}.md5
 
 jobs:
   build:
@@ -24,13 +28,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build image
-        uses: metal-stack/action-docker-make@master
-        with:
-          args: >
-            --no-cache
-            --no-lint
-            --no-push
-            --summary
+        run: |
+          docker buildx build -o - . > ${{ env.IMG_TAR }}
+          tar -xf ${{ env.IMG_TAR }} ${{ env.IMG_LZ4 }}
+          rm -f ${{ env.IMG_TAR }}
+          md5sum ${{ env.IMG_LZ4 }} > ${{ env.IMG_LZ4_MD5 }}
       - name: Prepare image upload
         run: |
           mkdir -p images/metal-hammer/${GITHUB_REF##*/}
