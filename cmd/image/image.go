@@ -1,7 +1,9 @@
 package image
 
 import (
+	"crypto/sha512"
 	"fmt"
+	"hash"
 	"log/slog"
 
 	pb "github.com/cheggaaa/pb/v3"
@@ -17,6 +19,13 @@ import (
 	"time"
 )
 
+const (
+	hashMD5    = hashType("md5")
+	hashSHA512 = hashType("sha512")
+)
+
+type hashType string
+
 type Image struct {
 	log *slog.Logger
 }
@@ -27,22 +36,38 @@ func NewImage(log *slog.Logger) *Image {
 
 // Pull a image from s3
 func (i *Image) Pull(image, destination string) error {
+	var (
+		sha512destination = destination + ".sha512sum"
+		sha512file        = image + ".sha512sum"
+		md5destination    = destination + ".md5"
+		md5file           = image + ".md5"
+	)
+
 	i.log.Info("pull image", "image", image)
-	md5destination := destination + ".md5"
-	md5file := image + ".md5"
 	err := i.download(image, destination)
 	if err != nil {
 		return fmt.Errorf("unable to pull image %s %w", image, err)
 	}
-	err = i.download(md5file, md5destination)
-	defer os.Remove(md5destination)
+
+	err = i.download(sha512file, sha512destination)
+	defer os.Remove(sha512destination)
 	if err != nil {
-		return fmt.Errorf("unable to pull md5 %s %w", md5file, err)
-	}
-	i.log.Info("check md5")
-	matches, err := i.checkMD5(destination, md5destination)
-	if err != nil || !matches {
-		return fmt.Errorf("md5sum mismatch")
+		i.log.Info("unable to process sha512 file, trying with md5", "error", err)
+		err = i.download(md5file, md5destination)
+		defer os.Remove(md5destination)
+		if err != nil {
+			return fmt.Errorf("unable to pull hash file %s %w", md5file, err)
+		}
+		matches, err := i.checkHash(destination, md5destination, hashMD5)
+		if err != nil || !matches {
+			return fmt.Errorf("md5 mismatch, matches: %v with error: %w", matches, err)
+		}
+	} else {
+		i.log.Info("check sha512")
+		matches, err := i.checkHash(destination, sha512destination, hashSHA512)
+		if err != nil || !matches {
+			return fmt.Errorf("sha512 mismatch, matches: %v with error: %w", matches, err)
+		}
 	}
 
 	i.log.Info("pull image done", "image", image)
@@ -102,16 +127,16 @@ func (i *Image) Burn(prefix, image, source string) error {
 	return nil
 }
 
-// checkMD5 check the md5 signature of file with the md5sum given in the md5file.
-// the content of the md5file must be in the form:
-// <md5sum> filename
-// this is the same format as create by the "md5sum" unix command
-func (i *Image) checkMD5(file, md5file string) (bool, error) {
-	md5fileContent, err := os.ReadFile(md5file)
+// checkHash check the sha512 or md5 signature of file with the sha512sum or md5sum given in the file.
+// the content of the file must be in the form:
+// <sha512sum | md5sum> filename
+// this is the same format as create by the "sha512 | md5sum" unix command
+func (i *Image) checkHash(file, hashfile string, hT hashType) (bool, error) {
+	hashfileContent, err := os.ReadFile(hashfile)
 	if err != nil {
-		return false, fmt.Errorf("unable to read md5sum file %s %w", md5file, err)
+		return false, fmt.Errorf("unable to read hash file %s %w", hashfile, err)
 	}
-	expectedMD5 := strings.Split(string(md5fileContent), " ")[0]
+	expectedHash := strings.Split(string(hashfileContent), " ")[0]
 
 	f, err := os.Open(file)
 	if err != nil {
@@ -119,15 +144,23 @@ func (i *Image) checkMD5(file, md5file string) (bool, error) {
 	}
 	defer f.Close()
 
-	//nolint:gosec
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return false, fmt.Errorf("unable to calculate md5sum of file: %s %w", file, err)
+	var h hash.Hash
+	switch hT {
+	case hashSHA512:
+		h = sha512.New()
+	case hashMD5:
+		h = md5.New()
+	default:
+		return false, fmt.Errorf("unsupported hash type: %s", hT)
 	}
-	sourceMD5 := fmt.Sprintf("%x", h.Sum(nil))
-	i.log.Info("check md5", "source md5", sourceMD5, "expected md5", expectedMD5)
-	if sourceMD5 != expectedMD5 {
-		return false, fmt.Errorf("source md5:%s expected md5:%s", sourceMD5, expectedMD5)
+
+	if _, err := io.Copy(h, f); err != nil {
+		return false, fmt.Errorf("unable to calculate %s of file: %s %w", hT, file, err)
+	}
+	sourceHash := fmt.Sprintf("%x", h.Sum(nil))
+	i.log.Info("check hash", "source hash", sourceHash, "expected hash", expectedHash)
+	if sourceHash != expectedHash {
+		return false, fmt.Errorf("source %s:%s expected %s:%s", hT, sourceHash, hT, expectedHash)
 	}
 	return true, nil
 }
