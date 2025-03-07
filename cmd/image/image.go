@@ -20,9 +20,11 @@ import (
 )
 
 const (
-	HashMD5    = "md5"
-	HashSHA512 = "sha512"
+	hashMD5    = hashType("md5")
+	hashSHA512 = hashType("sha512")
 )
+
+type hashType string
 
 type Image struct {
 	log *slog.Logger
@@ -56,13 +58,13 @@ func (i *Image) Pull(image, destination string) error {
 		if err != nil {
 			return fmt.Errorf("unable to pull hash file %s %w", md5file, err)
 		}
-		matches, err := i.checkHash(destination, md5destination, HashMD5)
+		matches, err := i.checkHash(destination, md5destination, hashMD5)
 		if err != nil || !matches {
 			return fmt.Errorf("md5 mismatch, matches: %v with error: %w", matches, err)
 		}
 	} else {
 		i.log.Info("check sha512")
-		matches, err := i.checkHash(destination, sha512destination, HashSHA512)
+		matches, err := i.checkHash(destination, sha512destination, hashSHA512)
 		if err != nil || !matches {
 			return fmt.Errorf("sha512 mismatch, matches: %v with error: %w", matches, err)
 		}
@@ -129,7 +131,7 @@ func (i *Image) Burn(prefix, image, source string) error {
 // the content of the file must be in the form:
 // <sha512sum | md5sum> filename
 // this is the same format as create by the "sha512 | md5sum" unix command
-func (i *Image) checkHash(file, hashfile, hashType string) (bool, error) {
+func (i *Image) checkHash(file, hashfile string, hT hashType) (bool, error) {
 	hashfileContent, err := os.ReadFile(hashfile)
 	if err != nil {
 		return false, fmt.Errorf("unable to read hash file %s %w", hashfile, err)
@@ -143,22 +145,22 @@ func (i *Image) checkHash(file, hashfile, hashType string) (bool, error) {
 	defer f.Close()
 
 	var h hash.Hash
-	switch hashType {
-	case HashSHA512:
+	switch hT {
+	case hashSHA512:
 		h = sha512.New()
-	case HashMD5:
+	case hashMD5:
 		h = md5.New()
 	default:
-		return false, fmt.Errorf("unsupported hash type: %s", hashType)
+		return false, fmt.Errorf("unsupported hash type: %s", hT)
 	}
 
 	if _, err := io.Copy(h, f); err != nil {
-		return false, fmt.Errorf("unable to calculate %s of file: %s %w", hashType, file, err)
+		return false, fmt.Errorf("unable to calculate %s of file: %s %w", hT, file, err)
 	}
 	sourceHash := fmt.Sprintf("%x", h.Sum(nil))
 	i.log.Info("check hash", "source hash", sourceHash, "expected hash", expectedHash)
 	if sourceHash != expectedHash {
-		return false, fmt.Errorf("source %s:%s expected %s:%s", hashType, sourceHash, hashType, expectedHash)
+		return false, fmt.Errorf("source %s:%s expected %s:%s", hT, sourceHash, hT, expectedHash)
 	}
 	return true, nil
 }
