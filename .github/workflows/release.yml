@@ -24,13 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build image
-        uses: metal-stack/action-docker-make@master
-        with:
-          args: >
-            --no-cache
-            --no-lint
-            --no-push
-            --summary
+        run: make metal-hammer-initrd.img.lz4
       - name: Prepare image upload
         run: |
           mkdir -p images/metal-hammer/${GITHUB_REF##*/}
