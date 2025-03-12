@@ -19,13 +19,6 @@ import (
 	"time"
 )
 
-const (
-	hashMD5    = hashType("md5")
-	hashSHA512 = hashType("sha512")
-)
-
-type hashType string
-
 type Image struct {
 	log *slog.Logger
 }
@@ -34,7 +27,7 @@ func NewImage(log *slog.Logger) *Image {
 	return &Image{log: log}
 }
 
-// Pull a image from s3
+// Pull an image from s3
 func (i *Image) Pull(image, destination string) error {
 	var (
 		sha512destination = destination + ".sha512sum"
@@ -58,13 +51,13 @@ func (i *Image) Pull(image, destination string) error {
 		if err != nil {
 			return fmt.Errorf("unable to pull hash file %s %w", md5file, err)
 		}
-		matches, err := i.checkHash(destination, md5destination, hashMD5)
+		matches, err := i.checkHash(destination, md5destination, md5.New)
 		if err != nil || !matches {
 			return fmt.Errorf("md5 mismatch, matches: %v with error: %w", matches, err)
 		}
 	} else {
 		i.log.Info("check sha512")
-		matches, err := i.checkHash(destination, sha512destination, hashSHA512)
+		matches, err := i.checkHash(destination, sha512destination, sha512.New)
 		if err != nil || !matches {
 			return fmt.Errorf("sha512 mismatch, matches: %v with error: %w", matches, err)
 		}
@@ -74,7 +67,7 @@ func (i *Image) Pull(image, destination string) error {
 	return nil
 }
 
-// Burn a image pulling a tarball and unpack to a specific directory
+// Burn an image pulling a tarball and unpack to a specific directory
 func (i *Image) Burn(prefix, image, source string) error {
 	i.log.Info("burn image", "image", image)
 	begin := time.Now()
@@ -127,11 +120,11 @@ func (i *Image) Burn(prefix, image, source string) error {
 	return nil
 }
 
-// checkHash check the sha512 or md5 signature of file with the sha512sum or md5sum given in the file.
+// checkHash check the hash e.g. sha512 or md5 signature of file with the hash given in the file.
 // the content of the file must be in the form:
-// <sha512sum | md5sum> filename
+// <hash e.g. sha512sum | md5sum> filename
 // this is the same format as create by the "sha512 | md5sum" unix command
-func (i *Image) checkHash(file, hashfile string, hT hashType) (bool, error) {
+func (i *Image) checkHash(file, hashfile string, newHash func() hash.Hash) (bool, error) {
 	hashfileContent, err := os.ReadFile(hashfile)
 	if err != nil {
 		return false, fmt.Errorf("unable to read hash file %s %w", hashfile, err)
@@ -144,23 +137,15 @@ func (i *Image) checkHash(file, hashfile string, hT hashType) (bool, error) {
 	}
 	defer f.Close()
 
-	var h hash.Hash
-	switch hT {
-	case hashSHA512:
-		h = sha512.New()
-	case hashMD5:
-		h = md5.New()
-	default:
-		return false, fmt.Errorf("unsupported hash type: %s", hT)
-	}
+	h := newHash()
 
 	if _, err := io.Copy(h, f); err != nil {
-		return false, fmt.Errorf("unable to calculate %s of file: %s %w", hT, file, err)
+		return false, fmt.Errorf("unable to calculate hash of file: %s %w", file, err)
 	}
 	sourceHash := fmt.Sprintf("%x", h.Sum(nil))
 	i.log.Info("check hash", "source hash", sourceHash, "expected hash", expectedHash)
 	if sourceHash != expectedHash {
-		return false, fmt.Errorf("source %s:%s expected %s:%s", hT, sourceHash, hT, expectedHash)
+		return false, fmt.Errorf("source:%s expected:%s", sourceHash, expectedHash)
 	}
 	return true, nil
 }
