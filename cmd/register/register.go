@@ -27,6 +27,7 @@ import (
 // Register the Machine
 type Register struct {
 	machineUUID string
+	partitionID string
 	client      v1.BootServiceClient
 	emitter     *event.EventEmitter
 	network     *network.Network
@@ -34,9 +35,10 @@ type Register struct {
 	log         *slog.Logger
 }
 
-func New(log *slog.Logger, machineID string, bootClient v1.BootServiceClient, emitter *event.EventEmitter, network *network.Network, inband hal.InBand) *Register {
+func New(log *slog.Logger, machineID, partitionID string, bootClient v1.BootServiceClient, emitter *event.EventEmitter, network *network.Network, inband hal.InBand) *Register {
 	return &Register{
 		machineUUID: machineID,
+		partitionID: partitionID,
 		client:      bootClient,
 		emitter:     emitter,
 		network:     network,
@@ -189,7 +191,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	}
 
 	hardware := &v1.MachineHardware{
-		Memory: uint64(memory.TotalPhysicalBytes),
+		Memory: uint64(memory.TotalPhysicalBytes), // nolint:gosec
 		Nics:   nics,
 		Disks:  disks,
 		Cpus:   metalCPUs,
@@ -216,6 +218,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 
 	request := &v1.BootServiceRegisterRequest{
 		Uuid:               r.machineUUID,
+		PartitionId:        r.partitionID,
 		Hardware:           hardware,
 		Bios:               bios,
 		Ipmi:               ipmi,

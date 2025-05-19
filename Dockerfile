@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine as builder
+FROM golang:1.24-alpine AS builder
 
 RUN apk add \
 	binutils \
@@ -21,7 +21,7 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
  && mv ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg /work/ice.pkg
 
 # ipmitool from bookworm is broken and returns with error on most commands
-FROM golang:1.23-bullseye as initrd-builder
+FROM golang:1.24-bullseye AS initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v0.14.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \

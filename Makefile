@@ -13,6 +13,9 @@ INITRD_COMPRESSED := ${INITRD}.${COMPRESSOR}
 MAINMODULE := .
 CGO_ENABLED := 1
 # export CGO_LDFLAGS := "-lsystemd" "-lpcap" "-ldbus-1"
+BINARY_TAR := ${BINARY}.tar
+HASH := md5
+INITRD_HASH := ${INITRD_COMPRESSED}.${HASH}
 
 
 .PHONY: all
@@ -46,7 +49,10 @@ clean::
 
 ${INITRD_COMPRESSED}:
 	rm -f ${INITRD_COMPRESSED}
-	docker-make --no-push --Lint
+	docker buildx build -o - . > ${BINARY_TAR}
+	tar -xf ${BINARY_TAR} ${INITRD_COMPRESSED}
+	rm -f ${BINARY_TAR}
+	md5sum ${INITRD_COMPRESSED} > ${INITRD_HASH}
 
 .PHONY: initrd
 initrd: ${INITRD_COMPRESSED}
