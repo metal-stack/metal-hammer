@@ -13,6 +13,7 @@ on:
 
 env:
   GCS_BUCKET: images.metal-pod.io
+  SBOM_NAME: metal-hammer-sbom.json
 
 jobs:
   build:
@@ -38,10 +39,18 @@ jobs:
         run: |
           make metal-hammer-initrd.img.lz4
 
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          artifact-name: ${{ env.SBOM_NAME }}
+          output-file: ${{ env.SBOM_NAME }}
+
       - name: Prepare upload
         run: |
           mkdir -p metal-hammer/${TARGET_BINARY_LOCATION}
           cp metal-hammer-initrd.img.lz4* metal-hammer/${TARGET_BINARY_LOCATION}/
+          cp ${{ env.SBOM_NAME }} metal-hammer/${TARGET_BINARY_LOCATION}/
 
       - name: Upload image tarballs to GCS
         run: gsutil -m cp -r -p metal-hammer gs://$GCS_BUCKET
@@ -53,4 +62,5 @@ jobs:
           files: |
             metal-hammer-initrd.img.lz4
             metal-hammer-initrd.img.lz4.md5
+            ${{ env.SBOM_NAME }}
         if: ${{ github.event_name == 'release' }}
