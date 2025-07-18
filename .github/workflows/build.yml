@@ -3,13 +3,10 @@ name: Build
 on:
   pull_request:
     branches:
-      - master
+      - gigabyte
   release:
     types:
       - published
-  push:
-    branches:
-      - master
 
 env:
   GCS_BUCKET: images.metal-pod.io
