@@ -158,15 +158,15 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 
 	// now attach neighbors, this will wait up to 2*tx-interval
 	// if during this timeout not all required neighbors where found abort and reboot.
-	for _, nic := range nics {
-		r.log.Info("register search neighbor for", "nic", nic.Name)
-		neighbors, err := r.network.Neighbors(nic.Name)
-		if err != nil {
-			return nil, fmt.Errorf("unable to determine neighbors of interface:%s %w", nic.Name, err)
-		}
-		r.log.Info("register found neighbor for", "nic", nic.Name, "neighbors", neighbors)
-		nic.Neighbors = neighbors
-	}
+	//for _, nic := range nics {
+	//	r.log.Info("register search neighbor for", "nic", nic.Name)
+	//	neighbors, err := r.network.Neighbors(nic.Name)
+	//	if err != nil {
+	//		return nil, fmt.Errorf("unable to determine neighbors of interface:%s %w", nic.Name, err)
+	//	}
+	//	r.log.Info("register found neighbor for", "nic", nic.Name, "neighbors", neighbors)
+	//	nic.Neighbors = neighbors
+	//}
 
 	// Disks
 	blockInfo, err := ghw.Block()
