@@ -62,7 +62,7 @@ func (n *Network) UpAllInterfaces() error {
 		lldpd.Start()
 	}
 
-	lc := NewLLDPClient(n.Log, interfaces, 0, 0, 0)
+	lc := NewLLDPClient(n.Log, interfaces, 1, 1, 0)
 	n.LLDPClient = lc
 	go lc.Start()
 
