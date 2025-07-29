@@ -570,9 +570,12 @@ func lvExists(log *slog.Logger, vg string, name string) bool {
 func vgExists(log *slog.Logger, vgname string) bool {
 	cmd := exec.Command("lvm", "vgs", vgname, "--noheadings", "-o", "vg_name")
 	out, err := cmd.CombinedOutput()
+	log.Info("debug vg name", "vg_name", string(out), "error", err)
 	if err != nil {
 		log.Info("unable to list existing volumegroups", "vg", vgname, "error", err)
 		return false
 	}
-	return vgname == strings.TrimSpace(string(out))
+	b := vgname == strings.TrimSpace(string(out))
+	log.Info("debug comparison", "bool", fmt.Sprintf("%t", b))
+	return b
 }
