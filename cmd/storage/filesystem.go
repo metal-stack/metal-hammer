@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"golang.org/x/sys/unix"
 	"log/slog"
 	gos "os"
 	"os/exec"
@@ -130,6 +131,20 @@ func (f *Filesystem) createPartitions() error {
 			if err != nil {
 				f.log.Error("sgdisk creating partitions failed", "error", err)
 				return fmt.Errorf("unable to create partitions on %s %w", *disk.Device, err)
+			}
+
+			// force the kernel to re-read the partition table
+			osFile, err := gos.OpenFile(*disk.Device, gos.O_RDONLY, 0)
+			if err != nil {
+				return fmt.Errorf("failed to open device %s: %v", *disk.Device, err)
+			}
+			defer osFile.Close()
+
+			fd := osFile.Fd()
+
+			err = unix.IoctlSetInt(int(fd), unix.BLKRRPART, 0)
+			if err != nil {
+				return fmt.Errorf("unable to re-read the partition table. Kernel still uses old partition table: %v", err)
 			}
 		}
 	}
