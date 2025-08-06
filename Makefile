@@ -67,6 +67,7 @@ ramdisk:
 		-files="bin/metal-hammer:bbin/uinit" \
 		-files="/bin/bash:bin/bash" \
 		-files="/bin/netstat:bin/netstat" \
+		-files="/bin/efibootmgr:bin/efibootmgr" \
 		-files="/etc/localtime:etc/localtime" \
 		-files="/etc/lvm/lvm.conf:etc/lvm/lvm.conf" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
@@ -87,7 +88,6 @@ ramdisk:
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/sbin/wipefs:sbin/wipefs" \
 		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
-		-files="/usr/bin/efibootmgr:usr/bin/efibootmgr" \
 		-files="/usr/bin/lspci:bin/lspci" \
 		-files="/usr/bin/strace:bin/strace" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
