@@ -34,6 +34,7 @@ RUN apt-get update \
 	gdisk \
 	hdparm \
 	ipmitool \
+    efibootmgr  \
 	liblz4-tool \
 	lvm2 \
 	mdadm \
