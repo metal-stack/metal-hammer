@@ -119,9 +119,13 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		return info, fmt.Errorf("unable to read boot-info.yaml %w", err)
 	}
 
-	err = h.EnsureBootOrder(info.BootloaderID)
-	if err != nil {
-		return info, fmt.Errorf("unable to ensure boot order %w", err)
+	h.log.Info("checking for boot order call", "vendor", h.hal.Board().Vendor.String())
+	if h.hal.Board().Vendor.String() != "Giga Computing" {
+		h.log.Info("metal-hammer need to ensure boot order", "vendor", h.hal.Board().Vendor.String(), "bootLoaderID", info.BootloaderID)
+		err = h.EnsureBootOrder(info.BootloaderID)
+		if err != nil {
+			return info, fmt.Errorf("unable to ensure boot order %w", err)
+		}
 	}
 
 	tmp := "/tmp"
