@@ -218,10 +218,14 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		console = "ttyS0"
 	}
 
+	h.log.Info("check command line options", "console", console)
+
 	raidEnabled := false
 	if alloc != nil && alloc.Filesystemlayout != nil && len(alloc.Filesystemlayout.Raid) > 0 {
 		raidEnabled = true
 	}
+
+	h.log.Info("check if raid is enabled", "raid", raidEnabled)
 
 	y := &api.InstallerConfig{
 		Hostname:      *alloc.Hostname,
