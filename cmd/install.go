@@ -221,7 +221,14 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		return fmt.Errorf("unable to get kernel cmdline map %w", err)
 	}
 
-	console, ok := cmdline["console"]
+	console := ""
+	ok := false
+	for _, env := range cmdline {
+		if env[0] == "console" {
+			console = " " + env[1]
+			ok = true
+		}
+	}
 	if !ok {
 		console = "ttyS0"
 	}

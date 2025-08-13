@@ -38,23 +38,23 @@ func ReadBootinfo(file string) (*api.Bootinfo, error) {
 }
 
 // ParseCmdline will put each key=value pair from /proc/cmdline into a map.
-func ParseCmdline() (map[string]string, error) {
+func ParseCmdline() ([][]string, error) {
 	cmdLine, err := os.ReadFile(cmdline)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read %s %w", cmdLine, err)
 	}
 
-	cmdLineValues := strings.Fields(string(cmdLine))
-	envmap := make(map[string]string)
-	for _, v := range cmdLineValues {
-		key, value, found := strings.Cut(v, "=")
-		if found {
-			key := strings.TrimSpace(key)
-			value := strings.TrimSpace(value)
-			envmap[key] = value
+	var envpairs [][]string
+
+	for _, value := range strings.Fields(string(cmdLine)) {
+		arg := strings.SplitN(value, "=", 2)
+		if len(arg) == 2 {
+			key := strings.TrimSpace(arg[0])
+			value := strings.TrimSpace(arg[1])
+			envpairs = append(envpairs, []string{key, value})
 		}
 	}
-	return envmap, nil
+	return envpairs, nil
 }
 
 // RunKexec boot into the new kernel given in Bootinfo
