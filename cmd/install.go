@@ -208,7 +208,15 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 	alloc := machine.Allocation
 
 	sshPubkeys := strings.Join(alloc.SSHPubKeys, "\n")
+	cmdlinedebug, err := os.ReadFile("/proc/cmdline")
+	if err != nil {
+		return fmt.Errorf("could not read /proc/cmdline %w", err)
+	}
+	h.log.Info("/proc/cmdline debug", "cmdlinedebug", string(cmdlinedebug))
 	cmdline, err := kernel.ParseCmdline()
+	for key, value := range cmdline {
+		h.log.Info("cmdline debug", "key", key, "value", value)
+	}
 	if err != nil {
 		return fmt.Errorf("unable to get kernel cmdline map %w", err)
 	}
