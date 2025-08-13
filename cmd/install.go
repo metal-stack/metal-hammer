@@ -225,13 +225,14 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 	ok := false
 	for _, env := range cmdline {
 		if env[0] == "console" {
-			console = " " + env[1]
+			console += " " + env[1]
 			ok = true
 		}
 	}
 	if !ok {
 		console = "ttyS0"
 	}
+	h.log.Info("resulting console for installer config", "console", console)
 
 	raidEnabled := false
 	if alloc != nil && alloc.Filesystemlayout != nil && len(alloc.Filesystemlayout.Raid) > 0 {
