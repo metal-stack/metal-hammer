@@ -12,11 +12,11 @@ func TestParseCmdLine(t *testing.T) {
 
 	tt := []struct {
 		commandline string
-		result      map[string]string
+		result      [][]string
 	}{
-		{"quiet", map[string]string{}},
-		{"console=ttyS0", map[string]string{"console": "ttyS0"}},
-		{"console=tty root=/dev/sda1", map[string]string{"console": "tty", "root": "/dev/sda1"}},
+		{"quiet", [][]string{}},
+		{"console=ttyS0", [][]string{{"console", "ttyS0"}}},
+		{"console=tty root=/dev/sda1", [][]string{{"console", "tty"}, {"root", "/dev/sda1"}}},
 	}
 
 	for _, tc := range tt {
@@ -26,17 +26,21 @@ func TestParseCmdLine(t *testing.T) {
 			t.Error(err)
 		}
 
-		envmap, err := ParseCmdline()
+		envpairs, err := ParseCmdline()
 		if err != nil {
 			t.Error(err)
 		}
 		for key := range tc.result {
-			val, ok := envmap[key]
-			if !ok {
-				t.Error("key not found")
-			}
-			if val != tc.result[key] {
-				t.Errorf("expected %s but got %s", tc.result[key], val)
+			switch envpairs[key][0] {
+			case "console":
+				if envpairs[key][1] != tc.result[key][1] {
+					t.Errorf("expected %s but got %s", tc.result[key], envpairs[key][1])
+				}
+			case "root":
+				if envpairs[key][1] != tc.result[key][1] {
+					t.Errorf("expected %s but got %s", tc.result[key], envpairs[key][1])
+				}
+			default:
 			}
 		}
 	}
