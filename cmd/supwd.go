@@ -23,7 +23,7 @@ func (h *hammer) createBmcSuperuser() error {
 
 	bmcConn := h.hal.BMCConnection()
 
-	changeIsNeeded, err := bmcConn.NeedsPasswordChange(bmcConn.SuperUser(), len(resp.SuperUserPassword), resp.SuperUserPassword)
+	changeIsNeeded, err := bmcConn.NeedsPasswordChange(bmcConn.SuperUser(), resp.SuperUserPassword)
 	if err != nil {
 		if changeIsNeeded {
 			err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, resp.SuperUserPassword)
