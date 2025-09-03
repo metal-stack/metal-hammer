@@ -10,7 +10,7 @@ require (
 	github.com/grafana/loki-client-go v0.0.0-20240913122146-e119d400c3a5
 	github.com/jaypipes/ghw v0.19.1
 	github.com/metal-stack/go-hal v0.5.9
-	github.com/metal-stack/go-lldpd v0.4.9
+	github.com/metal-stack/go-lldpd v0.4.10
 	github.com/metal-stack/metal-api v0.42.2
 	github.com/metal-stack/metal-go v0.42.2
 	github.com/metal-stack/pixie v0.3.6
@@ -81,7 +81,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/loki/pkg/push v0.0.0-20250902181239-8a9da8f0e31c // indirect
+	github.com/grafana/loki/pkg/push v0.0.0-20250903093132-95ced86f69c5 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/jaypipes/pcidb v1.1.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -111,11 +111,11 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_golang v1.22.0 // indirect
+	github.com/prometheus/client_golang v1.23.0 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
-	github.com/prometheus/prometheus v0.302.1 // indirect
-	github.com/rekby/gpt v0.0.0-20200219180433-a930afbc6edc // indirect
+	github.com/prometheus/prometheus v0.304.0 // indirect
+	github.com/rekby/gpt v0.0.0-20200614112001-7da10aec5566 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/samber/lo v1.51.0 // indirect
 	github.com/samber/slog-common v0.19.0 // indirect
