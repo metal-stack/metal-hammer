@@ -31,6 +31,7 @@ RUN apt-get update \
 	e2fsprogs \
 	ethtool \
 	gcc \
+	# sgdisk from debian:13 is broken and creates a corrupt GPT partition layout
 	gdisk \
 	hdparm \
 	ipmitool \
