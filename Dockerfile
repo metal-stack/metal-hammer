@@ -20,7 +20,8 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
  && mkdir -p /lib/firmware/intel/ice/ddp/ \
  && mv ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg /work/ice.pkg
 
-# ipmitool from bookworm is broken and returns with error on most commands
+# ipmitool from bookworm is broken and returns with error on most commands, seems fixed
+# sgdisk from debian:13 is broken and creates a corrupt GPT partition layout
 FROM golang:1.25-bookworm AS initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v0.15.0
 RUN apt-get update \
@@ -31,7 +32,6 @@ RUN apt-get update \
 	e2fsprogs \
 	ethtool \
 	gcc \
-	# sgdisk from debian:13 is broken and creates a corrupt GPT partition layout
 	gdisk \
 	hdparm \
 	ipmitool \
