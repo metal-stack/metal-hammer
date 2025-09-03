@@ -34,8 +34,8 @@ RUN apt-get update \
 	gdisk \
 	hdparm \
 	ipmitool \
-	liblz4-tool \
 	lvm2 \
+	lz4 \
 	mdadm \
 	net-tools \
 	nvme-cli \
