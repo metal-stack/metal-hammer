@@ -70,7 +70,6 @@ ramdisk:
 		-files="/etc/localtime:etc/localtime" \
 		-files="/etc/lvm/lvm.conf:etc/lvm/lvm.conf" \
 		-files="/etc/ssl/certs/ca-certificates.crt:etc/ssl/certs/ca-certificates.crt" \
-		-files="/lib/x86_64-linux-gnu/libnss_files-2.31.so:lib/x86_64-linux-gnu/libnss_files-2.31.so" \
 		-files="/lib/x86_64-linux-gnu/libnss_files.so.2:lib/x86_64-linux-gnu/libnss_files.so.2" \
 		-files="/sbin/blkid:sbin/blkid" \
 		-files="/sbin/ethtool:sbin/ethtool" \

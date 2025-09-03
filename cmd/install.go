@@ -214,7 +214,7 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		console = "ttyS0"
 	}
 
-	raidEnabled := false
+	var raidEnabled bool
 	if alloc != nil && alloc.Filesystemlayout != nil && len(alloc.Filesystemlayout.Raid) > 0 {
 		raidEnabled = true
 	}
