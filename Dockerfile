@@ -21,7 +21,7 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
  && mv ice-${ICE_VERSION}/ddp/ice-${ICE_PKG_VERSION}.pkg /work/ice.pkg
 
 # ipmitool from bookworm is broken and returns with error on most commands
-FROM golang:1.25-trixie AS initrd-builder
+FROM golang:1.25-bookworm AS initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v0.15.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
