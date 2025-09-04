@@ -37,20 +37,29 @@ type Specification struct {
 func NewSpec(log *slog.Logger) *Specification {
 	spec := &Specification{}
 	// Grab metal-hammer configuration from kernel commandline
-	envmap, err := kernel.ParseCmdline()
+	envpairs, err := kernel.ParseCmdline()
 	if err != nil {
 		log.Error("parse cmdline", "error", err)
 		os.Exit(1)
 	}
 
-	if d, ok := envmap["DEBUG"]; ok && (d == "1" || strings.ToLower(d) == "true") {
-		spec.Debug = true
-		os.Setenv("DEBUG", "1")
-	}
-
-	// PIXIE_API_URL must be in the form http://ip-of-pixie:4242
-	if url, ok := envmap["PIXIE_API_URL"]; ok {
-		spec.PixieAPIUrl = url
+	for _, env := range envpairs {
+		switch env[0] {
+		case "DEBUG":
+			if env[1] == "1" || strings.ToLower(env[1]) == "true" {
+				spec.Debug = true
+				os.Setenv("DEBUG", "1")
+			}
+		case "PIXIE_API_URL":
+			// PIXIE_API_URL must be in the form http://ip-of-pixie:4242
+			spec.PixieAPIUrl = env[1]
+		case "BGP_ENABLED":
+			enabled, err := strconv.ParseBool(env[1])
+			if err == nil {
+				spec.BGPEnabled = enabled
+			}
+		default:
+		}
 	}
 
 	metalConfig, err := fetchMetalConfig(spec.PixieAPIUrl)
@@ -61,12 +70,6 @@ func NewSpec(log *slog.Logger) *Specification {
 
 	spec.MetalConfig = metalConfig
 
-	if bgp, ok := envmap["BGP"]; ok {
-		enabled, err := strconv.ParseBool(bgp)
-		if err == nil {
-			spec.BGPEnabled = enabled
-		}
-	}
 	spec.log = log
 
 	return spec

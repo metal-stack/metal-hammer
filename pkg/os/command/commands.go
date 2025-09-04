@@ -6,22 +6,23 @@ import (
 )
 
 const (
-	BlkID    = "blkid"
-	DD       = "dd"
-	MDADM    = "mdadm"
-	LVM      = "lvm"
-	Ethtool  = "ethtool"
-	HDParm   = "hdparm"
-	IPMITool = "ipmitool"
-	MKFSExt3 = "mkfs.ext3"
-	MKFSExt4 = "mkfs.ext4"
-	MKFSVFat = "mkfs.vfat"
-	MKSwap   = "mkswap"
-	NVME     = "nvme"
-	SGDisk   = "sgdisk"
-	SSHD     = "sshd"
-	SUM      = "sum"
-	WIPEFS   = "wipefs"
+	BlkID      = "blkid"
+	DD         = "dd"
+	MDADM      = "mdadm"
+	LVM        = "lvm"
+	Ethtool    = "ethtool"
+	HDParm     = "hdparm"
+	IPMITool   = "ipmitool"
+	EFIBOOTMGR = "efibootmgr"
+	MKFSExt3   = "mkfs.ext3"
+	MKFSExt4   = "mkfs.ext4"
+	MKFSVFat   = "mkfs.vfat"
+	MKSwap     = "mkswap"
+	NVME       = "nvme"
+	SGDisk     = "sgdisk"
+	SSHD       = "sshd"
+	SUM        = "sum"
+	WIPEFS     = "wipefs"
 )
 
 var commands = []string{
@@ -32,6 +33,7 @@ var commands = []string{
 	Ethtool,
 	HDParm,
 	IPMITool,
+	EFIBOOTMGR,
 	MKFSExt3,
 	MKFSExt4,
 	MKFSVFat,

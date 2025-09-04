@@ -119,9 +119,13 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		return info, fmt.Errorf("unable to read boot-info.yaml %w", err)
 	}
 
-	err = h.EnsureBootOrder(info.BootloaderID)
-	if err != nil {
-		return info, fmt.Errorf("unable to ensure boot order %w", err)
+	h.log.Info("checking for boot order call", "vendor", h.hal.Board().Vendor.String())
+	if h.hal.Board().Vendor.String() != "Giga Computing" {
+		h.log.Info("metal-hammer need to ensure boot order", "vendor", h.hal.Board().Vendor.String(), "bootLoaderID", info.BootloaderID)
+		err = h.EnsureBootOrder(info.BootloaderID)
+		if err != nil {
+			return info, fmt.Errorf("unable to ensure boot order %w", err)
+		}
 	}
 
 	tmp := "/tmp"
@@ -204,15 +208,31 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 	alloc := machine.Allocation
 
 	sshPubkeys := strings.Join(alloc.SSHPubKeys, "\n")
+	cmdlinedebug, err := os.ReadFile("/proc/cmdline")
+	if err != nil {
+		return fmt.Errorf("could not read /proc/cmdline %w", err)
+	}
+	h.log.Info("/proc/cmdline debug", "cmdlinedebug", string(cmdlinedebug))
 	cmdline, err := kernel.ParseCmdline()
+	for key, value := range cmdline {
+		h.log.Info("cmdline debug", "key", key, "value", value)
+	}
 	if err != nil {
 		return fmt.Errorf("unable to get kernel cmdline map %w", err)
 	}
 
-	console, ok := cmdline["console"]
+	console := ""
+	ok := false
+	for _, env := range cmdline {
+		if env[0] == "console" {
+			console += " " + env[1]
+			ok = true
+		}
+	}
 	if !ok {
 		console = "ttyS0"
 	}
+	h.log.Info("resulting console for installer config", "console", console)
 
 	raidEnabled := false
 	if alloc != nil && alloc.Filesystemlayout != nil && len(alloc.Filesystemlayout.Raid) > 0 {
