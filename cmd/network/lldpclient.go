@@ -106,7 +106,7 @@ func (l *LLDPClient) addNeighbor(neighbor lldp.Neighbor) {
 
 func (l *LLDPClient) requirementsMet() bool {
 	// First check we have at least neighbors for 2 interfaces found
-	if l.Host.minimumInterfaces == 0 && l.Host.minimumNeighbors == 0 {
+	if l.Host.minimumInterfaces == 1 && l.Host.minimumNeighbors == 1 {
 		return true
 	}
 	if len(l.Host.neighbors) < l.Host.minimumInterfaces {
