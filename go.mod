@@ -31,7 +31,11 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+replace (
+	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
+	// keep this until https://github.com/u-root/u-root/pull/3451 is merged and released
+	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
+)
 
 require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
