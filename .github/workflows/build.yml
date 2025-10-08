@@ -1,0 +1,66 @@
+name: Build
+
+on:
+  pull_request:
+    branches:
+      - master
+  release:
+    types:
+      - published
+  push:
+    branches:
+      - master
+
+env:
+  GCS_BUCKET: images.metal-pod.io
+  SBOM_NAME: metal-hammer-sbom.json
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Make tag
+        run: |
+          [ "${GITHUB_EVENT_NAME}" == 'pull_request' ] && echo "TARGET_BINARY_LOCATION=pull-requests/$(echo $GITHUB_REF | awk -F / '{print $3}')-${GITHUB_HEAD_REF##*/}" >> $GITHUB_ENV || true
+          [ "${GITHUB_EVENT_NAME}" == 'release' ] && echo "TARGET_BINARY_LOCATION=${GITHUB_REF##*/}" >> $GITHUB_ENV || true
+          [ "${GITHUB_EVENT_NAME}" == 'push' ] && echo "TARGET_BINARY_LOCATION=latest" >> $GITHUB_ENV || true
+
+      - name: Build image
+        run: |
+          make metal-hammer-initrd.img.lz4
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          artifact-name: ${{ env.SBOM_NAME }}
+          output-file: ${{ env.SBOM_NAME }}
+
+      - name: Prepare upload
+        run: |
+          mkdir -p metal-hammer/${TARGET_BINARY_LOCATION}
+          cp metal-hammer-initrd.img.lz4* metal-hammer/${TARGET_BINARY_LOCATION}/
+          cp ${{ env.SBOM_NAME }} metal-hammer/${TARGET_BINARY_LOCATION}/
+
+      - name: Upload image tarballs to GCS
+        run: gsutil -m cp -r -p metal-hammer gs://$GCS_BUCKET
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            metal-hammer-initrd.img.lz4
+            metal-hammer-initrd.img.lz4.md5
+            ${{ env.SBOM_NAME }}
+        if: ${{ github.event_name == 'release' }}
