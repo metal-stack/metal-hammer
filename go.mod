@@ -37,6 +37,8 @@ replace (
 	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
 )
 
+require github.com/pkg/term v1.1.0
+
 require (
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect

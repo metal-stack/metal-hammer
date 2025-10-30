@@ -17,17 +17,27 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/moby/sys/mountinfo"
+	"github.com/pkg/term"
 )
 
 func main() {
 	br := bufio.NewWriter(os.Stdout)
 
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered. Error:\n", r)
+	t, err := term.Open("/dev/ttyS0")
+	if err != nil {
+		panic(err)
+	}
+
+	ticker := time.NewTicker(1 * time.Second)
+
+	go func() {
+		for range ticker.C {
+			fmt.Println(".")
+
+			_ = br.Flush()
+			err = t.Flush()
+
 		}
-		fmt.Fprintf(br, "metal-hammer is terminating\n")
-		_ = br.Flush()
 	}()
 
 	jsonHandler := slog.NewJSONHandler(br, &slog.HandlerOptions{
