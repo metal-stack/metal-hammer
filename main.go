@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log/slog"
 	"os"
@@ -19,13 +20,16 @@ import (
 )
 
 func main() {
+	br := bufio.NewWriter(os.Stdout)
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered. Error:\n", r)
 		}
+		_ = br.Flush()
 	}()
 
-	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	jsonHandler := slog.NewJSONHandler(br, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
 	log := slog.New(jsonHandler)
