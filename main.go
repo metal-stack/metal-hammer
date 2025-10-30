@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
 	"syscall"
 	"time"
 
@@ -28,6 +29,20 @@ func main() {
 	if len(os.Args) > 1 {
 		panic("cmd args are not supported")
 	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c)
+	go func() {
+		s := <-c
+		log.Debug("signal received", "signal", s.String())
+		switch s {
+		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, os.Interrupt:
+			log.Debug("termination requested, exiting")
+			os.Exit(0)
+		case syscall.SIGHUP:
+		case syscall.SIGSEGV:
+		}
+	}()
 
 	mounted, err := mountinfo.Mounted("/etc")
 	if err != nil {
