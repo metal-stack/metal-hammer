@@ -26,6 +26,7 @@ func main() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered. Error:\n", r)
 		}
+		fmt.Fprintf(br, "metal-hammer is terminating\n")
 		_ = br.Flush()
 	}()
 
