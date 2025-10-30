@@ -44,8 +44,6 @@ type InstallerConfig struct {
 	DNSServers []*models.V1DNSServer `yaml:"dns_servers"`
 	// NTPServers for the machine
 	NTPServers []*models.V1NTPServer `yaml:"ntp_servers"`
-	// FirewallDistance is used by the firewall-controller only not by machines
-	FirewallDistance uint8 `yaml:"firewall_distance"`
 }
 
 // FIXME legacy structs remove once old images are gone

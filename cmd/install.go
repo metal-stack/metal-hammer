@@ -220,22 +220,21 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 	}
 
 	y := &api.InstallerConfig{
-		Hostname:         *alloc.Hostname,
-		SSHPublicKey:     sshPubkeys,
-		Networks:         alloc.Networks,
-		MachineUUID:      h.spec.MachineUUID,
-		Password:         h.spec.ConsolePassword,
-		Console:          console,
-		Timestamp:        time.Now().Format(time.RFC3339),
-		Nics:             h.onlyNicsWithNeighbors(machine.Hardware.Nics),
-		VPN:              alloc.Vpn,
-		Role:             *alloc.Role,
-		RaidEnabled:      raidEnabled,
-		RootUUID:         rootUUiD,
-		FirewallRules:    alloc.FirewallRules,
-		DNSServers:       alloc.DNSServers,
-		NTPServers:       alloc.NtpServers,
-		FirewallDistance: 0,
+		Hostname:      *alloc.Hostname,
+		SSHPublicKey:  sshPubkeys,
+		Networks:      alloc.Networks,
+		MachineUUID:   h.spec.MachineUUID,
+		Password:      h.spec.ConsolePassword,
+		Console:       console,
+		Timestamp:     time.Now().Format(time.RFC3339),
+		Nics:          h.onlyNicsWithNeighbors(machine.Hardware.Nics),
+		VPN:           alloc.Vpn,
+		Role:          *alloc.Role,
+		RaidEnabled:   raidEnabled,
+		RootUUID:      rootUUiD,
+		FirewallRules: alloc.FirewallRules,
+		DNSServers:    alloc.DNSServers,
+		NTPServers:    alloc.NtpServers,
 	}
 
 	yamlContent, err := yaml.Marshal(y)
