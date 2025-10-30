@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/u-root/u-root/pkg/mount/block"
 	"log/slog"
 	gos "os"
 	"os/exec"
@@ -130,6 +131,16 @@ func (f *Filesystem) createPartitions() error {
 			if err != nil {
 				f.log.Error("sgdisk creating partitions failed", "error", err)
 				return fmt.Errorf("unable to create partitions on %s %w", *disk.Device, err)
+			}
+
+			blkdev, err := block.Device(*disk.Device)
+			if err != nil {
+				return fmt.Errorf("unable to find block device %s: %v", *disk.Device, err)
+			}
+
+			err = blkdev.ReadPartitionTable()
+			if err != nil {
+				return fmt.Errorf("unable to re-read the partition table. Kernel still uses old partition table: %v", err)
 			}
 		}
 	}
