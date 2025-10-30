@@ -35,7 +35,8 @@ require (
 replace (
 	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
 	// keep this until https://github.com/u-root/u-root/pull/3451 is merged and released
-	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
+	// github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
+	github.com/u-root/u-root => github.com/u-root/u-root v0.14.1-0.20240326203528-0d741dd84444
 )
 
 require (
