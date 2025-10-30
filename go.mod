@@ -19,6 +19,7 @@ require (
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/pierrec/lz4/v4 v4.1.22
+	github.com/pkg/term v1.1.0
 	github.com/prometheus/common v0.65.0
 	github.com/samber/slog-loki/v3 v3.5.4
 	github.com/samber/slog-multi v1.4.1
@@ -36,8 +37,6 @@ replace (
 	// keep this until https://github.com/u-root/u-root/pull/3451 is merged and released
 	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
 )
-
-require github.com/pkg/term v1.1.0
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
