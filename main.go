@@ -32,8 +32,6 @@ func main() {
 
 	go func() {
 		for range ticker.C {
-			fmt.Println(".")
-
 			_ = br.Flush()
 			err = t.Flush()
 
