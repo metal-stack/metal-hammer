@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20240913122146-e119d400c3a5
 	github.com/jaypipes/ghw v0.14.0
-	github.com/metal-stack/go-hal v0.5.7
+	github.com/metal-stack/go-hal v0.6.1-0.20251030115327-6205d228ba00
 	github.com/metal-stack/go-lldpd v0.4.9
 	github.com/metal-stack/metal-api v0.40.4
 	github.com/metal-stack/metal-go v0.40.4
@@ -26,8 +26,8 @@ require (
 	github.com/samber/slog-multi v1.4.0
 	github.com/u-root/u-root v0.14.0
 	github.com/vishvananda/netlink v1.3.0
-	golang.org/x/sync v0.12.0
-	golang.org/x/sys v0.31.0
+	golang.org/x/sync v0.16.0
+	golang.org/x/sys v0.35.0
 	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v3 v3.0.1
@@ -128,11 +128,11 @@ require (
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
-	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250303144028-a0af3efb3deb // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.1 // indirect
