@@ -49,7 +49,7 @@ func main() {
 	}
 
 	// Reboot if metal-hammer crashes after 60sec.
-	// go kernel.Watchdog(log)
+	go kernel.Watchdog(log)
 
 	hal, err := connect.InBand(logger.NewSlog(log))
 	if err != nil {
