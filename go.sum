@@ -214,8 +214,8 @@ github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 h1:i4JJtLb5iDVsncU7s
 github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/4B6NhGzofHK/+I+N31NTUz/hrEm4ssUwA=
 github.com/mdlayher/packet v1.0.0/go.mod h1:eE7/ctqDhoiRhQ44ko5JZU2zxB88g+JH/6jmnjzPjOU=
 github.com/mdlayher/socket v0.2.1/go.mod h1:QLlNPkFR88mRUNQIzRBMfXxwKal8H7u1h3bL1CV+f0E=
-github.com/metal-stack/go-hal v0.6.1-0.20251030143059-13d9433af225 h1:RCgJHfVY118R9NDf0LdrIcDbmhp5mfKmoFrxsROyvFU=
-github.com/metal-stack/go-hal v0.6.1-0.20251030143059-13d9433af225/go.mod h1:GDwQ9byf09dgWA/vUUSXbBYsBY5NvFQYZXP0EUmSyXg=
+github.com/metal-stack/go-hal v0.6.1-0.20251031121551-66a536840e72 h1:gGMqAvQUo+SLoq6VSVEkCgG4j1HVT9B5B0NgR63IHVg=
+github.com/metal-stack/go-hal v0.6.1-0.20251031121551-66a536840e72/go.mod h1:GDwQ9byf09dgWA/vUUSXbBYsBY5NvFQYZXP0EUmSyXg=
 github.com/metal-stack/go-lldpd v0.4.10 h1:ocS2AqFJXU3p71+YSAson7Ocn43lzWHmvt+hFDgN+/k=
 github.com/metal-stack/go-lldpd v0.4.10/go.mod h1:q2X/Jo1P53ZcWhyCXffj9D8YJ2IkKE3pg4EtQ4A2hzE=
 github.com/metal-stack/metal-api v0.42.2 h1:uBFY8GNFNhLfQnF7tOUHlQLqYaEYvsJl2Uv5puwClB0=
