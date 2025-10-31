@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log/slog"
 	"os"
@@ -14,31 +13,13 @@ import (
 	"github.com/metal-stack/go-hal/pkg/logger"
 	"github.com/metal-stack/metal-hammer/cmd"
 	"github.com/metal-stack/metal-hammer/cmd/event"
-	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/moby/sys/mountinfo"
-	"github.com/pkg/term"
 )
 
 func main() {
-	br := bufio.NewWriter(os.Stdout)
 
-	t, err := term.Open("/dev/ttyS0")
-	if err != nil {
-		panic(err)
-	}
-
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for range ticker.C {
-			_ = br.Flush()
-			err = t.Flush()
-
-		}
-	}()
-
-	jsonHandler := slog.NewJSONHandler(br, &slog.HandlerOptions{
+	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
 	log := slog.New(jsonHandler)
@@ -83,22 +64,22 @@ func main() {
 	}
 	log = log.With("machineID", uuid.String())
 
-	ip := network.InternalIP()
-	err = cmd.StartSSHD(log, ip)
-	if err != nil {
-		log.Error("sshd error", "error", err)
-		os.Exit(1)
-	}
+	// ip := network.InternalIP()
+	// err = cmd.StartSSHD(log, ip)
+	// if err != nil {
+	// 	log.Error("sshd error", "error", err)
+	// 	os.Exit(1)
+	// }
 
 	log.Info("starting", "version", v.V.String(), "hal", hal.Describe())
 
 	spec := cmd.NewSpec(log)
 
 	// Synchronize time using NTP
-	network.NtpDate(log, spec.MetalConfig.NTPServers)
+	// network.NtpDate(log, spec.MetalConfig.NTPServers)
 
 	spec.MachineUUID = uuid.String()
-	spec.IP = ip
+	// spec.IP = ip
 
 	spec.Log()
 
