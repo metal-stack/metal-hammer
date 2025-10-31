@@ -54,8 +54,7 @@ func main() {
 	hal, err := connect.InBand(logger.NewSlog(log))
 	if err != nil {
 		log.Error("unable to detect hardware", "error", err)
-		// FIXME
-		// os.Exit(1)
+		os.Exit(1)
 	}
 
 	uuid, err := hal.UUID()

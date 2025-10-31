@@ -19,7 +19,6 @@ require (
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/pierrec/lz4/v4 v4.1.22
-	github.com/pkg/term v1.1.0
 	github.com/prometheus/common v0.65.0
 	github.com/samber/slog-loki/v3 v3.5.4
 	github.com/samber/slog-multi v1.4.1
