@@ -163,6 +163,27 @@ func (i *Image) download(source, dest string) error {
 	bar.Start()
 	defer bar.Finish()
 
+	progressTicker := time.NewTicker(30 * time.Second)
+	done := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-progressTicker.C:
+				downloaded := bar.Current()
+				attrs := []any{"downloaded_bytes", downloaded, "total_bytes", fileSize}
+				if fileSize > 0 {
+					percent := (float64(downloaded) / float64(fileSize)) * 100
+					attrs = append(attrs, "percent_complete", percent)
+				}
+				i.log.Info("image download progress", attrs...)
+			case <-done:
+				progressTicker.Stop()
+				return
+			}
+		}
+	}()
+	defer close(done)
+
 	reader := bar.NewProxyReader(resp.Body)
 	// Write the body to file
 	bytesWritten, err := io.Copy(out, reader)
