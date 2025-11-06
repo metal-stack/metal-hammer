@@ -31,15 +31,19 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 
 	image := machine.Allocation.Image.URL
 
+	h.log.Info("prepare image download", "image_url", image, "destination", h.osImageDestination)
+
 	err = img.NewImage(h.log).Pull(image, h.osImageDestination)
 	if err != nil {
 		return nil, err
 	}
+	h.log.Info("image download completed", "image_url", image, "destination", h.osImageDestination)
 
 	err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
 	if err != nil {
 		return nil, err
 	}
+	h.log.Info("image unpacked", "image_url", image, "target_root", h.chrootPrefix)
 
 	info, err := h.install(h.chrootPrefix, machine, s.RootUUID)
 	if err != nil {
