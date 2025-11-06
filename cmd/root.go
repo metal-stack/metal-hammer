@@ -158,48 +158,6 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 func (h *hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.BootServiceClient, m *models.V1MachineResponse) error {
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
-	deref := func(s *string) string {
-		if s == nil {
-			return ""
-		}
-		return *s
-	}
-
-	if m == nil {
-		h.log.Warn("machine payload missing when logging allocation")
-	} else if m.Allocation == nil {
-		h.log.Warn("machine allocation missing", "machineID", deref(m.ID))
-	} else {
-		allocation := m.Allocation
-		imageID := ""
-		imageURL := ""
-		if allocation.Image != nil {
-			imageID = deref(allocation.Image.ID)
-			imageURL = allocation.Image.URL
-		}
-		layoutID := ""
-		if allocation.Filesystemlayout != nil {
-			layoutID = deref(allocation.Filesystemlayout.ID)
-		}
-		reinstall := false
-		if allocation.Reinstall != nil {
-			reinstall = *allocation.Reinstall
-		}
-		succeeded := false
-		if allocation.Succeeded != nil {
-			succeeded = *allocation.Succeeded
-		}
-		h.log.Info("allocation received",
-			"machineID", deref(m.ID),
-			"hostname", deref(allocation.Hostname),
-			"imageID", imageID,
-			"imageURL", imageURL,
-			"filesystemLayoutID", layoutID,
-			"reinstall", reinstall,
-			"succeeded", succeeded,
-			"userDataPresent", allocation.UserData != "",
-		)
-	}
 	info, err := h.Install(m)
 
 	// FIXME, must not return here.
