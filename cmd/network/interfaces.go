@@ -27,7 +27,7 @@ type Network struct {
 
 // We expect to have storage and MTU of 9000 supports efficient transmission.
 // In our clos topology MTU 9000 (non vxlan)/9216 (vxlan) is status quo.
-const MTU = 9000
+const MTU = 1500
 
 // UpAllInterfaces set all available eth* interfaces up
 // to ensure they do ipv6 link local autoconfiguration and
