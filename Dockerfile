@@ -22,7 +22,7 @@ RUN curl -fLsS https://sourceforge.net/projects/e1000/files/ice%20stable/${ICE_V
 
 # ipmitool from bookworm is broken and returns with error on most commands, seems fixed
 # sgdisk from debian:13 is broken and creates a corrupt GPT partition layout
-FROM golang:1.24-bullseye AS initrd-builder
+FROM golang:1.24-bookworm AS initrd-builder
 ENV UROOT_GIT_SHA_OR_TAG=v0.14.0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
