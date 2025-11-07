@@ -224,8 +224,9 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 	}
 
 	y := &api.InstallerConfig{
-		Hostname:      *alloc.Hostname,
-		SSHPublicKey:  sshPubkeys,
+		Hostname:     *alloc.Hostname,
+		SSHPublicKey: sshPubkeys,
+		// This is empty for external networks for fw
 		Networks:      alloc.Networks,
 		MachineUUID:   h.spec.MachineUUID,
 		Password:      h.spec.ConsolePassword,
