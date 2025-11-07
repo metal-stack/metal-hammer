@@ -239,6 +239,7 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		FirewallRules: alloc.FirewallRules,
 		DNSServers:    alloc.DNSServers,
 		NTPServers:    alloc.NtpServers,
+		BmcExists:     false,
 	}
 
 	yamlContent, err := yaml.Marshal(y)
