@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20240913122146-e119d400c3a5
 	github.com/jaypipes/ghw v0.19.1
-	github.com/metal-stack/go-hal v0.6.0
+	github.com/metal-stack/go-hal v0.6.1-0.20251030115327-6205d228ba00
 	github.com/metal-stack/go-lldpd v0.4.10
 	github.com/metal-stack/metal-api v0.42.2
 	github.com/metal-stack/metal-go v0.42.2
@@ -34,7 +34,7 @@ require (
 replace (
 	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
 	// keep this until https://github.com/u-root/u-root/pull/3451 is merged and released
-	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
+	github.com/u-root/u-root => github.com/u-root/u-root v0.14.1-0.20240326203528-0d741dd84444
 )
 
 require (

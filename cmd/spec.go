@@ -53,7 +53,7 @@ func NewSpec(log *slog.Logger) *Specification {
 		spec.PixieAPIUrl = url
 	}
 
-	metalConfig, err := fetchMetalConfig(spec.PixieAPIUrl)
+	metalConfig, err := fetchMetalConfig(log, spec.PixieAPIUrl)
 	if err != nil {
 		log.Error("unable to fetch configuration from pixiecore", "error", err)
 		os.Exit(1)

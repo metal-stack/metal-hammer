@@ -240,7 +240,7 @@ func (r *Register) detectGPUs() (pci.Devices, error) {
 		return nil, err
 	}
 
-	devices.SetVendorDeviceName(pci.IDs)
+	devices.SetVendorDeviceName()
 
 	var result pci.Devices
 	for _, device := range devices {

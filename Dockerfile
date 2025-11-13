@@ -45,6 +45,8 @@ RUN apt-get update \
 	util-linux \
  # this is required, otherwise uroot complains that these files already exist
  && rm -f /etc/passwd /etc/lvm/lvmlocal.conf
+COPY ca.pem /usr/local/share/ca-certificates/metal-control-plane.crt
+RUN update-ca-certificates
 RUN mkdir -p ${GOPATH}/src/github.com/u-root \
  && cd ${GOPATH}/src/github.com/u-root \
  && git clone https://github.com/u-root/u-root \

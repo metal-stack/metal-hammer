@@ -44,6 +44,8 @@ type InstallerConfig struct {
 	DNSServers []*models.V1DNSServer `yaml:"dns_servers"`
 	// NTPServers for the machine
 	NTPServers []*models.V1NTPServer `yaml:"ntp_servers"`
+	// NTPServers for the machine
+	BmcExists bool `yaml:"bmc_exists"`
 }
 
 // FIXME legacy structs remove once old images are gone

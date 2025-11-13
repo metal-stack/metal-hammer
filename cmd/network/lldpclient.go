@@ -28,7 +28,7 @@ type Host struct {
 
 const (
 	// LLDPTxInterval is set to 10 seconds in /etc/lldpd.d/tx-interval.conf on each leaf.
-	LLDPTxInterval = 15 * time.Second
+	LLDPTxInterval = 60 * time.Second
 
 	// LLDPTxIntervalTimeout is set to double of tx-interval of lldpd on the switch side.
 	// This ensures we get all lldp pdu`s.
@@ -38,9 +38,7 @@ const (
 
 // NewLLDPClient create a lldp client.
 func NewLLDPClient(log *slog.Logger, interfaces []string, minimumInterfaces, minimumNeighbors int, timeout time.Duration) *LLDPClient {
-	if timeout == 0 {
-		timeout = LLDPTxIntervalTimeout
-	}
+	timeout = LLDPTxIntervalTimeout
 	return &LLDPClient{
 		Host: &Host{
 			mutex:             sync.RWMutex{},

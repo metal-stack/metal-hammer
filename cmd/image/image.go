@@ -150,6 +150,7 @@ func (i *Image) download(source, dest string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	i.log.Info("download response", "source", source, "status", resp.StatusCode, "final_url", resp.Request.URL.String(), "content_length", resp.ContentLength)
 	if resp.StatusCode >= http.StatusBadRequest {
 		return fmt.Errorf("download of %s did not work, statuscode was: %d", source, resp.StatusCode)
 	}
@@ -164,10 +165,11 @@ func (i *Image) download(source, dest string) error {
 
 	reader := bar.NewProxyReader(resp.Body)
 	// Write the body to file
-	_, err = io.Copy(out, reader)
+	bytesWritten, err := io.Copy(out, reader)
 	if err != nil {
 		return err
 	}
+	i.log.Info("download finished", "destination", dest, "bytes", bytesWritten)
 
 	return nil
 }
