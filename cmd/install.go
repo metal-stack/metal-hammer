@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -31,14 +32,26 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 
 	image := machine.Allocation.Image.URL
 
-	err = img.NewImage(h.log).Pull(image, h.osImageDestination)
-	if err != nil {
-		return nil, err
-	}
+	if strings.HasPrefix(image, "oci://") {
+		ctx := context.Background()
+		// TODO: where to get oci credentials from?
+		username := os.Getenv("REGISTRY_USERNAME")
+		password := os.Getenv("REGISTRY_PASSWORD")
 
-	err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
-	if err != nil {
-		return nil, err
+		err = img.NewImage(h.log).OciPull(ctx, image, h.osImageDestination, username, password)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = img.NewImage(h.log).Pull(image, h.osImageDestination)
+		if err != nil {
+			return nil, err
+		}
+
+		err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	info, err := h.install(h.chrootPrefix, machine, s.RootUUID)

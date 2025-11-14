@@ -1,12 +1,21 @@
 package image
 
 import (
+	"archive/tar"
+	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 
 	pb "github.com/cheggaaa/pb/v3"
 	"github.com/mholt/archiver"
 	lz4 "github.com/pierrec/lz4/v4"
+
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	//nolint:gosec
 	"crypto/md5"
@@ -25,7 +34,42 @@ func NewImage(log *slog.Logger) *Image {
 	return &Image{log: log}
 }
 
-// Pull a image from s3
+func (i *Image) OciPull(ctx context.Context, imageRef, mountDir, username, password string) error {
+	// Parse the image reference (e.g., docker.io/library/alpine:latest)
+	ref, err := name.ParseReference(imageRef)
+	if err != nil {
+		return fmt.Errorf("parsing image reference: %w", err)
+	}
+
+	// Choose authentication method
+	var auth = authn.Anonymous
+	if username != "" || password != "" {
+		auth = &authn.Basic{
+			Username: username,
+			Password: password,
+		}
+	}
+
+	i.log.Info("pull oci image", "image", imageRef)
+	img, err := remote.Image(ref, remote.WithAuth(auth))
+	if err != nil {
+		return fmt.Errorf("fetching remote image: %w", err)
+	}
+
+	// Flatten layers and create a tar stream
+	rc := mutate.Extract(img)
+	defer rc.Close()
+
+	i.log.Info(fmt.Sprintf("untar oci image into %s", mountDir), "image", imageRef)
+	if err := i.untar(rc, mountDir); err != nil {
+		return fmt.Errorf("extracting tar: %w", err)
+	}
+
+	i.log.Info("pull oci image done", "image", imageRef)
+	return nil
+}
+
+// Pull an image from s3
 func (i *Image) Pull(image, destination string) error {
 	i.log.Info("pull image", "image", image)
 	md5destination := destination + ".md5"
@@ -169,5 +213,73 @@ func (i *Image) download(source, dest string) error {
 		return err
 	}
 
+	return nil
+}
+
+func (i *Image) untar(r io.Reader, dest string) error {
+	tr := tar.NewReader(r)
+	for {
+		hdr, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("reading tar: %w", err)
+		}
+
+		target := filepath.Join(dest, hdr.Name)
+
+		fmt.Printf("extracting:%s\n", target)
+
+		if strings.HasSuffix(target, ".log") {
+			fmt.Printf("skipping:%s\n", target)
+			continue
+		}
+
+		switch hdr.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(target, os.FileMode(hdr.Mode)); err != nil {
+				return fmt.Errorf("creating dir: %w", err)
+			}
+			if err := os.Lchown(target, hdr.Uid, hdr.Gid); err != nil && !errors.Is(err, os.ErrPermission) {
+				return fmt.Errorf("chown dir: %w", err)
+			}
+
+		case tar.TypeReg:
+			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+				return fmt.Errorf("creating parent dir: %w", err)
+			}
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(hdr.Mode))
+			if err != nil {
+				return fmt.Errorf("creating file: %w", err)
+			}
+			if _, err := io.Copy(f, tr); err != nil {
+				f.Close()
+				return fmt.Errorf("copying file: %w", err)
+			}
+			f.Close()
+
+			if err := os.Chmod(target, os.FileMode(hdr.Mode)); err != nil {
+				return fmt.Errorf("chmod: %w", err)
+			}
+			if err := os.Lchown(target, hdr.Uid, hdr.Gid); err != nil && !errors.Is(err, os.ErrPermission) {
+				return fmt.Errorf("chown file: %w", err)
+			}
+
+		case tar.TypeSymlink:
+			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+				return fmt.Errorf("creating parent dir: %w", err)
+			}
+			if err := os.Symlink(hdr.Linkname, target); err != nil {
+				return fmt.Errorf("creating symlink: %w", err)
+			}
+			if err := os.Lchown(target, hdr.Uid, hdr.Gid); err != nil && !errors.Is(err, os.ErrPermission) {
+				return fmt.Errorf("chown symlink: %w", err)
+			}
+
+		default:
+			// skip unsupported or special files
+		}
+	}
 	return nil
 }
