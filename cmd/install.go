@@ -31,14 +31,16 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 	}
 
 	image := machine.Allocation.Image.URL
-
 	if strings.HasPrefix(image, "oci://") {
-		ctx := context.Background()
-		// TODO: where to get oci credentials from?
-		username := os.Getenv("REGISTRY_USERNAME")
-		password := os.Getenv("REGISTRY_PASSWORD")
+		ociConfigs := h.spec.MetalConfig.OciConfig
+		for _, c := range ociConfigs {
+			if strings.ToLower(image) != strings.ToLower(c.RegistryURL) {
+				continue
+			}
 
-		err = img.NewImage(h.log).OciPull(ctx, image, h.osImageDestination, username, password)
+			ctx := context.Background()
+			err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.osImageDestination, c.Username, c.Password)
+		}
 		if err != nil {
 			return nil, err
 		}
