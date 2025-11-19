@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -30,15 +31,29 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 	}
 
 	image := machine.Allocation.Image.URL
+	if strings.HasPrefix(image, "oci://") {
+		ociConfigs := h.spec.MetalConfig.OciConfig
+		for _, c := range ociConfigs {
+			if strings.ToLower(image) != strings.ToLower(c.RegistryURL) {
+				continue
+			}
 
-	err = img.NewImage(h.log).Pull(image, h.osImageDestination)
-	if err != nil {
-		return nil, err
-	}
+			ctx := context.Background()
+			err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.osImageDestination, c.Username, c.Password)
+		}
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = img.NewImage(h.log).Pull(image, h.osImageDestination)
+		if err != nil {
+			return nil, err
+		}
 
-	err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
-	if err != nil {
-		return nil, err
+		err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	info, err := h.install(h.chrootPrefix, machine, s.RootUUID)
