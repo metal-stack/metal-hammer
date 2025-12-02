@@ -13,7 +13,7 @@ require (
 	github.com/metal-stack/go-lldpd v0.4.10
 	github.com/metal-stack/metal-api v0.42.4
 	github.com/metal-stack/metal-go v0.42.2
-	github.com/metal-stack/pixie v0.3.8-0.20251119081648-0cd55ab0ff7a
+	github.com/metal-stack/pixie v0.3.8-0.20251120151433-6e075b23326c
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -36,6 +36,8 @@ replace (
 	// keep this until https://github.com/u-root/u-root/pull/3451 is merged and released
 	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
 )
+
+require github.com/google/go-containerregistry v0.20.6
 
 require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
@@ -88,7 +90,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
-	github.com/google/go-containerregistry v0.20.6 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20250903093132-95ced86f69c5 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
@@ -148,6 +149,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
 	golang.org/x/net v0.46.0 // indirect
