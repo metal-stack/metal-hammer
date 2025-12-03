@@ -31,20 +31,21 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 	}
 
 	image := machine.Allocation.Image.URL
-	h.log.Info("checking if oci", "image", image)
+	h.log.Info("checking oci image", "image", image)
 	if strings.HasPrefix(image, "oci://") {
 		ociConfigs := h.spec.MetalConfig.OciConfig
-		for _, c := range ociConfigs {
-			h.log.Info("checking if registry url is equal to image", "image", image, "RegistryURL", c.RegistryURL)
-			if !strings.EqualFold(image, c.RegistryURL) {
-				continue
-			}
 
+		for _, c := range ociConfigs {
 			ctx := context.Background()
-			err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.osImageDestination, c.Username, c.Password)
-		}
-		if err != nil {
-			return nil, err
+
+			if strings.EqualFold(image, c.RegistryURL) {
+				err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.osImageDestination, c.Username, c.Password)
+			} else {
+				err = img.NewImage(h.log).OciPull(ctx, image, h.osImageDestination, "", "")
+			}
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		err = img.NewImage(h.log).Pull(image, h.osImageDestination)
