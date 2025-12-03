@@ -31,10 +31,12 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 	}
 
 	image := machine.Allocation.Image.URL
+	h.log.Info("checking if oci", "image", image)
 	if strings.HasPrefix(image, "oci://") {
 		ociConfigs := h.spec.MetalConfig.OciConfig
 		for _, c := range ociConfigs {
-			if strings.ToLower(image) != strings.ToLower(c.RegistryURL) {
+			h.log.Info("checking if registry url is equal to image", "image", image, "RegistryURL", c.RegistryURL)
+			if !strings.EqualFold(image, c.RegistryURL) {
 				continue
 			}
 
@@ -259,6 +261,7 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 
 	return os.WriteFile(destination, yamlContent, 0600)
 }
+
 func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1MachineNic {
 	noNeighbors := func(neighbors []*models.V1MachineNic) bool {
 		if len(neighbors) == 0 {
