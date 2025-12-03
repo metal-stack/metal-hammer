@@ -12,6 +12,8 @@ github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.1 h1:FPKJS1T+clwv+OLGt13a8U
 github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.1/go.mod h1:j2chePtV91HrC22tGoRX3sGY42uF13WzmmV80/OdVAA=
 github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 h1:oygO0locgZJe7PpYPXT5A29ZkwJaPqcva7BVeemZOZs=
 github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2/go.mod h1:wP83P5OoQ5p6ip3ScPr0BAq0BvuPAvacpEuSzyouqAI=
+github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=
+github.com/Masterminds/semver/v3 v3.4.0/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
 github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2 h1:+vx7roKuyA63nhn5WAunQHLTznkw5W8b1Xc0dNjp83s=
 github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2/go.mod h1:HBCaDeC1lPdgDeDbhX8XFpy1jqjK0IBG8W5K+xYqA0w=
 github.com/VividCortex/ewma v1.2.0 h1:f58SaIzcDXrSy3kWaHNvuJgJ3Nmz59Zji6XoJR/q1ow=
@@ -214,8 +216,8 @@ github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 h1:i4JJtLb5iDVsncU7s
 github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/4B6NhGzofHK/+I+N31NTUz/hrEm4ssUwA=
 github.com/mdlayher/packet v1.0.0/go.mod h1:eE7/ctqDhoiRhQ44ko5JZU2zxB88g+JH/6jmnjzPjOU=
 github.com/mdlayher/socket v0.2.1/go.mod h1:QLlNPkFR88mRUNQIzRBMfXxwKal8H7u1h3bL1CV+f0E=
-github.com/metal-stack/go-hal v0.6.0 h1:mhe+x3HPqtud3VH4NJwJR0yNV4Kh9oOnhj9yyXDBLIc=
-github.com/metal-stack/go-hal v0.6.0/go.mod h1:2yeab7N8ApBd44z7mEwWCb+CL7o3ioZu41kSsra50Dw=
+github.com/metal-stack/go-hal v0.6.1-0.20251203141015-f3bfae1c6a8f h1:1ExSh+R5LcPmB+YP0GCFcTq5EFgDsgS5YdxF8keOIYg=
+github.com/metal-stack/go-hal v0.6.1-0.20251203141015-f3bfae1c6a8f/go.mod h1:GDwQ9byf09dgWA/vUUSXbBYsBY5NvFQYZXP0EUmSyXg=
 github.com/metal-stack/go-lldpd v0.4.10 h1:ocS2AqFJXU3p71+YSAson7Ocn43lzWHmvt+hFDgN+/k=
 github.com/metal-stack/go-lldpd v0.4.10/go.mod h1:q2X/Jo1P53ZcWhyCXffj9D8YJ2IkKE3pg4EtQ4A2hzE=
 github.com/metal-stack/metal-api v0.42.2 h1:uBFY8GNFNhLfQnF7tOUHlQLqYaEYvsJl2Uv5puwClB0=
