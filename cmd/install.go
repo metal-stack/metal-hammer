@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -30,15 +31,34 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 	}
 
 	image := machine.Allocation.Image.URL
+	h.log.Info("checking oci image", "image", image)
+	if strings.HasPrefix(image, "oci://") {
+		ociConfigs := h.spec.MetalConfig.OciConfig
+		ctx := context.Background()
 
-	err = img.NewImage(h.log).Pull(image, h.osImageDestination)
-	if err != nil {
-		return nil, err
-	}
+		if len(ociConfigs) == 0 {
+			err = img.NewImage(h.log).OciPull(ctx, image, h.osImageDestination, "", "")
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, c := range ociConfigs {
+				err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.osImageDestination, c.Username, c.Password)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	} else {
+		err = img.NewImage(h.log).Pull(image, h.osImageDestination)
+		if err != nil {
+			return nil, err
+		}
 
-	err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
-	if err != nil {
-		return nil, err
+		err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	info, err := h.install(h.chrootPrefix, machine, s.RootUUID)
@@ -244,6 +264,7 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 
 	return os.WriteFile(destination, yamlContent, 0600)
 }
+
 func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1MachineNic {
 	noNeighbors := func(neighbors []*models.V1MachineNic) bool {
 		if len(neighbors) == 0 {
