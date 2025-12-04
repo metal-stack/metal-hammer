@@ -34,17 +34,19 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 	h.log.Info("checking oci image", "image", image)
 	if strings.HasPrefix(image, "oci://") {
 		ociConfigs := h.spec.MetalConfig.OciConfig
+		ctx := context.Background()
 
-		for _, c := range ociConfigs {
-			ctx := context.Background()
-
-			if strings.EqualFold(image, c.RegistryURL) {
-				err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.osImageDestination, c.Username, c.Password)
-			} else {
-				err = img.NewImage(h.log).OciPull(ctx, image, h.osImageDestination, "", "")
-			}
+		if len(ociConfigs) == 0 {
+			err = img.NewImage(h.log).OciPull(ctx, image, h.osImageDestination, "", "")
 			if err != nil {
 				return nil, err
+			}
+		} else {
+			for _, c := range ociConfigs {
+				err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.osImageDestination, c.Username, c.Password)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	} else {
