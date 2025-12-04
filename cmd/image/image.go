@@ -35,8 +35,9 @@ func NewImage(log *slog.Logger) *Image {
 }
 
 func (i *Image) OciPull(ctx context.Context, imageRef, mountDir, username, password string) error {
+	imageRefWithoutOciPrefix := strings.TrimPrefix(imageRef, "oci://")
 	// Parse the image reference (e.g., docker.io/library/alpine:latest)
-	ref, err := name.ParseReference(imageRef)
+	ref, err := name.ParseReference(imageRefWithoutOciPrefix)
 	if err != nil {
 		return fmt.Errorf("parsing image reference: %w", err)
 	}
