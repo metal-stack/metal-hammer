@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
 	pixiecore "github.com/metal-stack/pixie/api"
 )
 
-func fetchMetalConfig(pixieURL string) (*pixiecore.MetalConfig, error) {
+func fetchMetalConfig(log *slog.Logger, pixieURL string) (*pixiecore.MetalConfig, error) {
 	certClient := http.Client{
 		Timeout: 5 * time.Second,
 	}
@@ -35,5 +36,15 @@ func fetchMetalConfig(pixieURL string) (*pixiecore.MetalConfig, error) {
 	if err := json.Unmarshal(js, &metalConfig); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal grpcConfig:%w", err)
 	}
+
+	log.Info("pixie configuration received",
+		"pixie_url", pixieURL,
+		"grpc_address", metalConfig.GRPCAddress,
+		"metal_api_url", metalConfig.MetalAPIUrl,
+		"partition", metalConfig.Partition,
+		"ntp_servers", metalConfig.NTPServers,
+		"debug", metalConfig.Debug,
+	)
+
 	return &metalConfig, nil
 }
