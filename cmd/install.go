@@ -37,13 +37,13 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 		ctx := context.Background()
 
 		if len(ociConfigs) == 0 {
-			err = img.NewImage(h.log).OciPull(ctx, image, h.osImageDestination, "", "")
+			err = img.NewImage(h.log).OciPull(ctx, image, h.chrootPrefix, "", "")
 			if err != nil {
 				return nil, err
 			}
 		} else {
 			for _, c := range ociConfigs {
-				err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.osImageDestination, c.Username, c.Password)
+				err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.chrootPrefix, c.Username, c.Password)
 				if err != nil {
 					return nil, err
 				}

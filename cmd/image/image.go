@@ -94,7 +94,7 @@ func (i *Image) Pull(image, destination string) error {
 	return nil
 }
 
-// Burn a image pulling a tarball and unpack to a specific directory
+// Burn an image pulling a tarball and unpack to a specific directory
 func (i *Image) Burn(prefix, image, source string) error {
 	i.log.Info("burn image", "image", image)
 	begin := time.Now()
