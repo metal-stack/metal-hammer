@@ -2,12 +2,12 @@ package image
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/foomo/htpasswd"
@@ -54,51 +54,31 @@ func TestCheckMD5(t *testing.T) {
 	if !matches {
 		t.Error("expected md5 matches, but didn't")
 	}
-
 }
 
 func TestOciPull(t *testing.T) {
 	var (
 		assert = assert.New(t)
 
-		ctx                  = context.Background()
-		invalidImageRef      = "invalid://"
-		imageRef             = "oci://ghcr.io/metal-stack/debian:12-oci-artifact-push" // TODO: change to debian:12 image before merging
-		imageRefDoesNotExist = "oci://does/not/exist:tag"
-		mountDir             = "/tmp/oci-pull-mount-dir"
-		installGoBin         = "install-go"
+		ctx          = context.Background()
+		mountDir     = "/tmp/oci-pull-mount-dir"
+		extractedBin = "a"
 
 		anonymousUsername = ""
 		anonymousPassword = ""
-		authUsername      = "test-user"
-		authPassword      = "test-password"
 	)
 
-	f, err := os.CreateTemp("", "htpasswd")
-	require.NoError(t, err)
-	defer func() {
-		_ = os.Remove(f.Name())
-	}()
-
-	err = htpasswd.SetPassword(f.Name(), authUsername, authPassword, htpasswd.HashBCrypt)
-	require.NoError(t, err)
-
-	env := map[string]string{
-		"REGISTRY_AUTH":                "htpasswd",
-		"REGISTRY_AUTH_HTPASSWD_REALM": "registry-login",
-		"REGISTRY_AUTH_HTPASSWD_PATH":  "/htpasswd",
-	}
-	regIP, regPort, err := startRegistry(env, pointer.Pointer(f.Name()), pointer.Pointer("/htpasswd"))
-	require.NoError(t, err)
-	registry := fmt.Sprintf("%s:%d", regIP, regPort)
-
-	imageRefBehindAuth := fmt.Sprintf("%s/library/debian", registry)
-	trimmedImageRef := strings.TrimPrefix(imageRef, "oci://")
-	err = fetchImageFromRemote(imageRefBehindAuth, trimmedImageRef, authUsername, authPassword)
-	require.NoError(t, err)
-
 	t.Run("successful anonymous pull", func(t *testing.T) {
-		err := os.Mkdir(mountDir, os.ModePerm)
+		regIP, regPort, err := startRegistry(nil, nil, nil)
+		require.NoError(t, err)
+		registry := fmt.Sprintf("%s:%d", regIP, regPort)
+
+		imageRef := fmt.Sprintf("%s/library/debian", registry)
+		err = createImage(imageRef, "", "", "12")
+		require.NoError(t, err)
+
+		// TODO: use afero
+		err = os.Mkdir(mountDir, os.ModePerm)
 		if err != nil {
 			t.Error(err)
 		}
@@ -109,33 +89,63 @@ func TestOciPull(t *testing.T) {
 			t.Error(err)
 		}
 
-		installGoBinFullPath := filepath.Join(mountDir, installGoBin)
-		assert.FileExists(installGoBinFullPath)
+		extractedBinFullPath := filepath.Join(mountDir, extractedBin)
+		assert.FileExists(extractedBinFullPath)
 	})
 
 	t.Run("successful authenticated pull", func(t *testing.T) {
-		err := os.Mkdir(mountDir, os.ModePerm)
+		var (
+			username = "test-user"
+			password = "test-password"
+		)
+
+		f, err := os.CreateTemp("", "htpasswd")
+		require.NoError(t, err)
+		defer func() {
+			_ = os.Remove(f.Name())
+		}()
+
+		err = htpasswd.SetPassword(f.Name(), username, password, htpasswd.HashBCrypt)
+		require.NoError(t, err)
+
+		env := map[string]string{
+			"REGISTRY_AUTH":                "htpasswd",
+			"REGISTRY_AUTH_HTPASSWD_REALM": "registry-login",
+			"REGISTRY_AUTH_HTPASSWD_PATH":  "/htpasswd",
+		}
+		regIP, regPort, err := startRegistry(env, pointer.Pointer(f.Name()), pointer.Pointer("/htpasswd"))
+		require.NoError(t, err)
+		registry := fmt.Sprintf("%s:%d", regIP, regPort)
+
+		imageRefBehindAuth := fmt.Sprintf("%s/library/debian", registry)
+		err = createImage(imageRefBehindAuth, username, password, "12")
+		require.NoError(t, err)
+
+		// TODO: use afero
+		err = os.Mkdir(mountDir, os.ModePerm)
 		if err != nil {
 			t.Error(err)
 		}
 		defer os.RemoveAll(mountDir)
 
 		i := NewImage(slog.Default())
-		if err = i.OciPull(ctx, imageRefBehindAuth, mountDir, authUsername, authPassword); err != nil {
+		if err = i.OciPull(ctx, imageRefBehindAuth, mountDir, username, password); err != nil {
 			t.Error(err)
 		}
 
-		installGoBinFullPath := filepath.Join(mountDir, installGoBin)
-		assert.FileExists(installGoBinFullPath)
+		extractedBinFullPath := filepath.Join(mountDir, extractedBin)
+		assert.FileExists(extractedBinFullPath)
 	})
 
 	t.Run("parsing of image refs fails", func(t *testing.T) {
+		invalidImageRef := "invalid://"
 		i := NewImage(slog.Default())
 		err := i.OciPull(ctx, invalidImageRef, mountDir, anonymousUsername, anonymousPassword)
 		assert.EqualError(err, "parsing image reference: could not parse reference: invalid://")
 	})
 
 	t.Run("pulling remote image fails", func(t *testing.T) {
+		imageRefDoesNotExist := "oci://does/not/exist:tag"
 		i := NewImage(slog.Default())
 		err := i.OciPull(ctx, imageRefDoesNotExist, mountDir, anonymousUsername, anonymousPassword)
 		assert.Error(err)
@@ -185,8 +195,14 @@ func startRegistry(env map[string]string, src, dst *string) (string, int, error)
 	return ip, port.Int(), nil
 }
 
-func fetchImageFromRemote(imageName, remoteImageName, username, password string) error {
-	img, err := crane.Pull(remoteImageName)
+func createImage(imageName, username, password string, tags ...string) error {
+	// ensure every image has distinct content
+	buf := make([]byte, 128)
+	_, err := rand.Read(buf)
+	if err != nil {
+		return err
+	}
+	img, err := crane.Image(map[string][]byte{"a": buf})
 	if err != nil {
 		return err
 	}
@@ -201,6 +217,12 @@ func fetchImageFromRemote(imageName, remoteImageName, username, password string)
 	err = crane.Push(img, imageName, crane.WithAuth(auth))
 	if err != nil {
 		return err
+	}
+	for _, tag := range tags {
+		err := crane.Push(img, imageName+":"+tag, crane.WithAuth(auth))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
