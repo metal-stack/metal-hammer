@@ -73,15 +73,12 @@ func TestOciPull(t *testing.T) {
 		require.NoError(t, err)
 		registry := fmt.Sprintf("%s:%d", regIP, regPort)
 
-		imageRef := fmt.Sprintf("%s/library/debian", registry)
-		err = createImage(imageRef, "", "", "12")
+		imageRef := fmt.Sprintf("%s/library/image", registry)
+		err = createImage(imageRef, "", "")
 		require.NoError(t, err)
 
-		// TODO: use afero
-		err = os.Mkdir(mountDir, os.ModePerm)
-		if err != nil {
-			t.Error(err)
-		}
+		err = os.MkdirAll(mountDir, 0777)
+		require.NoError(t, err)
 		defer os.RemoveAll(mountDir)
 
 		i := NewImage(slog.Default())
@@ -117,15 +114,12 @@ func TestOciPull(t *testing.T) {
 		require.NoError(t, err)
 		registry := fmt.Sprintf("%s:%d", regIP, regPort)
 
-		imageRefBehindAuth := fmt.Sprintf("%s/library/debian", registry)
-		err = createImage(imageRefBehindAuth, username, password, "12")
+		imageRefBehindAuth := fmt.Sprintf("%s/library/image", registry)
+		err = createImage(imageRefBehindAuth, username, password)
 		require.NoError(t, err)
 
-		// TODO: use afero
-		err = os.Mkdir(mountDir, os.ModePerm)
-		if err != nil {
-			t.Error(err)
-		}
+		err = os.MkdirAll(mountDir, 0777)
+		require.NoError(t, err)
 		defer os.RemoveAll(mountDir)
 
 		i := NewImage(slog.Default())
