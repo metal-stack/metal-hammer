@@ -29,7 +29,7 @@ LINKMODE := -linkmode external -extldflags '-static -s -w' \
 		 -X 'github.com/metal-stack/v.GitSHA1=$(SHA)' \
 		 -X 'github.com/metal-stack/v.BuildDate=$(BUILDDATE)'
 
-bin/$(BINARY): test $(GOSRC)
+bin/$(BINARY): test-unit $(GOSRC)
 	$(info CGO_ENABLED="$(CGO_ENABLED)")
 	$(GO) build \
 		-tags netgo \
@@ -39,9 +39,13 @@ bin/$(BINARY): test $(GOSRC)
 		$(MAINMODULE)
 	strip bin/$(BINARY)
 
-.PHONY: test
-test:
+.PHONY: test-unit
+test-unit:
 	CGO_ENABLED=1 $(GO) test -cover ./...
+
+.PHONY: test-integration
+test-integration:
+	CGO_ENABLED=1 find . -name '*_integration_test.go' -type f -printf '%h\n' | sort -u | xargs -r $(GO) test -cover -tags=integration
 
 .PHONY: clean
 clean::
