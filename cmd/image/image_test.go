@@ -2,14 +2,22 @@ package image
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	// "github.com/google/go-containerregistry/pkg/name"
+	"github.com/foomo/htpasswd"
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/metal-stack/metal-lib/pkg/pointer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 func TestCheckMD5(t *testing.T) {
@@ -59,13 +67,35 @@ func TestOciPull(t *testing.T) {
 		imageRefDoesNotExist = "oci://does/not/exist:tag"
 		mountDir             = "/tmp/oci-pull-mount-dir"
 		installGoBin         = "install-go"
-		anonymousUsername    = ""
-		anonymousPassword    = ""
 
-	// TODO: what credentials shall be used here?
-	// username = "test-user"
-	// password = "test-password"
+		anonymousUsername = ""
+		anonymousPassword = ""
+		authUsername      = "test-user"
+		authPassword      = "test-password"
 	)
+
+	f, err := os.CreateTemp("", "htpasswd")
+	require.NoError(t, err)
+	defer func() {
+		_ = os.Remove(f.Name())
+	}()
+
+	err = htpasswd.SetPassword(f.Name(), authUsername, authPassword, htpasswd.HashBCrypt)
+	require.NoError(t, err)
+
+	env := map[string]string{
+		"REGISTRY_AUTH":                "htpasswd",
+		"REGISTRY_AUTH_HTPASSWD_REALM": "registry-login",
+		"REGISTRY_AUTH_HTPASSWD_PATH":  "/htpasswd",
+	}
+	regIP, regPort, err := startRegistry(env, pointer.Pointer(f.Name()), pointer.Pointer("/htpasswd"))
+	require.NoError(t, err)
+	registry := fmt.Sprintf("%s:%d", regIP, regPort)
+
+	imageRefBehindAuth := fmt.Sprintf("%s/library/debian", registry)
+	trimmedImageRef := strings.TrimPrefix(imageRef, "oci://")
+	err = fetchImageFromRemote(imageRefBehindAuth, trimmedImageRef, authUsername, authPassword)
+	require.NoError(t, err)
 
 	t.Run("successful anonymous pull", func(t *testing.T) {
 		err := os.Mkdir(mountDir, os.ModePerm)
@@ -83,22 +113,21 @@ func TestOciPull(t *testing.T) {
 		assert.FileExists(installGoBinFullPath)
 	})
 
-	// t.Run("successful authenticated pull", func(t *testing.T) {
-	// 	err := os.Mkdir(mountDir, os.ModePerm)
-	// 	if err != nil {
-	// 		t.Error(err)
-	// 	}
-	// 	defer os.RemoveAll(mountDir)
-	//
-	// 	i := NewImage(slog.Default())
-	// 	// TODO: what credentials shall be used here?
-	// 	if err = i.OciPull(ctx, imageRef, mountDir, username, password); err != nil {
-	// 		t.Error(err)
-	// 	}
-	//
-	// 	installGoBinFullPath := filepath.Join(mountDir, installGoBin)
-	// 	assert.FileExists(installGoBinFullPath)
-	// })
+	t.Run("successful authenticated pull", func(t *testing.T) {
+		err := os.Mkdir(mountDir, os.ModePerm)
+		if err != nil {
+			t.Error(err)
+		}
+		defer os.RemoveAll(mountDir)
+
+		i := NewImage(slog.Default())
+		if err = i.OciPull(ctx, imageRefBehindAuth, mountDir, authUsername, authPassword); err != nil {
+			t.Error(err)
+		}
+
+		installGoBinFullPath := filepath.Join(mountDir, installGoBin)
+		assert.FileExists(installGoBinFullPath)
+	})
 
 	t.Run("parsing of image refs fails", func(t *testing.T) {
 		i := NewImage(slog.Default())
@@ -111,4 +140,68 @@ func TestOciPull(t *testing.T) {
 		err := i.OciPull(ctx, imageRefDoesNotExist, mountDir, anonymousUsername, anonymousPassword)
 		assert.Error(err)
 	})
+}
+
+// HELPER FUNCTIONS
+func startRegistry(env map[string]string, src, dst *string) (string, int, error) {
+	ctx := context.Background()
+	var (
+		c   testcontainers.Container
+		err error
+	)
+
+	req := testcontainers.ContainerRequest{
+		Image:        "registry:3",
+		ExposedPorts: []string{"5000/tcp"},
+		Env:          env,
+		WaitingFor: wait.ForAll(
+			wait.ForLog("listening on"),
+			wait.ForListeningPort("5000/tcp"),
+		),
+	}
+	c, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		return "", 0, err
+	}
+	if src != nil && dst != nil {
+		err = c.CopyFileToContainer(ctx, *src, *dst, 0o777)
+		if err != nil {
+			return "", 0, err
+		}
+	}
+
+	ip, err := c.Host(ctx)
+	if err != nil {
+		return ip, 0, err
+	}
+	port, err := c.MappedPort(ctx, "5000")
+	if err != nil {
+		return ip, port.Int(), err
+	}
+
+	return ip, port.Int(), nil
+}
+
+func fetchImageFromRemote(imageName, remoteImageName, username, password string) error {
+	img, err := crane.Pull(remoteImageName)
+	if err != nil {
+		return err
+	}
+
+	var auth = authn.Anonymous
+	if username != "" || password != "" {
+		auth = &authn.Basic{
+			Username: username,
+			Password: password,
+		}
+	}
+	err = crane.Push(img, imageName, crane.WithAuth(auth))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
