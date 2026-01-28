@@ -30,32 +30,25 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 		return nil, err
 	}
 
-	image := machine.Allocation.Image.URL
-	h.log.Info("checking oci image", "image", image)
-	if strings.HasPrefix(image, "oci://") {
-		ociConfigs := h.spec.MetalConfig.OciConfig
+	imageURL := machine.Allocation.Image.URL
+	newImage := img.NewImage(h.log)
+
+	h.log.Info("checking oci image", "image", imageURL)
+	if strings.HasPrefix(imageURL, "oci://") {
+		ociConfig := h.spec.MetalConfig.OciConfigs[imageURL]
 		ctx := context.Background()
 
-		if len(ociConfigs) == 0 {
-			err = img.NewImage(h.log).OciPull(ctx, image, h.chrootPrefix, "", "")
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			for _, c := range ociConfigs {
-				err = img.NewImage(h.log).OciPull(ctx, c.RegistryURL, h.chrootPrefix, c.Username, c.Password)
-				if err != nil {
-					return nil, err
-				}
-			}
+		err = newImage.OciPull(ctx, imageURL, h.chrootPrefix, ociConfig.Username, ociConfig.Password)
+		if err != nil {
+			return nil, err
 		}
 	} else {
-		err = img.NewImage(h.log).Pull(image, h.osImageDestination)
+		err = newImage.Pull(imageURL, h.osImageDestination)
 		if err != nil {
 			return nil, err
 		}
 
-		err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
+		err = newImage.Burn(h.chrootPrefix, imageURL, h.osImageDestination)
 		if err != nil {
 			return nil, err
 		}

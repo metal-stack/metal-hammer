@@ -277,6 +277,10 @@ github.com/metal-stack/metal-lib v0.23.5 h1:ozrkB3DNr3Cqn8nkBvmzc/KKpYqC1j1mv2OV
 github.com/metal-stack/metal-lib v0.23.5/go.mod h1:7uyHIrE19dkLwCZyeh2jmd7IEq5pEpzrzUGLoMN1eqY=
 github.com/metal-stack/pixie v0.3.8-0.20251203143945-380592aaca05 h1:+y4zskObx4TXfpTWGimoZQac6888tI6idOlKGFJpbc0=
 github.com/metal-stack/pixie v0.3.8-0.20251203143945-380592aaca05/go.mod h1:+lwYIQypbRMhUicK5/+YKLHekB/Spnm2vwcMvzOx7UM=
+github.com/metal-stack/pixie v0.3.8-0.20260128143514-644a7b5c3577 h1:h+4yGgDF629OokzY3dLHymhOVrNRzwPXjJZOt/eXeCM=
+github.com/metal-stack/pixie v0.3.8-0.20260128143514-644a7b5c3577/go.mod h1:+lwYIQypbRMhUicK5/+YKLHekB/Spnm2vwcMvzOx7UM=
+github.com/metal-stack/pixie v0.3.8-0.20260128144617-3445ea794d7c h1:lSO06/baCbBX1WHTXP4bQdfZWg9T0cLTfH+mbEg6Fek=
+github.com/metal-stack/pixie v0.3.8-0.20260128144617-3445ea794d7c/go.mod h1:+lwYIQypbRMhUicK5/+YKLHekB/Spnm2vwcMvzOx7UM=
 github.com/metal-stack/security v0.9.4 h1:qgB4Yx48Wgi57a/ePWE1gdUn4RjilVySQAFRVIoPKBU=
 github.com/metal-stack/security v0.9.4/go.mod h1:Qya3sKnaZ+1VmayGcMGgCBsVhzBvWYYx9hcvinfXB1Q=
 github.com/metal-stack/v v1.0.3 h1:Sh2oBlnxrCUD+mVpzfC8HiqL045YWkxs0gpTvkjppqs=

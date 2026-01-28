@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/beevik/ntp v1.4.3
 	github.com/cheggaaa/pb/v3 v3.1.7
+	github.com/foomo/htpasswd v0.0.0-20200116085101-e3a90e78da9c
 	github.com/google/go-containerregistry v0.20.6
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
@@ -14,7 +15,8 @@ require (
 	github.com/metal-stack/go-lldpd v0.4.10
 	github.com/metal-stack/metal-api v0.42.4
 	github.com/metal-stack/metal-go v0.42.2
-	github.com/metal-stack/pixie v0.3.8-0.20251203143945-380592aaca05
+	github.com/metal-stack/metal-lib v0.23.5
+	github.com/metal-stack/pixie v0.3.8-0.20260128144617-3445ea794d7c
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -38,13 +40,6 @@ replace (
 	github.com/mholt/archiver => github.com/mholt/archiver v2.1.0+incompatible
 	// keep this until https://github.com/u-root/u-root/pull/3451 is merged and released
 	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
-
-	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20250826171959-ef028d996bc1
-)
-
-require (
-	github.com/foomo/htpasswd v0.0.0-20200116085101-e3a90e78da9c
-	github.com/metal-stack/metal-lib v0.23.5
 )
 
 require (

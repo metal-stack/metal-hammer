@@ -36,6 +36,7 @@ func NewImage(log *slog.Logger) *Image {
 
 func (i *Image) OciPull(ctx context.Context, imageRef, mountDir, username, password string) error {
 	imageRefWithoutOciPrefix := strings.TrimPrefix(imageRef, "oci://")
+
 	// Parse the image reference (e.g., docker.io/library/alpine:latest)
 	ref, err := name.ParseReference(imageRefWithoutOciPrefix)
 	if err != nil {
@@ -230,10 +231,10 @@ func (i *Image) untar(r io.Reader, dest string) error {
 
 		target := filepath.Join(dest, hdr.Name)
 
-		fmt.Printf("extracting:%s\n", target)
+		i.log.Debug("untar oci image", "image", fmt.Sprintf("extracting:%s\n", target))
 
 		if strings.HasSuffix(target, ".log") {
-			fmt.Printf("skipping:%s\n", target)
+			i.log.Debug("untar oci image", "image", fmt.Sprintf("skipping:%s\n", target))
 			continue
 		}
 
