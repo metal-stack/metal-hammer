@@ -262,7 +262,7 @@ func (i *Image) untar(r io.Reader, dest string) error {
 			f.Close()
 
 			if err := os.Chmod(target, os.FileMode(hdr.Mode)); err != nil {
-				return fmt.Errorf("chmod: %w", err)
+				return fmt.Errorf("chmod file: %w", err)
 			}
 			if err := os.Lchown(target, hdr.Uid, hdr.Gid); err != nil && !errors.Is(err, os.ErrPermission) {
 				return fmt.Errorf("chown file: %w", err)
@@ -278,10 +278,16 @@ func (i *Image) untar(r io.Reader, dest string) error {
 			if err := os.Lchown(target, hdr.Uid, hdr.Gid); err != nil && !errors.Is(err, os.ErrPermission) {
 				return fmt.Errorf("chown symlink: %w", err)
 			}
+			if err := os.Chmod(target, os.FileMode(hdr.Mode)); err != nil {
+				return fmt.Errorf("chmod symlink: %w", err)
+			}
 
 		default:
-			// skip unsupported or special files
+			// skip unsupported or special files, but log them
+			i.log.Debug("untar oci image", "image", fmt.Sprintf("skipping unsupported file type:%s\n", target))
+			continue
 		}
 	}
+
 	return nil
 }
