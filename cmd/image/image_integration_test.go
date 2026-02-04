@@ -14,7 +14,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/metal-stack/metal-lib/pkg/pointer"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -22,9 +21,6 @@ import (
 
 func TestOciPull(t *testing.T) {
 	var (
-		assert = assert.New(t)
-
-		ctx          = context.Background()
 		mountDir     = "/tmp/oci-pull-mount-dir"
 		extractedBin = "a"
 
@@ -46,12 +42,12 @@ func TestOciPull(t *testing.T) {
 		defer os.RemoveAll(mountDir)
 
 		i := NewImage(slog.Default())
-		if err = i.OciPull(ctx, imageRef, mountDir, anonymousUsername, anonymousPassword); err != nil {
-			t.Error(err)
+		if err = i.OciPull(t.Context(), imageRef, mountDir, anonymousUsername, anonymousPassword); err != nil {
+			require.NoError(t, err)
 		}
 
 		extractedBinFullPath := filepath.Join(mountDir, extractedBin)
-		assert.FileExists(extractedBinFullPath)
+		require.FileExists(t, extractedBinFullPath)
 	})
 
 	t.Run("successful authenticated pull", func(t *testing.T) {
@@ -87,26 +83,26 @@ func TestOciPull(t *testing.T) {
 		defer os.RemoveAll(mountDir)
 
 		i := NewImage(slog.Default())
-		if err = i.OciPull(ctx, imageRefBehindAuth, mountDir, username, password); err != nil {
-			t.Error(err)
+		if err = i.OciPull(t.Context(), imageRefBehindAuth, mountDir, username, password); err != nil {
+			require.NoError(t, err)
 		}
 
 		extractedBinFullPath := filepath.Join(mountDir, extractedBin)
-		assert.FileExists(extractedBinFullPath)
+		require.FileExists(t, extractedBinFullPath)
 	})
 
 	t.Run("parsing of image refs fails", func(t *testing.T) {
 		invalidImageRef := "invalid://"
 		i := NewImage(slog.Default())
-		err := i.OciPull(ctx, invalidImageRef, mountDir, anonymousUsername, anonymousPassword)
-		assert.EqualError(err, "parsing image reference: could not parse reference: invalid://")
+		err := i.OciPull(t.Context(), invalidImageRef, mountDir, anonymousUsername, anonymousPassword)
+		require.EqualError(t, err, "parsing image reference: could not parse reference: invalid://")
 	})
 
 	t.Run("pulling remote image fails", func(t *testing.T) {
 		imageRefDoesNotExist := "oci://does/not/exist:tag"
 		i := NewImage(slog.Default())
-		err := i.OciPull(ctx, imageRefDoesNotExist, mountDir, anonymousUsername, anonymousPassword)
-		assert.Error(err)
+		err := i.OciPull(t.Context(), imageRefDoesNotExist, mountDir, anonymousUsername, anonymousPassword)
+		require.Error(t, err)
 	})
 }
 
