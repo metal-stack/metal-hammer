@@ -278,9 +278,6 @@ func (i *Image) untar(r io.Reader, dest string) error {
 			if err := os.Lchown(target, hdr.Uid, hdr.Gid); err != nil && !errors.Is(err, os.ErrPermission) {
 				return fmt.Errorf("chown symlink: %w", err)
 			}
-			if err := os.Chmod(target, os.FileMode(hdr.Mode)); err != nil {
-				return fmt.Errorf("chmod symlink: %w", err)
-			}
 
 		default:
 			// skip unsupported or special files, but log them
