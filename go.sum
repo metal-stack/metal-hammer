@@ -246,8 +246,8 @@ github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5 h1:i4JJtLb5iDVsncU7s
 github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5/go.mod h1:IZAsRpRUv/4B6NhGzofHK/+I+N31NTUz/hrEm4ssUwA=
 github.com/mdlayher/packet v1.0.0/go.mod h1:eE7/ctqDhoiRhQ44ko5JZU2zxB88g+JH/6jmnjzPjOU=
 github.com/mdlayher/socket v0.2.1/go.mod h1:QLlNPkFR88mRUNQIzRBMfXxwKal8H7u1h3bL1CV+f0E=
-github.com/metal-stack/go-hal v0.6.2-0.20260217142444-5829d27a7388 h1:EMUM2yMVj49XeCgNeCPy7sYAuzeprZfHGrP+vBxBR+s=
-github.com/metal-stack/go-hal v0.6.2-0.20260217142444-5829d27a7388/go.mod h1:3Erax8HGCEikZ2Jl62haFIzm4BmzlujXMgBHf4Y0a88=
+github.com/metal-stack/go-hal v0.6.2-0.20260217144829-c15d12177b00 h1:YB4/wi53urYRJEwHsCTJ5FSwMtK20BM0X+kXDgTXZ6I=
+github.com/metal-stack/go-hal v0.6.2-0.20260217144829-c15d12177b00/go.mod h1:86fMwvN+Jp8//j/Cv7ZP/F0ScCv8mK/jmKQLqVYwBNI=
 github.com/metal-stack/go-lldpd v0.4.10 h1:ocS2AqFJXU3p71+YSAson7Ocn43lzWHmvt+hFDgN+/k=
 github.com/metal-stack/go-lldpd v0.4.10/go.mod h1:q2X/Jo1P53ZcWhyCXffj9D8YJ2IkKE3pg4EtQ4A2hzE=
 github.com/metal-stack/metal-api v0.42.2 h1:uBFY8GNFNhLfQnF7tOUHlQLqYaEYvsJl2Uv5puwClB0=
@@ -355,8 +355,8 @@ github.com/shirou/gopsutil/v4 v4.25.12 h1:e7PvW/0RmJ8p8vPGJH4jvNkOyLmbkXgXW4m6ZP
 github.com/shirou/gopsutil/v4 v4.25.12/go.mod h1:EivAfP5x2EhLp2ovdpKSozecVXn1TmuG7SMzs/Wh4PU=
 github.com/sirupsen/logrus v1.9.4 h1:TsZE7l11zFCLZnZ+teH4Umoq5BhEIfIzfRDZ1Uzql2w=
 github.com/sirupsen/logrus v1.9.4/go.mod h1:ftWc9WdOfJ0a92nsE2jF5u5ZwH8Bv2zdeOC42RjbV2g=
-github.com/stmcginnis/gofish v0.20.1-0.20260203173523-22b2013b7c28 h1:SbDUY/fBx550CKQ/DhSlNCTXyEJTDn+gFO0J6Gt7cgs=
-github.com/stmcginnis/gofish v0.20.1-0.20260203173523-22b2013b7c28/go.mod h1:PzF5i8ecRG9A2ol8XT64npKUunyraJ+7t0kYMpQAtqU=
+github.com/stmcginnis/gofish v0.21.1 h1:sutDvBhmLh4RDOZ1DN8GUyYRu7f1ggvKMMnSaiqhwn4=
+github.com/stmcginnis/gofish v0.21.1/go.mod h1:PzF5i8ecRG9A2ol8XT64npKUunyraJ+7t0kYMpQAtqU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=

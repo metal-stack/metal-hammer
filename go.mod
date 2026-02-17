@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20240913122146-e119d400c3a5
 	github.com/jaypipes/ghw v0.19.1
-	github.com/metal-stack/go-hal v0.6.2-0.20260217142444-5829d27a7388
+	github.com/metal-stack/go-hal v0.6.2-0.20260217144829-c15d12177b00
 	github.com/metal-stack/go-lldpd v0.4.10
 	github.com/metal-stack/metal-api v0.42.2
 	github.com/metal-stack/metal-go v0.42.2
@@ -125,7 +125,7 @@ require (
 	github.com/samber/slog-common v0.19.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sethvargo/go-password v0.3.1 // indirect
-	github.com/stmcginnis/gofish v0.20.1-0.20260203173523-22b2013b7c28 // indirect
+	github.com/stmcginnis/gofish v0.21.1 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
