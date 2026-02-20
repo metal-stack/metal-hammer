@@ -275,12 +275,8 @@ github.com/metal-stack/metal-go v0.42.2 h1:Z2f8YQKt2BzGwuYtueI/GYP6z2gKGU4m5jU6I
 github.com/metal-stack/metal-go v0.42.2/go.mod h1:T0lbyrc+aHlI/GWAu2Og4Fmj4oaj5RD55736jBG0R8Y=
 github.com/metal-stack/metal-lib v0.23.5 h1:ozrkB3DNr3Cqn8nkBvmzc/KKpYqC1j1mv2OVOj8i7Ac=
 github.com/metal-stack/metal-lib v0.23.5/go.mod h1:7uyHIrE19dkLwCZyeh2jmd7IEq5pEpzrzUGLoMN1eqY=
-github.com/metal-stack/pixie v0.3.8-0.20251203143945-380592aaca05 h1:+y4zskObx4TXfpTWGimoZQac6888tI6idOlKGFJpbc0=
-github.com/metal-stack/pixie v0.3.8-0.20251203143945-380592aaca05/go.mod h1:+lwYIQypbRMhUicK5/+YKLHekB/Spnm2vwcMvzOx7UM=
-github.com/metal-stack/pixie v0.3.8-0.20260128143514-644a7b5c3577 h1:h+4yGgDF629OokzY3dLHymhOVrNRzwPXjJZOt/eXeCM=
-github.com/metal-stack/pixie v0.3.8-0.20260128143514-644a7b5c3577/go.mod h1:+lwYIQypbRMhUicK5/+YKLHekB/Spnm2vwcMvzOx7UM=
-github.com/metal-stack/pixie v0.3.8-0.20260128144617-3445ea794d7c h1:lSO06/baCbBX1WHTXP4bQdfZWg9T0cLTfH+mbEg6Fek=
-github.com/metal-stack/pixie v0.3.8-0.20260128144617-3445ea794d7c/go.mod h1:+lwYIQypbRMhUicK5/+YKLHekB/Spnm2vwcMvzOx7UM=
+github.com/metal-stack/pixie v0.3.8-0.20260219141810-27a64e8c02de h1:ny7k8oAgHFUHND8l+YKGNQsu4zBmKZcAeV+mXAMp5Ns=
+github.com/metal-stack/pixie v0.3.8-0.20260219141810-27a64e8c02de/go.mod h1:F921gmyW8jQt6/7eDujPDywFe68+iqZ5+w/ub5EfAi4=
 github.com/metal-stack/security v0.9.4 h1:qgB4Yx48Wgi57a/ePWE1gdUn4RjilVySQAFRVIoPKBU=
 github.com/metal-stack/security v0.9.4/go.mod h1:Qya3sKnaZ+1VmayGcMGgCBsVhzBvWYYx9hcvinfXB1Q=
 github.com/metal-stack/v v1.0.3 h1:Sh2oBlnxrCUD+mVpzfC8HiqL045YWkxs0gpTvkjppqs=

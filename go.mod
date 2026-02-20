@@ -16,7 +16,7 @@ require (
 	github.com/metal-stack/metal-api v0.42.4
 	github.com/metal-stack/metal-go v0.42.2
 	github.com/metal-stack/metal-lib v0.23.5
-	github.com/metal-stack/pixie v0.3.8-0.20260128144617-3445ea794d7c
+	github.com/metal-stack/pixie v0.3.8-0.20260219141810-27a64e8c02de
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
