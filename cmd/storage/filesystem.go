@@ -275,6 +275,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 
 		args := []string{
 			"lvcreate",
+			"--yes",
 			"--verbose",
 			"--name", *lv.Name,
 			"--wipesignatures", "y",
