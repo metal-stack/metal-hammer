@@ -150,7 +150,7 @@ func (f *Filesystem) createPartitions() error {
 			// wiping the newly created partitions to remove any existing signatures, e.g. mdadm superblock, lvm signatures, filesystem signatures
 			for _, p := range createdPartitions {
 				partPath := getPartitionPath(*disk.Device, int(p))
-				f.log.Info("wipe new partition", "command", command.WIPEFS+" --all"+" "+partPath)
+				f.log.Info(fmt.Sprintf("wipe new partition %s", partPath), "command", command.WIPEFS+" --all"+" "+partPath)
 				// TODO: wait for the partition to be available, e.g. by watching udev events?
 				err = os.ExecuteCommand(command.WIPEFS, "--all", partPath)
 				if err != nil {
