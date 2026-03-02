@@ -18,27 +18,27 @@ func TestHammer_onlyNicsWithNeighbors(t *testing.T) {
 		{
 			name: "4 interfaces, two with neighbors",
 			nics: []*models.V1MachineNic{
-				{Name: ptr("eth0")},
-				{Name: ptr("eth1")},
-				{Name: ptr("eth2"), Mac: ptr("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: ptr("swp1"), Mac: ptr("cc:dd")}}},
-				{Name: ptr("eth3"), Mac: ptr("aa:bc"), Neighbors: []*models.V1MachineNic{{Name: ptr("swp2"), Mac: ptr("cc:de")}}},
+				{Name: new("eth0")},
+				{Name: new("eth1")},
+				{Name: new("eth2"), Mac: new("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: new("swp1"), Mac: new("cc:dd")}}},
+				{Name: new("eth3"), Mac: new("aa:bc"), Neighbors: []*models.V1MachineNic{{Name: new("swp2"), Mac: new("cc:de")}}},
 			},
 			want: []*models.V1MachineNic{
-				{Name: ptr("eth2"), Mac: ptr("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: ptr("swp1"), Mac: ptr("cc:dd")}}},
-				{Name: ptr("eth3"), Mac: ptr("aa:bc"), Neighbors: []*models.V1MachineNic{{Name: ptr("swp2"), Mac: ptr("cc:de")}}},
+				{Name: new("eth2"), Mac: new("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: new("swp1"), Mac: new("cc:dd")}}},
+				{Name: new("eth3"), Mac: new("aa:bc"), Neighbors: []*models.V1MachineNic{{Name: new("swp2"), Mac: new("cc:de")}}},
 			},
 		},
 		{
 			name: "4 interfaces, two with neighbors, one with empty Mac",
 			nics: []*models.V1MachineNic{
-				{Name: ptr("eth0")},
-				{Name: ptr("eth1"), Mac: ptr("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: ptr("swp1")}}},
-				{Name: ptr("eth2"), Mac: ptr("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: ptr("swp1"), Mac: ptr("cc:dd")}}},
-				{Name: ptr("eth3"), Mac: ptr("aa:bc"), Neighbors: []*models.V1MachineNic{{Name: ptr("swp2"), Mac: ptr("cc:de")}}},
+				{Name: new("eth0")},
+				{Name: new("eth1"), Mac: new("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: new("swp1")}}},
+				{Name: new("eth2"), Mac: new("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: new("swp1"), Mac: new("cc:dd")}}},
+				{Name: new("eth3"), Mac: new("aa:bc"), Neighbors: []*models.V1MachineNic{{Name: new("swp2"), Mac: new("cc:de")}}},
 			},
 			want: []*models.V1MachineNic{
-				{Name: ptr("eth2"), Mac: ptr("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: ptr("swp1"), Mac: ptr("cc:dd")}}},
-				{Name: ptr("eth3"), Mac: ptr("aa:bc"), Neighbors: []*models.V1MachineNic{{Name: ptr("swp2"), Mac: ptr("cc:de")}}},
+				{Name: new("eth2"), Mac: new("aa:bb"), Neighbors: []*models.V1MachineNic{{Name: new("swp1"), Mac: new("cc:dd")}}},
+				{Name: new("eth3"), Mac: new("aa:bc"), Neighbors: []*models.V1MachineNic{{Name: new("swp2"), Mac: new("cc:de")}}},
 			},
 		},
 	}
@@ -52,8 +52,4 @@ func TestHammer_onlyNicsWithNeighbors(t *testing.T) {
 			}
 		})
 	}
-}
-
-func ptr(s string) *string {
-	return &s
 }
