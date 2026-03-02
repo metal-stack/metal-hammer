@@ -31,7 +31,7 @@ func FetchBlockIDProperties(partitionDevice string) (map[string]string, error) {
 	// we just put every key=value entry into a map
 
 	props := make(map[string]string)
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		key, value, ok := strings.Cut(line, "=")
 		if !ok {
 			continue

@@ -41,7 +41,6 @@ func (d *Disks) Wipe() error {
 
 	g, _ := errgroup.WithContext(context.Background())
 	for _, disk := range disks {
-		disk := disk
 		if strings.HasPrefix(disk.Name, DiskPrefixToIgnore) {
 			d.log.Info("skip because in ignorelist", "disk", disk.Name)
 			continue
