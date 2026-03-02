@@ -1,6 +1,6 @@
 module github.com/metal-stack/metal-hammer
 
-go 1.25
+go 1.25.0
 
 require (
 	github.com/beevik/ntp v1.5.0
@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20251015150631-c42bbddc310a
 	github.com/jaypipes/ghw v0.21.2
-	github.com/metal-stack/go-hal v0.6.2-0.20260129090150-98edd50cbc4e
+	github.com/metal-stack/go-hal v0.6.2-0.20260302065007-218376de4208
 	github.com/metal-stack/go-lldpd v0.4.11
 	github.com/metal-stack/metal-api v0.43.0
 	github.com/metal-stack/metal-go v0.43.0
@@ -20,13 +20,13 @@ require (
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/pierrec/lz4/v4 v4.1.25
 	github.com/prometheus/common v0.67.5
-	github.com/samber/slog-loki/v3 v3.7.0
-	github.com/samber/slog-multi v1.7.0
+	github.com/samber/slog-loki/v3 v3.7.1
+	github.com/samber/slog-multi v1.7.1
 	github.com/u-root/u-root v0.15.0
 	github.com/vishvananda/netlink v1.3.1
 	golang.org/x/sync v0.19.0
-	golang.org/x/sys v0.40.0
-	google.golang.org/grpc v1.78.0
+	golang.org/x/sys v0.41.0
+	google.golang.org/grpc v1.79.1
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -83,7 +83,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20250903093132-95ced86f69c5 // indirect
@@ -93,8 +93,8 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
-	github.com/lestrrat-go/httprc/v3 v3.0.2 // indirect
-	github.com/lestrrat-go/jwx/v3 v3.0.12 // indirect
+	github.com/lestrrat-go/httprc/v3 v3.0.4 // indirect
+	github.com/lestrrat-go/jwx/v3 v3.0.13 // indirect
 	github.com/lestrrat-go/option/v2 v2.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -119,29 +119,29 @@ require (
 	github.com/rekby/gpt v0.0.0-20200614112001-7da10aec5566 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/samber/lo v1.52.0 // indirect
-	github.com/samber/slog-common v0.19.0 // indirect
+	github.com/samber/slog-common v0.20.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/sethvargo/go-password v0.3.1 // indirect
-	github.com/stmcginnis/gofish v0.20.1-0.20260124133034-8acdb3d97c89 // indirect
+	github.com/stmcginnis/gofish v0.21.3 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
 	github.com/vmware/goipmi v0.0.0-20181114221114-2333cd82d702 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	go.mongodb.org/mongo-driver v1.17.6 // indirect
+	go.mongodb.org/mongo-driver v1.17.9 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.39.0 // indirect
-	go.opentelemetry.io/otel/metric v1.39.0 // indirect
-	go.opentelemetry.io/otel/trace v1.39.0 // indirect
+	go.opentelemetry.io/otel v1.40.0 // indirect
+	go.opentelemetry.io/otel/metric v1.40.0 // indirect
+	go.opentelemetry.io/otel/trace v1.40.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.47.0 // indirect
-	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
-	golang.org/x/net v0.49.0 // indirect
-	golang.org/x/oauth2 v0.34.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
+	golang.org/x/crypto v0.48.0 // indirect
+	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
+	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/oauth2 v0.35.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.2-0.20250314012144-ee69052608d9 // indirect
 )
