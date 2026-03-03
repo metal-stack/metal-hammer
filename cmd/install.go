@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/metal-stack/metal-hammer/cmd/utils"
-	"github.com/metal-stack/metal-hammer/pkg/api"
+	apiv1 "github.com/metal-stack/os-installer/api/v1"
 
 	"github.com/metal-stack/metal-go/api/models"
 	img "github.com/metal-stack/metal-hammer/cmd/image"
@@ -22,7 +22,7 @@ import (
 )
 
 // Install a given image to the disk by using genuinetools/img
-func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, error) {
+func (h *hammer) Install(machine *models.V1MachineResponse) (*apiv1.Bootinfo, error) {
 	s := storage.New(h.log, h.chrootPrefix, *h.filesystemLayout)
 	err := s.Run()
 	if err != nil {
@@ -60,7 +60,7 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 
 // install will execute /install.sh in the pulled docker image which was extracted onto disk
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*api.Bootinfo, error) {
+func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*apiv1.Bootinfo, error) {
 	h.log.Info("install", "image", machine.Allocation.Image.URL)
 
 	err := h.writeInstallerConfig(machine, rootUUID)
@@ -78,9 +78,19 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		return nil, err
 	}
 
-	installBinary := "/install.sh"
-	if fileExists(path.Join(prefix, "install-go")) {
-		installBinary = "/install-go"
+	// TODO we still run the binary instead of calling it as a library because it needs to run in a chroot env
+	// Can be done once we figure out howto fork itself in the chroot.
+	installBinary := "/bin/os-installer"
+	installBinaryInChroot := path.Join(prefix, installBinary)
+
+	_, err = utils.Copy(installBinary, installBinaryInChroot)
+	if err != nil {
+		return nil, fmt.Errorf("unable to copy %s to %s %w", installBinary, prefix, err)
+	}
+
+	err = os.Chmod(installBinaryInChroot, 0755)
+	if err != nil {
+		return nil, fmt.Errorf("unable to chmod %w", err)
 	}
 
 	h.log.Info("running install", "binary", installBinary, "prefix", prefix)
@@ -109,7 +119,7 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	}
 	h.log.Info("finish running", "binary", installBinary)
 
-	err = os.Remove(path.Join(prefix, installBinary))
+	err = os.Remove(installBinaryInChroot)
 	if err != nil {
 		h.log.Warn("unable to remove, ignoring", "binary", installBinary, "error", err)
 	}
@@ -219,7 +229,7 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		raidEnabled = true
 	}
 
-	y := &api.InstallerConfig{
+	y := &apiv1.InstallerConfig{
 		Hostname:      *alloc.Hostname,
 		SSHPublicKey:  sshPubkeys,
 		Networks:      alloc.Networks,

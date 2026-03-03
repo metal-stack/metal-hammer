@@ -16,7 +16,7 @@ import (
 	"github.com/u-root/u-root/pkg/mount/block"
 
 	"github.com/metal-stack/metal-go/api/models"
-	"github.com/metal-stack/metal-hammer/pkg/api"
+	apiv1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
@@ -31,7 +31,7 @@ type Filesystem struct {
 	fstabEntries fstabEntries
 	// disk is the legacy disk.json representatio
 	// TODO remove once old images are gone
-	disk     api.Disk
+	disk     apiv1.Disk
 	log      *slog.Logger
 	RootUUID string
 }
@@ -53,7 +53,7 @@ func New(log *slog.Logger, chroot string, config models.V1FilesystemLayoutRespon
 		config:       config,
 		chroot:       chroot,
 		fstabEntries: fstabEntries{},
-		disk:         api.Disk{Device: "legacy", Partitions: []api.Partition{}},
+		disk:         apiv1.Disk{Device: "legacy", Partitions: []apiv1.Partition{}},
 		log:          log,
 	}
 }
@@ -396,7 +396,7 @@ func (f *Filesystem) mountFilesystems() error {
 			if fs.Label == "root" {
 				f.RootUUID = partUUID
 			}
-			part := api.Partition{
+			part := apiv1.Partition{
 				Label:      fs.Label,
 				Filesystem: *fs.Format,
 				Properties: map[string]string{"UUID": properties["UUID"]},

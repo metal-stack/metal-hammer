@@ -65,6 +65,7 @@ ramdisk:
 		-format=cpio -build=bb \
 		-defaultsh=/bin/bash \
 		-files="bin/metal-hammer:bbin/uinit" \
+		-files="os-installer:bin/os-installer" \
 		-files="/bin/bash:bin/bash" \
 		-files="/bin/netstat:bin/netstat" \
 		-files="/etc/localtime:etc/localtime" \

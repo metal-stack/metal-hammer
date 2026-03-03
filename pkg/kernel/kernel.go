@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/metal-stack/metal-hammer/pkg/api"
+	apiv1 "github.com/metal-stack/os-installer/api/v1"
 
 	"github.com/u-root/u-root/pkg/boot/kexec"
 	"github.com/u-root/u-root/pkg/watchdog"
@@ -23,13 +23,13 @@ var (
 
 // ReadBootinfo read boot-info.yaml which was written by the OS install.sh
 // to get all information required to do kexec.
-func ReadBootinfo(file string) (*api.Bootinfo, error) {
+func ReadBootinfo(file string) (*apiv1.Bootinfo, error) {
 	bi, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("could not read boot-info.yaml %w", err)
 	}
 
-	info := &api.Bootinfo{}
+	info := &apiv1.Bootinfo{}
 	err = yaml.Unmarshal(bi, info)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal boot-info.yaml %w", err)
@@ -58,7 +58,7 @@ func ParseCmdline() (map[string]string, error) {
 }
 
 // RunKexec boot into the new kernel given in Bootinfo
-func RunKexec(info *api.Bootinfo) error {
+func RunKexec(info *apiv1.Bootinfo) error {
 	if info != nil {
 		kernel, err := os.OpenFile(info.Kernel, os.O_RDONLY, 0)
 		if err != nil {
