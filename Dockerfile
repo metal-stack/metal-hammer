@@ -56,7 +56,7 @@ RUN mkdir -p /work/etc/lvm /work/etc/ssl/certs /work/lib/firmware/intel/ice/ddp/
  && cp /usr/share/zoneinfo/Etc/UTC /work/etc/localtime
 COPY lvmlocal.conf metal.key metal.key.pub passwd varrun Makefile .git /work/
 COPY --from=r.metal-stack.io/metal/supermicro:2.14.0 /usr/bin/sum /work/
-COPY --from=ghcr.io/metal-stack/os-installer:pr-1 /os-installer /work/os-installer
+COPY --from=ghcr.io/metal-stack/os-installer:v0.2.0 /os-installer /work/os-installer
 COPY --from=builder /work/ice.pkg /work/ice.pkg
 COPY --from=builder /work/bin/metal-hammer /work/bin/
 RUN make ramdisk

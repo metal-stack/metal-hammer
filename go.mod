@@ -13,7 +13,7 @@ require (
 	github.com/metal-stack/go-lldpd v0.4.11
 	github.com/metal-stack/metal-api v0.43.0
 	github.com/metal-stack/metal-go v0.43.0
-	github.com/metal-stack/os-installer v0.1.1-0.20260303150355-c77566fbffb0
+	github.com/metal-stack/os-installer v0.2.0
 	github.com/metal-stack/pixie v0.4.0
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
