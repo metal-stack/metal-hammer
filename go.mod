@@ -13,7 +13,7 @@ require (
 	github.com/metal-stack/go-lldpd v0.4.11
 	github.com/metal-stack/metal-api v0.43.0
 	github.com/metal-stack/metal-go v0.43.0
-	github.com/metal-stack/os-installer v0.2.0
+	github.com/metal-stack/os-installer v0.2.1-0.20260311143620-25ad94d7b479
 	github.com/metal-stack/pixie v0.4.0
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
@@ -41,6 +41,7 @@ replace (
 require (
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
+	github.com/ajeddeloh/go-json v0.0.0-20160803184958-73d058cf8437 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/avast/retry-go/v4 v4.7.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -48,11 +49,15 @@ require (
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
+	github.com/coreos/go-semver v0.3.1 // indirect
+	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
+	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
+	github.com/flatcar/ignition v0.36.2 // indirect
 	github.com/frankban/quicktest v1.14.6 // indirect
 	github.com/gliderlabs/ssh v0.3.8 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
@@ -85,6 +90,7 @@ require (
 	github.com/go-openapi/validate v0.25.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
@@ -124,9 +130,11 @@ require (
 	github.com/samber/slog-common v0.20.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/sethvargo/go-password v0.3.1 // indirect
+	github.com/spf13/afero v1.15.0 // indirect
 	github.com/stmcginnis/gofish v0.21.3 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
+	github.com/vincent-petithory/dataurl v1.0.0 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
 	github.com/vmware/goipmi v0.0.0-20181114221114-2333cd82d702 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
@@ -138,6 +146,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	go4.org v0.0.0-20260112195520-a5071408f32f // indirect
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
 	golang.org/x/net v0.51.0 // indirect

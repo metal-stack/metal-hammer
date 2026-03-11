@@ -4,19 +4,20 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/metal-stack/metal-hammer/cmd/utils"
 	apiv1 "github.com/metal-stack/os-installer/api/v1"
 
+	installer "github.com/metal-stack/os-installer/pkg/install"
+
 	"github.com/metal-stack/metal-go/api/models"
 	img "github.com/metal-stack/metal-hammer/cmd/image"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
+	"github.com/metal-stack/metal-hammer/pkg/chroot"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"gopkg.in/yaml.v3"
 )
@@ -63,7 +64,7 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*apiv1.Bootinfo, er
 func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*apiv1.Bootinfo, error) {
 	h.log.Info("install", "image", machine.Allocation.Image.URL)
 
-	err := h.writeInstallerConfig(machine, rootUUID)
+	installerConfig, err := h.writeInstallerConfig(machine, rootUUID)
 	if err != nil {
 		return nil, fmt.Errorf("writing configuration install.yaml failed %w", err)
 	}
@@ -78,51 +79,13 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		return nil, err
 	}
 
-	// TODO we still run the binary instead of calling it as a library because it needs to run in a chroot env
-	// Can be done once we figure out howto fork itself in the chroot.
-	installBinary := "/bin/os-installer"
-	installBinaryInChroot := path.Join(prefix, installBinary)
-
-	_, err = utils.Copy(installBinary, installBinaryInChroot)
-	if err != nil {
-		return nil, fmt.Errorf("unable to copy %s to %s %w", installBinary, prefix, err)
+	if err := chroot.RunInChroot(prefix, func() error {
+		return installer.Install(h.log, installerConfig)
+	}); err != nil {
+		return nil, fmt.Errorf("unable to run the installer %w", err)
 	}
 
-	err = os.Chmod(installBinaryInChroot, 0755)
-	if err != nil {
-		return nil, fmt.Errorf("unable to chmod %w", err)
-	}
-
-	h.log.Info("running install", "binary", installBinary, "prefix", prefix)
-	err = os.Chdir(prefix)
-	if err != nil {
-		return nil, fmt.Errorf("unable to chdir to: %s error %w", prefix, err)
-	}
-	cmd := exec.Command(installBinary)
-	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
-	// these syscalls are required to execute the command in a chroot env.
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Credential: &syscall.Credential{
-			Uid:    uint32(0),
-			Gid:    uint32(0),
-			Groups: []uint32{0},
-		},
-		Chroot: prefix,
-	}
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("running %q in chroot failed %w", installBinary, err)
-	}
-
-	err = os.Chdir("/")
-	if err != nil {
-		return nil, fmt.Errorf("unable to chdir to: / error %w", err)
-	}
-	h.log.Info("finish running", "binary", installBinary)
-
-	err = os.Remove(installBinaryInChroot)
-	if err != nil {
-		h.log.Warn("unable to remove, ignoring", "binary", installBinary, "error", err)
-	}
+	h.log.Info("finish running the installer")
 
 	info, err := kernel.ReadBootinfo(path.Join(prefix, "etc", "metal", "boot-info.yaml"))
 	if err != nil {
@@ -202,12 +165,12 @@ func (h *hammer) writeUserData(machine *models.V1MachineResponse) error {
 	return nil
 }
 
-func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUiD string) error {
+func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUiD string) (*apiv1.InstallerConfig, error) {
 	h.log.Info("write installation configuration")
 	configdir := path.Join(h.chrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
-		return fmt.Errorf("mkdir of %s target os failed %w", configdir, err)
+		return nil, fmt.Errorf("mkdir of %s target os failed %w", configdir, err)
 	}
 	destination := path.Join(configdir, "install.yaml")
 
@@ -216,7 +179,7 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 	sshPubkeys := strings.Join(alloc.SSHPubKeys, "\n")
 	cmdline, err := kernel.ParseCmdline()
 	if err != nil {
-		return fmt.Errorf("unable to get kernel cmdline map %w", err)
+		return nil, fmt.Errorf("unable to get kernel cmdline map %w", err)
 	}
 
 	console, ok := cmdline["console"]
@@ -249,10 +212,10 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 
 	yamlContent, err := yaml.Marshal(y)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return os.WriteFile(destination, yamlContent, 0600)
+	return y, os.WriteFile(destination, yamlContent, 0600)
 }
 func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1MachineNic {
 	noNeighbors := func(neighbors []*models.V1MachineNic) bool {
@@ -277,12 +240,4 @@ func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1
 	}
 	h.log.Info("onlyNicWithNeighbors add", "result", result)
 	return result
-}
-
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
 }
