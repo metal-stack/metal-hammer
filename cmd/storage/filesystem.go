@@ -3,7 +3,6 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/u-root/u-root/pkg/mount/block"
 	"log/slog"
 	gos "os"
 	"os/exec"
@@ -13,6 +12,8 @@ import (
 	"sort"
 	"strings"
 	"syscall"
+
+	"github.com/u-root/u-root/pkg/mount/block"
 
 	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/pkg/api"
@@ -251,6 +252,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 
 		args := []string{
 			"lvcreate",
+			"--yes",
 			"--verbose",
 			"--name", *lv.Name,
 			"--wipesignatures", "y",
