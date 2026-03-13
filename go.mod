@@ -40,6 +40,8 @@ replace (
 	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
 )
 
+require github.com/google/go-cmp v0.7.0
+
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260209202127-80ab13bee0bf.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect

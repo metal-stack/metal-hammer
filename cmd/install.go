@@ -400,6 +400,9 @@ func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*apiv2.Mac
 			Mac:        pointer.SafeDeref(nic.Mac),
 			Name:       pointer.SafeDeref(nic.Name),
 			Identifier: pointer.SafeDeref(nic.Identifier),
+			Neighbors: []*apiv2.MachineNic{
+				{Mac: pointer.SafeDeref(nic.Neighbors[0].Mac), Name: pointer.SafeDeref(nic.Neighbors[0].Name)},
+			},
 		}
 		result = append(result, n)
 	}
