@@ -79,7 +79,7 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		return nil, err
 	}
 
-	if err := chroot.RunInChroot(prefix, func() error {
+	if err := chroot.RunInChroot(h.log, prefix, func() error {
 		return installer.Install(h.log, installerConfig)
 	}); err != nil {
 		return nil, fmt.Errorf("unable to run the installer %w", err)

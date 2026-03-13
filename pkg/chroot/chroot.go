@@ -2,10 +2,12 @@ package chroot
 
 import (
 	"fmt"
-	"os"
+	"log/slog"
 	"runtime"
 	"syscall"
 )
+
+// Generated with ai, slightly adopted to meet our requirements.
 
 // chrootContext holds the file descriptors needed to escape back to the real root
 type chrootContext struct {
@@ -80,7 +82,7 @@ func (c *chrootContext) exit() error {
 }
 
 // RunInChroot is a convenience wrapper: enters chroot, calls fn, then exits.
-func RunInChroot(newRoot string, fn func() error) error {
+func RunInChroot(log *slog.Logger, newRoot string, fn func() error) error {
 	ctx, err := enterChroot(newRoot)
 	if err != nil {
 		return fmt.Errorf("enter chroot: %w", err)
@@ -88,7 +90,7 @@ func RunInChroot(newRoot string, fn func() error) error {
 	// Always exit the chroot, even if fn panics
 	defer func() {
 		if exitErr := ctx.exit(); exitErr != nil {
-			fmt.Fprintf(os.Stderr, "WARNING: failed to exit chroot: %v\n", exitErr)
+			log.Warn("failed to exit chroot", "error", exitErr)
 		}
 	}()
 	return fn()
