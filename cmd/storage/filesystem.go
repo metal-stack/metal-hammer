@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	gos "os"
@@ -16,24 +15,21 @@ import (
 	"github.com/u-root/u-root/pkg/mount/block"
 
 	"github.com/metal-stack/metal-go/api/models"
-	apiv1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
 	"github.com/metal-stack/v"
 )
 
 type Filesystem struct {
+	log *slog.Logger
+
 	config models.V1FilesystemLayoutResponse
 	// chroot defines the root of the mounts
 	chroot string
 	// mounts are collected to be able to umount all in reverse order
 	mounts       []string
 	fstabEntries fstabEntries
-	// disk is the legacy disk.json representatio
-	// TODO remove once old images are gone
-	disk     apiv1.Disk
-	log      *slog.Logger
-	RootUUID string
+	RootUUID     string
 }
 
 type fstabEntries []fstabEntry
@@ -50,11 +46,10 @@ type fstabEntry struct {
 
 func New(log *slog.Logger, chroot string, config models.V1FilesystemLayoutResponse) *Filesystem {
 	return &Filesystem{
+		log:          log,
 		config:       config,
 		chroot:       chroot,
 		fstabEntries: fstabEntries{},
-		disk:         apiv1.Disk{Device: "legacy", Partitions: []apiv1.Partition{}},
-		log:          log,
 	}
 }
 
@@ -89,11 +84,6 @@ func (f *Filesystem) Run() error {
 		return fmt.Errorf("mount special filesystems failed:%w", err)
 	}
 
-	// TODO legacy image support, can be removed once all images in use do no depend on disk.json anymore
-	err = f.createDiskJSON()
-	if err != nil {
-		return fmt.Errorf("disk.json creation failed:%w", err)
-	}
 	return nil
 }
 func (f *Filesystem) Umount() {
@@ -362,12 +352,11 @@ func (f *Filesystem) mountFilesystems() error {
 
 		passno := uint(2)
 		spec := ""
-		properties := map[string]string{"UUID": ""}
 		if *fs.Format == "tmpfs" {
 			spec = *fs.Format
 			passno = 0
 		} else {
-			properties, err = FetchBlockIDProperties(*fs.Device)
+			properties, err := FetchBlockIDProperties(*fs.Device)
 			if err != nil {
 				return err
 			}
@@ -389,20 +378,6 @@ func (f *Filesystem) mountFilesystems() error {
 			passno:    passno,
 		}
 		f.fstabEntries = append(f.fstabEntries, fstabEntry)
-		// create legacy disk.json
-		switch fs.Label {
-		case "root", "efi", "varlib":
-			partUUID := properties["UUID"]
-			if fs.Label == "root" {
-				f.RootUUID = partUUID
-			}
-			part := apiv1.Partition{
-				Label:      fs.Label,
-				Filesystem: *fs.Format,
-				Properties: map[string]string{"UUID": properties["UUID"]},
-			}
-			f.disk.Partitions = append(f.disk.Partitions, part)
-		}
 	}
 	return nil
 }
@@ -472,26 +447,6 @@ func (f *Filesystem) umountFilesystems() {
 
 func (f *Filesystem) CreateFSTab() error {
 	return f.fstabEntries.write(f.log, f.chroot)
-}
-
-func (f *Filesystem) createDiskJSON() error {
-	configdir := path.Join(f.chroot, "etc", "metal")
-	destination := path.Join(configdir, "disk.json")
-
-	if _, err := gos.Stat(configdir); err != nil && gos.IsNotExist(err) {
-		if err := gos.MkdirAll(configdir, 0755); err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
-	}
-
-	j, err := json.MarshalIndent(f.disk, "", "  ")
-	if err != nil {
-		return fmt.Errorf("unable to marshal to json %w", err)
-	}
-	f.log.Info("create legacy disk.json", "content", string(j))
-	return gos.WriteFile(destination, j, 0600)
 }
 
 func mountFs(log *slog.Logger, chroot string, fs models.V1Filesystem) (string, error) {
