@@ -15,8 +15,8 @@ require (
 	github.com/metal-stack/metal-api v0.43.0
 	github.com/metal-stack/metal-go v0.43.1-0.20260313140852-e1dafffd26a3
 	github.com/metal-stack/metal-lib v0.24.0
-	github.com/metal-stack/os-installer v0.2.1-0.20260313134806-b4e91c290b04
-	github.com/metal-stack/pixie v0.4.0
+	github.com/metal-stack/os-installer v0.2.1-0.20260314085701-f6d4c1c6c420
+	github.com/metal-stack/pixie v0.4.1
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
 	github.com/mholt/archiver v3.1.1+incompatible
@@ -29,7 +29,7 @@ require (
 	github.com/vishvananda/netlink v1.3.1
 	golang.org/x/sync v0.20.0
 	golang.org/x/sys v0.42.0
-	google.golang.org/grpc v1.79.1
+	google.golang.org/grpc v1.79.2
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -44,6 +44,9 @@ require github.com/google/go-cmp v0.7.0
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260209202127-80ab13bee0bf.1 // indirect
+	buf.build/go/protovalidate v1.1.3 // indirect
+	buf.build/go/protoyaml v0.6.0 // indirect
+	cel.dev/expr v0.25.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
@@ -51,6 +54,7 @@ require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/ajeddeloh/go-json v0.0.0-20160803184958-73d058cf8437 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
+	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/avast/retry-go/v4 v4.7.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -101,6 +105,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
+	github.com/google/cel-go v0.27.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20250903093132-95ced86f69c5 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
@@ -162,6 +167,7 @@ require (
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260311181403-84a4fc48630c // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v1.0.2-0.20250314012144-ee69052608d9 // indirect

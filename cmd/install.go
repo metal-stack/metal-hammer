@@ -66,9 +66,14 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*installerv1.Bootin
 func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*installerv1.Bootinfo, error) {
 	h.log.Info("install", "image", machine.Allocation.Image.URL)
 
-	machineDetails, machineAllocation, err := h.writeInstallerConfig(machine, rootUUID)
+	lldpdConfig, machineDetails, machineAllocation, err := h.convertConfigs(machine, rootUUID)
 	if err != nil {
-		return nil, fmt.Errorf("writing configuration install.yaml failed %w", err)
+		return nil, fmt.Errorf("error converting configuration: %w", err)
+	}
+
+	err = h.writeConfigs(lldpdConfig, machineDetails, machineAllocation)
+	if err != nil {
+		return nil, fmt.Errorf("error writing configuration: %w", err)
 	}
 
 	err = h.writeUserData(machine)
@@ -82,7 +87,8 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	}
 
 	if err := chroot.RunInChroot(h.log, prefix, func() error {
-		return installer.Install(context.TODO(), h.log, machineDetails, machineAllocation)
+		i := installer.New(h.log, machineDetails, machineAllocation)
+		return i.Install(context.TODO())
 	}); err != nil {
 		return nil, fmt.Errorf("unable to run the installer %w", err)
 	}
@@ -167,19 +173,40 @@ func (h *hammer) writeUserData(machine *models.V1MachineResponse) error {
 	return nil
 }
 
-func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUiD string) (*installerv1.MachineDetails, *apiv2.MachineAllocation, error) {
+func (h *hammer) writeConfigs(lldpconfig *installerv1.LLDPDConfig, details *installerv1.MachineDetails, allocation *apiv2.MachineAllocation) error {
 	h.log.Info("write installation configuration")
 	configdir := path.Join(h.chrootPrefix, "etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
-		return nil, nil, fmt.Errorf("mkdir of %s target os failed %w", configdir, err)
+		return fmt.Errorf("mkdir of %s target os failed %w", configdir, err)
 	}
 
+	i := installer.New(h.log, details, allocation)
+
+	err = i.PersistConfigurations()
+	if err != nil {
+		return fmt.Errorf("unable to persist configuration: %w", err)
+	}
+
+	yamlContent, err := yaml.Marshal(lldpconfig)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(installerv1.LLDPDConfigPath, yamlContent, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("unable to write lldpd config %w", err)
+	}
+
+	return nil
+}
+
+func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD string) (*installerv1.LLDPDConfig, *installerv1.MachineDetails, *apiv2.MachineAllocation, error) {
 	alloc := machine.Allocation
 
 	cmdline, err := kernel.ParseCmdline()
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get kernel cmdline map %w", err)
+		return nil, nil, nil, fmt.Errorf("unable to get kernel cmdline map %w", err)
 	}
 
 	console, ok := cmdline["console"]
@@ -196,15 +223,6 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		MachineUUID: h.spec.MachineUUID,
 		Timestamp:   time.Now().Format(time.RFC3339),
 	}
-	yamlContent, err := yaml.Marshal(lldpdConfig)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = os.WriteFile(installerv1.LLDPDConfigPath, yamlContent, os.ModePerm)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to write lldpd config %w", err)
-	}
 
 	machineDetails := &installerv1.MachineDetails{
 		ID:          h.spec.MachineUUID,
@@ -213,16 +231,6 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		RaidEnabled: raidEnabled,
 		RootUUID:    rootUUiD,
 		Nics:        h.onlyNicsWithNeighbors(machine.Hardware.Nics),
-	}
-
-	yamlContent, err = yaml.Marshal(machineDetails)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = os.WriteFile(installerv1.MachineDetailsPath, yamlContent, os.ModePerm)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to write machine details %w", err)
 	}
 
 	var vpn *apiv2.MachineVPN
@@ -344,16 +352,16 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 	}
 
 	machineAllocation := &apiv2.MachineAllocation{
-		Uuid:        *alloc.Allocationuuid,
-		Name:        *alloc.Name,
+		Uuid:        pointer.SafeDeref(alloc.Allocationuuid),
+		Name:        pointer.SafeDeref(alloc.Name),
 		Description: alloc.Description,
-		CreatedBy:   *alloc.Creator,
-		Project:     *alloc.Project,
+		CreatedBy:   pointer.SafeDeref(alloc.Creator),
+		Project:     pointer.SafeDeref(alloc.Project),
 		Image: &apiv2.Image{
-			Id:  *alloc.Image.ID,
+			Id:  pointer.SafeDeref(alloc.Image.ID),
 			Url: alloc.Image.URL,
 		},
-		Hostname:       *alloc.Hostname,
+		Hostname:       pointer.SafeDeref(alloc.Hostname),
 		SshPublicKeys:  alloc.SSHPubKeys,
 		Userdata:       alloc.UserData,
 		AllocationType: allocationType,
@@ -364,17 +372,7 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 		Vpn:            vpn,
 	}
 
-	yamlContent, err = yaml.Marshal(machineAllocation)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = os.WriteFile(installerv1.MachineAllocationPath, yamlContent, os.ModePerm)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to write machine allocation %w", err)
-	}
-
-	return machineDetails, machineAllocation, nil
+	return lldpdConfig, machineDetails, machineAllocation, nil
 }
 
 func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*apiv2.MachineNic {
