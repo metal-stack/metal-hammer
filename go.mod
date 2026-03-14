@@ -5,6 +5,7 @@ go 1.26
 require (
 	github.com/beevik/ntp v1.5.0
 	github.com/cheggaaa/pb/v3 v3.1.7
+	github.com/google/go-cmp v0.7.0
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20251015150631-c42bbddc310a
@@ -39,8 +40,6 @@ replace (
 	// keep this until https://github.com/u-root/u-root/pull/3451 is merged and released
 	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
 )
-
-require github.com/google/go-cmp v0.7.0
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260209202127-80ab13bee0bf.1 // indirect
