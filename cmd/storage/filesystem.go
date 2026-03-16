@@ -352,11 +352,12 @@ func (f *Filesystem) mountFilesystems() error {
 
 		passno := uint(2)
 		spec := ""
+		properties := map[string]string{"UUID": ""}
 		if *fs.Format == "tmpfs" {
 			spec = *fs.Format
 			passno = 0
 		} else {
-			properties, err := FetchBlockIDProperties(*fs.Device)
+			properties, err = FetchBlockIDProperties(*fs.Device)
 			if err != nil {
 				return err
 			}
@@ -378,6 +379,9 @@ func (f *Filesystem) mountFilesystems() error {
 			passno:    passno,
 		}
 		f.fstabEntries = append(f.fstabEntries, fstabEntry)
+		if fs.Label == "root" {
+			f.RootUUID = properties["UUID"]
+		}
 	}
 	return nil
 }
