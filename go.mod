@@ -10,13 +10,13 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20251015150631-c42bbddc310a
 	github.com/jaypipes/ghw v0.21.2
-	github.com/metal-stack/api v0.0.54-0.20260309104254-e1a94cd811ff
+	github.com/metal-stack/api v0.0.55-0.20260316085710-1f98c8226b9e
 	github.com/metal-stack/go-hal v0.7.0
 	github.com/metal-stack/go-lldpd v0.4.11
 	github.com/metal-stack/metal-api v0.43.0
 	github.com/metal-stack/metal-go v0.43.1-0.20260313140852-e1dafffd26a3
 	github.com/metal-stack/metal-lib v0.24.0
-	github.com/metal-stack/os-installer v0.2.1-0.20260316114451-0d0d563b7d9c
+	github.com/metal-stack/os-installer v0.2.1-0.20260316124146-23c4e387ef65
 	github.com/metal-stack/pixie v0.4.1
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below

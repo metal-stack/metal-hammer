@@ -61,7 +61,7 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*installerv1.Bootin
 	return info, nil
 }
 
-// install will execute /install.sh in the pulled docker image which was extracted onto disk
+// install will execute Install from os-installer in the chroot where the os-image was extracted
 // to finish installation e.g. install mbr, grub, write network and filesystem config
 func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*installerv1.Bootinfo, error) {
 	h.log.Info("install", "image", machine.Allocation.Image.URL)
@@ -107,6 +107,8 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	if err != nil {
 		return info, fmt.Errorf("unable to read boot-info.yaml %w", err)
 	}
+
+	h.log.Info("bootinfo", "info", info)
 
 	err = h.EnsureBootOrder(info.BootloaderID)
 	if err != nil {
@@ -255,15 +257,15 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 		allocationType = apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL
 	}
 
-	var dnsserver []*apiv2.DNSServer
+	var dnsservers []*apiv2.DNSServer
 	for _, dns := range alloc.DNSServers {
-		dnsserver = append(dnsserver, &apiv2.DNSServer{
+		dnsservers = append(dnsservers, &apiv2.DNSServer{
 			Ip: pointer.SafeDeref(dns.IP),
 		})
 	}
-	var ntpserver []*apiv2.NTPServer
+	var ntpservers []*apiv2.NTPServer
 	for _, ntp := range alloc.NtpServers {
-		ntpserver = append(ntpserver, &apiv2.NTPServer{
+		ntpservers = append(ntpservers, &apiv2.NTPServer{
 			Address: pointer.SafeDeref(ntp.Address),
 		})
 	}
@@ -375,8 +377,8 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 		AllocationType: allocationType,
 		FirewallRules:  firewallRules,
 		Networks:       networks,
-		DnsServer:      dnsserver,
-		NtpServer:      ntpserver,
+		DnsServers:     dnsservers,
+		NtpServers:     ntpservers,
 		Vpn:            vpn,
 	}
 
