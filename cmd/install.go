@@ -71,11 +71,6 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		return nil, fmt.Errorf("error converting configuration: %w", err)
 	}
 
-	err = h.writeConfigs(lldpdConfig, machineDetails, machineAllocation)
-	if err != nil {
-		return nil, fmt.Errorf("error writing configuration: %w", err)
-	}
-
 	err = h.writeUserData(machine)
 	if err != nil {
 		return nil, fmt.Errorf("writing userdata failed %w", err)
@@ -87,6 +82,11 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	}
 
 	if err := chroot.RunInChroot(h.log, prefix, func() error {
+		err = h.writeConfigs(lldpdConfig, machineDetails, machineAllocation)
+		if err != nil {
+			return fmt.Errorf("error writing configuration: %w", err)
+		}
+
 		i := installer.New(h.log, machineDetails, machineAllocation)
 		return i.Install(context.TODO())
 	}); err != nil {
