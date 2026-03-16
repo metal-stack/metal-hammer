@@ -37,7 +37,8 @@ func NewImage(log *slog.Logger) *Image {
 func (i *Image) OciPull(ctx context.Context, imageRef, mountDir, username, password string) error {
 	imageRefWithoutOciPrefix := strings.TrimPrefix(imageRef, "oci://")
 
-	// Parse the image reference (e.g., docker.io/library/alpine:latest)
+	// TODO: just for testing - remove log statement before merging
+	i.log.Info("log image ref without oci prefix", "imageRefWithoutOciPrefix", imageRefWithoutOciPrefix)
 	ref, err := name.ParseReference(imageRefWithoutOciPrefix)
 	if err != nil {
 		return fmt.Errorf("parsing image reference: %w", err)

@@ -38,6 +38,8 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 		ociConfig := h.spec.MetalConfig.OciConfigs[imageURL]
 		ctx := context.Background()
 
+		// TODO: just for testing - remove log statement before merging
+		h.log.Info("log oci config", "ociConfig", ociConfig)
 		err = newImage.OciPull(ctx, imageURL, h.chrootPrefix, ociConfig.Username, ociConfig.Password)
 		if err != nil {
 			return nil, err
