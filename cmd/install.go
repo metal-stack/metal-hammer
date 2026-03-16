@@ -81,6 +81,7 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		return nil, err
 	}
 
+	// Write configuration to /etc/metal and execute the installer in chroot
 	if err := chroot.RunInChroot(h.log, prefix, func() error {
 		h.log.Debug("write configs in chroot")
 		err = h.writeConfigs(lldpdConfig, machineDetails, machineAllocation)
