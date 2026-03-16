@@ -372,6 +372,8 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 		Vpn:            vpn,
 	}
 
+	h.log.Info("generated apiv2 allocation", "allocation", machineAllocation)
+
 	return lldpdConfig, machineDetails, machineAllocation, nil
 }
 
