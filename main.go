@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -94,7 +95,8 @@ func main() {
 	// FIXME set loglevel from spec.Debug
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("recover, sleeping for 5sec.", "errortrace", r)
+			stack := debug.Stack()
+			log.Error("recover, sleeping for 5sec.", "errortrace", r, "stack", string(stack))
 			time.Sleep(5 * time.Second)
 		}
 	}()
