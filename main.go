@@ -94,7 +94,7 @@ func main() {
 	// FIXME set loglevel from spec.Debug
 	defer func() {
 		if r := recover(); r != nil {
-			log.Info("recover, sleeping for 5sec.")
+			log.Error("recover, sleeping for 5sec.", "errortrace", r)
 			time.Sleep(5 * time.Second)
 		}
 	}()
