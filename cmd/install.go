@@ -82,13 +82,20 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	}
 
 	if err := chroot.RunInChroot(h.log, prefix, func() error {
+		h.log.Debug("write configs in chroot")
 		err = h.writeConfigs(lldpdConfig, machineDetails, machineAllocation)
 		if err != nil {
 			return fmt.Errorf("error writing configuration: %w", err)
 		}
 
+		h.log.Debug("start install in chroot")
 		i := installer.New(h.log, machineDetails, machineAllocation)
-		return i.Install(context.TODO())
+		err = i.Install(context.TODO())
+		if err != nil {
+			h.log.Error("error during install", "error", err)
+			return fmt.Errorf("error during install: %w", err)
+		}
+		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("unable to run the installer %w", err)
 	}
