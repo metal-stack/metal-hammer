@@ -89,7 +89,7 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 			return fmt.Errorf("error writing configuration: %w", err)
 		}
 
-		h.log.Debug("start install in chroot")
+		h.log.Debug("start install in chroot", "details", machineDetails, "allocation", machineAllocation)
 		i := installer.New(h.log, machineDetails, machineAllocation)
 		err = i.Install(context.TODO())
 		if err != nil {
@@ -242,6 +242,8 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 		RootUUID:    rootUUiD,
 		Nics:        h.onlyNicsWithNeighbors(machine.Hardware.Nics),
 	}
+
+	h.log.Info("generated apiv2 machinedetails", "details", machineDetails)
 
 	var vpn *apiv2.MachineVPN
 	if alloc.Vpn != nil {
