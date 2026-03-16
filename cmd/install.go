@@ -323,7 +323,7 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 		}
 
 		var networkType apiv2.NetworkType
-		switch pointer.SafeDeref(nw.Nattypev2) {
+		switch pointer.SafeDeref(nw.Networktypev2) {
 		case "external":
 			networkType = apiv2.NetworkType_NETWORK_TYPE_EXTERNAL
 		case "underlay":
