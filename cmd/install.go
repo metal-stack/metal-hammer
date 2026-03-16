@@ -175,7 +175,7 @@ func (h *hammer) writeUserData(machine *models.V1MachineResponse) error {
 
 func (h *hammer) writeConfigs(lldpconfig *installerv1.LLDPDConfig, details *installerv1.MachineDetails, allocation *apiv2.MachineAllocation) error {
 	h.log.Info("write installation configuration")
-	configdir := path.Join(h.chrootPrefix, "etc", "metal")
+	configdir := path.Join("etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
 	if err != nil {
 		return fmt.Errorf("mkdir of %s target os failed %w", configdir, err)
