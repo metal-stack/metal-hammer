@@ -307,8 +307,8 @@ github.com/metal-stack/metal-go v0.43.1-0.20260313140852-e1dafffd26a3 h1:Ux2dWje
 github.com/metal-stack/metal-go v0.43.1-0.20260313140852-e1dafffd26a3/go.mod h1:vkx1XXqym3ZykVVC6EDIheM++iZhfA8nwY7qEHND+9c=
 github.com/metal-stack/metal-lib v0.24.0 h1:wvQQPWIXcA2tP+I6zAHUNdtVLLJfQnnV9yG2SoqUkz4=
 github.com/metal-stack/metal-lib v0.24.0/go.mod h1:oITaqj/BtB9vDKM66jCXkeA+4D0eTZElgIKal5vtiNY=
-github.com/metal-stack/os-installer v0.2.1-0.20260317091807-31287d7c790e h1:Nb5wNfPTPPY8OEvfM1rc54wBaFE79jm9hJRTaFrgTnA=
-github.com/metal-stack/os-installer v0.2.1-0.20260317091807-31287d7c790e/go.mod h1:uWbwwMwEEIMUFrLSkLuY8zLAb08jZvLlWwUblMcyGDs=
+github.com/metal-stack/os-installer v0.2.1-0.20260317093919-37d7cba35920 h1:KepTpLwUYSTc9cxw555KP0gxOldZ11oszbJJhviEewM=
+github.com/metal-stack/os-installer v0.2.1-0.20260317093919-37d7cba35920/go.mod h1:uWbwwMwEEIMUFrLSkLuY8zLAb08jZvLlWwUblMcyGDs=
 github.com/metal-stack/pixie v0.4.1 h1:aFKySq2MiGZ/eSp+WUuwa5TcpDIXgxqIeB6DVInMesU=
 github.com/metal-stack/pixie v0.4.1/go.mod h1:+lwYIQypbRMhUicK5/+YKLHekB/Spnm2vwcMvzOx7UM=
 github.com/metal-stack/security v0.9.6 h1:q+JbfFis/G2IuyKky2btmDmO0Y2GQ47p7lmzOi80kMY=
