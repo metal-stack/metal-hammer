@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
@@ -21,7 +22,6 @@ import (
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/metal-hammer/pkg/chroot"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
-	"gopkg.in/yaml.v3"
 )
 
 // Install a given image to the disk by using genuinetools/img
@@ -66,9 +66,14 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*installerv1.Bootin
 func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*installerv1.Bootinfo, error) {
 	h.log.Info("install", "image", machine.Allocation.Image.URL)
 
-	lldpdConfig, machineDetails, machineAllocation, err := h.convertConfigs(machine, rootUUID)
+	machineDetails, machineAllocation, err := h.convertConfigs(machine, rootUUID)
 	if err != nil {
 		return nil, fmt.Errorf("error converting configuration: %w", err)
+	}
+
+	legacyConfig, err := h.generateLegacyConfig(machine, machineDetails, rootUUID)
+	if err != nil {
+		return nil, fmt.Errorf("error converting legacy configuration: %w", err)
 	}
 
 	err = h.writeUserData(machine)
@@ -84,7 +89,7 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	// Write configuration to /etc/metal and execute the installer in chroot
 	if err := chroot.RunInChroot(h.log, prefix, func() error {
 		h.log.Debug("write configs in chroot")
-		err = h.writeConfigs(lldpdConfig, machineDetails, machineAllocation)
+		err = h.writeConfigs(legacyConfig, machineDetails, machineAllocation)
 		if err != nil {
 			return fmt.Errorf("error writing configuration: %w", err)
 		}
@@ -183,7 +188,7 @@ func (h *hammer) writeUserData(machine *models.V1MachineResponse) error {
 	return nil
 }
 
-func (h *hammer) writeConfigs(lldpconfig *installerv1.LLDPDConfig, details *installerv1.MachineDetails, allocation *apiv2.MachineAllocation) error {
+func (h *hammer) writeConfigs(legacyConfig *installerv1.InstallerConfig, details *installerv1.MachineDetails, allocation *apiv2.MachineAllocation) error {
 	h.log.Info("write installation configuration")
 	configdir := path.Join("etc", "metal")
 	err := os.MkdirAll(configdir, 0755)
@@ -198,25 +203,115 @@ func (h *hammer) writeConfigs(lldpconfig *installerv1.LLDPDConfig, details *inst
 		return fmt.Errorf("unable to persist configuration: %w", err)
 	}
 
-	yamlContent, err := yaml.Marshal(lldpconfig)
+	err = i.PersistLegacyInstallYaml(legacyConfig)
 	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(installerv1.LLDPDConfigPath, yamlContent, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("unable to write lldpd config %w", err)
+		return fmt.Errorf("unable to persist configuration: %w", err)
 	}
 
 	return nil
 }
 
-func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD string) (*installerv1.LLDPDConfig, *installerv1.MachineDetails, *apiv2.MachineAllocation, error) {
+func (h *hammer) generateLegacyConfig(machine *models.V1MachineResponse, details *installerv1.MachineDetails, rootUUiD string) (*installerv1.InstallerConfig, error) {
+	var vpn *installerv1.V1MachineVPN
+	if machine.Allocation.Vpn != nil {
+		vpn = &installerv1.V1MachineVPN{
+			Address: machine.Allocation.Vpn.Address,
+			AuthKey: machine.Allocation.Vpn.AuthKey,
+		}
+	}
+
+	var (
+		dnsServers []*installerv1.V1DNSServer
+		ntpServers []*installerv1.V1NTPServer
+	)
+	for _, dns := range machine.Allocation.DNSServers {
+		dnsServers = append(dnsServers, &installerv1.V1DNSServer{
+			IP: dns.IP,
+		})
+	}
+	for _, ntp := range machine.Allocation.NtpServers {
+		ntpServers = append(ntpServers, &installerv1.V1NTPServer{
+			Address: ntp.Address,
+		})
+	}
+
+	var firewallRules *installerv1.V1FirewallRules
+	if machine.Allocation.FirewallRules != nil {
+		var (
+			egress  []*installerv1.V1FirewallEgressRule
+			ingress []*installerv1.V1FirewallIngressRule
+		)
+		for _, e := range machine.Allocation.FirewallRules.Egress {
+			egress = append(egress, &installerv1.V1FirewallEgressRule{
+				Comment:  e.Comment,
+				Protocol: e.Protocol,
+				Ports:    e.Ports,
+				To:       e.To,
+			})
+		}
+
+		for _, i := range machine.Allocation.FirewallRules.Ingress {
+			ingress = append(ingress, &installerv1.V1FirewallIngressRule{
+				Comment:  i.Comment,
+				Protocol: i.Protocol,
+				Ports:    i.Ports,
+				To:       i.To,
+				From:     i.From,
+			})
+		}
+
+		firewallRules = &installerv1.V1FirewallRules{
+			Egress:  egress,
+			Ingress: ingress,
+		}
+	}
+
+	var networks []*installerv1.V1MachineNetwork
+	for _, nw := range machine.Allocation.Networks {
+		networks = append(networks, &installerv1.V1MachineNetwork{
+			Asn:                 nw.Asn,
+			Destinationprefixes: nw.Destinationprefixes,
+			Ips:                 nw.Ips,
+			Nat:                 nw.Nat,
+			Nattypev2:           nw.Nattypev2,
+			Networkid:           nw.Networkid,
+			Networktype:         nw.Networktype,
+			Networktypev2:       nw.Nattypev2,
+			Prefixes:            nw.Prefixes,
+			Private:             nw.Private,
+			Projectid:           nw.Projectid,
+			Underlay:            nw.Underlay,
+			Vrf:                 nw.Vrf,
+		})
+	}
+
+	legacyConfig := &installerv1.InstallerConfig{
+		Hostname:      pointer.SafeDeref(machine.Allocation.Hostname),
+		Password:      details.Password,
+		Console:       details.Console,
+		RaidEnabled:   details.RaidEnabled,
+		RootUUID:      details.RootUUID,
+		SSHPublicKey:  strings.Join(machine.Allocation.SSHPubKeys, "\n"),
+		MachineUUID:   h.spec.MachineUUID,
+		Timestamp:     time.Now().Format(time.RFC3339),
+		Networks:      networks,
+		Nics:          h.onlyNicsWithNeighborsLegacy(machine.Hardware.Nics),
+		VPN:           vpn,
+		Role:          pointer.SafeDeref(machine.Allocation.Role),
+		FirewallRules: firewallRules,
+		DNSServers:    dnsServers,
+		NTPServers:    ntpServers,
+	}
+
+	return legacyConfig, nil
+}
+
+func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD string) (*installerv1.MachineDetails, *apiv2.MachineAllocation, error) {
 	alloc := machine.Allocation
 
 	cmdline, err := kernel.ParseCmdline()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("unable to get kernel cmdline map %w", err)
+		return nil, nil, fmt.Errorf("unable to get kernel cmdline map %w", err)
 	}
 
 	console, ok := cmdline["console"]
@@ -227,11 +322,6 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 	var raidEnabled bool
 	if alloc != nil && alloc.Filesystemlayout != nil && len(alloc.Filesystemlayout.Raid) > 0 {
 		raidEnabled = true
-	}
-
-	lldpdConfig := &installerv1.LLDPDConfig{
-		MachineUUID: h.spec.MachineUUID,
-		Timestamp:   time.Now().Format(time.RFC3339),
 	}
 
 	machineDetails := &installerv1.MachineDetails{
@@ -386,7 +476,7 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 
 	h.log.Info("generated apiv2 allocation", "allocation", machineAllocation)
 
-	return lldpdConfig, machineDetails, machineAllocation, nil
+	return machineDetails, machineAllocation, nil
 }
 
 func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*apiv2.MachineNic {
@@ -419,5 +509,37 @@ func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*apiv2.Mac
 		result = append(result, n)
 	}
 	h.log.Info("onlyNicWithNeighbors add", "result", result)
+	return result
+}
+
+func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*models.V1MachineNic) []*installerv1.V1MachineNic {
+	noNeighbors := func(neighbors []*models.V1MachineNic) bool {
+		if len(neighbors) == 0 {
+			return true
+		}
+		for _, n := range neighbors {
+			if n.Mac == nil || *n.Mac == "" {
+				return true
+			}
+		}
+		return false
+	}
+
+	result := []*installerv1.V1MachineNic{}
+	for i := range nics {
+		nic := nics[i]
+		if noNeighbors(nic.Neighbors) {
+			continue
+		}
+		n := &installerv1.V1MachineNic{
+			Mac:        nic.Mac,
+			Name:       nic.Name,
+			Identifier: nic.Identifier,
+			Neighbors: []*installerv1.V1MachineNic{
+				{Mac: nic.Neighbors[0].Mac, Name: nic.Neighbors[0].Name},
+			},
+		}
+		result = append(result, n)
+	}
 	return result
 }
