@@ -94,9 +94,12 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 			return fmt.Errorf("error writing configuration: %w", err)
 		}
 
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		defer cancel()
+
 		h.log.Debug("start install in chroot", "details", machineDetails, "allocation", machineAllocation)
 		i := installer.New(h.log, machineDetails, machineAllocation)
-		err = i.Install(context.TODO())
+		err = i.Install(ctx)
 		if err != nil {
 			h.log.Error("error during install", "error", err)
 			return fmt.Errorf("error during install: %w", err)
