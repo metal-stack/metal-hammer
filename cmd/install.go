@@ -71,7 +71,7 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		return nil, fmt.Errorf("error converting configuration: %w", err)
 	}
 
-	legacyConfig, err := h.generateLegacyConfig(machine, machineDetails, rootUUID)
+	legacyConfig, err := h.generateLegacyConfig(machine, machineDetails)
 	if err != nil {
 		return nil, fmt.Errorf("error converting legacy configuration: %w", err)
 	}
@@ -201,11 +201,6 @@ func (h *hammer) writeConfigs(legacyConfig *installerv1.InstallerConfig, details
 
 	i := installer.New(h.log, details, allocation)
 
-	err = i.PersistConfigurations()
-	if err != nil {
-		return fmt.Errorf("unable to persist configuration: %w", err)
-	}
-
 	err = i.PersistLegacyInstallYaml(legacyConfig)
 	if err != nil {
 		return fmt.Errorf("unable to persist configuration: %w", err)
@@ -214,7 +209,7 @@ func (h *hammer) writeConfigs(legacyConfig *installerv1.InstallerConfig, details
 	return nil
 }
 
-func (h *hammer) generateLegacyConfig(machine *models.V1MachineResponse, details *installerv1.MachineDetails, rootUUiD string) (*installerv1.InstallerConfig, error) {
+func (h *hammer) generateLegacyConfig(machine *models.V1MachineResponse, details *installerv1.MachineDetails) (*installerv1.InstallerConfig, error) {
 	var vpn *installerv1.V1MachineVPN
 	if machine.Allocation.Vpn != nil {
 		vpn = &installerv1.V1MachineVPN{
