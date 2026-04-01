@@ -16,7 +16,7 @@ require (
 	github.com/metal-stack/metal-api v0.43.1
 	github.com/metal-stack/metal-go v0.43.1
 	github.com/metal-stack/metal-lib v0.24.0
-	github.com/metal-stack/os-installer v0.2.1-0.20260323102444-0f62218ce3b9
+	github.com/metal-stack/os-installer v0.3.0
 	github.com/metal-stack/pixie v0.4.1
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
