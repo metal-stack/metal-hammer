@@ -44,7 +44,6 @@ func (i *Image) OciPull(ctx context.Context, imageRef, mountDir, username, passw
 		return fmt.Errorf("parsing image reference: %w", err)
 	}
 
-	// Choose authentication method
 	var auth = authn.Anonymous
 	if username != "" || password != "" {
 		auth = &authn.Basic{
@@ -68,7 +67,7 @@ func (i *Image) OciPull(ctx context.Context, imageRef, mountDir, username, passw
 		return fmt.Errorf("extracting tar: %w", err)
 	}
 
-	i.log.Info("pull oci image done", "image", imageRef)
+	i.log.Info("pulled oci image successfully", "image", imageRef)
 	return nil
 }
 
