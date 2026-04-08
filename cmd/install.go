@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -29,16 +30,30 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*api.Bootinfo, erro
 		return nil, err
 	}
 
-	image := machine.Allocation.Image.URL
+	imageURL := machine.Allocation.Image.URL
+	newImage := img.NewImage(h.log)
 
-	err = img.NewImage(h.log).Pull(image, h.osImageDestination)
-	if err != nil {
-		return nil, err
-	}
+	h.log.Info("checking oci image", "image", imageURL)
+	if strings.HasPrefix(imageURL, "oci://") {
+		ociConfig := h.spec.MetalConfig.OciConfigs[imageURL]
+		ctx := context.Background()
 
-	err = img.NewImage(h.log).Burn(h.chrootPrefix, image, h.osImageDestination)
-	if err != nil {
-		return nil, err
+		// TODO: just for testing - remove log statement before merging
+		h.log.Info("log oci config", "ociConfig", ociConfig)
+		err = newImage.OciPull(ctx, imageURL, h.chrootPrefix, ociConfig.Username, ociConfig.Password)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = newImage.Pull(imageURL, h.osImageDestination)
+		if err != nil {
+			return nil, err
+		}
+
+		err = newImage.Burn(h.chrootPrefix, imageURL, h.osImageDestination)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	info, err := h.install(h.chrootPrefix, machine, s.RootUUID)
@@ -244,6 +259,7 @@ func (h *hammer) writeInstallerConfig(machine *models.V1MachineResponse, rootUUi
 
 	return os.WriteFile(destination, yamlContent, 0600)
 }
+
 func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*models.V1MachineNic {
 	noNeighbors := func(neighbors []*models.V1MachineNic) bool {
 		if len(neighbors) == 0 {
