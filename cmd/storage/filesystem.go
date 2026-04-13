@@ -16,6 +16,8 @@ import (
 
 	"github.com/u-root/u-root/pkg/mount/block"
 
+	"github.com/u-root/u-root/pkg/mount/block"
+
 	"github.com/metal-stack/metal-go/api/models"
 	"github.com/metal-stack/metal-hammer/pkg/api"
 	"github.com/metal-stack/metal-hammer/pkg/os"
