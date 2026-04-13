@@ -7,9 +7,9 @@ require (
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
-	github.com/metal-stack/go-hal v0.6.2-0.20260225153411-0c999d377503
 	github.com/grafana/loki-client-go v0.0.0-20251015150631-c42bbddc310a
 	github.com/jaypipes/ghw v0.21.2
+	github.com/metal-stack/go-hal v0.7.1-0.20260412184111-d9fc0353dbcd
 	github.com/metal-stack/go-lldpd v0.4.11
 	github.com/metal-stack/metal-api v0.43.0
 	github.com/metal-stack/metal-go v0.43.0
