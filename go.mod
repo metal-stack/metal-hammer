@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20251015150631-c42bbddc310a
 	github.com/jaypipes/ghw v0.21.2
-	github.com/metal-stack/go-hal v0.7.1-0.20260412184111-d9fc0353dbcd
+	github.com/metal-stack/go-hal v0.7.1-0.20260415124810-bded598c6e39
 	github.com/metal-stack/go-lldpd v0.4.11
 	github.com/metal-stack/metal-api v0.43.0
 	github.com/metal-stack/metal-go v0.43.0
