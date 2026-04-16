@@ -28,6 +28,26 @@ This component performs the following actions:
 - Ensures BIOS uses UEFI mode
 - Ensures `Waiting` loop until machine gets requested by the `metal-api`
 
+If a machine is requested, `metal-hammer` initiates the installation including the following steps:
+
+- Installs a filesystem layout (defined in the `metal-api`):
+  - Cleanup disks using `wipefs` to remove signatures
+  - Create partitions using `sgdisk` (and `--zap-all` option, to destroy partition table structure)
+  - Create RAID using `mdadm`
+  - Create logical volumes using `lvm`
+  - Create filesystems. Supported are: `ext3`, `ext4`, `swap`, `vfat`
+  - Mount filesystems
+- Downloads the requested OS image as a `.tar` and unpacks it into a directory on the disk
+- Writes the requested allocation configuration for the OS (e.g. hostname, networks, DNS servers, NTP servers...) into `/etc/metal/install.yaml`
+- Writes the user specific data into `/etc/metal/userdata`
+- Writes the LVM configuration into `/etc/lvm/lvmlocal.conf` for compatibility with the new OS
+- Executes the Go binary `install.go` inside the downloaded OS metal-image
+- Reads the kernel's boot info from `/etc/metal/boot-info.yaml`
+- Configures the boot order to boot the installed OS after rebooting
+- Writes all fstab entries to `/etc/fstab` inside chroot
+- Reports the installation to the `metal-api`
+- Boots into the new kernel from the installed OS
+
 ## Local Development
 
 Use the following command for local development:
