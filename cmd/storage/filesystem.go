@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	gos "os"
@@ -89,11 +88,6 @@ func (f *Filesystem) Run() error {
 		return fmt.Errorf("mount special filesystems failed:%w", err)
 	}
 
-	// TODO legacy image support, can be removed once all images in use do no depend on disk.json anymore
-	err = f.createDiskJSON()
-	if err != nil {
-		return fmt.Errorf("disk.json creation failed:%w", err)
-	}
 	return nil
 }
 func (f *Filesystem) Umount() {
@@ -472,26 +466,6 @@ func (f *Filesystem) umountFilesystems() {
 
 func (f *Filesystem) CreateFSTab() error {
 	return f.fstabEntries.write(f.log, f.chroot)
-}
-
-func (f *Filesystem) createDiskJSON() error {
-	configdir := path.Join(f.chroot, "etc", "metal")
-	destination := path.Join(configdir, "disk.json")
-
-	if _, err := gos.Stat(configdir); err != nil && gos.IsNotExist(err) {
-		if err := gos.MkdirAll(configdir, 0755); err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
-	}
-
-	j, err := json.MarshalIndent(f.disk, "", "  ")
-	if err != nil {
-		return fmt.Errorf("unable to marshal to json %w", err)
-	}
-	f.log.Info("create legacy disk.json", "content", string(j))
-	return gos.WriteFile(destination, j, 0600)
 }
 
 func mountFs(log *slog.Logger, chroot string, fs models.V1Filesystem) (string, error) {
