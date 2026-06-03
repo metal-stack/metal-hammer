@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"syscall"
+	"unicode"
 
 	"github.com/u-root/u-root/pkg/mount/block"
 
@@ -96,6 +97,7 @@ func (f *Filesystem) createPartitions() error {
 	}
 	for _, disk := range f.config.Disks {
 		opts := []string{}
+		createdPartitions := []int64{}
 
 		if disk.Wipeonreinstall != nil && *disk.Wipeonreinstall {
 			opts = append(opts, "--zap-all")
@@ -108,6 +110,7 @@ func (f *Filesystem) createPartitions() error {
 			if p.Gpttype != nil {
 				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", *p.Number, *p.Gpttype))
 			}
+			createdPartitions = append(createdPartitions, *p.Number)
 		}
 		if disk.Device != nil {
 			f.log.Info("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+*disk.Device)
@@ -133,9 +136,29 @@ func (f *Filesystem) createPartitions() error {
 			if err != nil {
 				return fmt.Errorf("unable to re-read the partition table. Kernel still uses old partition table: %v", err)
 			}
+
+			// wiping the newly created partitions to remove any existing signatures, e.g. mdadm superblock, lvm signatures, filesystem signatures
+			for _, p := range createdPartitions {
+				partPath := getPartitionPath(*disk.Device, int(p))
+				f.log.Info(fmt.Sprintf("wipe new partition %s", partPath), "command", command.WIPEFS+" --all"+" "+partPath)
+				// TODO: wait for the partition to be available, e.g. by watching udev events?
+				err = os.ExecuteCommand(command.WIPEFS, "--all", partPath)
+				if err != nil {
+					f.log.Error("wipe new partition failed", "error", err)
+					return fmt.Errorf("unable to wipe new partition %s %w", partPath, err)
+				}
+			}
 		}
 	}
 	return nil
+}
+
+// Helper to get the right partition path on sata and nvme drives, e.g. /dev/sda1 vs /dev/nvme0n1p1
+func getPartitionPath(diskPath string, partNum int) string {
+	if len(diskPath) > 0 && unicode.IsDigit(rune(diskPath[len(diskPath)-1])) {
+		return fmt.Sprintf("%sp%d", diskPath, partNum)
+	}
+	return fmt.Sprintf("%s%d", diskPath, partNum)
 }
 
 func (f *Filesystem) createRaids() error {
