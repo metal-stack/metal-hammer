@@ -5,14 +5,14 @@ import (
 	"time"
 
 	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
-	kernelapi "github.com/metal-stack/metal-hammer/pkg/api"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
+	installerv1 "github.com/metal-stack/os-installer/api/v1"
 )
 
 func (h *hammer) abortReinstall(reason error, machineID string, primaryDiskWiped bool) error {
 	h.log.Error("reinstall cancelled => boot into existing OS...", "reason", reason)
 
-	var bootInfo *kernelapi.Bootinfo
+	var bootInfo *installerv1.Bootinfo
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -23,7 +23,7 @@ func (h *hammer) abortReinstall(reason error, machineID string, primaryDiskWiped
 	}
 
 	if resp != nil && resp.BootInfo != nil {
-		bootInfo = &kernelapi.Bootinfo{
+		bootInfo = &installerv1.Bootinfo{
 			Initrd:       resp.BootInfo.Initrd,
 			Cmdline:      resp.BootInfo.Cmdline,
 			Kernel:       resp.BootInfo.Kernel,
