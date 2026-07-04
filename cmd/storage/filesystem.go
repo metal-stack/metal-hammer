@@ -468,6 +468,12 @@ func (f *Filesystem) umountFilesystems() {
 			f.log.Error("unable to unmount", "path", m, "error", err)
 		}
 	}
+	// Unmount errors above are tolerated, but a failed unmount leaves dirty pages behind and
+	// the machine kexecs right after this - and kexec does NOT flush the page cache. Without
+	// this global sync, late writes (most prominently /etc/fstab, written after install-go)
+	// are silently lost and the installed OS boots with the image's placeholder fstab, a
+	// read-only root and none of the layout's extra mounts.
+	syscall.Sync()
 }
 
 func (f *Filesystem) CreateFSTab() error {
