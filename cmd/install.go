@@ -470,6 +470,7 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 		DnsServers:     dnsservers,
 		NtpServers:     ntpservers,
 		Vpn:            vpn,
+		// FilesystemLayout is not required here because os-installer does not process it.
 	}
 
 	h.log.Info("generated apiv2 allocation", "allocation", machineAllocation)
