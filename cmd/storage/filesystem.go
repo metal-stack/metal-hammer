@@ -86,8 +86,8 @@ func (f *Filesystem) Run() error {
 
 	return nil
 }
-func (f *Filesystem) Umount() {
-	f.umountFilesystems()
+func (f *Filesystem) Umount() error {
+	return f.umountFilesystems()
 }
 
 func (f *Filesystem) createPartitions() error {
@@ -427,13 +427,13 @@ func (f *Filesystem) mountSpecialFilesystems() error {
 	return nil
 }
 
-func (f *Filesystem) umountFilesystems() {
+func (f *Filesystem) umountFilesystems() error {
 	for index := len(specialMounts) - 1; index >= 0; index-- {
 		m := filepath.Join(f.chroot, specialMounts[index].target)
 		f.log.Info("unmounting", "mountpoint", m)
-		err := syscall.Unmount(m, syscall.MNT_FORCE)
+		err := syscall.Unmount(m, 0)
 		if err != nil {
-			f.log.Error("unable to unmount", "path", m, "error", err)
+			return fmt.Errorf("unable to unmount %s: %w", m, err)
 		}
 	}
 	for index := len(f.mounts) - 1; index >= 0; index-- {
@@ -442,11 +442,12 @@ func (f *Filesystem) umountFilesystems() {
 			continue
 		}
 		f.log.Info("unmounting", "mountpoint", m)
-		err := syscall.Unmount(m, syscall.MNT_FORCE)
+		err := syscall.Unmount(m, 0)
 		if err != nil {
-			f.log.Error("unable to unmount", "path", m, "error", err)
+			return fmt.Errorf("unable to unmount %s: %w", m, err)
 		}
 	}
+	return nil
 }
 
 func (f *Filesystem) CreateFSTab() error {
