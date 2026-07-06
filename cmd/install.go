@@ -56,7 +56,10 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*installerv1.Bootin
 		return nil, err
 	}
 
-	s.Umount()
+	err = s.Umount()
+	if err != nil {
+		return nil, err
+	}
 
 	return info, nil
 }
