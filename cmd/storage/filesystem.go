@@ -436,7 +436,9 @@ func (f *Filesystem) umountFilesystems() error {
 		f.log.Info("unmounting", "mountpoint", m)
 		if err := syscall.Unmount(m, 0); err != nil {
 			f.log.Error("unmount failed, detaching lazily", "path", m, "error", err)
-			_ = syscall.Unmount(m, syscall.MNT_DETACH) // won't block the data-fs umount below
+			if err := syscall.Unmount(m, syscall.MNT_DETACH); err != nil { // won't block the data-fs umount below
+				f.log.Error("unable to lazy unmount, ignoring", "path", m, "error", err)
+			}
 		}
 	}
 
