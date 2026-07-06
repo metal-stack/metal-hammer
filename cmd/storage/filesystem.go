@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	gos "os"
@@ -428,27 +429,28 @@ func (f *Filesystem) mountSpecialFilesystems() error {
 }
 
 func (f *Filesystem) umountFilesystems() error {
+	syscall.Sync()
+
 	for _, specialMount := range slices.Backward(specialMounts) {
 		m := filepath.Join(f.chroot, specialMount.target)
 		f.log.Info("unmounting", "mountpoint", m)
-		err := syscall.Unmount(m, 0)
-		if err != nil {
-			return fmt.Errorf("unable to unmount %q %w", m, err)
+		if err := syscall.Unmount(m, 0); err != nil {
+			f.log.Error("unmount failed, detaching lazily", "path", m, "error", err)
+			_ = syscall.Unmount(m, syscall.MNT_DETACH) // won't block the data-fs umount below
 		}
 	}
-	for _, m := range slices.Backward(f.mounts) {
 
+	var errs []error
+	for _, m := range slices.Backward(f.mounts) {
 		if m == "" {
 			continue
 		}
 		f.log.Info("unmounting", "mountpoint", m)
-		err := syscall.Unmount(m, 0)
-		if err != nil {
-			return fmt.Errorf("unable to unmount %q %w", m, err)
+		if err := syscall.Unmount(m, 0); err != nil {
+			errs = append(errs, fmt.Errorf("unable to unmount %q %w", m, err))
 		}
 	}
-	syscall.Sync()
-	return nil
+	return errors.Join(errs...)
 }
 
 func (f *Filesystem) CreateFSTab() error {
