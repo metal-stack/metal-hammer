@@ -87,9 +87,9 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		Log:         log,
 	}
 
-	// TODO: Does not work yet, needs to be done manually
-	// firmware := firmware.New()
-	// firmware.Update()
+	// a firmware update never fails this run, it either power cycles this machine
+	// or leaves it on the firmware which is currently active, see UpdateFirmware.
+	hammer.UpdateFirmware()
 
 	err = n.UpAllInterfaces()
 	if err != nil {

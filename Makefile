@@ -94,6 +94,7 @@ ramdisk:
 		-files="passwd:etc/passwd" \
 		-files="varrun:var/run/keep" \
 		-files="ice.pkg:lib/firmware/intel/ice/ddp/ice.pkg" \
+		-files="intel:intel" \
 		-files="metal.key:id_rsa" \
 		-files="metal.key.pub:authorized_keys" \
 		-files="sum:sbin/sum" \

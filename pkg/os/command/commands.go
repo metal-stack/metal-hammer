@@ -18,10 +18,14 @@ const (
 	MKFSVFat = "mkfs.vfat"
 	MKSwap   = "mkswap"
 	NVME     = "nvme"
-	SGDisk   = "sgdisk"
-	SSHD     = "sshd"
-	SUM      = "sum"
-	WIPEFS   = "wipefs"
+	// NVMUpdate is the intel nvm update utility, it is only packaged into the
+	// initrd if a firmware package was given to the docker build, see Dockerfile,
+	// and therefore intentionally not part of the mandatory commands below.
+	NVMUpdate = "nvmupdate64e"
+	SGDisk    = "sgdisk"
+	SSHD      = "sshd"
+	SUM       = "sum"
+	WIPEFS    = "wipefs"
 )
 
 var commands = []string{

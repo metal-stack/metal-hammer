@@ -41,6 +41,8 @@ replace (
 	github.com/u-root/u-root => github.com/majst01/u-root v0.0.0-20250910091544-306665b6f8e8
 )
 
+require github.com/Masterminds/semver/v3 v3.5.0
+
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260415201107-50325440f8f2.1 // indirect
 	buf.build/go/protovalidate v1.2.0 // indirect
@@ -48,7 +50,6 @@ require (
 	cel.dev/expr v0.25.2 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/ajeddeloh/go-json v0.0.0-20160803184958-73d058cf8437 // indirect
