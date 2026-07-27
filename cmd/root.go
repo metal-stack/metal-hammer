@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -158,26 +159,27 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 func (h *hammer) installImage(eventEmitter *event.EventEmitter, bootService v1.BootServiceClient, m *models.V1MachineResponse) error {
 	eventEmitter.Emit(event.ProvisioningEventInstalling, "start installation")
 	installationStart := time.Now()
-	info, err := h.Install(m)
-
-	// FIXME, must not return here.
-	if err != nil {
-		return fmt.Errorf("install %w ", err)
-	}
+	info, installErr := h.Install(m)
 
 	rep := &report.Report{
 		MachineUUID:     h.spec.MachineUUID,
 		Client:          bootService,
 		ConsolePassword: h.spec.ConsolePassword,
-		Initrd:          info.Initrd,
-		Cmdline:         info.Cmdline,
-		Kernel:          info.Kernel,
-		BootloaderID:    info.BootloaderID,
-		InstallError:    err,
+		InstallError:    installErr,
 		Log:             h.log,
 	}
 
-	err = rep.ReportInstallation()
+	// info is nil when the installation failed
+	if info != nil {
+		rep.Initrd = info.Initrd
+		rep.Cmdline = info.Cmdline
+		rep.Kernel = info.Kernel
+		rep.BootloaderID = info.BootloaderID
+	}
+
+	reportErr := rep.ReportInstallation()
+
+	err := errors.Join(installErr, reportErr)
 	if err != nil {
 		return err
 	}
