@@ -23,18 +23,12 @@ func (h *hammer) createBmcSuperuser() error {
 
 	bmcConn := h.hal.BMCConnection()
 
-	changeIsNeeded, err := bmcConn.NeedsPasswordChange(bmcConn.SuperUser(), resp.SuperUserPassword)
+	err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, resp.SuperUserPassword)
 	if err != nil {
-		if changeIsNeeded {
-			err = bmcConn.CreateUser(bmcConn.SuperUser(), api.AdministratorPrivilege, resp.SuperUserPassword)
-			if err != nil {
-				// FIXME: this happens always after the first creation on X12 and newer boards
-				// return fmt.Errorf("failed to create bmc superuser: %s %w", bmcConn.SuperUser().Name, err)
-				h.log.Error("failed to create bmc superuser", "user", bmcConn.SuperUser().Name, "error", err)
-				return nil
-			}
-		}
-		h.log.Error("failed to verify password change for bmc superuser", "user", bmcConn.SuperUser().Name, "error", err)
+		// FIXME: this happens always after the first creation on X12 and newer boards
+		// return fmt.Errorf("failed to create bmc superuser: %s %w", bmcConn.SuperUser().Name, err)
+		h.log.Error("failed to create bmc superuser", "user", bmcConn.SuperUser().Name, "error", err)
+		return nil
 	}
 
 	h.log.Info("created superuser", "user", bmcConn.SuperUser().Name)
