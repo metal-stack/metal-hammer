@@ -2,11 +2,11 @@ package register
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	gonet "net"
 	"os"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -279,73 +279,56 @@ func createSyslog() error {
 
 // IPMI configuration and
 func (r *Register) readIPMIDetails() (*v1.MachineIPMI, error) {
-	var pw string
-	intf := "lanplus"
-	details := &v1.MachineIPMI{
-		Interface: intf,
-	}
-	defaultIPMIPort := "623"
-	bmcVersion := "unknown"
-	bmcConn := r.inband.BMCConnection()
-	if bmcConn.Present() {
-		r.log.Info("ipmi details from bmc")
-		board := r.inband.Board()
-		bmc := board.BMC
-		if bmc == nil {
-			return nil, fmt.Errorf("unable to read ipmi bmc info configuration")
+	var (
+		pw      string
+		intf    = "lanplus"
+		details = &v1.MachineIPMI{
+			Interface: intf,
 		}
+		defaultIPMIPort = "623"
+		bmcVersion      = "unknown"
+		bmcConn         = r.inband.BMCConnection()
+	)
 
-		// FIXME userid should be verified if available
-		pw, err := bmcConn.CreateUserAndPassword(bmcConn.User(), api.AdministratorPrivilege)
-		if err != nil {
-			return nil, fmt.Errorf("ipmi create user failed %w", err)
-		}
-
-		bmcUser := bmcConn.User().Name
-		bmcVersion = bmc.FirmwareRevision
-		fru := &v1.MachineFRU{
-			ChassisPartNumber:   &bmc.ChassisPartNumber,
-			ChassisPartSerial:   &bmc.ChassisPartSerial,
-			BoardMfg:            &bmc.BoardMfg,
-			BoardMfgSerial:      &bmc.BoardMfgSerial,
-			BoardPartNumber:     &bmc.BoardPartNumber,
-			ProductManufacturer: &bmc.ProductManufacturer,
-			ProductPartNumber:   &bmc.ProductPartNumber,
-			ProductSerial:       &bmc.ProductSerial,
-		}
-		bmc.IP = bmc.IP + ":" + defaultIPMIPort
-		details.Address = bmc.IP
-		details.Mac = bmc.MAC
-		details.User = bmcUser
-		details.Password = pw
-		details.BmcVersion = bmcVersion
-		details.Fru = fru
-		return details, nil
+	if !bmcConn.Present() {
+		return nil, errors.New("no ipmi device present, unable to proceed with machine registration")
 	}
 
-	r.log.Info("ipmi details faked")
-	eth0Mac := r.network.Eth0Mac
-	if len(r.network.Eth0Mac) == 0 {
-		eth0Mac = "00:00:00:00:00:00"
+	r.log.Info("ipmi details from bmc")
+
+	board := r.inband.Board()
+
+	bmc := board.BMC
+	if bmc == nil {
+		return nil, fmt.Errorf("unable to read ipmi bmc info configuration")
 	}
 
-	macParts := strings.Split(eth0Mac, ":")
-	lastOctet := macParts[len(macParts)-1]
-	port, err := strconv.ParseUint(lastOctet, 16, 32)
+	// FIXME userid should be verified if available
+	pw, err := bmcConn.CreateUserAndPassword(bmcConn.User(), api.AdministratorPrivilege)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse last octet of eth0 mac to a integer %w", err)
+		return nil, fmt.Errorf("ipmi create user failed %w", err)
 	}
 
-	const baseIPMIPort = 6230
-	// Fixed IP of vagrant environment gateway
-	bmcIP := fmt.Sprintf("192.168.121.1:%d", baseIPMIPort+port)
-	bmcMAC := "00:00:00:00:00:00"
-	pw = "vagrant"
-	user := "vagrant"
-	details.Address = bmcIP
-	details.Mac = bmcMAC
-	details.User = user
+	bmcUser := bmcConn.User().Name
+	bmcVersion = bmc.FirmwareRevision
+	fru := &v1.MachineFRU{
+		ChassisPartNumber:   &bmc.ChassisPartNumber,
+		ChassisPartSerial:   &bmc.ChassisPartSerial,
+		BoardMfg:            &bmc.BoardMfg,
+		BoardMfgSerial:      &bmc.BoardMfgSerial,
+		BoardPartNumber:     &bmc.BoardPartNumber,
+		ProductManufacturer: &bmc.ProductManufacturer,
+		ProductPartNumber:   &bmc.ProductPartNumber,
+		ProductSerial:       &bmc.ProductSerial,
+	}
+
+	bmc.IP = bmc.IP + ":" + defaultIPMIPort
+	details.Address = bmc.IP
+	details.Mac = bmc.MAC
+	details.User = bmcUser
 	details.Password = pw
 	details.BmcVersion = bmcVersion
+	details.Fru = fru
+
 	return details, nil
 }
