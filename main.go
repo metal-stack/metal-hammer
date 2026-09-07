@@ -8,12 +8,12 @@ import (
 	"syscall"
 	"time"
 
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/v"
 
 	"github.com/metal-stack/go-hal/connect"
 	"github.com/metal-stack/go-hal/pkg/logger"
 	"github.com/metal-stack/metal-hammer/cmd"
-	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/moby/sys/mountinfo"
@@ -106,14 +106,14 @@ func main() {
 		wait := 5 * time.Second
 		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
 		if emitter != nil {
-			emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
+			emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, fmt.Sprintf("%s", err))
 		}
 		time.Sleep(wait)
 		err := kernel.Reboot()
 		if err != nil {
 			log.Error("metal-hammer reboot failed", "error", err)
 			if emitter != nil {
-				emitter.Emit(event.ProvisioningEventCrashed, fmt.Sprintf("%s", err))
+				emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, fmt.Sprintf("%s", err))
 			}
 		}
 	}

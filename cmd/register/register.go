@@ -6,16 +6,17 @@ import (
 	"log/slog"
 	gonet "net"
 	"os"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
 	"unsafe"
 
 	"github.com/jaypipes/ghw"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
+	infrav2 "github.com/metal-stack/api/go/metalstack/infra/v2"
+	"github.com/metal-stack/api/go/metalstack/infra/v2/infrav2connect"
 	"github.com/metal-stack/go-hal"
 	"github.com/metal-stack/go-hal/pkg/api"
-	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 	"github.com/metal-stack/metal-hammer/cmd/event"
 	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
@@ -28,14 +29,14 @@ import (
 type Register struct {
 	machineUUID string
 	partitionID string
-	client      v1.BootServiceClient
+	client      infrav2connect.BootServiceClient
 	emitter     *event.EventEmitter
 	network     *network.Network
 	inband      hal.InBand
 	log         *slog.Logger
 }
 
-func New(log *slog.Logger, machineID, partitionID string, bootClient v1.BootServiceClient, emitter *event.EventEmitter, network *network.Network, inband hal.InBand) *Register {
+func New(log *slog.Logger, machineID, partitionID string, bootClient infrav2connect.BootServiceClient, emitter *event.EventEmitter, network *network.Network, inband hal.InBand) *Register {
 	return &Register{
 		machineUUID: machineID,
 		partitionID: partitionID,
@@ -48,29 +49,29 @@ func New(log *slog.Logger, machineID, partitionID string, bootClient v1.BootServ
 }
 
 // RegisterMachine register a machine at the metal-api via metal-api
-func (r *Register) RegisterMachine() error {
-	r.emitter.Emit(event.ProvisioningEventRegistering, "start registering")
+func (r *Register) RegisterMachine() (*apiv2.MachineHardware, error) {
+	r.emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_REGISTERING, "start registering")
 	req, err := r.readHardwareDetails()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	resp, err := r.client.Register(ctx, req)
 
 	if err != nil {
-		return fmt.Errorf("unable to register machine:%#v %w", req, err)
+		return nil, fmt.Errorf("unable to register machine:%#v %w", req, err)
 	}
 	if resp == nil {
-		return fmt.Errorf("unable to register machine:%#v response payload is nil", req)
+		return nil, fmt.Errorf("unable to register machine:%#v response payload is nil", req)
 	}
 
 	r.log.Info("machine registered", "response", resp)
-	return nil
+	return req.Hardware, nil
 }
 
 // ReadHardwareDetails returns the hardware details of the machine
-func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error) {
+func (r *Register) readHardwareDetails() (*infrav2.BootServiceRegisterRequest, error) {
 	err := createSyslog()
 	if err != nil {
 		return nil, fmt.Errorf("unable to write kernel boot message to /var/log/syslog %w", err)
@@ -85,9 +86,9 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		return nil, fmt.Errorf("unable to get system cpu(s) %w", err)
 	}
 	r.log.Info("cpu", "processors", cpu.String())
-	var metalCPUs []*v1.MachineCPU
+	var metalCPUs []*apiv2.MetalCPU
 	for _, cpu := range cpu.Processors {
-		metalCPUs = append(metalCPUs, &v1.MachineCPU{
+		metalCPUs = append(metalCPUs, &apiv2.MetalCPU{
 			Vendor:  cpu.Vendor,
 			Model:   cpu.Model,
 			Cores:   cpu.NumCores,
@@ -102,17 +103,17 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		return nil, fmt.Errorf("unable to get system gpu(s) %w", err)
 	}
 
-	var metalGPUs []*v1.MachineGPU
+	var metalGPUs []*apiv2.MetalGPU
 	for _, g := range gpus {
 		r.log.Info("found gpu", "gpu", g.String())
-		metalGPUs = append(metalGPUs, &v1.MachineGPU{
+		metalGPUs = append(metalGPUs, &apiv2.MetalGPU{
 			Vendor: g.VendorName,
 			Model:  g.DeviceName,
 		})
 	}
 
 	// Nics
-	nics := []*v1.MachineNic{}
+	var nics []*apiv2.MachineNic
 	loFound := false
 	links, err := netlink.LinkList()
 	if err != nil {
@@ -136,7 +137,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 			r.network.Eth0Mac = mac
 		}
 
-		nic := &v1.MachineNic{
+		nic := &apiv2.MachineNic{
 			Mac:  mac,
 			Name: name,
 		}
@@ -149,7 +150,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	if !loFound {
 		mac := "00:00:00:00:00:00"
 		name := "lo"
-		lo := &v1.MachineNic{
+		lo := &apiv2.MachineNic{
 			Mac:  mac,
 			Name: name,
 		}
@@ -173,7 +174,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get system block devices %w", err)
 	}
-	disks := []*v1.MachineBlockDevice{}
+	var disks []*apiv2.MachineBlockDevice
 	for _, disk := range blockInfo.Disks {
 		if strings.HasPrefix(disk.Name, storage.DiskPrefixToIgnore) {
 			continue
@@ -183,14 +184,14 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 		if !strings.HasPrefix(diskName, "/dev/") {
 			diskName = fmt.Sprintf("/dev/%s", disk.Name)
 		}
-		blockDevice := &v1.MachineBlockDevice{
+		blockDevice := &apiv2.MachineBlockDevice{
 			Name: diskName,
 			Size: size,
 		}
 		disks = append(disks, blockDevice)
 	}
 
-	hardware := &v1.MachineHardware{
+	hardware := &apiv2.MachineHardware{
 		Memory: uint64(memory.TotalPhysicalBytes), // nolint:gosec
 		Nics:   nics,
 		Disks:  disks,
@@ -199,7 +200,7 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	}
 
 	// IPMI
-	ipmi, err := r.readIPMIDetails()
+	bmc, fru, err := r.readIPMIDetails()
 	if err != nil {
 		return nil, err
 	}
@@ -210,18 +211,19 @@ func (r *Register) readHardwareDetails() (*v1.BootServiceRegisterRequest, error)
 	if b == nil {
 		return nil, fmt.Errorf("unable to read bios information from bmc")
 	}
-	bios := &v1.MachineBIOS{
+	bios := &apiv2.MachineBios{
 		Version: b.Version,
 		Vendor:  b.Vendor,
 		Date:    b.Date,
 	}
 
-	request := &v1.BootServiceRegisterRequest{
+	request := &infrav2.BootServiceRegisterRequest{
 		Uuid:               r.machineUUID,
-		PartitionId:        r.partitionID,
+		Partition:          r.partitionID,
 		Hardware:           hardware,
 		Bios:               bios,
-		Ipmi:               ipmi,
+		Bmc:                bmc,
+		Fru:                fru,
 		MetalHammerVersion: v.Version,
 	}
 
@@ -278,12 +280,7 @@ func createSyslog() error {
 }
 
 // IPMI configuration and
-func (r *Register) readIPMIDetails() (*v1.MachineIPMI, error) {
-	var pw string
-	intf := "lanplus"
-	details := &v1.MachineIPMI{
-		Interface: intf,
-	}
+func (r *Register) readIPMIDetails() (*apiv2.MachineBMC, *apiv2.MachineFRU, error) {
 	defaultIPMIPort := "623"
 	bmcVersion := "unknown"
 	bmcConn := r.inband.BMCConnection()
@@ -292,18 +289,18 @@ func (r *Register) readIPMIDetails() (*v1.MachineIPMI, error) {
 		board := r.inband.Board()
 		bmc := board.BMC
 		if bmc == nil {
-			return nil, fmt.Errorf("unable to read ipmi bmc info configuration")
+			return nil, nil, fmt.Errorf("unable to read ipmi bmc info configuration")
 		}
 
 		// FIXME userid should be verified if available
 		pw, err := bmcConn.CreateUserAndPassword(bmcConn.User(), api.AdministratorPrivilege)
 		if err != nil {
-			return nil, fmt.Errorf("ipmi create user failed %w", err)
+			return nil, nil, fmt.Errorf("ipmi create user failed %w", err)
 		}
 
 		bmcUser := bmcConn.User().Name
 		bmcVersion = bmc.FirmwareRevision
-		fru := &v1.MachineFRU{
+		fru := &apiv2.MachineFRU{
 			ChassisPartNumber:   &bmc.ChassisPartNumber,
 			ChassisPartSerial:   &bmc.ChassisPartSerial,
 			BoardMfg:            &bmc.BoardMfg,
@@ -314,38 +311,16 @@ func (r *Register) readIPMIDetails() (*v1.MachineIPMI, error) {
 			ProductSerial:       &bmc.ProductSerial,
 		}
 		bmc.IP = bmc.IP + ":" + defaultIPMIPort
-		details.Address = bmc.IP
-		details.Mac = bmc.MAC
-		details.User = bmcUser
-		details.Password = pw
-		details.BmcVersion = bmcVersion
-		details.Fru = fru
-		return details, nil
+		details := &apiv2.MachineBMC{
+			Interface: "lanplus",
+			Address:   bmc.IP,
+			Mac:       bmc.MAC,
+			User:      bmcUser,
+			Password:  pw,
+			Version:   bmcVersion,
+		}
+		return details, fru, nil
 	}
 
-	r.log.Info("ipmi details faked")
-	eth0Mac := r.network.Eth0Mac
-	if len(r.network.Eth0Mac) == 0 {
-		eth0Mac = "00:00:00:00:00:00"
-	}
-
-	macParts := strings.Split(eth0Mac, ":")
-	lastOctet := macParts[len(macParts)-1]
-	port, err := strconv.ParseUint(lastOctet, 16, 32)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse last octet of eth0 mac to a integer %w", err)
-	}
-
-	const baseIPMIPort = 6230
-	// Fixed IP of vagrant environment gateway
-	bmcIP := fmt.Sprintf("192.168.121.1:%d", baseIPMIPort+port)
-	bmcMAC := "00:00:00:00:00:00"
-	pw = "vagrant"
-	user := "vagrant"
-	details.Address = bmcIP
-	details.Mac = bmcMAC
-	details.User = user
-	details.Password = pw
-	details.BmcVersion = bmcVersion
-	return details, nil
+	return nil, nil, fmt.Errorf("unable to detect bmc interface")
 }

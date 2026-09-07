@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	infrav2 "github.com/metal-stack/api/go/metalstack/infra/v2"
 	"github.com/metal-stack/go-hal/pkg/api"
-	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 )
 
 // createBmcSuperuser creates the bmc super user.
 func (h *hammer) createBmcSuperuser() error {
-	req := &v1.BootServiceSuperUserPasswordRequest{}
-	resp, err := h.metalAPIClient.BootService().SuperUserPassword(context.Background(), req)
+	resp, err := h.metalAPIClient.BootService().SuperUserPassword(context.Background(), &infrav2.BootServiceSuperUserPasswordRequest{})
 	if err != nil {
 		return fmt.Errorf("failed to fetch SuperUser password %w", err)
 	}

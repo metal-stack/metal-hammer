@@ -15,16 +15,18 @@ import (
 
 	"github.com/u-root/u-root/pkg/mount/block"
 
-	"github.com/metal-stack/metal-go/api/models"
+	"github.com/metal-stack/api/go/enum"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/metal-hammer/pkg/os"
 	"github.com/metal-stack/metal-hammer/pkg/os/command"
+	"github.com/metal-stack/metal-lib/pkg/pointer"
 	"github.com/metal-stack/v"
 )
 
 type Filesystem struct {
 	log *slog.Logger
 
-	config models.V1FilesystemLayoutResponse
+	config *apiv2.FilesystemLayout
 	// chroot defines the root of the mounts
 	chroot string
 	// mounts are collected to be able to umount all in reverse order
@@ -45,7 +47,7 @@ type fstabEntry struct {
 	passno    uint
 }
 
-func New(log *slog.Logger, chroot string, config models.V1FilesystemLayoutResponse) *Filesystem {
+func New(log *slog.Logger, chroot string, config *apiv2.FilesystemLayout) *Filesystem {
 	return &Filesystem{
 		log:          log,
 		config:       config,
@@ -98,42 +100,35 @@ func (f *Filesystem) createPartitions() error {
 	for _, disk := range f.config.Disks {
 		opts := []string{}
 
-		if disk.Wipeonreinstall != nil && *disk.Wipeonreinstall {
-			opts = append(opts, "--zap-all")
-		}
 		for _, p := range disk.Partitions {
-			if p.Size != nil {
-				opts = append(opts, fmt.Sprintf("--new=%d:0:+%dM", *p.Number, *p.Size))
-			}
-			opts = append(opts, fmt.Sprintf("--change-name=%d:%s", *p.Number, p.Label))
-			if p.Gpttype != nil {
-				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", *p.Number, *p.Gpttype))
+			opts = append(opts, fmt.Sprintf("--new=%d:0:+%dM", p.Number, p.Size))
+			opts = append(opts, fmt.Sprintf("--change-name=%d:%s", p.Number, pointer.SafeDeref(p.Label)))
+			if p.GptType != nil {
+				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", p.Number, *p.GptType))
 			}
 		}
-		if disk.Device != nil {
-			f.log.Info("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+*disk.Device)
-			err := os.ExecuteCommand(command.WIPEFS, "--all", *disk.Device)
-			if err != nil {
-				f.log.Error("wipe existing partition signatures failed", "error", err)
-				return fmt.Errorf("unable wipe existing partitions on %s %w", *disk.Device, err)
-			}
-			opts = append(opts, *disk.Device)
-			f.log.Info("sgdisk create partitions", "command", opts)
-			err = os.ExecuteCommand(command.SGDisk, opts...)
-			if err != nil {
-				f.log.Error("sgdisk creating partitions failed", "error", err)
-				return fmt.Errorf("unable to create partitions on %s %w", *disk.Device, err)
-			}
+		f.log.Info("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+disk.Device)
+		err := os.ExecuteCommand(command.WIPEFS, "--all", disk.Device)
+		if err != nil {
+			f.log.Error("wipe existing partition signatures failed", "error", err)
+			return fmt.Errorf("unable wipe existing partitions on %s %w", disk.Device, err)
+		}
+		opts = append(opts, disk.Device)
+		f.log.Info("sgdisk create partitions", "command", opts)
+		err = os.ExecuteCommand(command.SGDisk, opts...)
+		if err != nil {
+			f.log.Error("sgdisk creating partitions failed", "error", err)
+			return fmt.Errorf("unable to create partitions on %s %w", disk.Device, err)
+		}
 
-			blkdev, err := block.Device(*disk.Device)
-			if err != nil {
-				return fmt.Errorf("unable to find block device %s: %v", *disk.Device, err)
-			}
+		blkdev, err := block.Device(disk.Device)
+		if err != nil {
+			return fmt.Errorf("unable to find block device %s: %v", disk.Device, err)
+		}
 
-			err = blkdev.ReadPartitionTable()
-			if err != nil {
-				return fmt.Errorf("unable to re-read the partition table. Kernel still uses old partition table: %v", err)
-			}
+		err = blkdev.ReadPartitionTable()
+		if err != nil {
+			return fmt.Errorf("unable to re-read the partition table. Kernel still uses old partition table: %v", err)
 		}
 	}
 	return nil
@@ -145,19 +140,19 @@ func (f *Filesystem) createRaids() error {
 	}
 
 	for _, raid := range f.config.Raid {
-		if raid.Arrayname == nil {
-			continue
+		spares := raid.Spares
+		var level string
+		switch raid.Level {
+		case apiv2.RaidLevel_RAID_LEVEL_0:
+			level = "0"
+		case apiv2.RaidLevel_RAID_LEVEL_1:
+			level = "1"
+		default:
+			// not supported
 		}
-		spares := int32(0)
-		if raid.Spares != nil {
-			spares = *raid.Spares
-		}
-		level := "1"
-		if raid.Level != nil {
-			level = *raid.Level
-		}
+
 		args := []string{
-			"--create", *raid.Arrayname,
+			"--create", raid.ArrayName,
 			"--force",
 			"--run",
 			"--homehost", "any",
@@ -165,8 +160,8 @@ func (f *Filesystem) createRaids() error {
 			"--raid-devices", fmt.Sprintf("%d", len(raid.Devices)-int(spares)),
 		}
 
-		switch level {
-		case "0", "1":
+		switch raid.Level {
+		case apiv2.RaidLevel_RAID_LEVEL_0, apiv2.RaidLevel_RAID_LEVEL_1:
 			args = append(args, "--assume-clean")
 		default:
 			// only safe to skip initial sync for raid 0 and 1
@@ -177,7 +172,7 @@ func (f *Filesystem) createRaids() error {
 			args = append(args, "--spare-devices", fmt.Sprintf("%d", spares))
 		}
 
-		for _, o := range raid.Createoptions {
+		for _, o := range raid.CreateOptions {
 			args = append(args, string(o))
 		}
 
@@ -187,7 +182,7 @@ func (f *Filesystem) createRaids() error {
 		err := os.ExecuteCommand(command.MDADM, args...)
 		if err != nil {
 			f.log.Error("create mdadm raid", "error", err)
-			return fmt.Errorf("unable to create mdadm raid %s %w", *raid.Arrayname, err)
+			return fmt.Errorf("unable to create mdadm raid %s %w", raid.ArrayName, err)
 		}
 
 		// set sync speed
@@ -200,44 +195,41 @@ func (f *Filesystem) createRaids() error {
 }
 
 func (f *Filesystem) createLogicalVolumes() error {
-	if len(f.config.Volumegroups) == 0 {
+	if len(f.config.VolumeGroups) == 0 {
 		return nil
 	}
 
 	pvcount := make(map[string]int)
-	for _, vg := range f.config.Volumegroups {
-		if vg.Name == nil || *vg.Name == "" {
+	for _, vg := range f.config.VolumeGroups {
+		if vg.Name == "" {
 			continue
 		}
-		if vgExists(f.log, *vg.Name) {
+		if vgExists(f.log, vg.Name) {
 			continue
 		}
 		args := []string{
 			"vgcreate",
 			"--verbose",
-			*vg.Name,
+			vg.Name,
 		}
 		for _, tag := range vg.Tags {
 			args = append(args, "--addtag", tag)
 		}
 		args = append(args, vg.Devices...)
 
-		pvcount[*vg.Name] = len(vg.Devices)
+		pvcount[vg.Name] = len(vg.Devices)
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
 			f.log.Error("vgcreate", "error", err)
-			return fmt.Errorf("unable to create volume group %s %w", *vg.Name, err)
+			return fmt.Errorf("unable to create volume group %s %w", vg.Name, err)
 		}
 	}
 
-	for _, lv := range f.config.Logicalvolumes {
-		if lv.Name == nil || *lv.Name == "" || lv.Volumegroup == nil || *lv.Volumegroup == "" {
+	for _, lv := range f.config.LogicalVolumes {
+		if lv.Name == "" || lv.VolumeGroup == "" {
 			continue
 		}
-		if lvExists(f.log, *lv.Volumegroup, *lv.Name) {
-			continue
-		}
-		if lv.Size == nil {
+		if lvExists(f.log, lv.VolumeGroup, lv.Name) {
 			continue
 		}
 
@@ -245,41 +237,35 @@ func (f *Filesystem) createLogicalVolumes() error {
 			"lvcreate",
 			"--yes",
 			"--verbose",
-			"--name", *lv.Name,
+			"--name", lv.Name,
 			"--wipesignatures", "y",
 		}
 
-		if *lv.Size > int64(0) {
-			args = append(args, "--size", fmt.Sprintf("%dm", *lv.Size))
+		if lv.Size > 0 {
+			args = append(args, "--size", fmt.Sprintf("%dm", lv.Size))
 		} else {
 			args = append(args, "--extents", "100%FREE")
 		}
 
-		lvmtype := "linear"
-		if lv.Lvmtype != nil {
-			lvmtype = *lv.Lvmtype
-		}
-		if pvcount[*lv.Volumegroup] < 2 {
-			f.log.Warn("volumegroup has only 1 pv, only linear is supported", "lv", *lv.Name, "vg", *lv.Volumegroup)
-			lvmtype = "linear"
-		}
-
-		switch lvmtype {
-		case "linear":
-		case "striped":
-			args = append(args, "--type", "striped", "--stripes", fmt.Sprintf("%d", pvcount[*lv.Volumegroup]))
-		case "raid1":
+		switch lv.LvmType {
+		case apiv2.LVMType_LVM_TYPE_LINEAR:
+			if pvcount[lv.VolumeGroup] < 2 {
+				f.log.Warn("volumegroup has only 1 pv, only linear is supported", "lv", lv.Name, "vg", lv.VolumeGroup)
+			}
+		case apiv2.LVMType_LVM_TYPE_STRIPED:
+			args = append(args, "--type", "striped", "--stripes", fmt.Sprintf("%d", pvcount[lv.VolumeGroup]))
+		case apiv2.LVMType_LVM_TYPE_RAID1:
 			args = append(args, "--type", "raid1", "--mirrors", "1", "--nosync")
 		default:
-			return fmt.Errorf("unsupported lvmtype:%s", lvmtype)
+			return fmt.Errorf("unsupported lvmtype:%s", lv.LvmType)
 		}
-		args = append(args, *lv.Volumegroup)
+		args = append(args, lv.VolumeGroup)
 
 		f.log.Info("lvcreate", "args", args)
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
 			f.log.Error("lvcreate", "error", err)
-			return fmt.Errorf("unable to create logical volume %s %w", *lv.Name, err)
+			return fmt.Errorf("unable to create logical volume %s %w", lv.Name, err)
 		}
 	}
 
@@ -292,41 +278,50 @@ func (f *Filesystem) createFilesystems() error {
 	}
 
 	for _, fs := range f.config.Filesystems {
-		if fs.Format == nil || *fs.Format == "tmpfs" {
+		if fs.Format == apiv2.Format_FORMAT_TMPFS {
 			continue
 		}
 		mkfs := ""
 		args := []string{}
-		args = append(args, fs.Createoptions...)
-		switch *fs.Format {
-		case "ext3":
+		args = append(args, fs.CreateOptions...)
+		switch fs.Format {
+		case apiv2.Format_FORMAT_EXT3:
 			mkfs = command.MKFSExt3
 			args = append(args, "-F")
-			args = append(args, "-L", fs.Label)
-		case "ext4":
+			if fs.Label != nil {
+				args = append(args, "-L", pointer.SafeDeref(fs.Label))
+			}
+		case apiv2.Format_FORMAT_EXT4:
 			mkfs = command.MKFSExt4
 			args = append(args, "-F")
-			args = append(args, "-L", fs.Label)
-		case "swap":
+			if fs.Label != nil {
+				args = append(args, "-L", pointer.SafeDeref(fs.Label))
+			}
+		case apiv2.Format_FORMAT_SWAP:
 			mkfs = command.MKSwap
 			args = append(args, "-f")
-			args = append(args, "-L", fs.Label)
-		case "vfat":
+			if fs.Label != nil {
+				args = append(args, "-L", pointer.SafeDeref(fs.Label))
+			}
+		case apiv2.Format_FORMAT_VFAT:
 			mkfs = command.MKFSVFat
 			// There is no force flag for mkfs.vfat, it always destroys any data on
 			// the device at which it is pointed.
-			args = append(args, "-n", fs.Label)
-		case "none":
+			// also label is added with -n
+			if fs.Label != nil {
+				args = append(args, "-n", pointer.SafeDeref(fs.Label))
+			}
+		case apiv2.Format_FORMAT_NONE:
 			//
 		default:
-			return fmt.Errorf("unsupported filesystem format: %q", *fs.Format)
+			return fmt.Errorf("unsupported filesystem format: %q", fs.Format)
 		}
-		args = append(args, *fs.Device)
+		args = append(args, fs.Device)
 		f.log.Info("create filesystem", "args", args)
 		err := os.ExecuteCommand(mkfs, args...)
 		if err != nil {
-			f.log.Error("create filesystem failed", "device", *fs.Device, "error", err)
-			return fmt.Errorf("unable to create filesystem on %s %w", *fs.Device, err)
+			f.log.Error("create filesystem failed", "device", fs.Device, "error", err)
+			return fmt.Errorf("unable to create filesystem on %s %w", fs.Device, err)
 		}
 	}
 
@@ -334,14 +329,16 @@ func (f *Filesystem) createFilesystems() error {
 }
 
 func (f *Filesystem) mountFilesystems() error {
-	fss := []models.V1Filesystem{}
+	var fss []*apiv2.Filesystem
 	for _, fs := range f.config.Filesystems {
-		if fs.Path == "" {
+		if fs.Path == nil {
 			continue
 		}
-		fss = append(fss, *fs)
+		fss = append(fss, fs)
 	}
-	sort.Slice(fss, func(i, j int) bool { return depth(fss[i].Path) < depth(fss[j].Path) })
+	sort.Slice(fss, func(i, j int) bool {
+		return depth(pointer.SafeDeref(fss[i].Path)) < depth(pointer.SafeDeref(fss[j].Path))
+	})
 	for _, fs := range fss {
 		path, err := mountFs(f.log, f.chroot, fs)
 		if err != nil {
@@ -351,36 +348,43 @@ func (f *Filesystem) mountFilesystems() error {
 			f.mounts = append(f.mounts, path)
 		}
 
-		passno := uint(2)
-		spec := ""
-		properties := map[string]string{"UUID": ""}
-		if *fs.Format == "tmpfs" {
-			spec = *fs.Format
+		var (
+			passno     = uint(2)
+			properties = map[string]string{"UUID": ""}
+			spec       string
+		)
+		format, err := enum.GetStringValue(fs.Format)
+		if err != nil {
+			return err
+		}
+		if fs.Format == apiv2.Format_FORMAT_TMPFS {
 			passno = 0
+			spec = *format
 		} else {
-			properties, err = FetchBlockIDProperties(*fs.Device)
+			properties, err = FetchBlockIDProperties(fs.Device)
 			if err != nil {
 				return err
 			}
 			spec = fmt.Sprintf("UUID=%s", properties["UUID"])
 		}
-		if fs.Path == "/" {
+		if pointer.SafeDeref(fs.Path) == "/" {
 			passno = 1
 		}
 		mountOpts := []string{"defaults"}
-		if len(fs.Mountoptions) > 0 {
-			mountOpts = fs.Mountoptions
+		if len(fs.MountOptions) > 0 {
+			mountOpts = fs.MountOptions
 		}
+
 		fstabEntry := fstabEntry{
 			spec:      spec,
-			file:      fs.Path,
-			vfsType:   *fs.Format,
+			file:      pointer.SafeDeref(fs.Path),
+			vfsType:   *format,
 			mountOpts: mountOpts,
 			freq:      0,
 			passno:    passno,
 		}
 		f.fstabEntries = append(f.fstabEntries, fstabEntry)
-		if fs.Label == "root" {
+		if pointer.SafeDeref(fs.Label) == "root" {
 			f.RootUUID = properties["UUID"]
 		}
 	}
@@ -459,11 +463,12 @@ func (f *Filesystem) CreateFSTab() error {
 	return f.fstabEntries.write(f.log, f.chroot)
 }
 
-func mountFs(log *slog.Logger, chroot string, fs models.V1Filesystem) (string, error) {
-	if fs.Format == nil || *fs.Format == "swap" || *fs.Format == "" || *fs.Format == "tmpfs" {
+func mountFs(log *slog.Logger, chroot string, fs *apiv2.Filesystem) (string, error) {
+	switch fs.Format {
+	case apiv2.Format_FORMAT_NONE, apiv2.Format_FORMAT_SWAP, apiv2.Format_FORMAT_TMPFS:
 		return "", nil
 	}
-	path := filepath.Join(chroot, fs.Path)
+	path := filepath.Join(chroot, pointer.SafeDeref(fs.Path))
 
 	if _, err := gos.Stat(path); err != nil && gos.IsNotExist(err) {
 		if err := gos.MkdirAll(path, 0755); err != nil {
@@ -472,17 +477,22 @@ func mountFs(log *slog.Logger, chroot string, fs models.V1Filesystem) (string, e
 	} else if err != nil {
 		return "", err
 	}
-	opts := optionSliceToString(fs.Mountoptions, ",")
-	log.Info("mount filesystem", "device", *fs.Device, "path", path, "format", fs.Format, "opts", opts)
+	opts := optionSliceToString(fs.MountOptions, ",")
+	log.Info("mount filesystem", "device", fs.Device, "path", path, "format", fs.Format, "opts", opts)
 	var args []string
 	if len(opts) > 0 {
 		args = append(args, "-o", opts)
 	}
-	args = append(args, "-t", *fs.Format, *fs.Device, path)
-	err := os.ExecuteCommand("mount", args...)
+	format, err := enum.GetStringValue(fs.Format)
 	if err != nil {
-		log.Error("mount filesystem failed", "device", *fs.Device, "path", fs.Path, "opts", opts, "error", err)
-		return "", fmt.Errorf("unable to mount filesystem %s on %s opts:%v error:%w", *fs.Device, fs.Path, opts, err)
+		return "", err
+	}
+
+	args = append(args, "-t", *format, fs.Device, path)
+
+	if err := os.ExecuteCommand("mount", args...); err != nil {
+		log.Error("mount filesystem failed", "device", fs.Device, "path", fs.Path, "opts", opts, "error", err)
+		return "", fmt.Errorf("unable to mount filesystem %s on %s opts:%v error:%w", fs.Device, pointer.SafeDeref(fs.Path), opts, err)
 	}
 	return path, nil
 }
