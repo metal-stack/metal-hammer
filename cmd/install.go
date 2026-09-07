@@ -10,14 +10,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/metal-stack/api/go/enum"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/metal-hammer/cmd/utils"
-	"github.com/metal-stack/metal-lib/pkg/pointer"
+	"github.com/metal-stack/metal-lib/pkg/net"
 
 	installerv1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/os-installer/pkg/installer"
 
-	"github.com/metal-stack/metal-go/api/models"
 	img "github.com/metal-stack/metal-hammer/cmd/image"
 	"github.com/metal-stack/metal-hammer/cmd/storage"
 	"github.com/metal-stack/metal-hammer/pkg/chroot"
@@ -25,14 +25,14 @@ import (
 )
 
 // Install a given image to the disk by using genuinetools/img
-func (h *hammer) Install(machine *models.V1MachineResponse) (*installerv1.Bootinfo, error) {
-	s := storage.New(h.log, h.chrootPrefix, *h.filesystemLayout)
+func (h *hammer) Install(alloc *apiv2.MachineAllocation, machineHardware *apiv2.MachineHardware) (*installerv1.Bootinfo, error) {
+	s := storage.New(h.log, h.chrootPrefix, h.filesystemLayout)
 	err := s.Run()
 	if err != nil {
 		return nil, err
 	}
 
-	image := machine.Allocation.Image.URL
+	image := alloc.Image.Url
 
 	err = img.NewImage(h.log).Pull(image, h.osImageDestination)
 	if err != nil {
@@ -44,7 +44,7 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*installerv1.Bootin
 		return nil, err
 	}
 
-	info, err := h.install(h.chrootPrefix, machine, s.RootUUID)
+	info, err := h.install(h.chrootPrefix, alloc, s.RootUUID, machineHardware)
 	if err != nil {
 		return nil, err
 	}
@@ -66,20 +66,20 @@ func (h *hammer) Install(machine *models.V1MachineResponse) (*installerv1.Bootin
 
 // install will execute Install from os-installer in the chroot where the os-image was extracted
 // to finish installation e.g. install mbr, grub, write network and filesystem config
-func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootUUID string) (*installerv1.Bootinfo, error) {
-	h.log.Info("install", "image", machine.Allocation.Image.URL)
+func (h *hammer) install(prefix string, alloc *apiv2.MachineAllocation, rootUUID string, machineHardware *apiv2.MachineHardware) (*installerv1.Bootinfo, error) {
+	h.log.Info("install", "image", alloc.Image.Url)
 
-	machineDetails, machineAllocation, err := h.convertConfigs(machine, rootUUID)
+	machineDetails, err := h.convertConfigs(alloc, rootUUID, machineHardware)
 	if err != nil {
 		return nil, fmt.Errorf("error converting configuration: %w", err)
 	}
 
-	legacyConfig, err := h.generateLegacyConfig(machine, machineDetails)
+	legacyConfig, err := h.generateLegacyConfig(alloc, machineDetails, machineHardware)
 	if err != nil {
 		return nil, fmt.Errorf("error converting legacy configuration: %w", err)
 	}
 
-	err = h.writeUserData(machine)
+	err = h.writeUserData(alloc)
 	if err != nil {
 		return nil, fmt.Errorf("writing userdata failed %w", err)
 	}
@@ -92,7 +92,7 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 	// Write configuration to /etc/metal and execute the installer in chroot
 	if err := chroot.RunInChroot(h.log, prefix, func() error {
 		h.log.Debug("write configs in chroot")
-		err = h.writeConfigs(legacyConfig, machineDetails, machineAllocation)
+		err = h.writeConfigs(legacyConfig, machineDetails, alloc)
 		if err != nil {
 			return fmt.Errorf("error writing configuration: %w", err)
 		}
@@ -100,8 +100,8 @@ func (h *hammer) install(prefix string, machine *models.V1MachineResponse, rootU
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
 
-		h.log.Debug("start install in chroot", "details", machineDetails, "allocation", machineAllocation)
-		i := installer.New(h.log, machineDetails, machineAllocation)
+		h.log.Debug("start install in chroot", "details", machineDetails, "allocation", alloc)
+		i := installer.New(h.log, machineDetails, alloc)
 		err = i.Install(ctx)
 		if err != nil {
 			h.log.Error("error during install", "error", err)
@@ -178,11 +178,11 @@ func (h *hammer) writeLVMLocalConf() error {
 	return nil
 }
 
-func (h *hammer) writeUserData(machine *models.V1MachineResponse) error {
+func (h *hammer) writeUserData(alloc *apiv2.MachineAllocation) error {
 	configdir := path.Join(h.chrootPrefix, "etc", "metal")
 	destination := path.Join(configdir, "userdata")
 
-	base64UserData := machine.Allocation.UserData
+	base64UserData := alloc.Userdata
 	if base64UserData != "" {
 		userdata, err := base64.StdEncoding.DecodeString(base64UserData)
 		if err != nil {
@@ -212,12 +212,12 @@ func (h *hammer) writeConfigs(legacyConfig *installerv1.InstallerConfig, details
 	return nil
 }
 
-func (h *hammer) generateLegacyConfig(machine *models.V1MachineResponse, details *installerv1.MachineDetails) (*installerv1.InstallerConfig, error) {
+func (h *hammer) generateLegacyConfig(alloc *apiv2.MachineAllocation, details *installerv1.MachineDetails, machineHardware *apiv2.MachineHardware) (*installerv1.InstallerConfig, error) {
 	var vpn *installerv1.V1MachineVPN
-	if machine.Allocation.Vpn != nil {
+	if alloc.Vpn != nil {
 		vpn = &installerv1.V1MachineVPN{
-			Address: machine.Allocation.Vpn.Address,
-			AuthKey: machine.Allocation.Vpn.AuthKey,
+			Address: &alloc.Vpn.ControlPlaneAddress,
+			AuthKey: &alloc.Vpn.AuthKey,
 		}
 	}
 
@@ -225,37 +225,53 @@ func (h *hammer) generateLegacyConfig(machine *models.V1MachineResponse, details
 		dnsServers []*installerv1.V1DNSServer
 		ntpServers []*installerv1.V1NTPServer
 	)
-	for _, dns := range machine.Allocation.DNSServers {
+	for _, dns := range alloc.DnsServers {
 		dnsServers = append(dnsServers, &installerv1.V1DNSServer{
-			IP: dns.IP,
+			IP: &dns.Ip,
 		})
 	}
-	for _, ntp := range machine.Allocation.NtpServers {
+	for _, ntp := range alloc.NtpServers {
 		ntpServers = append(ntpServers, &installerv1.V1NTPServer{
-			Address: ntp.Address,
+			Address: &ntp.Address,
 		})
 	}
 
 	var firewallRules *installerv1.V1FirewallRules
-	if machine.Allocation.FirewallRules != nil {
+	if alloc.FirewallRules != nil {
 		var (
 			egress  []*installerv1.V1FirewallEgressRule
 			ingress []*installerv1.V1FirewallIngressRule
 		)
-		for _, e := range machine.Allocation.FirewallRules.Egress {
+		for _, e := range alloc.FirewallRules.Egress {
+			protocol, err := enum.GetStringValue(e.Protocol)
+			if err != nil {
+				return nil, err
+			}
+			var ports []int32
+			for _, port := range e.Ports {
+				ports = append(ports, int32(port))
+			}
 			egress = append(egress, &installerv1.V1FirewallEgressRule{
 				Comment:  e.Comment,
-				Protocol: e.Protocol,
-				Ports:    e.Ports,
+				Protocol: *protocol,
+				Ports:    ports,
 				To:       e.To,
 			})
 		}
 
-		for _, i := range machine.Allocation.FirewallRules.Ingress {
+		for _, i := range alloc.FirewallRules.Ingress {
+			protocol, err := enum.GetStringValue(i.Protocol)
+			if err != nil {
+				return nil, err
+			}
+			var ports []int32
+			for _, port := range i.Ports {
+				ports = append(ports, int32(port))
+			}
 			ingress = append(ingress, &installerv1.V1FirewallIngressRule{
 				Comment:  i.Comment,
-				Protocol: i.Protocol,
-				Ports:    i.Ports,
+				Protocol: *protocol,
+				Ports:    ports,
 				To:       i.To,
 				From:     i.From,
 			})
@@ -268,37 +284,72 @@ func (h *hammer) generateLegacyConfig(machine *models.V1MachineResponse, details
 	}
 
 	var networks []*installerv1.V1MachineNetwork
-	for _, nw := range machine.Allocation.Networks {
+	for _, nw := range alloc.Networks {
+		var (
+			nat         bool
+			underlay    bool
+			private     bool
+			networkType string
+		)
+		switch nw.NetworkType {
+		case apiv2.NetworkType_NETWORK_TYPE_CHILD:
+			private = true
+			networkType = net.PrivatePrimaryUnshared
+		case apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
+			private = true
+			networkType = net.PrivatePrimaryShared
+		case apiv2.NetworkType_NETWORK_TYPE_EXTERNAL:
+			networkType = net.External
+		case apiv2.NetworkType_NETWORK_TYPE_UNDERLAY:
+			underlay = true
+			networkType = net.Underlay
+		}
+
+		natTypeV2, err := enum.GetStringValue(nw.NatType)
+		if err != nil {
+			return nil, err
+		}
+
+		networkTypeV2, err := enum.GetStringValue(nw.NetworkType)
+		if err != nil {
+			return nil, err
+		}
+
 		networks = append(networks, &installerv1.V1MachineNetwork{
-			Asn:                 nw.Asn,
-			Destinationprefixes: nw.Destinationprefixes,
+			Asn:                 new(int64(nw.Asn)),
+			Destinationprefixes: nw.DestinationPrefixes,
 			Ips:                 nw.Ips,
-			Nat:                 nw.Nat,
-			Nattypev2:           nw.Nattypev2,
-			Networkid:           nw.Networkid,
-			Networktype:         nw.Networktype,
-			Networktypev2:       nw.Nattypev2,
+			Nat:                 &nat,
+			Nattypev2:           natTypeV2,
+			Networkid:           &nw.Network,
+			Networktype:         &networkType,
+			Networktypev2:       networkTypeV2,
 			Prefixes:            nw.Prefixes,
-			Private:             nw.Private,
-			Projectid:           nw.Projectid,
-			Underlay:            nw.Underlay,
-			Vrf:                 nw.Vrf,
+			Private:             &private,
+			Projectid:           nw.Project,
+			Underlay:            &underlay,
+			Vrf:                 new(int64(nw.Vrf)),
 		})
 	}
 
+	role, err := enum.GetStringValue(alloc.AllocationType)
+	if err != nil {
+		return nil, err
+	}
+
 	legacyConfig := &installerv1.InstallerConfig{
-		Hostname:      pointer.SafeDeref(machine.Allocation.Hostname),
+		Hostname:      alloc.Hostname,
 		Password:      details.Password,
 		Console:       details.Console,
 		RaidEnabled:   details.RaidEnabled,
 		RootUUID:      details.RootUUID,
-		SSHPublicKey:  strings.Join(machine.Allocation.SSHPubKeys, "\n"),
+		SSHPublicKey:  strings.Join(alloc.SshPublicKeys, "\n"),
 		MachineUUID:   h.spec.MachineUUID,
 		Timestamp:     time.Now().Format(time.RFC3339),
 		Networks:      networks,
-		Nics:          h.onlyNicsWithNeighborsLegacy(machine.Hardware.Nics),
+		Nics:          h.onlyNicsWithNeighborsLegacy(machineHardware.Nics),
 		VPN:           vpn,
-		Role:          pointer.SafeDeref(machine.Allocation.Role),
+		Role:          *role,
 		FirewallRules: firewallRules,
 		DNSServers:    dnsServers,
 		NTPServers:    ntpServers,
@@ -307,12 +358,10 @@ func (h *hammer) generateLegacyConfig(machine *models.V1MachineResponse, details
 	return legacyConfig, nil
 }
 
-func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD string) (*installerv1.MachineDetails, *apiv2.MachineAllocation, error) {
-	alloc := machine.Allocation
-
+func (h *hammer) convertConfigs(alloc *apiv2.MachineAllocation, rootUUiD string, machineHardware *apiv2.MachineHardware) (*installerv1.MachineDetails, error) {
 	cmdline, err := kernel.ParseCmdline()
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get kernel cmdline map %w", err)
+		return nil, fmt.Errorf("unable to get kernel cmdline map %w", err)
 	}
 
 	console, ok := cmdline["console"]
@@ -321,7 +370,7 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 	}
 
 	var raidEnabled bool
-	if alloc != nil && alloc.Filesystemlayout != nil && len(alloc.Filesystemlayout.Raid) > 0 {
+	if alloc != nil && alloc.FilesystemLayout != nil && len(alloc.FilesystemLayout.Raid) > 0 {
 		raidEnabled = true
 	}
 
@@ -331,195 +380,21 @@ func (h *hammer) convertConfigs(machine *models.V1MachineResponse, rootUUiD stri
 		Console:     console,
 		RaidEnabled: raidEnabled,
 		RootUUID:    rootUUiD,
-		Nics:        h.onlyNicsWithNeighbors(machine.Hardware.Nics),
+		Nics:        machineHardware.Nics,
 	}
 
 	h.log.Info("generated apiv2 machinedetails", "details", machineDetails)
 
-	var vpn *apiv2.MachineVPN
-	if alloc.Vpn != nil {
-		vpn = &apiv2.MachineVPN{
-			ControlPlaneAddress: pointer.SafeDeref(alloc.Vpn.Address),
-			AuthKey:             pointer.SafeDeref(alloc.Vpn.AuthKey),
-			Connected:           pointer.SafeDeref(alloc.Vpn.Connected),
-		}
-	}
-
-	allocationType := apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_MACHINE
-	if alloc.Role != nil && *alloc.Role == "firewall" {
-		allocationType = apiv2.MachineAllocationType_MACHINE_ALLOCATION_TYPE_FIREWALL
-	}
-
-	var dnsservers []*apiv2.DNSServer
-	for _, dns := range alloc.DNSServers {
-		dnsservers = append(dnsservers, &apiv2.DNSServer{
-			Ip: pointer.SafeDeref(dns.IP),
-		})
-	}
-	var ntpservers []*apiv2.NTPServer
-	for _, ntp := range alloc.NtpServers {
-		ntpservers = append(ntpservers, &apiv2.NTPServer{
-			Address: pointer.SafeDeref(ntp.Address),
-		})
-	}
-
-	var firewallRules *apiv2.FirewallRules
-	if alloc.FirewallRules != nil {
-		var egressrules []*apiv2.FirewallEgressRule
-
-		for _, egress := range alloc.FirewallRules.Egress {
-			var proto apiv2.IPProtocol
-			if egress.Protocol == "tcp" {
-				proto = apiv2.IPProtocol_IP_PROTOCOL_TCP
-			}
-			if egress.Protocol == "udp" {
-				proto = apiv2.IPProtocol_IP_PROTOCOL_UDP
-			}
-			var ports []uint32
-			for _, port := range egress.Ports {
-				ports = append(ports, uint32(port))
-			}
-
-			egressrules = append(egressrules, &apiv2.FirewallEgressRule{
-				Comment:  egress.Comment,
-				Protocol: proto,
-				Ports:    ports,
-				To:       egress.To,
-			})
-		}
-
-		var ingressrules []*apiv2.FirewallIngressRule
-		for _, ingress := range alloc.FirewallRules.Ingress {
-			var proto apiv2.IPProtocol
-			if ingress.Protocol == "tcp" {
-				proto = apiv2.IPProtocol_IP_PROTOCOL_TCP
-			}
-			if ingress.Protocol == "udp" {
-				proto = apiv2.IPProtocol_IP_PROTOCOL_UDP
-			}
-			var ports []uint32
-			for _, port := range ingress.Ports {
-				ports = append(ports, uint32(port))
-			}
-
-			ingressrules = append(ingressrules, &apiv2.FirewallIngressRule{
-				Comment:  ingress.Comment,
-				Protocol: proto,
-				Ports:    ports,
-				To:       ingress.To,
-				From:     ingress.From,
-			})
-		}
-
-		firewallRules = &apiv2.FirewallRules{
-			Egress:  egressrules,
-			Ingress: ingressrules,
-		}
-	}
-
-	var networks []*apiv2.MachineNetwork
-	for _, nw := range alloc.Networks {
-
-		natType := apiv2.NATType_NAT_TYPE_NONE
-		if nw.Nat != nil && *nw.Nat {
-			natType = apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE
-		}
-
-		var networkType apiv2.NetworkType
-		switch pointer.SafeDeref(nw.Networktypev2) {
-		case "external":
-			networkType = apiv2.NetworkType_NETWORK_TYPE_EXTERNAL
-		case "underlay":
-			networkType = apiv2.NetworkType_NETWORK_TYPE_UNDERLAY
-		case "super":
-			networkType = apiv2.NetworkType_NETWORK_TYPE_SUPER
-		case "super-namespaced":
-			networkType = apiv2.NetworkType_NETWORK_TYPE_SUPER_NAMESPACED
-		case "child":
-			networkType = apiv2.NetworkType_NETWORK_TYPE_CHILD
-		case "child-shared":
-			networkType = apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED
-		}
-
-		networks = append(networks, &apiv2.MachineNetwork{
-			Network:             pointer.SafeDeref(nw.Networkid),
-			Prefixes:            nw.Prefixes,
-			DestinationPrefixes: nw.Destinationprefixes,
-			Ips:                 nw.Ips,
-			Vrf:                 uint64(pointer.SafeDeref(nw.Vrf)),
-			Asn:                 uint32(pointer.SafeDeref(nw.Asn)),
-			Project:             nw.Projectid,
-			NatType:             natType,
-			NetworkType:         networkType,
-		})
-	}
-
-	machineAllocation := &apiv2.MachineAllocation{
-		Uuid:        pointer.SafeDeref(alloc.Allocationuuid),
-		Name:        pointer.SafeDeref(alloc.Name),
-		Description: alloc.Description,
-		CreatedBy:   pointer.SafeDeref(alloc.Creator),
-		Project:     pointer.SafeDeref(alloc.Project),
-		Image: &apiv2.Image{
-			Id:  pointer.SafeDeref(alloc.Image.ID),
-			Url: alloc.Image.URL,
-		},
-		Hostname:       pointer.SafeDeref(alloc.Hostname),
-		SshPublicKeys:  alloc.SSHPubKeys,
-		Userdata:       alloc.UserData,
-		AllocationType: allocationType,
-		FirewallRules:  firewallRules,
-		Networks:       networks,
-		DnsServers:     dnsservers,
-		NtpServers:     ntpservers,
-		Vpn:            vpn,
-	}
-
-	h.log.Info("generated apiv2 allocation", "allocation", machineAllocation)
-
-	return machineDetails, machineAllocation, nil
+	return machineDetails, nil
 }
 
-func (h *hammer) onlyNicsWithNeighbors(nics []*models.V1MachineNic) []*apiv2.MachineNic {
-	noNeighbors := func(neighbors []*models.V1MachineNic) bool {
+func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*apiv2.MachineNic) []*installerv1.V1MachineNic {
+	noNeighbors := func(neighbors []*apiv2.MachineNic) bool {
 		if len(neighbors) == 0 {
 			return true
 		}
 		for _, n := range neighbors {
-			if n.Mac == nil || *n.Mac == "" {
-				return true
-			}
-		}
-		return false
-	}
-
-	result := []*apiv2.MachineNic{}
-	for i := range nics {
-		nic := nics[i]
-		if noNeighbors(nic.Neighbors) {
-			continue
-		}
-		n := &apiv2.MachineNic{
-			Mac:        pointer.SafeDeref(nic.Mac),
-			Name:       pointer.SafeDeref(nic.Name),
-			Identifier: pointer.SafeDeref(nic.Identifier),
-			Neighbors: []*apiv2.MachineNic{
-				{Mac: pointer.SafeDeref(nic.Neighbors[0].Mac), Name: pointer.SafeDeref(nic.Neighbors[0].Name)},
-			},
-		}
-		result = append(result, n)
-	}
-	h.log.Info("onlyNicWithNeighbors add", "result", result)
-	return result
-}
-
-func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*models.V1MachineNic) []*installerv1.V1MachineNic {
-	noNeighbors := func(neighbors []*models.V1MachineNic) bool {
-		if len(neighbors) == 0 {
-			return true
-		}
-		for _, n := range neighbors {
-			if n.Mac == nil || *n.Mac == "" {
+			if n.Mac == "" {
 				return true
 			}
 		}
@@ -533,11 +408,14 @@ func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*models.V1MachineNic) []*ins
 			continue
 		}
 		n := &installerv1.V1MachineNic{
-			Mac:        nic.Mac,
-			Name:       nic.Name,
-			Identifier: nic.Identifier,
+			Mac:        &nic.Mac,
+			Name:       &nic.Name,
+			Identifier: &nic.Identifier,
 			Neighbors: []*installerv1.V1MachineNic{
-				{Mac: nic.Neighbors[0].Mac, Name: nic.Neighbors[0].Name},
+				{
+					Mac:  &nic.Neighbors[0].Mac,
+					Name: &nic.Neighbors[0].Name,
+				},
 			},
 		}
 		result = append(result, n)

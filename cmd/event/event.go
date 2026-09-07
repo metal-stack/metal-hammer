@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"time"
 
-	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
+	infrav2 "github.com/metal-stack/api/go/metalstack/infra/v2"
+	"github.com/metal-stack/api/go/metalstack/infra/v2/infrav2connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -31,11 +33,11 @@ const (
 
 type EventEmitter struct {
 	log         *slog.Logger
-	eventClient v1.EventServiceClient
+	eventClient infrav2connect.EventServiceClient
 	machineID   string
 }
 
-func NewEventEmitter(log *slog.Logger, eventClient v1.EventServiceClient, machineID string) *EventEmitter {
+func NewEventEmitter(log *slog.Logger, eventClient infrav2connect.EventServiceClient, machineID string) *EventEmitter {
 	emitter := &EventEmitter{
 		eventClient: eventClient,
 		machineID:   machineID,
@@ -45,22 +47,21 @@ func NewEventEmitter(log *slog.Logger, eventClient v1.EventServiceClient, machin
 	ticker := time.NewTicker(1 * time.Minute)
 	go func() {
 		for t := range ticker.C {
-			emitter.Emit(ProvisioningEventAlive, fmt.Sprintf("still alive at: %s", t))
+			emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_ALIVE, fmt.Sprintf("still alive at: %s", t))
 		}
 	}()
 	return emitter
 }
 
-func (e *EventEmitter) Emit(eventType ProvisioningEventType, message string) {
-	eventString := string(eventType)
-	e.log.Info("event", "event", eventString, "message", message)
+func (e *EventEmitter) Emit(eventType apiv2.MachineProvisioningEventType, message string) {
+	e.log.Info("event", "event", eventType, "message", message)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	s, err := e.eventClient.Send(ctx, &v1.EventServiceSendRequest{
-		Events: map[string]*v1.MachineProvisioningEvent{
+	s, err := e.eventClient.Send(ctx, &infrav2.EventServiceSendRequest{
+		Events: map[string]*apiv2.MachineProvisioningEvent{
 			e.machineID: {
 				Time:    timestamppb.Now(),
-				Event:   eventString,
+				Event:   eventType,
 				Message: message,
 			},
 		},

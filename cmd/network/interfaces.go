@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 
 	"github.com/metal-stack/go-lldpd/pkg/lldp"
 	"github.com/metal-stack/v"
@@ -96,7 +96,7 @@ func linkSetUp(name string) error {
 }
 
 // Neighbors of a interface, detected via ip neighbor detection
-func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error) {
+func (n *Network) Neighbors(name string) (neighbors []*apiv2.MachineNic, err error) {
 	host := n.LLDPClient.Host
 
 	for !host.done {
@@ -124,7 +124,7 @@ func (n *Network) Neighbors(name string) (neighbors []*v1.MachineNic, err error)
 		// 	mac = m.String()
 		// }
 		n.Log.Info("register add neighbor", "nic", name, "switch port", neigh.PortDescription, "identifier", identifier)
-		neighbors = append(neighbors, &v1.MachineNic{
+		neighbors = append(neighbors, &apiv2.MachineNic{
 			Mac:        identifier,
 			Identifier: identifier,
 			Name:       neigh.PortDescription,
