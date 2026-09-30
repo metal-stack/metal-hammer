@@ -27,14 +27,14 @@ type Specification struct {
 	MachineUUID string
 	// IP of this instance
 	IP string
-	// MetalConfig is fetched from pixiecore to get the certs for the metal-api and logging config
-	MetalConfig *pixiecore.MetalConfig
+	// PixieConfig is fetched from pixiecore to initiate the client for the metal-apiserver and logging config
+	PixieConfig *pixiecore.V2MetalHammerConfigPayload
 
 	log *slog.Logger
 }
 
 // NewSpec fills Specification with configuration made by kernel commandline
-func NewSpec(log *slog.Logger) *Specification {
+func NewSpec(log *slog.Logger, machineUUID string) *Specification {
 	spec := &Specification{}
 	// Grab metal-hammer configuration from kernel commandline
 	envmap, err := kernel.ParseCmdline()
@@ -53,13 +53,13 @@ func NewSpec(log *slog.Logger) *Specification {
 		spec.PixieAPIUrl = url
 	}
 
-	metalConfig, err := fetchMetalConfig(spec.PixieAPIUrl)
+	config, err := fetchPixieConfig(spec.PixieAPIUrl, machineUUID)
 	if err != nil {
 		log.Error("unable to fetch configuration from pixiecore", "error", err)
 		os.Exit(1)
 	}
 
-	spec.MetalConfig = metalConfig
+	spec.PixieConfig = config
 
 	if bgp, ok := envmap["BGP"]; ok {
 		enabled, err := strconv.ParseBool(bgp)
@@ -67,6 +67,7 @@ func NewSpec(log *slog.Logger) *Specification {
 			spec.BGPEnabled = enabled
 		}
 	}
+
 	spec.log = log
 
 	return spec

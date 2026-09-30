@@ -279,28 +279,32 @@ func createSyslog() error {
 	return os.WriteFile("/var/log/syslog", b[:amt], 0666)
 }
 
-// IPMI configuration and
 func (r *Register) readIPMIDetails() (*apiv2.MachineBMC, *apiv2.MachineFRU, error) {
-	defaultIPMIPort := "623"
-	bmcVersion := "unknown"
+	const defaultIPMIPort = "623"
+
 	bmcConn := r.inband.BMCConnection()
-	if bmcConn.Present() {
-		r.log.Info("ipmi details from bmc")
-		board := r.inband.Board()
-		bmc := board.BMC
-		if bmc == nil {
-			return nil, nil, fmt.Errorf("unable to read ipmi bmc info configuration")
-		}
+	if !bmcConn.Present() {
+		return nil, nil, fmt.Errorf("unable to detect bmc interface")
+	}
 
-		// FIXME userid should be verified if available
-		pw, err := bmcConn.CreateUserAndPassword(bmcConn.User(), api.AdministratorPrivilege)
-		if err != nil {
-			return nil, nil, fmt.Errorf("ipmi create user failed %w", err)
-		}
+	r.log.Info("ipmi details from bmc")
 
-		bmcUser := bmcConn.User().Name
-		bmcVersion = bmc.FirmwareRevision
-		fru := &apiv2.MachineFRU{
+	bmc := r.inband.Board().BMC
+
+	if bmc == nil {
+		return nil, nil, fmt.Errorf("unable to read ipmi bmc info configuration")
+	}
+
+	bmc.IP = bmc.IP + ":" + defaultIPMIPort
+
+	// FIXME userid should be verified if available
+	pw, err := bmcConn.CreateUserAndPassword(bmcConn.User(), api.AdministratorPrivilege)
+	if err != nil {
+		return nil, nil, fmt.Errorf("ipmi create user failed %w", err)
+	}
+
+	var (
+		fru = &apiv2.MachineFRU{
 			ChassisPartNumber:   &bmc.ChassisPartNumber,
 			ChassisPartSerial:   &bmc.ChassisPartSerial,
 			BoardMfg:            &bmc.BoardMfg,
@@ -310,17 +314,15 @@ func (r *Register) readIPMIDetails() (*apiv2.MachineBMC, *apiv2.MachineFRU, erro
 			ProductPartNumber:   &bmc.ProductPartNumber,
 			ProductSerial:       &bmc.ProductSerial,
 		}
-		bmc.IP = bmc.IP + ":" + defaultIPMIPort
-		details := &apiv2.MachineBMC{
+		details = &apiv2.MachineBMC{
 			Interface: "lanplus",
 			Address:   bmc.IP,
 			Mac:       bmc.MAC,
-			User:      bmcUser,
+			User:      bmcConn.User().Name,
 			Password:  pw,
-			Version:   bmcVersion,
+			Version:   bmc.FirmwareRevision,
 		}
-		return details, fru, nil
-	}
+	)
 
-	return nil, nil, fmt.Errorf("unable to detect bmc interface")
+	return details, fru, nil
 }
