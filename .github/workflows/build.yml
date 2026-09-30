@@ -16,8 +16,13 @@ env:
   SBOM_NAME: metal-hammer-sbom.json
 
 jobs:
+  draft:
+    uses: metal-stack/actions-common/.github/workflows/release-drafter.yaml@v1
+
   build:
     runs-on: ubuntu-latest
+    outputs:
+      build-artifacts: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -55,12 +60,24 @@ jobs:
       - name: Upload image tarballs to GCS
         run: gsutil -m cp -r -p metal-hammer gs://$GCS_BUCKET
 
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v7
+        id: artifact-upload-step
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          files: |
+          name: go-build-artifact
+          path: |
             metal-hammer-initrd.img.lz4
             metal-hammer-initrd.img.lz4.md5
             ${{ env.SBOM_NAME }}
-        if: ${{ github.event_name == 'release' }}
+          if-no-files-found: error
+          retention-days: 1
+
+  release-assets:
+    uses: metal-stack/actions-common/.github/workflows/release-assets.yaml@v1
+    needs:
+      - build
+    with:
+      artifact-ids: ${{ needs.build.outputs.build-artifacts }}
+      files: |
+        metal-hammer-initrd.img.lz4
+        metal-hammer-initrd.img.lz4.md5
+        metal-hammer-sbom.json
