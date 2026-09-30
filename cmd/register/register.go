@@ -51,22 +51,26 @@ func New(log *slog.Logger, machineID, partitionID string, bootClient infrav2conn
 // RegisterMachine register a machine at the metal-api via metal-api
 func (r *Register) RegisterMachine() (*apiv2.MachineHardware, error) {
 	r.emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_REGISTERING, "start registering")
+
 	req, err := r.readHardwareDetails()
 	if err != nil {
 		return nil, err
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := r.client.Register(ctx, req)
 
+	resp, err := r.client.Register(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("unable to register machine:%#v %w", req, err)
 	}
+
 	if resp == nil {
 		return nil, fmt.Errorf("unable to register machine:%#v response payload is nil", req)
 	}
 
 	r.log.Info("machine registered", "response", resp)
+
 	return req.Hardware, nil
 }
 

@@ -4,41 +4,37 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
+	"connectrpc.com/connect"
+	"github.com/metal-stack/api/go/client"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	infrav2 "github.com/metal-stack/api/go/metalstack/infra/v2"
-	"github.com/metal-stack/api/go/metalstack/infra/v2/infrav2connect"
 )
 
 // WaitForAllocation can be used to call the wait method continuously until an allocation was made.
 // This is made for the metal-hammer and located here for better testability.
-func WaitForAllocation(ctx context.Context, log *slog.Logger, service infrav2connect.BootServiceClient, machineID string, timeout time.Duration) (*apiv2.MachineAllocation, error) {
-	req := &infrav2.BootServiceWaitRequest{
-		Uuid: machineID,
-	}
+func WaitForAllocation(ctx context.Context, log *slog.Logger, c client.Client, machineID string) (*apiv2.MachineAllocation, error) {
+	msgs, errs := client.ReconnectingStreamRead(ctx, func(ctx context.Context) (*connect.ServerStreamForClient[infrav2.BootServiceWaitResponse], error) {
+		return c.Infrav2().Boot().Wait(ctx, &infrav2.BootServiceWaitRequest{Uuid: machineID})
+	}, client.WithStreamBackoff(10*time.Second), client.WithStreamLogger(log))
 
 	for {
-		stream, err := service.Wait(ctx, req)
-		defer func() {
-			_ = stream.Close()
-		}()
-		if err != nil {
-			log.Error("failed waiting for allocation", "retry after", timeout, "error", err)
-
-			if strings.Contains(err.Error(), "failed to verify certificate") {
-				return nil, fmt.Errorf("certificate changed, rebooting")
-			}
-
-			time.Sleep(timeout)
-			continue
-		}
-
 		log.Info("wait for allocation...")
-		for stream.Receive() {
-			resp := stream.Msg()
-			return resp.Allocation, nil
+
+		select {
+		case message := <-msgs:
+			log.Info("received allocation")
+
+			return message.Allocation, nil
+		case err := <-errs:
+			log.Error("error waiting for allocation", "error", err)
+
+			continue
+		case <-ctx.Done():
+			log.Info("context cancelled, stop waiting for allocation")
+
+			return nil, fmt.Errorf("stopped waiting for allocation")
 		}
 	}
 }

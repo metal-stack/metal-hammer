@@ -50,6 +50,7 @@ func NewEventEmitter(log *slog.Logger, eventClient infrav2connect.EventServiceCl
 			emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_ALIVE, fmt.Sprintf("still alive at: %s", t))
 		}
 	}()
+
 	return emitter
 }
 

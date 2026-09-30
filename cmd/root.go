@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/metal-stack/api/go/client"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/api/go/metalstack/infra/v2/infrav2connect"
 	"github.com/metal-stack/go-hal"
@@ -28,7 +29,7 @@ type hammer struct {
 	log              *slog.Logger
 	spec             *Specification
 	hal              hal.InBand
-	metalAPIClient   *MetalAPIClient
+	metalAPIClient   client.Client
 	eventEmitter     *event.EventEmitter
 	filesystemLayout *apiv2.FilesystemLayout
 	// IPAddress is the ip of the eth0 interface during installation
@@ -39,15 +40,14 @@ type hammer struct {
 // Run orchestrates the whole register/wipe/format/burn and reboot process
 func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
+
 	metalAPIClient, err := NewMetalAPIClient(log, &spec.PixieConfig.Client)
 	if err != nil {
-		log.Error("failed to fetch GRPC certificates", "error", err)
+		log.Error("failed to initialize metal-apiserver client", "error", err)
 		return nil, err
 	}
 
-	bootService := metalAPIClient.BootService()
-
-	eventEmitter := event.NewEventEmitter(log, metalAPIClient.Event(), spec.MachineUUID)
+	eventEmitter := event.NewEventEmitter(log, metalAPIClient.Infrav2().Event(), spec.MachineUUID)
 
 	eventEmitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_PREPARING, fmt.Sprintf("starting metal-hammer version:%q", v.V))
 
@@ -95,7 +95,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		return eventEmitter, fmt.Errorf("interfaces %w", err)
 	}
 
-	reg := register.New(log, spec.MachineUUID, spec.PixieConfig.Partition, bootService, eventEmitter, n, hal)
+	reg := register.New(log, spec.MachineUUID, spec.PixieConfig.Partition, metalAPIClient.Infrav2().Boot(), eventEmitter, n, hal)
 
 	machineHardware, err := reg.RegisterMachine()
 	if err != nil {
@@ -115,14 +115,17 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 
 	eventEmitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_WAITING, "waiting for allocation")
 
-	alloc, err := WaitForAllocation(context.Background(), log, metalAPIClient.BootService(), spec.MachineUUID, defaultWaitTimeOut)
+	waitCtx, waitCancel := context.WithTimeout(context.Background(), defaultWaitTimeOut)
+	defer waitCancel()
+
+	alloc, err := WaitForAllocation(waitCtx, log, metalAPIClient, spec.MachineUUID)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
 
 	log.Info("perform install", "machineID", spec.MachineUUID, "imageID", alloc.Image.Id)
 	hammer.filesystemLayout = alloc.FilesystemLayout
-	err = hammer.installImage(eventEmitter, metalAPIClient.BootService(), alloc, machineHardware)
+	err = hammer.installImage(eventEmitter, metalAPIClient.Infrav2().Boot(), alloc, machineHardware)
 	return eventEmitter, err
 }
 

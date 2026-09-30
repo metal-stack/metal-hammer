@@ -35,7 +35,9 @@ type Specification struct {
 
 // NewSpec fills Specification with configuration made by kernel commandline
 func NewSpec(log *slog.Logger, machineUUID string) *Specification {
-	spec := &Specification{}
+	spec := &Specification{
+		MachineUUID: machineUUID,
+	}
 	// Grab metal-hammer configuration from kernel commandline
 	envmap, err := kernel.ParseCmdline()
 	if err != nil {

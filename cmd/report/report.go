@@ -24,18 +24,19 @@ type Report struct {
 
 // ReportInstallation will tell metal-api the result of the installation
 func (r *Report) ReportInstallation() error {
-	report := &infrav2.BootServiceInstallationSucceededRequest{
-		Uuid:            r.MachineUUID,
-		ConsolePassword: r.ConsolePassword,
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_, err := r.Client.InstallationSucceeded(ctx, report)
+
+	_, err := r.Client.InstallationSucceeded(ctx, &infrav2.BootServiceInstallationSucceededRequest{
+		Uuid:            r.MachineUUID,
+		ConsolePassword: r.ConsolePassword,
+	})
 	if err != nil {
 		r.Log.Error("report", "error", err)
-		return fmt.Errorf("unable to report image installation %w", err)
+		return fmt.Errorf("unable to report image installation: %w", err)
 	}
+
 	r.Log.Info("report image installation was successful")
+
 	return nil
 }

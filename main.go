@@ -79,7 +79,6 @@ func main() {
 	// Synchronize time using NTP
 	network.NtpDate(log, spec.PixieConfig.NTPServers)
 
-	spec.MachineUUID = uuid.String()
 	spec.IP = ip
 
 	spec.Log()
