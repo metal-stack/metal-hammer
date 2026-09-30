@@ -124,13 +124,14 @@ func (n *Network) Neighbors(name string) (neighbors []*apiv2.MachineNic, err err
 		// 	mac = m.String()
 		// }
 		n.Log.Info("register add neighbor", "nic", name, "switch port", neigh.PortDescription, "identifier", identifier)
+
 		neighbors = append(neighbors, &apiv2.MachineNic{
-			Mac:        identifier,
 			Identifier: identifier,
 			Name:       neigh.PortDescription,
 			Hostname:   neigh.Name,
 		})
 	}
+
 	return neighbors, nil
 }
 
