@@ -394,7 +394,7 @@ func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*apiv2.MachineNic) []*instal
 			return true
 		}
 		for _, n := range neighbors {
-			if n.Mac == "" {
+			if n.Mac == "" { //nolint:staticcheck
 				return true
 			}
 		}
@@ -408,12 +408,12 @@ func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*apiv2.MachineNic) []*instal
 			continue
 		}
 		n := &installerv1.V1MachineNic{
-			Mac:        &nic.Mac,
+			Mac:        &nic.Mac, //nolint:staticcheck
 			Name:       &nic.Name,
 			Identifier: &nic.Identifier,
 			Neighbors: []*installerv1.V1MachineNic{
 				{
-					Mac:  &nic.Neighbors[0].Mac,
+					Mac:  &nic.Neighbors[0].Mac, //nolint:staticcheck
 					Name: &nic.Neighbors[0].Name,
 				},
 			},

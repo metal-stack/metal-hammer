@@ -142,7 +142,7 @@ func (r *Register) readHardwareDetails() (*infrav2.BootServiceRegisterRequest, e
 		}
 
 		nic := &apiv2.MachineNic{
-			Mac:  mac,
+			Mac:  mac, //nolint:staticcheck
 			Name: name,
 		}
 		r.log.Info("register", "nic", name, "mac", mac)
@@ -152,13 +152,10 @@ func (r *Register) readHardwareDetails() (*infrav2.BootServiceRegisterRequest, e
 	// this is required to have this interface present
 	// in our DCIM management to add a ip later.
 	if !loFound {
-		mac := "00:00:00:00:00:00"
-		name := "lo"
-		lo := &apiv2.MachineNic{
-			Mac:  mac,
-			Name: name,
-		}
-		nics = append(nics, lo)
+		nics = append(nics, &apiv2.MachineNic{
+			Mac:  "00:00:00:00:00:00", //nolint:staticcheck
+			Name: "lo",
+		})
 	}
 
 	// now attach neighbors, this will wait up to 2*tx-interval

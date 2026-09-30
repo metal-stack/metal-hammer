@@ -17,7 +17,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/grafana/loki-client-go v0.0.0-20260414011004-43add134e848
 	github.com/jaypipes/ghw v0.25.0
-	github.com/metal-stack/api v0.7.1-0.20260930124637-bec5ec6aae55
+	github.com/metal-stack/api v0.7.1-0.20260930141302-c792100c6a74
 	github.com/metal-stack/go-hal v0.7.3
 	github.com/metal-stack/go-lldpd v0.4.12
 	github.com/metal-stack/metal-lib v0.26.3
