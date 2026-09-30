@@ -10,7 +10,7 @@ import (
 
 // createBmcSuperuser creates the bmc super user.
 func (h *hammer) createBmcSuperuser() error {
-	resp, err := h.metalAPIClient.Infrav2().Boot().SuperUserPassword(context.Background(), &infrav2.BootServiceSuperUserPasswordRequest{
+	resp, err := h.bootClient.SuperUserPassword(context.Background(), &infrav2.BootServiceSuperUserPasswordRequest{
 		Uuid: h.spec.MachineUUID,
 	})
 	if err != nil {

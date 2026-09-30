@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/metal-stack/api/go/client"
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/api/go/metalstack/infra/v2/infrav2connect"
 	"github.com/metal-stack/go-hal"
@@ -29,7 +28,7 @@ type hammer struct {
 	log              *slog.Logger
 	spec             *Specification
 	hal              hal.InBand
-	metalAPIClient   client.Client
+	bootClient       infrav2connect.BootServiceClient
 	eventEmitter     *event.EventEmitter
 	filesystemLayout *apiv2.FilesystemLayout
 	// IPAddress is the ip of the eth0 interface during installation
@@ -41,13 +40,13 @@ type hammer struct {
 func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmitter, error) {
 	log.Info("metal-hammer run", "firmware", kernel.Firmware(), "bios", hal.Board().BIOS.String())
 
-	metalAPIClient, err := NewMetalAPIClient(log, &spec.PixieConfig.Client)
+	bootClient, err := NewMetalAPIClient(log, &spec.PixieConfig.Client)
 	if err != nil {
 		log.Error("failed to initialize metal-apiserver client", "error", err)
 		return nil, err
 	}
 
-	eventEmitter := event.NewEventEmitter(log, metalAPIClient.Infrav2().Event(), spec.MachineUUID)
+	eventEmitter := event.NewEventEmitter(log, bootClient, spec.MachineUUID)
 
 	eventEmitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_PREPARING, fmt.Sprintf("starting metal-hammer version:%q", v.V))
 
@@ -63,7 +62,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		eventEmitter:       eventEmitter,
 		chrootPrefix:       "/rootfs",
 		osImageDestination: "/tmp/os.tgz",
-		metalAPIClient:     metalAPIClient,
+		bootClient:         bootClient,
 	}
 
 	// Reboot after 24Hours if no allocation was requested.
@@ -95,7 +94,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		return eventEmitter, fmt.Errorf("interfaces %w", err)
 	}
 
-	reg := register.New(log, spec.MachineUUID, spec.PixieConfig.Partition, metalAPIClient.Infrav2().Boot(), eventEmitter, n, hal)
+	reg := register.New(log, spec.MachineUUID, spec.PixieConfig.Partition, bootClient, eventEmitter, n, hal)
 
 	machineHardware, err := reg.RegisterMachine()
 	if err != nil {
@@ -118,39 +117,29 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 	waitCtx, waitCancel := context.WithTimeout(context.Background(), defaultWaitTimeOut)
 	defer waitCancel()
 
-	alloc, err := WaitForAllocation(waitCtx, log, metalAPIClient, spec.MachineUUID)
+	alloc, err := WaitForAllocation(waitCtx, log, bootClient, spec.MachineUUID)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
 
 	log.Info("perform install", "machineID", spec.MachineUUID, "imageID", alloc.Image.Id)
 	hammer.filesystemLayout = alloc.FilesystemLayout
-	err = hammer.installImage(eventEmitter, metalAPIClient.Infrav2().Boot(), alloc, machineHardware)
+	err = hammer.installImage(eventEmitter, alloc, machineHardware)
 	return eventEmitter, err
 }
 
-func (h *hammer) installImage(eventEmitter *event.EventEmitter, bootService infrav2connect.BootServiceClient, alloc *apiv2.MachineAllocation, machineHardware *apiv2.MachineHardware) error {
+func (h *hammer) installImage(eventEmitter *event.EventEmitter, alloc *apiv2.MachineAllocation, machineHardware *apiv2.MachineHardware) error {
 	eventEmitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_INSTALLING, "start installation")
 	installationStart := time.Now()
 	info, installErr := h.Install(alloc, machineHardware)
 
 	rep := &report.Report{
 		MachineUUID:     h.spec.MachineUUID,
-		Client:          bootService,
 		ConsolePassword: h.spec.ConsolePassword,
-		InstallError:    installErr,
 		Log:             h.log,
 	}
 
-	// info is nil when the installation failed
-	if info != nil {
-		rep.Initrd = info.Initrd
-		rep.Cmdline = info.Cmdline
-		rep.Kernel = info.Kernel
-		rep.BootloaderID = info.BootloaderID
-	}
-
-	reportErr := rep.ReportInstallation()
+	reportErr := rep.ReportInstallation(h.bootClient)
 
 	err := errors.Join(installErr, reportErr)
 	if err != nil {
@@ -164,5 +153,6 @@ func (h *hammer) installImage(eventEmitter *event.EventEmitter, bootService infr
 	// time.Sleep(10 * time.Second)
 
 	eventEmitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_BOOTING_NEW_KERNEL, "booting into distro kernel")
+
 	return kernel.RunKexec(info)
 }

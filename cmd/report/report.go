@@ -11,23 +11,17 @@ import (
 )
 
 type Report struct {
-	Client          infrav2connect.BootServiceClient
 	ConsolePassword string
 	MachineUUID     string
-	InstallError    error
-	Initrd          string
-	Cmdline         string
-	Kernel          string
-	BootloaderID    string
 	Log             *slog.Logger
 }
 
 // ReportInstallation will tell metal-api the result of the installation
-func (r *Report) ReportInstallation() error {
+func (r *Report) ReportInstallation(bootClient infrav2connect.BootServiceClient) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_, err := r.Client.InstallationSucceeded(ctx, &infrav2.BootServiceInstallationSucceededRequest{
+	_, err := bootClient.InstallationSucceeded(ctx, &infrav2.BootServiceInstallationSucceededRequest{
 		Uuid:            r.MachineUUID,
 		ConsolePassword: r.ConsolePassword,
 	})
