@@ -21,8 +21,6 @@ import (
 	"github.com/metal-stack/v"
 )
 
-const defaultWaitTimeOut = 3 * time.Second
-
 // hammer is the machine which forms a bare metal to a working server
 type hammer struct {
 	log              *slog.Logger
@@ -114,10 +112,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 
 	eventEmitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_WAITING, "waiting for allocation")
 
-	waitCtx, waitCancel := context.WithTimeout(context.Background(), defaultWaitTimeOut)
-	defer waitCancel()
-
-	alloc, err := WaitForAllocation(waitCtx, log, bootClient, spec.MachineUUID)
+	alloc, err := WaitForAllocation(context.Background(), log, bootClient, spec.MachineUUID)
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wait for installation %w", err)
 	}
