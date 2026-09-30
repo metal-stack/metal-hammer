@@ -104,7 +104,12 @@ func (f *Filesystem) createPartitions() error {
 			opts = append(opts, fmt.Sprintf("--new=%d:0:+%dM", p.Number, p.Size))
 			opts = append(opts, fmt.Sprintf("--change-name=%d:%s", p.Number, pointer.SafeDeref(p.Label)))
 			if p.GptType != nil {
-				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", p.Number, *p.GptType))
+				gptType, err := enum.GetStringValue(p.GptType)
+				if err != nil {
+					return err
+				}
+
+				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", p.Number, *gptType))
 			}
 		}
 		f.log.Info("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+disk.Device)
