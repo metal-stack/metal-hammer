@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
@@ -390,9 +389,17 @@ func (h *hammer) convertConfigs(alloc *apiv2.MachineAllocation, rootUUiD string,
 }
 
 func onlyNicsWithNeighbors(nics []*apiv2.MachineNic) []*apiv2.MachineNic {
-	return slices.DeleteFunc(nics, func(nic *apiv2.MachineNic) bool {
-		return len(nic.Neighbors) == 0
-	})
+	var res []*apiv2.MachineNic
+
+	for _, nic := range nics {
+		if len(nic.Neighbors) == 0 {
+			continue
+		}
+
+		res = append(res, nic)
+	}
+
+	return res
 }
 
 func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*apiv2.MachineNic) []*installerv1.V1MachineNic {
