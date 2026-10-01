@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -380,12 +381,18 @@ func (h *hammer) convertConfigs(alloc *apiv2.MachineAllocation, rootUUiD string,
 		Console:     console,
 		RaidEnabled: raidEnabled,
 		RootUUID:    rootUUiD,
-		Nics:        machineHardware.Nics,
+		Nics:        onlyNicsWithNeighbors(machineHardware.Nics),
 	}
 
 	h.log.Info("generated apiv2 machinedetails", "details", machineDetails)
 
 	return machineDetails, nil
+}
+
+func onlyNicsWithNeighbors(nics []*apiv2.MachineNic) []*apiv2.MachineNic {
+	return slices.DeleteFunc(nics, func(nic *apiv2.MachineNic) bool {
+		return len(nic.Neighbors) == 0
+	})
 }
 
 func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*apiv2.MachineNic) []*installerv1.V1MachineNic {
