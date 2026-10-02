@@ -200,35 +200,34 @@ func (r *Register) readHardwareDetails() (*infrav2.BootServiceRegisterRequest, e
 		Gpus:   metalGPUs,
 	}
 
-	// IPMI
-	bmc, fru, err := r.readIPMIDetails()
+	bmc, fru, err := r.readBmcDetails()
 	if err != nil {
 		return nil, err
 	}
 
-	// Bios
 	board := r.inband.Board()
+
 	b := board.BIOS
 	if b == nil {
 		return nil, fmt.Errorf("unable to read bios information from bmc")
 	}
-	bios := &apiv2.MachineBios{
-		Version: b.Version,
-		Vendor:  b.Vendor,
-		Date:    b.Date,
-	}
 
 	request := &infrav2.BootServiceRegisterRequest{
-		Uuid:               r.machineUUID,
-		Partition:          r.partitionID,
-		Hardware:           hardware,
-		Bios:               bios,
+		Uuid:      r.machineUUID,
+		Partition: r.partitionID,
+		Hardware:  hardware,
+		Bios: &apiv2.MachineBios{
+			Version: b.Version,
+			Vendor:  b.Vendor,
+			Date:    b.Date,
+		},
 		Bmc:                bmc,
 		Fru:                fru,
 		MetalHammerVersion: v.Version,
 	}
 
 	r.log.Info("register", "request", request)
+
 	return request, nil
 }
 
@@ -280,7 +279,7 @@ func createSyslog() error {
 	return os.WriteFile("/var/log/syslog", b[:amt], 0666)
 }
 
-func (r *Register) readIPMIDetails() (*apiv2.MachineBMC, *apiv2.MachineFRU, error) {
+func (r *Register) readBmcDetails() (*apiv2.MachineBMC, *apiv2.MachineFRU, error) {
 	const defaultIPMIPort = "623"
 
 	bmcConn := r.inband.BMCConnection()
