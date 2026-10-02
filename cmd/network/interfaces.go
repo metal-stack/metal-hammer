@@ -17,12 +17,13 @@ import (
 
 // Network provides networking operations.
 type Network struct {
-	IPAddress   string
-	Started     time.Time
-	MachineUUID string
-	LLDPClient  *LLDPClient
-	Eth0Mac     string // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
-	Log         *slog.Logger
+	IPAddress     string
+	Started       time.Time
+	MachineUUID   string
+	LLDPClient    *LLDPClient
+	Eth0Mac       string // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
+	Log           *slog.Logger
+	RequiredLinks int
 }
 
 // We expect to have storage and MTU of 9000 supports efficient transmission.
@@ -62,7 +63,7 @@ func (n *Network) UpAllInterfaces() error {
 		lldpd.Start()
 	}
 
-	lc := NewLLDPClient(n.Log, interfaces, 2, 2, 0)
+	lc := NewLLDPClient(n.Log, interfaces, n.RequiredLinks, n.RequiredLinks, 0)
 	n.LLDPClient = lc
 	go lc.Start()
 
