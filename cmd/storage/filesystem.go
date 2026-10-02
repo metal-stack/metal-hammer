@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -97,12 +98,14 @@ func (f *Filesystem) createPartitions() error {
 	if len(f.config.Disks) == 0 {
 		return nil
 	}
-	for _, disk := range f.config.Disks {
+
+	for i1, disk := range f.config.Disks {
 		opts := []string{}
 
-		for _, p := range disk.Partitions {
+		for i2, p := range disk.Partitions {
 			opts = append(opts, fmt.Sprintf("--new=%d:0:+%dM", p.Number, p.Size))
-			opts = append(opts, fmt.Sprintf("--change-name=%d:%s", p.Number, pointer.SafeDeref(p.Label)))
+			opts = append(opts, fmt.Sprintf("--change-name=%d:%s", p.Number, pointer.SafeDerefOrDefault(p.Label, "disk"+strconv.Itoa(i1)+"partition-"+strconv.Itoa(i2))))
+
 			if p.GptType != nil {
 				gptType, err := enum.GetStringValue(p.GptType)
 				if err != nil {
@@ -112,30 +115,36 @@ func (f *Filesystem) createPartitions() error {
 				opts = append(opts, fmt.Sprintf("--typecode=%d:%s", p.Number, *gptType))
 			}
 		}
+
 		f.log.Info("wipe existing partition signatures", "command", command.WIPEFS+" --all"+" "+disk.Device)
+
 		err := os.ExecuteCommand(command.WIPEFS, "--all", disk.Device)
 		if err != nil {
 			f.log.Error("wipe existing partition signatures failed", "error", err)
-			return fmt.Errorf("unable wipe existing partitions on %s %w", disk.Device, err)
+			return fmt.Errorf("unable wipe existing partitions on %s: %w", disk.Device, err)
 		}
+
 		opts = append(opts, disk.Device)
+
 		f.log.Info("sgdisk create partitions", "command", opts)
+
 		err = os.ExecuteCommand(command.SGDisk, opts...)
 		if err != nil {
 			f.log.Error("sgdisk creating partitions failed", "error", err)
-			return fmt.Errorf("unable to create partitions on %s %w", disk.Device, err)
+			return fmt.Errorf("unable to create partitions on %s: %w", disk.Device, err)
 		}
 
 		blkdev, err := block.Device(disk.Device)
 		if err != nil {
-			return fmt.Errorf("unable to find block device %s: %v", disk.Device, err)
+			return fmt.Errorf("unable to find block device %s: %w", disk.Device, err)
 		}
 
 		err = blkdev.ReadPartitionTable()
 		if err != nil {
-			return fmt.Errorf("unable to re-read the partition table. Kernel still uses old partition table: %v", err)
+			return fmt.Errorf("unable to re-read the partition table. Kernel still uses old partition table: %w", err)
 		}
 	}
+
 	return nil
 }
 
@@ -146,14 +155,10 @@ func (f *Filesystem) createRaids() error {
 
 	for _, raid := range f.config.Raid {
 		spares := raid.Spares
-		var level string
-		switch raid.Level {
-		case apiv2.RaidLevel_RAID_LEVEL_0:
-			level = "0"
-		case apiv2.RaidLevel_RAID_LEVEL_1:
-			level = "1"
-		default:
-			// not supported
+
+		level, err := enum.GetStringValue(raid.Level)
+		if err != nil {
+			return err
 		}
 
 		args := []string{
@@ -161,7 +166,7 @@ func (f *Filesystem) createRaids() error {
 			"--force",
 			"--run",
 			"--homehost", "any",
-			"--level", level,
+			"--level", *level,
 			"--raid-devices", fmt.Sprintf("%d", len(raid.Devices)-int(spares)),
 		}
 
@@ -184,7 +189,7 @@ func (f *Filesystem) createRaids() error {
 		args = append(args, raid.Devices...)
 
 		f.log.Info("create mdadm raid", "args", args)
-		err := os.ExecuteCommand(command.MDADM, args...)
+		err = os.ExecuteCommand(command.MDADM, args...)
 		if err != nil {
 			f.log.Error("create mdadm raid", "error", err)
 			return fmt.Errorf("unable to create mdadm raid %s %w", raid.ArrayName, err)
@@ -196,6 +201,7 @@ func (f *Filesystem) createRaids() error {
 			f.log.Error("unable to set min sync speed, ignoring...", "error", err)
 		}
 	}
+
 	return nil
 }
 
@@ -226,7 +232,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
 			f.log.Error("vgcreate", "error", err)
-			return fmt.Errorf("unable to create volume group %s %w", vg.Name, err)
+			return fmt.Errorf("unable to create volume group %s: %w", vg.Name, err)
 		}
 	}
 
@@ -262,7 +268,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		case apiv2.LVMType_LVM_TYPE_RAID1:
 			args = append(args, "--type", "raid1", "--mirrors", "1", "--nosync")
 		default:
-			return fmt.Errorf("unsupported lvmtype:%s", lv.LvmType)
+			return fmt.Errorf("unsupported lvmtype: %s", lv.LvmType)
 		}
 		args = append(args, lv.VolumeGroup)
 
@@ -270,7 +276,7 @@ func (f *Filesystem) createLogicalVolumes() error {
 		err := os.ExecuteCommand(command.LVM, args...)
 		if err != nil {
 			f.log.Error("lvcreate", "error", err)
-			return fmt.Errorf("unable to create logical volume %s %w", lv.Name, err)
+			return fmt.Errorf("unable to create logical volume %s: %w", lv.Name, err)
 		}
 	}
 
@@ -326,7 +332,7 @@ func (f *Filesystem) createFilesystems() error {
 		err := os.ExecuteCommand(mkfs, args...)
 		if err != nil {
 			f.log.Error("create filesystem failed", "device", fs.Device, "error", err)
-			return fmt.Errorf("unable to create filesystem on %s %w", fs.Device, err)
+			return fmt.Errorf("unable to create filesystem on %s: %w", fs.Device, err)
 		}
 	}
 

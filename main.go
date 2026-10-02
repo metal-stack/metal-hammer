@@ -103,16 +103,20 @@ func main() {
 	emitter, err := cmd.Run(log, spec, hal)
 	if err != nil {
 		wait := 5 * time.Second
-		log.Error("metal-hammer failed", "rebooting in", wait, "error", err)
+
+		log.Error("metal-hammer failed", "rebooting in", wait.String(), "error", err)
+
 		if emitter != nil {
-			emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, fmt.Sprintf("%s", err))
+			emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, err.Error())
 		}
+
 		time.Sleep(wait)
+
 		err := kernel.Reboot()
 		if err != nil {
 			log.Error("metal-hammer reboot failed", "error", err)
 			if emitter != nil {
-				emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, fmt.Sprintf("%s", err))
+				emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, err.Error())
 			}
 		}
 	}
