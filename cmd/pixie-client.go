@@ -6,21 +6,32 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	pixiecore "github.com/metal-stack/pixie/api"
 )
 
-func fetchMetalConfig(pixieURL string) (*pixiecore.MetalConfig, error) {
-	certClient := http.Client{
-		Timeout: 5 * time.Second,
-	}
-	ctx, httpcancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer httpcancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pixieURL, nil)
+func fetchPixieConfig(pixieURL, machineUUID string) (*pixiecore.V2MetalHammerConfigPayload, error) {
+	u, err := url.Parse(pixieURL)
 	if err != nil {
 		return nil, err
 	}
+
+	endpoint := fmt.Sprintf("%s://%s/config/%s", u.Scheme, u.Host, machineUUID)
+
+	certClient := http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	ctx, httpcancel := context.WithTimeout(context.Background(), certClient.Timeout)
+	defer httpcancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	resp, err := certClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -31,9 +42,12 @@ func fetchMetalConfig(pixieURL string) (*pixiecore.MetalConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	var metalConfig pixiecore.MetalConfig
-	if err := json.Unmarshal(js, &metalConfig); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal grpcConfig:%w", err)
+
+	var config pixiecore.V2MetalHammerConfigPayload
+
+	if err := json.Unmarshal(js, &config); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal pixiecore response: %w", err)
 	}
-	return &metalConfig, nil
+
+	return &config, nil
 }

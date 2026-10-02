@@ -3,7 +3,7 @@ package cmd
 import (
 	"time"
 
-	"github.com/metal-stack/metal-hammer/cmd/event"
+	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 )
 
@@ -22,7 +22,7 @@ func (h *hammer) ConfigureBIOS() error {
 
 	if reboot {
 		msg := "BIOS configuration requires a reboot"
-		h.eventEmitter.Emit(event.ProvisioningEventPlannedReboot, msg)
+		h.eventEmitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_PLANNED_REBOOT, msg)
 		h.log.Info("bios", msg, "reboot in 1 sec")
 		time.Sleep(1 * time.Second)
 		err = kernel.Reboot()

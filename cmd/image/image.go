@@ -111,7 +111,7 @@ func (i *Image) checkMD5(file, md5file string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("unable to read md5sum file %s %w", md5file, err)
 	}
-	expectedMD5 := strings.Split(string(md5fileContent), " ")[0]
+	expectedMD5, _, _ := strings.Cut(string(md5fileContent), " ")
 
 	f, err := os.Open(file)
 	if err != nil {
