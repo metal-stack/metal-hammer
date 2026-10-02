@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/metal-stack/go-hal"
@@ -86,6 +88,21 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		IPAddress:   spec.IP,
 		Started:     time.Now(),
 		Log:         log,
+	}
+
+	params, err := kernel.ParseCmdline()
+	if err != nil {
+		log.Error("parse cmdline", "error", err)
+		os.Exit(1)
+	}
+
+	if reqLinks, ok := params["required_links"]; ok {
+		reqLinksInt, err := strconv.Atoi(reqLinks)
+		if err != nil {
+			log.Error("parse cmdline arg required_links", "error", err)
+			os.Exit(1)
+		}
+		n.RequiredLinks = reqLinksInt
 	}
 
 	// TODO: Does not work yet, needs to be done manually
