@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	infrav2 "github.com/metal-stack/api/go/metalstack/infra/v2"
 	"github.com/metal-stack/go-hal/pkg/api"
-	v1 "github.com/metal-stack/metal-api/pkg/api/v1"
 )
 
 // createBmcSuperuser creates the bmc super user.
 func (h *hammer) createBmcSuperuser() error {
-	req := &v1.BootServiceSuperUserPasswordRequest{}
-	resp, err := h.metalAPIClient.BootService().SuperUserPassword(context.Background(), req)
+	resp, err := h.bootClient.SuperUserPassword(context.Background(), &infrav2.BootServiceSuperUserPasswordRequest{
+		Uuid: h.spec.MachineUUID,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to fetch SuperUser password %w", err)
 	}
@@ -34,9 +35,11 @@ func (h *hammer) createBmcSuperuser() error {
 				return nil
 			}
 		}
+
 		h.log.Error("failed to verify password change for bmc superuser", "user", bmcConn.SuperUser().Name, "error", err)
 	}
 
 	h.log.Info("created superuser", "user", bmcConn.SuperUser().Name)
+
 	return nil
 }
