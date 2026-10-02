@@ -284,7 +284,30 @@ func (r *Register) readBmcDetails() (*apiv2.MachineBMC, *apiv2.MachineFRU, error
 
 	bmcConn := r.inband.BMCConnection()
 	if !bmcConn.Present() {
-		return nil, nil, fmt.Errorf("unable to detect bmc interface")
+		// TODO: this is for the mini-lab to work
+		// this can be removed once we properly integrated metal-bmc in the lab
+		var (
+			fru = &apiv2.MachineFRU{
+				ChassisPartNumber:   new("unknown"),
+				ChassisPartSerial:   new("unknown"),
+				BoardMfg:            new("unknown"),
+				BoardMfgSerial:      new("unknown"),
+				BoardPartNumber:     new("unknown"),
+				ProductManufacturer: new("unknown"),
+				ProductPartNumber:   new("unknown"),
+				ProductSerial:       new("unknown"),
+			}
+			details = &apiv2.MachineBMC{
+				Interface: "lanplus",
+				Address:   "192.168.121.1:623",
+				Mac:       "00:00:00:00:00:00",
+				User:      "mini-lab",
+				Password:  "mini-lab",
+				Version:   "unknown",
+			}
+		)
+
+		return details, fru, nil
 	}
 
 	r.log.Info("ipmi details from bmc")
