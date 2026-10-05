@@ -117,7 +117,7 @@ func (l *LLDPClient) requirementsMet() bool {
 	neighMap := make(map[string]string)
 	for iface, neighs := range l.Host.neighbors {
 		for _, neigh := range neighs {
-			if neigh.Chassis.Type == lldp.Mac && (neigh.Port.Type == lldp.Mac || neigh.Port.Type == lldp.Local) {
+			if (neigh.Chassis.Type == lldp.Mac || neigh.Chassis.Type == lldp.Local) && (neigh.Port.Type == lldp.Mac || neigh.Port.Type == lldp.Local) {
 				neighMap[neigh.Chassis.Value] = iface
 			}
 		}
