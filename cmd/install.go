@@ -315,6 +315,11 @@ func (h *hammer) generateLegacyConfig(alloc *apiv2.MachineAllocation, details *i
 			return nil, err
 		}
 
+		switch nw.NatType {
+		case apiv2.NATType_NAT_TYPE_IPV4_MASQUERADE:
+			nat = true
+		}
+
 		networks = append(networks, &installerv1.V1MachineNetwork{
 			Asn:                 new(int64(nw.Asn)),
 			Destinationprefixes: nw.DestinationPrefixes,
