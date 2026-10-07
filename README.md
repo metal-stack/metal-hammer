@@ -1,54 +1,76 @@
-# Metal Stack Hammer
+# metal-stack.io | metal-hammer
 
-Hammer is used to boot a bare metal server via PXE together with the Metal Stack kernel. Hammer is a initrd which runs a small golang binary as init process. This does the following actions:
+![Go version](https://img.shields.io/github/go-mod/go-version/metal-stack/metal-hammer)
+[![Go Report Card](https://goreportcard.com/badge/github.com/metal-stack/metal-hammer)](https://goreportcard.com/report/github.com/metal-stack/metal-hammer)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/metal-stack/metal-hammer)
+[![Build](https://github.com/metal-stack/metal-hammer/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/metal-stack/metal-hammer/actions)
+[![Slack](https://img.shields.io/badge/slack-metal--stack-brightgreen.svg?logo=slack)](https://metal-stack.slack.com/)
 
-- Ensures all interfaces are up
-- Check if the server was booted in UEFI, if not modify the bios to uefi and reboots
-- Wipes as existing disks by either:
-  - run secure erase if possible by using the mechanism in modern disks, this is true for most SSD´s and NVME disks.
-  - If not possible run mkfs.ext4 --discard on the disks.
-- Gather HW information and report them back to metal-api:
-  - CPU Core count
-  - Memory count
-  - Disks with their size and device path
-  - Network adapters which have an active uplink with their interface name, own mac address and mac address of the switch chassis where this network card is connected to. 2 distinct switch chassis are required.
-  - IPMI interface with mac and ipaddress.
-  - create a metal user on IPMI with a strong password
-- Set BIOS boot order to contain only PXE and Hard Disk as possible options.
-- Wait until a `machine create` command was issued from metal-api
+The `metal-hammer` is a component of metal-stack for performing bare-metal provisioning of servers. It runs as an `initrd` that contains a small Go binary as `init` process. The `metal-hammer` is loaded during the PXE booting process together with the `metal-kernel`.
 
-## Local Testing
+This component performs the following actions:
+
+- Ensures a reboot after 24 hours, if the machine was not allocated yet
+- Creates or updates the [BMC users](https://metal-stack.io/docs/next/security-principles/#bmc-user-management), that are used for administrative tasks
+- Registers the machine at the `metal-api` using the following hardware specifications:
+  - CPUs (vendor, model, cores, threads)
+  - GPUs (vendor, model)
+  - NICs (MAC, interface name, interface neighbors, MAC of switch chassis)
+  - Disks (size, device path)
+  - IPMI interface details (IP address, MAC, BMC firmware version)
+  - IPMI FRU details (board manufacturer, board type)
+  - BIOS (vendor, version, date)
+- Ensures all interfaces are up for link-local neighbor discovery
+- Wipes disks:
+  - Using `mkfs.ext4` (and `-E discard` option) for rotational disks
+  - Using nvme cli (and `--format` option) for NVMe disks
+  - Using `dd` as fallback option
+- Ensures BIOS uses UEFI mode
+- Ensures `Waiting` loop until machine gets requested by the `metal-api`
+
+If a machine is requested, `metal-hammer` initiates the installation including the following steps:
+
+- Installs a filesystem layout (defined in the `metal-api`):
+  - Cleanup disks using `wipefs` to remove signatures
+  - Create partitions using `sgdisk` (and `--zap-all` option, to destroy partition table structure)
+  - Create RAID using `mdadm`
+  - Create logical volumes using `lvm`
+  - Create filesystems. Supported are: `ext3`, `ext4`, `swap`, `vfat`
+  - Mount filesystems
+- Downloads the requested OS image as a `.tar` and unpacks it into a directory on the disk
+- Writes the requested allocation configuration for the OS (e.g. hostname, networks, DNS servers, NTP servers...) into `/etc/metal/install.yaml`
+- Writes the user specific data into `/etc/metal/userdata`
+- Writes the LVM configuration into `/etc/lvm/lvmlocal.conf` for compatibility with the new OS
+- Executes the Go binary `install.go` inside the downloaded OS metal-image
+- Reads the kernel's boot info from `/etc/metal/boot-info.yaml`
+- Configures the boot order to boot the installed OS after rebooting
+- Writes all fstab entries to `/etc/fstab` inside chroot
+- Reports the installation to the `metal-api`
+- Boots into the new kernel from the installed OS
+
+## Local Development
+
+Use the following command for local development:
 
 ```bash
 make clean initrd vagrant-up
 ```
 
-## Create a PXE boot initrd with u-root
+## Create your own PXE boot initrd with u-root
 
-In order to be able to create an initrd image which is suitable to boot a bare metal server with the required tools to discover and install the target os, we use u-root.
-
-### Quickstart
-
-- download u-root:
+We use `u-root` to create an `initrd` image which is suitable to boot a bare metal server with the required tools to discover and install a target OS.
+Follow these steps to create your custom one:
 
 ```bash
+# Download u-root
 go get -u github.com/u-root/u-root
-```
 
-- build the initrd
-
-```bash
+# Build the initrd
 make initrd
-```
 
-### check content
-
-```bash
+# Verify content
 cpio -itv < metal-hammer-initrd.img
-```
 
-### start it
-
-```bash
+# Test it
 make vagrant-up
 ```
