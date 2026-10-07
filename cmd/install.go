@@ -14,6 +14,7 @@ import (
 	apiv2 "github.com/metal-stack/api/go/metalstack/api/v2"
 	"github.com/metal-stack/metal-hammer/cmd/utils"
 	"github.com/metal-stack/metal-lib/pkg/net"
+	"github.com/metal-stack/metal-lib/pkg/pointer"
 
 	installerv1 "github.com/metal-stack/os-installer/api/v1"
 	"github.com/metal-stack/os-installer/pkg/installer"
@@ -295,9 +296,15 @@ func (h *hammer) generateLegacyConfig(alloc *apiv2.MachineAllocation, details *i
 		case apiv2.NetworkType_NETWORK_TYPE_CHILD:
 			private = true
 			networkType = net.PrivatePrimaryUnshared
+			// net.PrivateSecondaryUnshared was for removed dmz cluster feature, does not need to be mapped
 		case apiv2.NetworkType_NETWORK_TYPE_CHILD_SHARED:
 			private = true
-			networkType = net.PrivatePrimaryShared
+
+			if pointer.SafeDeref(nw.Project) == alloc.Project {
+				networkType = net.PrivatePrimaryShared
+			} else {
+				networkType = net.PrivateSecondaryShared
+			}
 		case apiv2.NetworkType_NETWORK_TYPE_EXTERNAL:
 			networkType = net.External
 		case apiv2.NetworkType_NETWORK_TYPE_UNDERLAY:
@@ -352,7 +359,7 @@ func (h *hammer) generateLegacyConfig(alloc *apiv2.MachineAllocation, details *i
 		MachineUUID:   h.spec.MachineUUID,
 		Timestamp:     time.Now().Format(time.RFC3339),
 		Networks:      networks,
-		Nics:          h.onlyNicsWithNeighborsLegacy(machineHardware.Nics),
+		Nics:          h.legacyNics(onlyNicsWithNeighbors(machineHardware.Nics)),
 		VPN:           vpn,
 		Role:          *role,
 		FirewallRules: firewallRules,
@@ -407,26 +414,11 @@ func onlyNicsWithNeighbors(nics []*apiv2.MachineNic) []*apiv2.MachineNic {
 	return res
 }
 
-func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*apiv2.MachineNic) []*installerv1.V1MachineNic {
-	noNeighbors := func(neighbors []*apiv2.MachineNic) bool {
-		if len(neighbors) == 0 {
-			return true
-		}
-		for _, n := range neighbors {
-			if n.Mac == "" { //nolint:staticcheck
-				return true
-			}
-		}
-		return false
-	}
-
+func (h *hammer) legacyNics(nics []*apiv2.MachineNic) []*installerv1.V1MachineNic {
 	result := []*installerv1.V1MachineNic{}
-	for i := range nics {
-		nic := nics[i]
-		if noNeighbors(nic.Neighbors) {
-			continue
-		}
-		n := &installerv1.V1MachineNic{
+
+	for _, nic := range nics {
+		result = append(result, &installerv1.V1MachineNic{
 			Mac:        &nic.Mac, //nolint:staticcheck
 			Name:       &nic.Name,
 			Identifier: &nic.Identifier,
@@ -436,8 +428,8 @@ func (h *hammer) onlyNicsWithNeighborsLegacy(nics []*apiv2.MachineNic) []*instal
 					Name: &nic.Neighbors[0].Name,
 				},
 			},
-		}
-		result = append(result, n)
+		})
 	}
+
 	return result
 }
