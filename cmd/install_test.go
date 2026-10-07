@@ -50,7 +50,7 @@ func TestHammer_onlyNicsWithNeighbors(t *testing.T) {
 			h := &hammer{
 				log: slog.Default(),
 			}
-			got := h.onlyNicsWithNeighborsLegacy(tt.nics)
+			got := h.legacyNics(onlyNicsWithNeighbors(tt.nics))
 			if diff := cmp.Diff(got, tt.nics, protocmp.Transform()); diff != "" {
 				t.Errorf("Hammer.onlyNicsWithNeighbors() diff = %s", diff)
 			}
