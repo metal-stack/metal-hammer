@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - master
+      - feat/lldp-chassis-local-support
 
 env:
   GCS_BUCKET: images.metal-pod.io
@@ -33,7 +34,8 @@ jobs:
         run: |
           [ "${GITHUB_EVENT_NAME}" == 'pull_request' ] && echo "TARGET_BINARY_LOCATION=pull-requests/$(echo $GITHUB_REF | awk -F / '{print $3}')-${GITHUB_HEAD_REF##*/}" >> $GITHUB_ENV || true
           [ "${GITHUB_EVENT_NAME}" == 'release' ] && echo "TARGET_BINARY_LOCATION=${GITHUB_REF##*/}" >> $GITHUB_ENV || true
-          [ "${GITHUB_EVENT_NAME}" == 'push' ] && echo "TARGET_BINARY_LOCATION=latest" >> $GITHUB_ENV || true
+          [ "${GITHUB_EVENT_NAME}" == 'push' ] && [ "${GITHUB_REF_NAME}" == 'master' ] && echo "TARGET_BINARY_LOCATION=latest" >> $GITHUB_ENV || true
+          [ "${GITHUB_EVENT_NAME}" == 'push' ] && [ "${GITHUB_REF_NAME}" != 'master' ] && echo "TARGET_BINARY_LOCATION=branches/${GITHUB_REF_NAME//\//-}" >> $GITHUB_ENV || true
 
       - name: Build image
         run: |
