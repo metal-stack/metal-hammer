@@ -11,10 +11,6 @@ on:
     branches:
       - master
 
-env:
-  GCS_BUCKET: images.metal-pod.io
-  SBOM_NAME: metal-hammer-sbom.json
-
 jobs:
   draft:
     uses: metal-stack/actions-common/.github/workflows/release-drafter.yaml@v1
@@ -27,38 +23,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - uses: google-github-actions/auth@v3
-        with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v3
-
-      - name: Make tag
-        run: |
-          [ "${GITHUB_EVENT_NAME}" == 'pull_request' ] && echo "TARGET_BINARY_LOCATION=pull-requests/$(echo $GITHUB_REF | awk -F / '{print $3}')-${GITHUB_HEAD_REF##*/}" >> $GITHUB_ENV || true
-          [ "${GITHUB_EVENT_NAME}" == 'release' ] && echo "TARGET_BINARY_LOCATION=${GITHUB_REF##*/}" >> $GITHUB_ENV || true
-          [ "${GITHUB_EVENT_NAME}" == 'push' ] && echo "TARGET_BINARY_LOCATION=latest" >> $GITHUB_ENV || true
-
       - name: Build image
         run: |
           make metal-hammer-initrd.img.lz4
-
-      - name: Generate SBOM
-        uses: anchore/sbom-action@v0
-        with:
-          format: spdx-json
-          artifact-name: ${{ env.SBOM_NAME }}
-          output-file: ${{ env.SBOM_NAME }}
-
-      - name: Prepare upload
-        run: |
-          mkdir -p metal-hammer/${TARGET_BINARY_LOCATION}
-          cp metal-hammer-initrd.img.lz4* metal-hammer/${TARGET_BINARY_LOCATION}/
-          cp ${{ env.SBOM_NAME }} metal-hammer/${TARGET_BINARY_LOCATION}/
-
-      - name: Upload image tarballs to GCS
-        run: gsutil -m cp -r -p metal-hammer gs://$GCS_BUCKET
 
       - uses: actions/upload-artifact@v7
         id: artifact-upload-step
@@ -67,9 +34,18 @@ jobs:
           path: |
             metal-hammer-initrd.img.lz4
             metal-hammer-initrd.img.lz4.md5
-            ${{ env.SBOM_NAME }}
           if-no-files-found: error
           retention-days: 1
+
+  gcp-bucket-push:
+    uses: metal-stack/actions-common/.github/workflows/gcp-bucket-push.yaml@v1
+    secrets: inherit
+    needs:
+      - build
+    with:
+      artifact-ids: ${{ needs.build.outputs.build-artifacts }}
+      bucket: images.metal-pod.io
+      default-branch-folder: latest
 
   release-assets:
     uses: metal-stack/actions-common/.github/workflows/release-assets.yaml@v1
@@ -80,4 +56,3 @@ jobs:
       files: |
         metal-hammer-initrd.img.lz4
         metal-hammer-initrd.img.lz4.md5
-        metal-hammer-sbom.json
