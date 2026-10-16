@@ -2,6 +2,7 @@ package register
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	gonet "net"
@@ -284,30 +285,7 @@ func (r *Register) readBmcDetails() (*apiv2.MachineBMC, *apiv2.MachineFRU, error
 
 	bmcConn := r.inband.BMCConnection()
 	if !bmcConn.Present() {
-		// TODO: this is for the mini-lab to work
-		// this can be removed once we properly integrated metal-bmc in the lab
-		var (
-			fru = &apiv2.MachineFRU{
-				ChassisPartNumber:   new("unknown"),
-				ChassisPartSerial:   new("unknown"),
-				BoardMfg:            new("unknown"),
-				BoardMfgSerial:      new("unknown"),
-				BoardPartNumber:     new("unknown"),
-				ProductManufacturer: new("unknown"),
-				ProductPartNumber:   new("unknown"),
-				ProductSerial:       new("unknown"),
-			}
-			details = &apiv2.MachineBMC{
-				Interface: "lanplus",
-				Address:   "192.168.121.1:623",
-				Mac:       "00:00:00:00:00:00",
-				User:      "mini-lab",
-				Password:  "mini-lab",
-				Version:   "unknown",
-			}
-		)
-
-		return details, fru, nil
+		return nil, nil, errors.New("no ipmi device present, unable to proceed with machine registration")
 	}
 
 	r.log.Info("ipmi details from bmc")
