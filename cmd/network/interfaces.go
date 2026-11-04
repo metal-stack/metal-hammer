@@ -22,7 +22,9 @@ type Network struct {
 	MachineUUID string
 	LLDPClient  *LLDPClient
 	Eth0Mac     string // this mac is used to calculate the IPMI Port offset in the metal-lab environment.
-	Log         *slog.Logger
+	// LLDP defines when neighbor discovery is complete; the zero value means DefaultLLDPRequirements.
+	LLDP LLDPRequirements
+	Log  *slog.Logger
 }
 
 // We expect to have storage and MTU of 9000 supports efficient transmission.
@@ -62,7 +64,12 @@ func (n *Network) UpAllInterfaces() error {
 		lldpd.Start()
 	}
 
-	lc := NewLLDPClient(n.Log, interfaces, 2, 2, 0)
+	req := n.LLDP
+	if req == (LLDPRequirements{}) {
+		req = DefaultLLDPRequirements
+	}
+	n.Log.Info("lldp requirements", "minimumInterfaces", req.MinInterfaces, "minimumNeighbors", req.MinNeighbors)
+	lc := NewLLDPClient(n.Log, interfaces, req.MinInterfaces, req.MinNeighbors, 0)
 	n.LLDPClient = lc
 	go lc.Start()
 

@@ -1,7 +1,9 @@
 package network
 
 import (
+	"fmt"
 	"log/slog"
+	"strconv"
 	"sync"
 	"time"
 
@@ -35,6 +37,49 @@ const (
 	// We add 2 seconds to be on the save side.
 	LLDPTxIntervalTimeout = (2 * LLDPTxInterval) + 2
 )
+
+const (
+	// CmdlineLLDPMinInterfaces is the kernel commandline key that lowers LLDPRequirements.MinInterfaces.
+	CmdlineLLDPMinInterfaces = "LLDP_MIN_INTERFACES"
+	// CmdlineLLDPMinNeighbors is the kernel commandline key that lowers LLDPRequirements.MinNeighbors.
+	CmdlineLLDPMinNeighbors = "LLDP_MIN_NEIGHBORS"
+)
+
+// LLDPRequirements define when neighbor discovery is complete.
+type LLDPRequirements struct {
+	// MinInterfaces is the number of interfaces that must have received at least one LLDP PDU.
+	MinInterfaces int
+	// MinNeighbors is the number of distinct switches (chassis MACs) that must have been seen.
+	MinNeighbors int
+}
+
+// DefaultLLDPRequirements is the production setup: every machine is dual-homed to two leaf switches.
+var DefaultLLDPRequirements = LLDPRequirements{MinInterfaces: 2, MinNeighbors: 2}
+
+// ParseLLDPRequirements reads LLDP_MIN_INTERFACES and LLDP_MIN_NEIGHBORS from the kernel commandline.
+// Missing keys keep the default. Values below 1 are rejected, so neighbor discovery can be relaxed
+// for single-switch setups (e.g. hardware labs) but never skipped.
+func ParseLLDPRequirements(cmdline map[string]string) (LLDPRequirements, error) {
+	r := DefaultLLDPRequirements
+	for key, target := range map[string]*int{
+		CmdlineLLDPMinInterfaces: &r.MinInterfaces,
+		CmdlineLLDPMinNeighbors:  &r.MinNeighbors,
+	} {
+		raw, ok := cmdline[key]
+		if !ok {
+			continue
+		}
+		n, err := strconv.Atoi(raw)
+		if err != nil {
+			return DefaultLLDPRequirements, fmt.Errorf("%s=%q is not a number", key, raw)
+		}
+		if n < 1 {
+			return DefaultLLDPRequirements, fmt.Errorf("%s must be at least 1, got %d", key, n)
+		}
+		*target = n
+	}
+	return r, nil
+}
 
 // NewLLDPClient create a lldp client.
 func NewLLDPClient(log *slog.Logger, interfaces []string, minimumInterfaces, minimumNeighbors int, timeout time.Duration) *LLDPClient {
@@ -105,7 +150,7 @@ func (l *LLDPClient) addNeighbor(neighbor lldp.Neighbor) {
 }
 
 func (l *LLDPClient) requirementsMet() bool {
-	// First check we have at least neighbors for 2 interfaces found
+	// First check we have neighbors on at least minimumInterfaces interfaces
 	if l.Host.minimumInterfaces == 0 && l.Host.minimumNeighbors == 0 {
 		return true
 	}
@@ -113,7 +158,7 @@ func (l *LLDPClient) requirementsMet() bool {
 		return false
 	}
 
-	// Then check if 2 distinct Chassis neighbors were found
+	// Then check if minimumNeighbors distinct Chassis neighbors were found
 	neighMap := make(map[string]string)
 	for iface, neighs := range l.Host.neighbors {
 		for _, neigh := range neighs {
@@ -122,6 +167,6 @@ func (l *LLDPClient) requirementsMet() bool {
 			}
 		}
 	}
-	// Requirements are met if we found at least 2 distinct chassis mac's
+	// Requirements are met if we found at least minimumNeighbors distinct chassis mac's
 	return len(neighMap) >= l.Host.minimumNeighbors
 }
