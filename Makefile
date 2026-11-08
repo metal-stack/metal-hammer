@@ -85,7 +85,6 @@ ramdisk:
 		-files="/sbin/mkswap:sbin/mkswap" \
 		-files="/sbin/sgdisk:sbin/sgdisk" \
 		-files="/sbin/wipefs:sbin/wipefs" \
-		-files="/usr/bin/ipmitool:usr/bin/ipmitool" \
 		-files="/usr/bin/lspci:bin/lspci" \
 		-files="/usr/bin/strace:bin/strace" \
 		-files="/usr/sbin/nvme:sbin/nvme" \
