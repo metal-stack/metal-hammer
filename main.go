@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -103,11 +104,17 @@ func main() {
 	emitter, err := cmd.Run(log, spec, hal)
 	if err != nil {
 		wait := 5 * time.Second
+		message := err.Error()
+		if errors.Is(err, network.ErrUplinkLoadTest) {
+			// a broken link will not heal by itself, do not stress the infrastructure with a fast boot cycle.
+			wait = network.UplinkLoadTestFailureHold
+			message = fmt.Sprintf("%s, rebooting in %s", message, wait)
+		}
 
 		log.Error("metal-hammer failed", "rebooting in", wait.String(), "error", err)
 
 		if emitter != nil {
-			emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, err.Error())
+			emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, message)
 		}
 
 		time.Sleep(wait)
