@@ -14,6 +14,7 @@ Hammer is used to boot a bare metal server via PXE together with the Metal Stack
   - Network adapters which have an active uplink with their interface name, own mac address and mac address of the switch chassis where this network card is connected to. 2 distinct switch chassis are required.
   - IPMI interface with mac and ipaddress.
   - create a metal user on IPMI with a strong password
+- Run a short load test (10 seconds) between the uplinks to detect faulty links, e.g. broken GBICs. Raw ethernet frames are sent in both directions from one uplink to the other, which requires that all uplinks are in the same layer 2 network. If frames get lost or corrupted, or the error counters of the network cards increase, the machine reports a crash, waits for 4 hours and reboots to retry. If no frames get through at all, the machine reboots after 5 seconds like on any other error.
 - Set BIOS boot order to contain only PXE and Hard Disk as possible options.
 - Wait until a `machine create` command was issued from metal-api
 
