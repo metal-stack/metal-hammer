@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"log/slog"
+	"maps"
 	"math/rand/v2"
 	"net"
 	"slices"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netlink/nl"
 	"golang.org/x/sys/unix"
 )
 
@@ -25,12 +27,8 @@ import (
 var ErrUplinkLoadTest = errors.New("uplink load test failed")
 
 const (
-	// UplinkLoadTestFailureHold is the duration to wait before rebooting after a failed uplink load test.
-	// This prevents a machine with a broken link from generating load with a endless and fast boot cycle.
-	UplinkLoadTestFailureHold = 4 * time.Hour
-
 	// loadTestEtherType is one of the ethertypes reserved by IEEE for local experimental use.
-	loadTestEtherType uint16 = 0x88b5
+	loadTestEtherType uint16 = unix.ETH_P_802_EX1
 	// loadTestMagic identifies a frame of the load test: "mhlt"
 	loadTestMagic uint32 = 0x6d686c74
 
@@ -63,6 +61,8 @@ const (
 	loadTestRcvBuf     = 64 * 1024 * 1024
 	loadTestRcvTimeout = 100 * time.Millisecond
 	loadTestSndTimeout = time.Second
+	// loadTestSndStuck is the time after which a full transmit queue is considered an error.
+	loadTestSndStuck = 2 * loadTestSndTimeout
 
 	// loadTestMaxLossRatio is the maximum tolerated ratio of frames lost on the wire.
 	loadTestMaxLossRatio = 0.001
@@ -70,32 +70,27 @@ const (
 
 // nicCounters are the kernel counters of a interface which are relevant for the load test.
 type nicCounters struct {
-	rxErrors  uint64
-	rxCrc     uint64
-	rxFrame   uint64
-	rxLength  uint64
-	rxDropped uint64
-	rxMissed  uint64
-	rxOver    uint64
-	rxFifo    uint64
-	txErrors  uint64
-	txCarrier uint64
-	txDropped uint64
+	rxErrors uint64
+	rxCrc    uint64
+	rxFrame  uint64
+	rxLength uint64
+	// rxHostDrops are frames which were received, but dropped because this host could not keep up.
+	rxHostDrops uint64
+	txErrors    uint64
+	txCarrier   uint64
+	txDropped   uint64
 }
 
 func (c nicCounters) sub(o nicCounters) nicCounters {
 	return nicCounters{
-		rxErrors:  c.rxErrors - o.rxErrors,
-		rxCrc:     c.rxCrc - o.rxCrc,
-		rxFrame:   c.rxFrame - o.rxFrame,
-		rxLength:  c.rxLength - o.rxLength,
-		rxDropped: c.rxDropped - o.rxDropped,
-		rxMissed:  c.rxMissed - o.rxMissed,
-		rxOver:    c.rxOver - o.rxOver,
-		rxFifo:    c.rxFifo - o.rxFifo,
-		txErrors:  c.txErrors - o.txErrors,
-		txCarrier: c.txCarrier - o.txCarrier,
-		txDropped: c.txDropped - o.txDropped,
+		rxErrors:    c.rxErrors - o.rxErrors,
+		rxCrc:       c.rxCrc - o.rxCrc,
+		rxFrame:     c.rxFrame - o.rxFrame,
+		rxLength:    c.rxLength - o.rxLength,
+		rxHostDrops: c.rxHostDrops - o.rxHostDrops,
+		txErrors:    c.txErrors - o.txErrors,
+		txCarrier:   c.txCarrier - o.txCarrier,
+		txDropped:   c.txDropped - o.txDropped,
 	}
 }
 
@@ -109,17 +104,14 @@ func readNicCounters(name string) (nicCounters, error) {
 		return nicCounters{}, nil
 	}
 	return nicCounters{
-		rxErrors:  s.RxErrors,
-		rxCrc:     s.RxCrcErrors,
-		rxFrame:   s.RxFrameErrors,
-		rxLength:  s.RxLengthErrors,
-		rxDropped: s.RxDropped,
-		rxMissed:  s.RxMissedErrors,
-		rxOver:    s.RxOverErrors,
-		rxFifo:    s.RxFifoErrors,
-		txErrors:  s.TxErrors,
-		txCarrier: s.TxCarrierErrors,
-		txDropped: s.TxDropped,
+		rxErrors:    s.RxErrors,
+		rxCrc:       s.RxCrcErrors,
+		rxFrame:     s.RxFrameErrors,
+		rxLength:    s.RxLengthErrors,
+		rxHostDrops: s.RxDropped + s.RxMissedErrors + s.RxOverErrors + s.RxFifoErrors,
+		txErrors:    s.TxErrors,
+		txCarrier:   s.TxCarrierErrors,
+		txDropped:   s.TxDropped,
 	}, nil
 }
 
@@ -144,7 +136,7 @@ type directionResult struct {
 
 // localDrops are frames which made it over the wire but were dropped on this host because it could not keep up.
 func (r directionResult) localDrops() uint64 {
-	return r.socketDrops + r.rx.rxDropped + r.rx.rxMissed + r.rx.rxOver + r.rx.rxFifo
+	return r.socketDrops + r.rx.rxHostDrops
 }
 
 // lost returns the number of frames which got lost on the wire.
@@ -273,15 +265,12 @@ type loadTestPort struct {
 	// separate sockets are used, because a socket created without protocol never receives anything.
 	tx, rx int
 
-	// set by the receiver
+	// set by the receiver while it is running
 	smallProbe atomic.Bool
 	fullProbe  atomic.Bool
-	received   atomic.Uint64
-	corrupt    atomic.Uint64
-}
-
-func htons(v uint16) uint16 {
-	return v<<8 | v>>8
+	// set by the receiver when it stops
+	received uint64
+	corrupt  uint64
 }
 
 func openLoadTestPort(name string) (*loadTestPort, error) {
@@ -295,6 +284,12 @@ func openLoadTestPort(name string) (*loadTestPort, error) {
 	}
 
 	p := &loadTestPort{name: name, mac: attrs.HardwareAddr, mtu: attrs.MTU, tx: -1, rx: -1}
+	opened := false
+	defer func() {
+		if !opened {
+			p.close()
+		}
+	}()
 
 	p.tx, err = unix.Socket(unix.AF_PACKET, unix.SOCK_RAW|unix.SOCK_CLOEXEC, 0)
 	if err != nil {
@@ -302,13 +297,11 @@ func openLoadTestPort(name string) (*loadTestPort, error) {
 	}
 	err = unix.Bind(p.tx, &unix.SockaddrLinklayer{Ifindex: attrs.Index})
 	if err != nil {
-		p.close()
 		return nil, fmt.Errorf("unable to bind send socket to %s %w", name, err)
 	}
 	snd := unix.NsecToTimeval(loadTestSndTimeout.Nanoseconds())
 	err = unix.SetsockoptTimeval(p.tx, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &snd)
 	if err != nil {
-		p.close()
 		return nil, fmt.Errorf("unable to set send timeout on %s %w", name, err)
 	}
 
@@ -316,27 +309,24 @@ func openLoadTestPort(name string) (*loadTestPort, error) {
 	// otherwise frames from all interfaces are received until bind is called.
 	p.rx, err = unix.Socket(unix.AF_PACKET, unix.SOCK_RAW|unix.SOCK_CLOEXEC, 0)
 	if err != nil {
-		p.close()
 		return nil, fmt.Errorf("unable to create receive socket for %s %w", name, err)
 	}
 	// best effort, the receiver ignores frames sent by this interface anyway.
 	_ = unix.SetsockoptInt(p.rx, unix.SOL_PACKET, unix.PACKET_IGNORE_OUTGOING, 1)
-	err = unix.SetsockoptInt(p.rx, unix.SOL_SOCKET, unix.SO_RCVBUFFORCE, loadTestRcvBuf)
-	if err != nil {
+	if unix.SetsockoptInt(p.rx, unix.SOL_SOCKET, unix.SO_RCVBUFFORCE, loadTestRcvBuf) != nil {
 		_ = unix.SetsockoptInt(p.rx, unix.SOL_SOCKET, unix.SO_RCVBUF, loadTestRcvBuf)
 	}
 	rcv := unix.NsecToTimeval(loadTestRcvTimeout.Nanoseconds())
 	err = unix.SetsockoptTimeval(p.rx, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &rcv)
 	if err != nil {
-		p.close()
 		return nil, fmt.Errorf("unable to set receive timeout on %s %w", name, err)
 	}
-	err = unix.Bind(p.rx, &unix.SockaddrLinklayer{Protocol: htons(loadTestEtherType), Ifindex: attrs.Index})
+	err = unix.Bind(p.rx, &unix.SockaddrLinklayer{Protocol: nl.Swap16(loadTestEtherType), Ifindex: attrs.Index})
 	if err != nil {
-		p.close()
 		return nil, fmt.Errorf("unable to bind receive socket to %s %w", name, err)
 	}
 
+	opened = true
 	return p, nil
 }
 
@@ -360,6 +350,7 @@ func (p *loadTestPort) socketDrops() uint64 {
 
 // receive consumes frames sent by peer until stop is set.
 func (p *loadTestPort) receive(peer net.HardwareAddr, runID uint64, stop *atomic.Bool) {
+	var received, corrupt uint64
 	buf := make([]byte, loadTestEthHeaderLen+p.mtu+64)
 	for !stop.Load() {
 		n, err := unix.Read(p.rx, buf)
@@ -377,11 +368,12 @@ func (p *loadTestPort) receive(peer net.HardwareAddr, runID uint64, stop *atomic
 				p.smallProbe.Store(true)
 			}
 		case kind == loadTestKindLoad && status == frameValid:
-			p.received.Add(1)
+			received++
 		case kind == loadTestKindLoad:
-			p.corrupt.Add(1)
+			corrupt++
 		}
 	}
+	p.received, p.corrupt = received, corrupt
 }
 
 func isTemporarySendError(err error) bool {
@@ -392,10 +384,8 @@ func isTemporarySendError(err error) bool {
 func (p *loadTestPort) send(peer net.HardwareAddr, runID uint64, frameSize int, stop *atomic.Bool) (uint64, error) {
 	frame, payloadCRC := newLoadTestFrame(peer, p.mac, loadTestKindLoad, runID, frameSize)
 	var (
-		sent     uint64
-		failing  time.Time
-		lastErr  error
-		maxRetry = 2 * loadTestSndTimeout
+		sent    uint64
+		failing time.Time
 	)
 	for !stop.Load() {
 		sealLoadTestFrame(frame, sent, payloadCRC)
@@ -411,13 +401,12 @@ func (p *loadTestPort) send(peer net.HardwareAddr, runID uint64, frameSize int, 
 		// the transmit queue is full
 		if failing.IsZero() {
 			failing = time.Now()
-		} else if time.Since(failing) > maxRetry {
-			lastErr = fmt.Errorf("transmit queue of %s is stuck %w", p.name, err)
-			break
+		} else if time.Since(failing) > loadTestSndStuck {
+			return sent, fmt.Errorf("transmit queue of %s is stuck %w", p.name, err)
 		}
 		time.Sleep(50 * time.Microsecond)
 	}
-	return sent, lastErr
+	return sent, nil
 }
 
 func (p *loadTestPort) sendProbe(peer net.HardwareAddr, runID uint64, frameSize int) {
@@ -434,11 +423,10 @@ func probeLoadTestPair(log *slog.Logger, a, b *loadTestPort, runID uint64) (int,
 	jumbo := mtu > loadTestStandardMTU
 
 	var (
-		start    = time.Now()
-		smallAt  time.Time
-		smallOK  bool
-		fullOK   bool
-		received = func(get func(p *loadTestPort) bool) bool { return get(a) && get(b) }
+		start   = time.Now()
+		smallAt time.Time
+		smallOK bool
+		fullOK  bool
 	)
 	for time.Since(start) < loadTestProbeTimeout {
 		for _, d := range [][2]*loadTestPort{{a, b}, {b, a}} {
@@ -449,8 +437,8 @@ func probeLoadTestPair(log *slog.Logger, a, b *loadTestPort, runID uint64) (int,
 		}
 		time.Sleep(loadTestProbeInterval)
 
-		smallOK = received(func(p *loadTestPort) bool { return p.smallProbe.Load() })
-		fullOK = received(func(p *loadTestPort) bool { return p.fullProbe.Load() })
+		smallOK = a.smallProbe.Load() && b.smallProbe.Load()
+		fullOK = a.fullProbe.Load() && b.fullProbe.Load()
 		if smallOK && smallAt.IsZero() {
 			smallAt = time.Now()
 		}
@@ -472,17 +460,17 @@ func probeLoadTestPair(log *slog.Logger, a, b *loadTestPort, runID uint64) (int,
 }
 
 // runLoadTestPair sends frames between the two given interfaces in both directions at the same time.
+// The result with index i is the direction where the interface with index i is the sender.
 func runLoadTestPair(log *slog.Logger, nameA, nameB string, duration time.Duration) ([]directionResult, error) {
-	a, err := openLoadTestPort(nameA)
-	if err != nil {
-		return nil, err
+	var ports [2]*loadTestPort
+	for i, name := range []string{nameA, nameB} {
+		p, err := openLoadTestPort(name)
+		if err != nil {
+			return nil, err
+		}
+		defer p.close()
+		ports[i] = p
 	}
-	defer a.close()
-	b, err := openLoadTestPort(nameB)
-	if err != nil {
-		return nil, err
-	}
-	defer b.close()
 
 	runID := rand.Uint64()
 
@@ -490,45 +478,45 @@ func runLoadTestPair(log *slog.Logger, nameA, nameB string, duration time.Durati
 		stopReceive atomic.Bool
 		receivers   sync.WaitGroup
 	)
-	receivers.Go(func() { a.receive(b.mac, runID, &stopReceive) })
-	receivers.Go(func() { b.receive(a.mac, runID, &stopReceive) })
-	stopReceivers := func() {
+	for i, p := range ports {
+		receivers.Go(func() { p.receive(ports[1-i].mac, runID, &stopReceive) })
+	}
+	// the receivers must be stopped before the sockets are closed and before their counters are read.
+	stopReceivers := sync.OnceFunc(func() {
 		stopReceive.Store(true)
 		receivers.Wait()
-	}
+	})
+	defer stopReceivers()
 
-	frameSize, err := probeLoadTestPair(log, a, b, runID)
+	frameSize, err := probeLoadTestPair(log, ports[0], ports[1], runID)
 	if err != nil {
-		stopReceivers()
 		return nil, err
 	}
 
-	// reading resets the drop counters
-	_ = a.socketDrops()
-	_ = b.socketDrops()
-	beforeA, errA := readNicCounters(a.name)
-	beforeB, errB := readNicCounters(b.name)
-	if err := errors.Join(errA, errB); err != nil {
-		stopReceivers()
-		return nil, err
+	var before, after [2]nicCounters
+	for i, p := range ports {
+		// reading resets the drop counters
+		_ = p.socketDrops()
+		before[i], err = readNicCounters(p.name)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var (
-		stopSend       atomic.Bool
-		senders        sync.WaitGroup
-		sentA, sentB   uint64
-		sendErrA       error
-		sendErrB       error
-		elapsedA       time.Duration
-		elapsedB       time.Duration
-		start          = time.Now()
-		sendAndMeasure = func(from, to *loadTestPort, sent *uint64, sendErr *error, elapsed *time.Duration) {
-			*sent, *sendErr = from.send(to.mac, runID, frameSize, &stopSend)
-			*elapsed = time.Since(start)
-		}
+		stopSend atomic.Bool
+		senders  sync.WaitGroup
+		results  = make([]directionResult, len(ports))
+		start    = time.Now()
 	)
-	senders.Go(func() { sendAndMeasure(a, b, &sentA, &sendErrA, &elapsedA) })
-	senders.Go(func() { sendAndMeasure(b, a, &sentB, &sendErrB, &elapsedB) })
+	for i := range results {
+		from, to, r := ports[i], ports[1-i], &results[i]
+		r.from, r.to, r.frameSize = from.name, to.name, frameSize
+		senders.Go(func() {
+			r.sent, r.sendErr = from.send(to.mac, runID, frameSize, &stopSend)
+			r.duration = time.Since(start)
+		})
+	}
 
 	time.Sleep(duration)
 	stopSend.Store(true)
@@ -536,42 +524,19 @@ func runLoadTestPair(log *slog.Logger, nameA, nameB string, duration time.Durati
 	time.Sleep(loadTestDrain)
 	stopReceivers()
 
-	afterA, errA := readNicCounters(a.name)
-	afterB, errB := readNicCounters(b.name)
-	if err := errors.Join(errA, errB); err != nil {
-		return nil, err
-	}
-	deltaA := afterA.sub(beforeA)
-	deltaB := afterB.sub(beforeB)
-
-	return []directionResult{
-		{
-			from: a.name, to: b.name, frameSize: frameSize, duration: elapsedA,
-			sent: sentA, received: b.received.Load(), corrupt: b.corrupt.Load(), socketDrops: b.socketDrops(),
-			sendErr: sendErrA, tx: deltaA, rx: deltaB,
-		},
-		{
-			from: b.name, to: a.name, frameSize: frameSize, duration: elapsedB,
-			sent: sentB, received: a.received.Load(), corrupt: a.corrupt.Load(), socketDrops: a.socketDrops(),
-			sendErr: sendErrB, tx: deltaB, rx: deltaA,
-		},
-	}, nil
-}
-
-// uplinks returns all interfaces with a lldp neighbor together with a description of this neighbor.
-func (n *Network) uplinks() map[string]string {
-	host := n.LLDPClient.Host
-	host.mutex.RLock()
-	defer host.mutex.RUnlock()
-
-	uplinks := make(map[string]string)
-	for name, neighbors := range host.neighbors {
-		if len(neighbors) == 0 {
-			continue
+	for i, p := range ports {
+		after[i], err = readNicCounters(p.name)
+		if err != nil {
+			return nil, err
 		}
-		uplinks[name] = fmt.Sprintf("%s connected to %s port %s", name, neighbors[0].Name, neighbors[0].PortDescription)
 	}
-	return uplinks
+	for i := range results {
+		receiver, r := ports[1-i], &results[i]
+		r.received, r.corrupt, r.socketDrops = receiver.received, receiver.corrupt, receiver.socketDrops()
+		r.tx, r.rx = after[i].sub(before[i]), after[1-i].sub(before[1-i])
+	}
+
+	return results, nil
 }
 
 // UplinkLoadTest transfers data between the uplinks of this machine for the given duration to detect faulty links.
@@ -581,12 +546,15 @@ func (n *Network) uplinks() map[string]string {
 // It must be called after the lldp neighbors were detected.
 // The returned error wraps ErrUplinkLoadTest if a faulty link was detected.
 func (n *Network) UplinkLoadTest(duration time.Duration) error {
-	uplinks := n.uplinks()
-	names := make([]string, 0, len(uplinks))
-	for name := range uplinks {
-		names = append(names, name)
+	// the uplinks are the interfaces with a lldp neighbor, described together with this neighbor.
+	uplinks := make(map[string]string)
+	for name, neighbors := range n.LLDPClient.Host.Neighbors() {
+		if len(neighbors) == 0 {
+			continue
+		}
+		uplinks[name] = fmt.Sprintf("%s connected to %s port %s", name, neighbors[0].Name, neighbors[0].PortDescription)
 	}
-	slices.Sort(names)
+	names := slices.Sorted(maps.Keys(uplinks))
 	if len(names) < 2 {
 		return fmt.Errorf("uplink load test requires at least two uplinks, found:%v", names)
 	}

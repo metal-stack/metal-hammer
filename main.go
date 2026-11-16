@@ -20,6 +20,10 @@ import (
 	"github.com/moby/sys/mountinfo"
 )
 
+// uplinkLoadTestFailureHold is the duration to wait before rebooting after a failed uplink load test.
+// This prevents a machine with a broken link from generating load with a endless and fast boot cycle.
+const uplinkLoadTestFailureHold = 4 * time.Hour
+
 func main() {
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
@@ -107,7 +111,7 @@ func main() {
 		message := err.Error()
 		if errors.Is(err, network.ErrUplinkLoadTest) {
 			// a broken link will not heal by itself, do not stress the infrastructure with a fast boot cycle.
-			wait = network.UplinkLoadTestFailureHold
+			wait = uplinkLoadTestFailureHold
 			message = fmt.Sprintf("%s, rebooting in %s", message, wait)
 		}
 

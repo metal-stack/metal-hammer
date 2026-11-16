@@ -86,7 +86,7 @@ func TestDirectionResultEvaluate(t *testing.T) {
 		},
 		{
 			name:   "drops of a slow receiver are not a loss",
-			result: directionResult{sent: 100000, received: 60000, socketDrops: 30000, rx: nicCounters{rxMissed: 10000}},
+			result: directionResult{sent: 100000, received: 60000, socketDrops: 30000, rx: nicCounters{rxHostDrops: 10000}},
 		},
 		{
 			name:    "loss on top of drops of a slow receiver",

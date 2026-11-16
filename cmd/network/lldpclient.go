@@ -2,6 +2,7 @@ package network
 
 import (
 	"log/slog"
+	"slices"
 	"sync"
 	"time"
 
@@ -35,6 +36,18 @@ const (
 	// We add 2 seconds to be on the save side.
 	LLDPTxIntervalTimeout = (2 * LLDPTxInterval) + 2
 )
+
+// Neighbors returns a snapshot of the lldp neighbors detected so far by interface name.
+func (h *Host) Neighbors() map[string][]*lldp.Neighbor {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+
+	neighbors := make(map[string][]*lldp.Neighbor, len(h.neighbors))
+	for name, neighs := range h.neighbors {
+		neighbors[name] = slices.Clone(neighs)
+	}
+	return neighbors
+}
 
 // NewLLDPClient create a lldp client.
 func NewLLDPClient(log *slog.Logger, interfaces []string, minimumInterfaces, minimumNeighbors int, timeout time.Duration) *LLDPClient {
