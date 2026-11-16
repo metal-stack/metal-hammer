@@ -448,8 +448,9 @@ func probeLoadTestPair(log *slog.Logger, a, b *loadTestPort, runID uint64) (int,
 	}
 
 	if !smallOK {
-		return 0, fmt.Errorf("%w: no layer 2 connectivity between %s and %s within %s (%s received:%t, %s received:%t)",
-			ErrUplinkLoadTest, a.name, b.name, loadTestProbeTimeout, a.name, a.smallProbe.Load(), b.name, b.smallProbe.Load())
+		// this is not treated as a faulty link, because the uplinks might just not be in the same layer 2 network.
+		return 0, fmt.Errorf("no layer 2 connectivity between %s and %s within %s (%s received:%t, %s received:%t)",
+			a.name, b.name, loadTestProbeTimeout, a.name, a.smallProbe.Load(), b.name, b.smallProbe.Load())
 	}
 	if jumbo && !fullOK {
 		// this is not a problem of the link of this machine, but of the network in between.
