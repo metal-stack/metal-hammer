@@ -12,7 +12,6 @@ const (
 	LVM      = "lvm"
 	Ethtool  = "ethtool"
 	HDParm   = "hdparm"
-	IPMITool = "ipmitool"
 	MKFSExt3 = "mkfs.ext3"
 	MKFSExt4 = "mkfs.ext4"
 	MKFSVFat = "mkfs.vfat"
@@ -31,7 +30,6 @@ var commands = []string{
 	LVM,
 	Ethtool,
 	HDParm,
-	IPMITool,
 	MKFSExt3,
 	MKFSExt4,
 	MKFSVFat,

@@ -34,7 +34,6 @@ RUN apt-get update \
 	gcc \
 	gdisk \
 	hdparm \
-	ipmitool \
 	lvm2 \
 	lz4 \
 	mdadm \
