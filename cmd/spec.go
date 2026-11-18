@@ -7,6 +7,7 @@ import (
 
 	"os"
 
+	"github.com/metal-stack/metal-hammer/cmd/network"
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	pixiecore "github.com/metal-stack/pixie/api"
 )
@@ -27,6 +28,8 @@ type Specification struct {
 	MachineUUID string
 	// IP of this instance
 	IP string
+	// LLDP requirements for neighbor discovery, lowered via LLDP_MIN_INTERFACES / LLDP_MIN_NEIGHBORS
+	LLDP network.LLDPRequirements
 	// PixieConfig is fetched from pixiecore to initiate the client for the metal-apiserver and logging config
 	PixieConfig *pixiecore.V2MetalHammerConfigPayload
 
@@ -70,6 +73,12 @@ func NewSpec(log *slog.Logger, machineUUID string) *Specification {
 		}
 	}
 
+	spec.LLDP, err = network.ParseLLDPRequirements(envmap)
+	if err != nil {
+		log.Error("parse cmdline", "error", err)
+		os.Exit(1)
+	}
+
 	spec.log = log
 
 	return spec
@@ -84,5 +93,7 @@ func (s *Specification) Log() {
 		"cidr", s.Cidr,
 		"machineUUID", s.MachineUUID,
 		"ip", s.IP,
+		"lldpMinInterfaces", s.LLDP.MinInterfaces,
+		"lldpMinNeighbors", s.LLDP.MinNeighbors,
 	)
 }

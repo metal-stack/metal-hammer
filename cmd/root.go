@@ -81,6 +81,7 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		IPAddress:   spec.IP,
 		Started:     time.Now(),
 		Log:         log,
+		LLDP:        spec.LLDP,
 	}
 
 	// TODO: Does not work yet, needs to be done manually
