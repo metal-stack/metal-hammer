@@ -128,6 +128,9 @@ func (l *Client) Neighbors(neighChan chan Neighbor) {
 						case layers.LLDPChassisIDSubtypeIfaceName:
 							chassis.Type = Interface
 							chassis.Value = string(lldp.ChassisID.ID)
+						case layers.LLDPChassisIDSubTypeLocal:
+							chassis.Type = Local
+							chassis.Value = string(lldp.ChassisID.ID)
 						}
 						neigh.Chassis = chassis
 						neigh.Port = port
