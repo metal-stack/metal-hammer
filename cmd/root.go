@@ -99,6 +99,12 @@ func Run(log *slog.Logger, spec *Specification, hal hal.InBand) (*event.EventEmi
 		return eventEmitter, fmt.Errorf("register %w", err)
 	}
 
+	// the lldp neighbors, and therefore the uplinks, are known after the registration.
+	err = n.UplinkLoadTest(10 * time.Second)
+	if err != nil {
+		return eventEmitter, fmt.Errorf("uplink load test %w", err)
+	}
+
 	err = storage.NewDisks(log).Wipe()
 	if err != nil {
 		return eventEmitter, fmt.Errorf("wipe %w", err)

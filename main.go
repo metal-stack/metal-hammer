@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -18,6 +19,10 @@ import (
 	"github.com/metal-stack/metal-hammer/pkg/kernel"
 	"github.com/moby/sys/mountinfo"
 )
+
+// uplinkLoadTestFailureHold is the duration to wait before rebooting after a failed uplink load test.
+// This prevents a machine with a broken link from generating load with a endless and fast boot cycle.
+const uplinkLoadTestFailureHold = 4 * time.Hour
 
 func main() {
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -103,11 +108,17 @@ func main() {
 	emitter, err := cmd.Run(log, spec, hal)
 	if err != nil {
 		wait := 5 * time.Second
+		message := err.Error()
+		if errors.Is(err, network.ErrUplinkLoadTest) {
+			// a broken link will not heal by itself, do not stress the infrastructure with a fast boot cycle.
+			wait = uplinkLoadTestFailureHold
+			message = fmt.Sprintf("%s, rebooting in %s", message, wait)
+		}
 
 		log.Error("metal-hammer failed", "rebooting in", wait.String(), "error", err)
 
 		if emitter != nil {
-			emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, err.Error())
+			emitter.Emit(apiv2.MachineProvisioningEventType_MACHINE_PROVISIONING_EVENT_TYPE_CRASHED, message)
 		}
 
 		time.Sleep(wait)
