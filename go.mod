@@ -21,7 +21,7 @@ require (
 	github.com/metal-stack/go-hal v0.7.3
 	github.com/metal-stack/go-lldpd v0.4.12
 	github.com/metal-stack/metal-lib v0.26.3
-	github.com/metal-stack/os-installer v0.3.5-0.20261124155921-e43681f9a449
+	github.com/metal-stack/os-installer v0.3.5-0.20261124222538-e8cb8cf95b89
 	github.com/metal-stack/pixie v0.5.0
 	github.com/metal-stack/v v1.0.3
 	// archiver must stay in version v2.1.0, see replace below
