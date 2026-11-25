@@ -13,11 +13,21 @@ import (
 type Report struct {
 	ConsolePassword string
 	MachineUUID     string
+	InstallError    error
 	Log             *slog.Logger
 }
 
-// ReportInstallation will tell metal-api the result of the installation
+// ReportInstallation will tell metal-apiserver that the installation succeeded.
+//
+// A failed installation is not reported here: InstallationSucceeded has no way to carry a failure,
+// and calling it makes metal-apiserver move the machine into the tenant vrf and boot it from disk.
+// The caller returns the installation error instead, which ends up in a crashed provisioning event.
 func (r *Report) ReportInstallation(bootClient infrav2connect.BootServiceClient) error {
+	if r.InstallError != nil {
+		r.Log.Error("installation failed, not reporting it as succeeded", "error", r.InstallError)
+		return nil
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
