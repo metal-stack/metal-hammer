@@ -131,6 +131,7 @@ func (h *hammer) installImage(eventEmitter *event.EventEmitter, alloc *apiv2.Mac
 	rep := &report.Report{
 		MachineUUID:     h.spec.MachineUUID,
 		ConsolePassword: h.spec.ConsolePassword,
+		InstallError:    installErr,
 		Log:             h.log,
 	}
 
